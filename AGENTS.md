@@ -20,7 +20,8 @@ primary checkout while a worktree for the task exists.
 
 ## Repository specifics
 
-This repo produces two Docker Sandboxes artifacts:
+This repo is published at `github.com/nikcio/docker-sandboxing` and produces
+two Docker Sandboxes artifacts:
 
 - `template/Dockerfile` — the sandbox template image
   (`opencode-node-dotnet:v1`): OpenCode base image + .NET SDK, Node via NVM,
@@ -45,6 +46,10 @@ Constraints to respect:
   download fails inside a sandbox, check `sbx policy log`, add the host to
   the owning mixin, and recreate the sandbox (kit changes never apply to
   running sandboxes).
+- Kits are fetched from this GitHub repo by default; `github.com/nikcio/`
+  must stay in the host's `kit.allowedSources` setting (bootstrap merges it).
+- `scripts/new-sandbox.*` is the configurable `sbx-new` launcher (profiles,
+  git/local source, ref pinning). Keep the PS and bash variants in sync.
 - Do not touch the sandbox-managed `~/.config/opencode/opencode.json` from
   the kit; the Zeldoc provider lives in its own file referenced by
   `OPENCODE_CONFIG`.

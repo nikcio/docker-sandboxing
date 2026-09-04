@@ -2,17 +2,21 @@
 # One-time host setup for the opencode-node-dotnet Docker Sandboxes kit.
 #
 #   - Enables clipboard image paste for sandboxes (sbx settings).
+#   - Allows the GitHub kit source (kit.allowedSources) so kits/mixins are
+#     fetched from github.com/nikcio/docker-sandboxing.
 #   - Builds the template image and loads it into the sandbox runtime
 #     (or pushes it when PUSH_REGISTRY is set).
 #   - Registers the Zeldoc.ai API key as a proxy-managed service secret
 #     (the real key never enters the sandbox) and pre-creates the
 #     credential binding.
-#   - Validates the kit.
+#   - Registers the configurable `sbx-new` shell function (skip with
+#     SKIP_ALIAS=1).
+#   - Validates the kit and mixins.
 #
 # Usage:
 #   ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
 #   PUSH_REGISTRY=docker.io/myorg ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
-#   SKIP_BUILD=1 ./scripts/bootstrap.sh            # template already loaded
+#   SKIP_BUILD=1 SKIP_ALIAS=1 ./scripts/bootstrap.sh   # selective runs
 
 set -euo pipefail
 
@@ -25,6 +29,41 @@ step() { printf '\033[36m==> %s\033[0m\n' "$1"; }
 
 step "sbx settings: allow clipboard image paste"
 sbx settings set clipboard.imagePaste true
+
+# Kits are fetched from GitHub, so the source must be in the allowlist.
+# The setting replaces the whole list — merge, don't overwrite.
+KIT_SOURCE="github.com/nikcio/"
+step "sbx settings: allow kit source ${KIT_SOURCE}"
+current="$(sbx settings get kit.allowedSources 2>/dev/null || echo '[]')"
+if ! grep -qF "${KIT_SOURCE}" <<<"${current}"; then
+    json="["
+    first=1
+    for e in "docker.io/" $(grep -oE '"[^"]+"' <<<"${current}" | tr -d '"' | grep -v '^$' || true) "${KIT_SOURCE}"; do
+        [ -z "$e" ] && continue
+        if printf '%s' "$json" | grep -qF "\"$e\""; then continue; fi
+        [ $first -eq 1 ] || json+=","
+        json+="\"$e\""
+        first=0
+    done
+    json+="]"
+    sbx settings set kit.allowedSources "$json"
+fi
+
+# Register the configurable `sbx-new` launcher as a shell function.
+# Skip with SKIP_ALIAS=1. Idempotent (marker comment).
+if [ -z "${SKIP_ALIAS:-}" ]; then
+    marker="sbx-new (docker-sandboxing)"
+    launcher="${REPO_ROOT}/scripts/new-sandbox.sh"
+    rc_file="${HOME}/.bashrc"
+    if ! grep -qF "$marker" "$rc_file" 2>/dev/null; then
+        step "Registering sbx-new function in ${rc_file}"
+        cat >> "$rc_file" <<EOF
+
+# ${marker} — configurable sandbox launcher (see scripts/new-sandbox.sh)
+sbx-new() { bash "${launcher}" "\$@"; }
+EOF
+    fi
+fi
 
 if [ -z "${SKIP_BUILD}" ]; then
     step "Building template image ${TEMPLATE_TAG}"
@@ -88,15 +127,11 @@ sbx kit validate "${REPO_ROOT}/kit"
 
 cat <<EOF
 
-Done. Launch a fully composed sandbox for a project with:
-  sbx run --kit "${REPO_ROOT}/kit" \\
-    --kit "${REPO_ROOT}/mixins/opencode-runtime" --kit "${REPO_ROOT}/mixins/zeldoc" \\
-    --kit "${REPO_ROOT}/mixins/git" --kit "${REPO_ROOT}/mixins/node" \\
-    --kit "${REPO_ROOT}/mixins/dotnet" --kit "${REPO_ROOT}/mixins/docker" \\
-    --kit "${REPO_ROOT}/mixins/apt" opencode-node-dotnet <path-to-project>
-
-Or use a .sbxenv.yaml (see examples/) — recommended.
+Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:
+  sbx-new <path-to-project>                 # full stack, kits from GitHub
+  sbx-new --profile node <path-to-project>  # node-only mixin set
+  sbx-new --list-profiles                   # all profiles
 
 Tip: kit changes only apply to NEW sandboxes. Recreate with:
-  sbx rm <sandbox-name> && sbx run --kit ...
+  sbx rm <sandbox-name> && sbx-new <path-to-project>
 EOF

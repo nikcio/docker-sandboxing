@@ -5,12 +5,16 @@
 
 .DESCRIPTION
     - Enables clipboard image paste for sandboxes (sbx settings).
+    - Allows the GitHub kit source (kit.allowedSources) so kits/mixins are
+      fetched from github.com/nikcio/docker-sandboxing.
     - Builds the template image and loads it into the sandbox runtime
       (or pushes it when -PushRegistry is given).
     - Registers the Zeldoc.ai API key as a proxy-managed service secret
       (the real key never enters the sandbox) and pre-creates the
       credential binding.
-    - Validates the kit.
+    - Registers the configurable `sbx-new` shell function (skip with
+      -SkipAlias).
+    - Validates the kit and mixins.
 
 .PARAMETER TemplateTag
     Tag for the template image. Defaults to opencode-node-dotnet:v1
@@ -24,6 +28,9 @@
 .PARAMETER SkipBuild
     Skip the template build (e.g. template already loaded).
 
+.PARAMETER SkipAlias
+    Skip registering the sbx-new shell function.
+
 .EXAMPLE
     $env:ZELDOC_API_KEY = "zd-..."
     ./scripts/bootstrap.ps1
@@ -32,7 +39,8 @@
 param(
     [string]$TemplateTag = "opencode-node-dotnet:v1",
     [string]$PushRegistry = "",
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [switch]$SkipAlias
 )
 
 $ErrorActionPreference = "Stop"
@@ -46,6 +54,40 @@ function Invoke-Step {
 
 Invoke-Step "sbx settings: allow clipboard image paste" {
     sbx settings set clipboard.imagePaste true
+}
+
+# Kits are fetched from GitHub, so the source must be in the allowlist.
+# The setting replaces the whole list — merge, don't overwrite.
+$kitSource = "github.com/nikcio/"
+Invoke-Step "sbx settings: allow kit source $kitSource" {
+    $current = sbx settings get kit.allowedSources
+    $entries = @()
+    try { $entries = @($current | ConvertFrom-Json) } catch { $entries = @() }
+    if ($entries -notcontains $kitSource) {
+        if ($entries -notcontains "docker.io/") { $entries = @("docker.io/") + $entries }
+        $entries = @($entries | Where-Object { $_ }) + $kitSource
+        $json = '["' + ($entries -join '","') + '"]'
+        sbx settings set kit.allowedSources $json
+    }
+}
+
+# Register the configurable `sbx-new` launcher as a shell function.
+# Skip with -SkipAlias. Idempotent (marker comment).
+if (-not $SkipAlias) {
+    $marker = "sbx-new (docker-sandboxing)"
+    $launcher = Join-Path $repoRoot "scripts\new-sandbox.ps1"
+    if (-not (Test-Path $PROFILE)) {
+        New-Item -ItemType File -Force -Path $PROFILE | Out-Null
+    }
+    if (-not (Select-String -Path $PROFILE -SimpleMatch $marker -Quiet)) {
+        Invoke-Step "Registering sbx-new function in PowerShell profile" {
+            Add-Content -Encoding utf8 $PROFILE @"
+
+# $marker — configurable sandbox launcher (see scripts/new-sandbox.ps1)
+function sbx-new { & "$launcher" @args }
+"@
+        }
+    }
 }
 
 if (-not $SkipBuild) {
@@ -113,13 +155,10 @@ Invoke-Step "Validating kit and mixins" {
 }
 
 Write-Host ""
-Write-Host "Done. Launch a fully composed sandbox for a project with:" -ForegroundColor Green
-Write-Host "  sbx run --kit `"$repoRoot\kit`" \"
-Write-Host "    --kit `"$repoRoot\mixins\opencode-runtime`" --kit `"$repoRoot\mixins\zeldoc`" \"
-Write-Host "    --kit `"$repoRoot\mixins\git`" --kit `"$repoRoot\mixins\node`" \"
-Write-Host "    --kit `"$repoRoot\mixins\dotnet`" --kit `"$repoRoot\mixins\docker`" \"
-Write-Host "    --kit `"$repoRoot\mixins\apt`" opencode-node-dotnet <path-to-project>"
+Write-Host "Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:" -ForegroundColor Green
+Write-Host "  sbx-new <path-to-project>                 # full stack, kits from GitHub"
+Write-Host "  sbx-new -Profile node <path-to-project>   # node-only mixin set"
+Write-Host "  sbx-new -ListProfiles                     # all profiles"
 Write-Host ""
-Write-Host "Or use a .sbxenv.yaml (see examples/) — recommended."
 Write-Host "Tip: kit changes only apply to NEW sandboxes. Recreate with:"
-Write-Host "  sbx rm <sandbox-name> && sbx run --kit ... "
+Write-Host "  sbx rm <sandbox-name> && sbx-new <path-to-project>"

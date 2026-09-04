@@ -52,7 +52,9 @@ environment:
 │   └── apt/                                   # package mirror egress
 ├── scripts/
 │   ├── bootstrap.ps1                          # host setup (Windows)
-│   └── bootstrap.sh                           # host setup (Linux/macOS/Git Bash)
+│   ├── bootstrap.sh                           # host setup (Linux/macOS/Git Bash)
+│   ├── new-sandbox.ps1                        # configurable `sbx-new` launcher (Windows)
+│   └── new-sandbox.sh                         # configurable `sbx-new` launcher (bash)
 └── examples/
     └── opencode-node-dotnet.sbxenv.yaml       # project .sbxenv.yaml example (composition)
 ```
@@ -61,13 +63,17 @@ environment:
 
 - [Docker Desktop](https://docs.docker.com/desktop/) with the `sbx` CLI
   installed and signed in (`sbx login`), version 0.39.0+
+- This repository published at `github.com/nikcio/docker-sandboxing` (kits
+  are fetched from there by default; the repo must be **public** for
+  `git+https`, or use `git+ssh` / `-Source local` from a clone)
 - A [Zeldoc.ai](https://zeldoc.ai) API key
   ([setup guide](https://docs.zeldoc.ai/connect-opencode))
 
 ## Quick start
 
-Run the bootstrap script — it flips the host setting, builds/loads the
-template, registers your Zeldoc key, and validates the kit and every mixin:
+Run the bootstrap script — it flips the host settings, builds/loads the
+template, registers your Zeldoc key, registers the `sbx-new` shell function,
+and validates the kit and every mixin:
 
 PowerShell:
 
@@ -87,25 +93,59 @@ What it does:
 | Step | Command | Why |
 | ---- | ------- | --- |
 | Allow clipboard image paste | `sbx settings set clipboard.imagePaste true` | lets the sandboxed agent read images you paste (host-side setting) |
+| Allow the kit source | merges `github.com/nikcio/` into `kit.allowedSources` | kits/mixins are fetched from this GitHub repo (list is merged, never overwritten) |
 | Build + load template | `docker build` → `docker image save` → `sbx template load` | bakes .NET/Node/PNPM/Git into the image; no per-sandbox installs |
 | *(or push)* | `PUSH_REGISTRY=docker.io/myorg ./scripts/bootstrap.sh` | share the template; then update `sandbox.image` in `kit/spec.yaml` |
 | Register Zeldoc key | `sbx secret set zeldoc` (+ pre-creates the credential binding) | proxy substitutes the real key on `api.zeldoc.ai` requests; the sandbox only sees a placeholder |
+| Register `sbx-new` | appends a function to your PowerShell profile / `~/.bashrc` | configurable alias for creating sandboxes (skip: `-SkipAlias` / `SKIP_ALIAS=1`) |
 | Validate kits | `sbx kit validate kit/` + every `mixins/<area>/` | catches spec errors early |
 
-Then launch a sandbox for any project — the sandbox kit plus the mixins you
-want (this is the full stack from the example):
+Then launch a sandbox for any project (from a **new** shell so `sbx-new` is
+loaded):
+
+```bash
+sbx-new /path/to/project
+```
+
+## The `sbx-new` launcher
+
+`sbx-new` (registered by the bootstrap script; wraps `scripts/new-sandbox.*`)
+creates the sandbox with a configurable mixin stack and attaches. If a
+sandbox with the same name already exists it re-attaches instead (kits only
+apply at creation).
+
+```bash
+sbx-new <workspace>                      # full profile, kits from GitHub
+sbx-new --profile node <workspace>       # node-only mixin set
+sbx-new --mixins zeldoc,git,node <ws>    # explicit mixin list
+sbx-new --source local <workspace>       # use the local clone instead of GitHub
+sbx-new --detach <workspace>             # create without attaching
+sbx-new --list-profiles                  # show profiles
+```
+
+Profiles: `full` (default: all mixins), `node`, `dotnet`, `node-docker`,
+`none`. Persist your own defaults via environment variables:
+
+| Variable | Default | Meaning |
+| -------- | ------- | ------- |
+| `SBX_SANDBOX_PROFILE` | `full` | preset mixin set |
+| `SBX_SANDBOX_MIXINS` | from profile | comma-separated override |
+| `SBX_SANDBOX_SOURCE` | `git` | `git` (fetch from GitHub) or `local` (use the clone) |
+| `SBX_SANDBOX_REPO` | `nikcio/docker-sandboxing` | GitHub repo to fetch kits from |
+| `SBX_SANDBOX_REF` | unset | pin kits to a branch/tag/commit |
+| `SBX_SANDBOX_REPO_DIR` | repo root | local repo dir for `--source local` |
+
+Equivalent flags (`-Profile`, `-Mixins`, `-Source`, `-Repo`, `-Ref`,
+`-RepoDir`, `-Name`, `-Detach`) win over the environment.
+
+Under the hood it composes:
 
 ```bash
 sbx run \
-  --kit ./kit \
-  --kit ./mixins/opencode-runtime \
-  --kit ./mixins/zeldoc \
-  --kit ./mixins/git \
-  --kit ./mixins/node \
-  --kit ./mixins/dotnet \
-  --kit ./mixins/docker \
-  --kit ./mixins/apt \
-  opencode-node-dotnet /path/to/project
+  --kit "git+https://github.com/nikcio/docker-sandboxing.git#dir=kit" \
+  --kit "git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime" \
+  --kit "git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc" \
+  ... opencode-node-dotnet <workspace>
 ```
 
 Each mixin is optional; drop the lines for areas a project doesn't need.
@@ -168,7 +208,7 @@ sandbox — kit changes never apply to running sandboxes:
 
 ```bash
 sbx rm <sandbox-name>
-sbx run --kit ./kit --kit ./mixins/... opencode-node-dotnet <project>
+sbx-new <project>
 ```
 
 ## Using it from a project (`.sbxenv.yaml`)
@@ -182,8 +222,10 @@ sbx env run
 
 ## Iterating
 
-- Mixin/sandbox kit spec changes → `sbx kit validate <dir>`, then recreate the
-  sandbox. While iterating on mixin-limited fields (`environment.variables`,
+- Mixin/sandbox kit spec changes → `sbx kit validate <dir>`, push, then
+  recreate the sandbox (`sbx rm <name>` + `sbx-new`). While iterating from a
+  clone, use `sbx-new --source local` to pick up uncommitted changes without
+  pushing. While iterating on mixin-limited fields (`environment.variables`,
   `setup.install`, `permissions.network.allow`), `sbx kit add <sandbox> <dir>`
   restarts an existing sandbox with the new kit set.
 - Template changes → re-run the bootstrap script (build + save + load), then
@@ -192,11 +234,13 @@ sbx env run
 
 ## Publishing
 
-- **Kits**: pack/push each directory (`sbx kit pack kit/ -o …`,
-  `sbx kit push mixins/zeldoc/ <oci-ref>`, …) or serve them from a Git
-  repository (`sbx run --kit "git+https://host/repo.git#dir=kit" …`, one
-  `#dir=` per mixin). If you load kits from a remote source, allow it first:
-  `sbx settings set kit.allowedSources '["docker.io/","github.com/<org>/"]'`.
+- **Push this repo** to `github.com/nikcio/docker-sandboxing` — that's where
+  `sbx-new` fetches kits from by default. For reproducible launches, pin a
+  tag: `SBX_SANDBOX_REF=v1.0.0 sbx-new <workspace>` (or pass `--ref`).
+- **OCI alternative**: pack/push each directory (`sbx kit pack kit/ -o …`,
+  `sbx kit push mixins/zeldoc/ <oci-ref>`, …). Any non-Docker-Hub kit source
+  must be allow-listed:
+  `sbx settings set kit.allowedSources '["docker.io/","github.com/nikcio/"]'`.
 - **Template**: build with `-PushRegistry` / `PUSH_REGISTRY` and update
   `sandbox.image` in `kit/spec.yaml` to the full registry reference (sbx does
   not resolve the Docker Hub domain automatically). Consumers of other
