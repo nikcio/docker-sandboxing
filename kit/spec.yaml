@@ -36,7 +36,7 @@ description: >
   network areas, workflow rules).
 version: 0.3.0
 
-extends: opencode
+#extends: opencode
 
 sandbox:
   # Local template built from ../template/Dockerfile (docker build +
@@ -45,6 +45,3 @@ sandbox:
   # the Docker Hub domain automatically.
   image: opencode-node-dotnet:v1
   entrypoint: [opencode]
-
-agentInstructions:
-  filename: AGENTS.md
