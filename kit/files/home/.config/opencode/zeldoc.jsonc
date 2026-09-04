@@ -1,0 +1,50 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Zeldoc.ai provider setup, per https://docs.zeldoc.ai/connect-opencode
+  //
+  // This file is injected by the opencode-node-dotnet kit and loaded through
+  // the OPENCODE_CONFIG environment variable, so it merges with (instead of
+  // replacing) the sandbox-managed ~/.config/opencode/opencode.json.
+  //
+  // ZELDOC_API_KEY holds a proxy-managed placeholder inside the sandbox; the
+  // host proxy swaps in the real key on requests to api.zeldoc.ai.
+  "model": "zeldoc/zdev",
+  // Keep conversations local and avoid accidentally using another provider.
+  "share": "disabled",
+  "disabled_providers": ["opencode"],
+  // websearch sends queries to a third-party service (Exa); keep it off.
+  "permission": {
+    "websearch": "deny"
+  },
+  "provider": {
+    "zeldoc": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Zeldoc.ai",
+      "options": {
+        "baseURL": "https://api.zeldoc.ai/v1",
+        "apiKey": "{env:ZELDOC_API_KEY}"
+      },
+      "models": {
+        "zdev": {
+          "name": "ZDev",
+          "attachment": true,
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": {
+            "context": 1000000,
+            "output": 131072
+          },
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "variants": {
+            "high": { "reasoningEffort": "high" },
+            "max": { "reasoningEffort": "max" }
+          }
+        }
+      }
+    }
+  }
+}

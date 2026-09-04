@@ -1,0 +1,35 @@
+# Example Docker Sandboxes environment file for the opencode-node-dotnet kit.
+#
+# Copy this NEXT TO your project directory (keep it OUTSIDE every mounted
+# workspace) and adjust the paths, then run:  sbx env run
+#
+#   my-project-env/
+#   ├── .sbxenv.yaml          <- this file, renamed
+#   └── my-project/           <- your code (becomes the workspace)
+#
+# See https://docs.docker.com/ai/sandboxes/configuration/environment-files/
+
+schemaVersion: "1"
+name: my-project
+# The agent defined by this repo's sandbox kit (kit/spec.yaml `name:`).
+agent: opencode-node-dotnet
+# Resolve the kit (relative paths resolve from the directory you run
+# `sbx env` in; use an OCI/Git reference when published,
+# e.g. docker.io/<org>/opencode-node-dotnet-kit:1.0).
+kits:
+  - ./kit
+workspace: ./my-project
+
+env:
+  NODE_ENV: development
+
+sandboxOptions:
+  # template: opencode-node-dotnet:v1   # only needed when agent is not the kit
+  cpus: 4
+  memory: 8g
+
+ports:
+  - sandbox: 5000 # ASP.NET / dotnet run
+    host: 5000
+  - sandbox: 3000 # node / vite dev server
+    host: 3000

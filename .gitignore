@@ -1,0 +1,5 @@
+dist/
+*.tar
+*.zip
+.worktrees/
+local.sbxenv.yaml
