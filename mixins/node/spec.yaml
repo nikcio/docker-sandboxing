@@ -1,0 +1,32 @@
+# Node mixin: Node.js/NVM/PNPM egress and agent notes.
+schemaVersion: "2"
+kind: mixin
+name: node
+displayName: Node.js / NVM / PNPM
+description: >
+  Network rules for the Node.js toolchain: nodejs.org distribution servers
+  for nvm installs and the npm registry for pnpm/npm/npx.
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # nvm install / nodejs.org distribution
+      - nodejs.org:443
+      - "*.nodejs.org:443"
+      # npm registry (pnpm/npm/npx installs and fetches)
+      - registry.npmjs.org:443
+      - "*.npmjs.org:443"
+      - npmjs.com:443
+      - "*.npmjs.com:443"
+
+agentInstructions:
+  content: |
+    ## Node.js / PNPM
+
+    - Node is managed by nvm (`nvm current`, `nvm install <version>`); PNPM is
+      installed globally into the active node version. A system-wide default
+      is also symlinked into `/usr/local/bin`.
+    - If `node` is not on PATH in a shell, run `nvm use` or source
+      `~/.nvm/nvm.sh` first.
+    - Prefer `pnpm` for installs and scripts; the npm registry is allow-listed.

@@ -105,13 +105,21 @@ elseif (-not (Select-String -Path $bindingsPath -Pattern "zeldoc" -Quiet)) {
     Write-Host "    or approve it interactively on the first 'sbx run'."
 }
 
-Invoke-Step "Validating kit" {
+Invoke-Step "Validating kit and mixins" {
+    Get-ChildItem -Directory (Join-Path $repoRoot "mixins") | ForEach-Object {
+        sbx kit validate $_.FullName
+    }
     sbx kit validate (Join-Path $repoRoot "kit")
 }
 
 Write-Host ""
-Write-Host "Done. Launch a sandbox for a project with:" -ForegroundColor Green
-Write-Host "  sbx run --kit `"$repoRoot\kit`" opencode-node-dotnet <path-to-project>"
+Write-Host "Done. Launch a fully composed sandbox for a project with:" -ForegroundColor Green
+Write-Host "  sbx run --kit `"$repoRoot\kit`" \"
+Write-Host "    --kit `"$repoRoot\mixins\opencode-runtime`" --kit `"$repoRoot\mixins\zeldoc`" \"
+Write-Host "    --kit `"$repoRoot\mixins\git`" --kit `"$repoRoot\mixins\node`" \"
+Write-Host "    --kit `"$repoRoot\mixins\dotnet`" --kit `"$repoRoot\mixins\docker`" \"
+Write-Host "    --kit `"$repoRoot\mixins\apt`" opencode-node-dotnet <path-to-project>"
 Write-Host ""
+Write-Host "Or use a .sbxenv.yaml (see examples/) — recommended."
 Write-Host "Tip: kit changes only apply to NEW sandboxes. Recreate with:"
 Write-Host "  sbx rm <sandbox-name> && sbx run --kit ... "

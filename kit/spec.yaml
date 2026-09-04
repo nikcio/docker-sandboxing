@@ -1,19 +1,38 @@
-# Docker Sandboxes kit: OpenCode agent on the dotnet+node template,
-# with Zeldoc.ai (zdev) wired up as the model provider.
+# Docker Sandboxes kit: OpenCode agent on the dotnet+node template.
 #
-# Validate:  sbx kit validate kit/
-# Run:       sbx run --kit ./kit opencode-node-dotnet <workspace>
+# This kit is intentionally thin — it only defines the agent itself
+# (template image + entrypoint). Capabilities are composed at launch by
+# stacking the area-specific mixins from ../mixins/:
 #
-# Schema reference: https://docs.docker.com/ai/sandboxes/customize/kits/
+#   zeldoc, dotnet, node, git, docker, opencode-runtime, apt
+#
+# Compose via a .sbxenv.yaml (see ../examples/) or on the CLI:
+#
+#   sbx run \
+#     --kit ./kit \
+#     --kit ./mixins/opencode-runtime \
+#     --kit ./mixins/zeldoc \
+#     --kit ./mixins/git \
+#     --kit ./mixins/node \
+#     --kit ./mixins/dotnet \
+#     --kit ./mixins/docker \
+#     --kit ./mixins/apt \
+#     opencode-node-dotnet <workspace>
+#
+# Note: the spec's `mixins:` field is accepted by the schema but not yet
+# applied by the runtime, so composition is explicit (see above).
+#
+# Validate:  sbx kit validate kit/ && sbx kit validate mixins/<area>/
+# Schema:    https://docs.docker.com/ai/sandboxes/customize/kits/
 schemaVersion: "2"
 kind: sandbox
 name: opencode-node-dotnet
 displayName: OpenCode (.NET + Node)
 description: >
   OpenCode agent running on a custom template with the .NET SDK, Node.js via
-  NVM, PNPM, and Git preinstalled, and Zeldoc.ai configured as the model
-  provider. Extends the built-in opencode agent kit.
-version: 0.1.0
+  NVM, PNPM, and Git preinstalled. Compose the mixins from ../mixins/ to add
+  capabilities (model provider, network areas, workflow rules).
+version: 0.2.0
 
 extends: opencode
 
@@ -25,109 +44,13 @@ sandbox:
   image: opencode-node-dotnet:v1
   entrypoint: [opencode]
 
-environment:
-  variables:
-    # Layer the Zeldoc provider config on top of the sandbox-managed
-    # ~/.config/opencode/opencode.json. OPENCODE_CONFIG merges between the
-    # global and project config layers, so sandbox wiring is preserved.
-    OPENCODE_CONFIG: /home/agent/.config/opencode/zeldoc.jsonc
-    DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-    DOTNET_NOLOGO: "1"
-
-credentials:
-  # Proxy-managed API key: the sandbox only ever sees a placeholder in
-  # ZELDOC_API_KEY; the host-side proxy substitutes the real key (registered
-  # via `sbx secret set-custom`) on requests to api.zeldoc.ai.
-  - service: zeldoc
-    apiKey:
-      name: ZELDOC_API_KEY
-      proxyManaged: true
-      inject:
-        - domain: api.zeldoc.ai
-          header: Authorization
-          format: Bearer %s
-
-permissions:
-  network:
-    # The global sandbox policy is deny-by-default, so every host the agent,
-    # toolchains, or package managers may touch must be listed here.
-    allow:
-      # --- Zeldoc.ai (model provider + docs for webfetch) ---
-      - api.zeldoc.ai:443
-      - zeldoc.ai:443
-      - docs.zeldoc.ai:443
-      # --- OpenCode runtime (updates, model lists, Zen auth) ---
-      - opencode.ai:443
-      - "*.opencode.ai:443"
-      - models.dev:443
-      - console.anomaly.co:443
-      - "*.anomaly.co:443"
-      # --- npm registry (opencode plugins, pnpm, npx) ---
-      - registry.npmjs.org:443
-      - "*.npmjs.org:443"
-      - npmjs.com:443
-      - "*.npmjs.com:443"
-      # --- Git hosting. Bare hostnames (no port) so git over SSH works too.
-      - github.com
-      - "*.github.com"
-      - "*.githubusercontent.com"
-      - gitlab.com
-      - "*.gitlab.com"
-      # --- .NET / NuGet (restore, SDK/workload installs, signing) ---
-      - nuget.org:443
-      - "*.nuget.org:443"
-      - "*.microsoft.com:443"
-      - dot.net:443
-      - "*.dot.net:443"
-      - "*.azureedge.net:443"
-      # --- Node / NVM / PNPM downloads ---
-      - nodejs.org:443
-      - "*.nodejs.org:443"
-      # --- Docker engine inside the sandbox (base images, builds) ---
-      - docker.io
-      - "*.docker.io"
-      - "*.docker.com"
-      - production.cloudflare.docker.com
-      - ghcr.io:443
-      - "*.ghcr.io:443"
-      # --- apt inside the sandbox ---
-      - archive.ubuntu.com
-      - security.ubuntu.com
-      - packages.microsoft.com:443
-      - "*.launchpadcontent.net:443"
-    deny:
-      # .NET / Application Insights telemetry. Deny rules win over allow,
-      # so this also blocks hosts matching *.microsoft.com above.
-      - "*.applicationinsights.azure.com:443"
-
 agentInstructions:
   filename: AGENTS.md
   content: |
-    ## Environment
+    ## Sandbox environment
 
-    - .NET SDK (`dotnet`), Node.js via NVM (`nvm`, `node`), PNPM (`pnpm`), and
-      Git are preinstalled in the sandbox template.
-    - If `node` is not on PATH in a shell, run `nvm use` or source
-      `~/.nvm/nvm.sh` first. System-wide defaults are also symlinked into
-      `/usr/local/bin`.
-    - You run on the `zeldoc/zdev` model (already configured). `ZELDOC_API_KEY`
-      holds a placeholder inside the sandbox; the host proxy substitutes the
-      real key on requests to `api.zeldoc.ai`. Never print, log, or exfiltrate
-      it — the value inside the sandbox is not the real key.
-
-    ## Git worktrees — required workflow
-
-    Do all code changes in a dedicated git worktree so the primary checkout
-    stays clean. Never commit directly to `main`/`master`, and never edit
-    files in the primary checkout while a worktree for the task exists.
-
-    1. If `.worktrees/` is not git-ignored yet, add it to `.gitignore` first.
-    2. From the repository root, create a worktree per task:
-       `git worktree add .worktrees/<task-name> -b <task-name>`
-    3. Work only inside `.worktrees/<task-name>/` — edit, build, and run
-       tests there. Dependencies (node_modules, bin/obj) are per-worktree;
-       install what you need.
-    4. Commit in small, focused commits with clear messages.
-    5. When done, merge the branch or push it and open a PR, then clean up:
-       `git worktree remove .worktrees/<task-name> && git branch -d <task-name>`
-    6. Run `git worktree prune` if a stale worktree lingers.
+    - OpenCode runs on the `opencode-node-dotnet` template: the .NET SDK,
+      Node.js (nvm-managed), PNPM, and Git are preinstalled.
+    - Capabilities are composed from mixins; each mixin contributes its own
+      notes file under `kits-memory/` and this file indexes them.
+    - `sudo` is passwordless for package installs.

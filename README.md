@@ -1,7 +1,8 @@
 # docker-sandboxing
 
 A [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) **template** and
-**kit** that give [OpenCode](https://opencode.ai) a full-stack dev environment:
+composable **kits** that give [OpenCode](https://opencode.ai) a full-stack dev
+environment:
 
 - **Template** (`template/Dockerfile` → `opencode-node-dotnet:v1`)
   - .NET SDK (LTS, `dotnet`)
@@ -9,13 +10,27 @@ A [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) **template** and
   - [PNPM](https://pnpm.io) (`pnpm`)
   - Git (+ git-lfs) and common CLI utilities
   - Extends the built-in `docker/sandbox-templates:opencode-docker` image
-- **Kit** (`kit/`, `kind: sandbox`, `extends: opencode`)
-  - Points at the template via `sandbox.image`
-  - Wires **Zeldoc.ai** (`zdev`) in as the model provider via a proxy-managed
-    API key — the key never enters the sandbox VM
-  - Declares the network allowlist the agent needs (the sandbox runs with a
-    deny-by-default network policy)
-  - Injects a base `AGENTS.md` that mandates the git-worktree workflow
+- **Sandbox kit** (`kit/`, `kind: sandbox`, `extends: opencode`) — thin agent
+  definition only: points at the template via `sandbox.image` and sets the
+  entrypoint. No rules of its own.
+- **Mixins** (`mixins/<area>/`, `kind: mixin`) — each defines the rules for
+  exactly one area and stacks via `--kit` or a `.sbxenv.yaml`:
+
+  | Mixin | Area | Provides |
+  | ----- | ---- | -------- |
+  | `zeldoc` | model provider | Zeldoc.ai credential (proxy-managed key), provider config (`OPENCODE_CONFIG`), Zeldoc hosts |
+  | `git` | git workflow | git hosting egress (HTTPS + SSH) + the mandatory worktree workflow in agent memory |
+  | `node` | Node toolchain | nodejs.org + npm registry egress, nvm/pnpm notes |
+  | `dotnet` | .NET toolchain | NuGet/Microsoft egress, telemetry opt-out, telemetry deny |
+  | `docker` | containers | registry egress for the Docker engine inside the sandbox |
+  | `opencode-runtime` | agent runtime | opencode.ai/models.dev/Zen egress, npm-hosted plugins |
+  | `apt` | OS packages | Ubuntu/Microsoft package mirrors for `sudo apt-get` |
+
+  Drop the mixins you don't need — e.g. a pure Node project skips `dotnet`,
+  `docker`, and `apt`.
+
+  Mixin memory notes (`agentInstructions`) are written to `kits-memory/<mixin>.md`
+  next to the main `AGENTS.md` (with an index) when the agent launches.
 
 ## Repo layout
 
@@ -24,14 +39,22 @@ A [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) **template** and
 ├── template/
 │   └── Dockerfile                             # sandbox template image
 ├── kit/
-│   ├── spec.yaml                              # kit spec (schemaVersion "2")
-│   └── files/home/.config/opencode/zeldoc.jsonc
-│                                              # Zeldoc provider config (OPENCODE_CONFIG)
+│   └── spec.yaml                              # thin sandbox kit (template + entrypoint only)
+├── mixins/
+│   ├── zeldoc/                                # provider credential + config + network
+│   │   ├── spec.yaml
+│   │   └── files/home/.config/opencode/zeldoc.jsonc
+│   ├── git/                                   # git egress + worktree workflow memory
+│   ├── node/                                  # node/npm egress
+│   ├── dotnet/                                # nuget/microsoft egress + telemetry deny
+│   ├── docker/                                # registry egress
+│   ├── opencode-runtime/                      # agent runtime egress
+│   └── apt/                                   # package mirror egress
 ├── scripts/
 │   ├── bootstrap.ps1                          # host setup (Windows)
 │   └── bootstrap.sh                           # host setup (Linux/macOS/Git Bash)
 └── examples/
-    └── opencode-node-dotnet.sbxenv.yaml       # project .sbxenv.yaml example
+    └── opencode-node-dotnet.sbxenv.yaml       # project .sbxenv.yaml example (composition)
 ```
 
 ## Prerequisites
@@ -44,7 +67,7 @@ A [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) **template** and
 ## Quick start
 
 Run the bootstrap script — it flips the host setting, builds/loads the
-template, registers your Zeldoc key, and validates the kit:
+template, registers your Zeldoc key, and validates the kit and every mixin:
 
 PowerShell:
 
@@ -67,13 +90,25 @@ What it does:
 | Build + load template | `docker build` → `docker image save` → `sbx template load` | bakes .NET/Node/PNPM/Git into the image; no per-sandbox installs |
 | *(or push)* | `PUSH_REGISTRY=docker.io/myorg ./scripts/bootstrap.sh` | share the template; then update `sandbox.image` in `kit/spec.yaml` |
 | Register Zeldoc key | `sbx secret set zeldoc` (+ pre-creates the credential binding) | proxy substitutes the real key on `api.zeldoc.ai` requests; the sandbox only sees a placeholder |
-| Validate kit | `sbx kit validate kit/` | catches spec errors early |
+| Validate kits | `sbx kit validate kit/` + every `mixins/<area>/` | catches spec errors early |
 
-Then launch a sandbox for any project:
+Then launch a sandbox for any project — the sandbox kit plus the mixins you
+want (this is the full stack from the example):
 
 ```bash
-sbx run --kit /path/to/docker-sandboxing/kit opencode-node-dotnet /path/to/project
+sbx run \
+  --kit ./kit \
+  --kit ./mixins/opencode-runtime \
+  --kit ./mixins/zeldoc \
+  --kit ./mixins/git \
+  --kit ./mixins/node \
+  --kit ./mixins/dotnet \
+  --kit ./mixins/docker \
+  --kit ./mixins/apt \
+  opencode-node-dotnet /path/to/project
 ```
+
+Each mixin is optional; drop the lines for areas a project doesn't need.
 
 ## How the Zeldoc setup works
 
@@ -81,13 +116,13 @@ Per the [Zeldoc connect guide](https://docs.zeldoc.ai/connect-opencode), the
 provider is declared in its own config file instead of the sandbox-managed
 `~/.config/opencode/opencode.json`:
 
-1. `kit/files/.../zeldoc.jsonc` defines the `zeldoc` provider
+1. `mixins/zeldoc/files/.../zeldoc.jsonc` defines the `zeldoc` provider
    (`api.zeldoc.ai/v1`, model `zdev`), sets `model: zeldoc/zdev`, disables
    sharing and the default `opencode` provider, and denies `websearch`.
-2. The kit sets `OPENCODE_CONFIG=/home/agent/.config/opencode/zeldoc.jsonc`.
+2. The mixin sets `OPENCODE_CONFIG=/home/agent/.config/opencode/zeldoc.jsonc`.
    OpenCode merges this between the global and project config layers, so
    sandbox-managed wiring (e.g. the MCP gateway) keeps working.
-3. The kit's `credentials` block declares the `zeldoc` service
+3. The mixin's `credentials` block declares the `zeldoc` service
    (`ZELDOC_API_KEY`, proxy-managed) and injects it as `Authorization: Bearer …`
    on `api.zeldoc.ai` requests. The value inside the sandbox is a placeholder;
    the real key lives in the host secret store (`sbx secret set zeldoc`).
@@ -100,32 +135,40 @@ If ZDev ever reports "encountered an error", the model's context limit likely
 changed — update `"limit".context` in `zeldoc.jsonc` per the
 [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode) (currently `1000000`).
 
+> Note: because the sandbox kit extends the built-in `opencode` agent, it
+> inherits the builtin provider credentials (anthropic, github, openai, …).
+> Third-party kits don't carry builtin provenance, so `sbx` notes at creation
+> that those credentials aren't injected until you approve bindings for them.
+> That's harmless here — Zeldoc is the configured provider — but if you want
+> another provider too, approve its binding (interactively on first run, or
+> in `credentials.yaml`) and store its key with `sbx secret set <service>`.
+
 ## Network allowlist
 
-The sandbox network policy is deny-by-default; the kit's
-`permissions.network.allow` is the only egress. Domains covered:
+The sandbox network policy is deny-by-default; the union of every composed
+mixin's `permissions.network.allow` is the only egress. Domains per mixin:
 
-| Purpose | Hosts |
-| ------- | ----- |
-| Zeldoc.ai | `api.zeldoc.ai`, `zeldoc.ai`, `docs.zeldoc.ai` |
-| OpenCode runtime | `opencode.ai`, `models.dev`, `console.anomaly.co`, `*.anomaly.co` |
-| npm / pnpm / npx | `registry.npmjs.org`, `*.npmjs.org`, `npmjs.com` |
-| Git hosting | `github.com`, `*.github.com`, `*.githubusercontent.com`, `gitlab.com` (bare hosts → git over SSH works) |
-| .NET / NuGet | `nuget.org`, `*.nuget.org`, `*.microsoft.com`, `dot.net`, `*.dot.net`, `*.azureedge.net` |
-| Node / NVM | `nodejs.org`, `*.nodejs.org` |
-| In-sandbox Docker | `docker.io`, `*.docker.io`, `*.docker.com`, `production.cloudflare.docker.com`, `ghcr.io` |
-| apt | `archive.ubuntu.com`, `security.ubuntu.com`, `packages.microsoft.com`, `*.launchpadcontent.net` |
+| Mixin | Hosts |
+| ----- | ----- |
+| `zeldoc` | `api.zeldoc.ai`, `zeldoc.ai`, `docs.zeldoc.ai` |
+| `opencode-runtime` | `opencode.ai`, `models.dev`, `console.anomaly.co`, `*.anomaly.co`, `registry.npmjs.org` (plugins) |
+| `node` | `nodejs.org`, `*.nodejs.org`, `registry.npmjs.org`, `*.npmjs.org`, `npmjs.com` |
+| `git` | `github.com`, `*.github.com`, `*.githubusercontent.com`, `gitlab.com` (bare hosts → git over SSH works) |
+| `dotnet` | `nuget.org`, `*.nuget.org`, `*.microsoft.com`, `dot.net`, `*.dot.net`, `*.azureedge.net` |
+| `docker` | `docker.io`, `*.docker.io`, `*.docker.com`, `production.cloudflare.docker.com`, `ghcr.io` |
+| `apt` | `archive.ubuntu.com`, `security.ubuntu.com`, `packages.microsoft.com`, `*.launchpadcontent.net` |
 
-Telemetry is explicitly denied (`*.applicationinsights.azure.com`); deny rules
-win over allow rules.
+`dotnet` also denies `*.applicationinsights.azure.com`; deny rules win over
+allow rules. A sandbox composed without a mixin simply has no egress for that
+area.
 
 **If a download fails inside the sandbox**, check `sbx policy log` for the
-blocked host, add it to `kit/spec.yaml`, and recreate the sandbox — kit
-changes never apply to running sandboxes:
+blocked host, add it to the owning mixin's `spec.yaml`, and recreate the
+sandbox — kit changes never apply to running sandboxes:
 
 ```bash
 sbx rm <sandbox-name>
-sbx run --kit ./kit opencode-node-dotnet <project>
+sbx run --kit ./kit --kit ./mixins/... opencode-node-dotnet <project>
 ```
 
 ## Using it from a project (`.sbxenv.yaml`)
@@ -139,8 +182,9 @@ sbx env run
 
 ## Iterating
 
-- Kit spec changes → `sbx kit validate kit/`, then recreate the sandbox.
-  While iterating on mixin-limited fields, `sbx kit add <sandbox> ./kit`
+- Mixin/sandbox kit spec changes → `sbx kit validate <dir>`, then recreate the
+  sandbox. While iterating on mixin-limited fields (`environment.variables`,
+  `setup.install`, `permissions.network.allow`), `sbx kit add <sandbox> <dir>`
   restarts an existing sandbox with the new kit set.
 - Template changes → re-run the bootstrap script (build + save + load), then
   recreate the sandbox.
@@ -148,10 +192,10 @@ sbx env run
 
 ## Publishing
 
-- **Kit**: `sbx kit pack kit/ -o opencode-node-dotnet.zip`, `sbx kit push kit/ <oci-ref>`,
-  or serve it from a Git repository
-  (`sbx run --kit "git+https://host/repo.git#dir=kit" …`). If you load kits
-  from a remote source, allow it first:
+- **Kits**: pack/push each directory (`sbx kit pack kit/ -o …`,
+  `sbx kit push mixins/zeldoc/ <oci-ref>`, …) or serve them from a Git
+  repository (`sbx run --kit "git+https://host/repo.git#dir=kit" …`, one
+  `#dir=` per mixin). If you load kits from a remote source, allow it first:
   `sbx settings set kit.allowedSources '["docker.io/","github.com/<org>/"]'`.
 - **Template**: build with `-PushRegistry` / `PUSH_REGISTRY` and update
   `sandbox.image` in `kit/spec.yaml` to the full registry reference (sbx does
@@ -164,5 +208,5 @@ sbx env run
   placeholder and the proxy rewrites the auth header.
 - Never commit secrets, `dist/`, `*.tar`, `*.zip`, or `local.sbxenv.yaml`
   (see `.gitignore`).
-- Kit install commands run with root privileges inside the sandbox — this kit
-  intentionally has none; all tooling is baked into the template image.
+- Kit install commands run with root privileges inside the sandbox — these
+  kits intentionally have none; all tooling is baked into the template image.

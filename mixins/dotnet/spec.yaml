@@ -1,0 +1,40 @@
+# .NET mixin: NuGet/Microsoft egress, telemetry opt-out, agent notes.
+schemaVersion: "2"
+kind: mixin
+name: dotnet
+displayName: .NET / NuGet
+description: >
+  Network rules and settings for .NET work: NuGet restore, SDK and workload
+  downloads, Microsoft package hosts, plus CLI telemetry opt-out.
+version: 0.1.0
+
+environment:
+  variables:
+    DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    DOTNET_NOLOGO: "1"
+
+permissions:
+  network:
+    allow:
+      # NuGet (restore, push, search)
+      - nuget.org:443
+      - "*.nuget.org:443"
+      # SDK/workload downloads, MS Build hosts, packages.microsoft.com
+      - "*.microsoft.com:443"
+      # dotnet-install script + feeds
+      - dot.net:443
+      - "*.dot.net:443"
+      # Legacy download CDNs
+      - "*.azureedge.net:443"
+    deny:
+      # .NET / Application Insights telemetry. Deny rules win over allow,
+      # so this also blocks hosts matching *.microsoft.com above.
+      - "*.applicationinsights.azure.com:443"
+
+agentInstructions:
+  content: |
+    ## .NET
+
+    - The `dotnet` SDK is preinstalled system-wide (`DOTNET_ROOT=/usr/share/dotnet`).
+    - NuGet and Microsoft hosts are allow-listed; restore and SDK installs work.
+    - Telemetry is disabled (`DOTNET_CLI_TELEMETRY_OPTOUT`, `DOTNET_NOLOGO`).

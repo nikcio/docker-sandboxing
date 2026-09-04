@@ -1,0 +1,29 @@
+# Docker mixin: container registry egress for the Docker engine that runs
+# inside the sandbox microVM (the template is an opencode-docker variant).
+schemaVersion: "2"
+kind: mixin
+name: docker
+displayName: Docker engine registries
+description: >
+  Network rules so the in-sandbox Docker engine can pull base images and
+  build containers (Docker Hub, GHCR, Cloudflare image CDN).
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      - docker.io
+      - "*.docker.io"
+      - "*.docker.com"
+      - production.cloudflare.docker.com
+      - ghcr.io:443
+      - "*.ghcr.io:443"
+
+agentInstructions:
+  content: |
+    ## Docker inside the sandbox
+
+    - A full Docker engine runs inside the sandbox microVM (`docker ps`,
+      `docker build`); containers you start are isolated from the host.
+    - Docker Hub and GHCR pulls are allow-listed. Other registries must be
+      added to this kit's network rules.

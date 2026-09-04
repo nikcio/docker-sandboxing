@@ -13,18 +13,26 @@ schemaVersion: "1"
 name: my-project
 # The agent defined by this repo's sandbox kit (kit/spec.yaml `name:`).
 agent: opencode-node-dotnet
-# Resolve the kit (relative paths resolve from the directory you run
-# `sbx env` in; use an OCI/Git reference when published,
-# e.g. docker.io/<org>/opencode-node-dotnet-kit:1.0).
+# Composition: the sandbox kit (template + entrypoint) plus the area-specific
+# mixins you want. Drop or add lines to scope the sandbox to your project —
+# each mixin only contributes its own network rules, settings, and notes.
+# Relative kit paths resolve from the directory you run `sbx env` in; use an
+# OCI/Git reference when published (e.g. docker.io/<org>/<kit>:1.0).
 kits:
-  - ./kit
+  - ./kit                     # agent definition (template image + entrypoint)
+  - ./mixins/opencode-runtime # agent runtime egress (updates, models, plugins)
+  - ./mixins/zeldoc           # Zeldoc.ai (zdev) provider + proxy-managed key
+  - ./mixins/git              # git hosting + worktree workflow rules
+  - ./mixins/node             # nodejs.org + npm registry
+  - ./mixins/dotnet           # nuget + microsoft hosts, telemetry opt-out
+  - ./mixins/docker           # in-sandbox docker registry pulls
+  - ./mixins/apt              # ubuntu/microsoft package mirrors
 workspace: ./my-project
 
 env:
   NODE_ENV: development
 
 sandboxOptions:
-  # template: opencode-node-dotnet:v1   # only needed when agent is not the kit
   cpus: 4
   memory: 8g
 

@@ -1,0 +1,59 @@
+# Zeldoc.ai mixin: wires the zdev model provider into OpenCode.
+#
+# - Declares the proxy-managed API key (the real key never enters the VM)
+# - Injects the provider config via OPENCODE_CONFIG (merged with the
+#   sandbox-managed ~/.config/opencode/opencode.json)
+# - Allows only the Zeldoc hosts
+#
+# Value provisioning (host-side):  sbx secret set zeldoc
+# Third-party v2 kits also need a credential binding approval
+# (%APPDATA%\sbx\credentials.yaml or ~/.config/sbx/credentials.yaml):
+#
+#   bindings:
+#     zeldoc:
+#       apiKey:
+#         domains: [api.zeldoc.ai]
+#
+schemaVersion: "2"
+kind: mixin
+name: zeldoc
+displayName: Zeldoc.ai provider
+description: >
+  Zeldoc.ai (zdev) model provider for OpenCode: proxy-managed API key,
+  provider config file, and network rules for the Zeldoc hosts.
+version: 0.1.0
+
+environment:
+  variables:
+    # Layer the Zeldoc provider config on top of the sandbox-managed
+    # ~/.config/opencode/opencode.json. OPENCODE_CONFIG merges between the
+    # global and project config layers, so sandbox wiring is preserved.
+    OPENCODE_CONFIG: /home/agent/.config/opencode/zeldoc.jsonc
+
+credentials:
+  - service: zeldoc
+    apiKey:
+      name: ZELDOC_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: api.zeldoc.ai
+          header: Authorization
+          format: Bearer %s
+
+permissions:
+  network:
+    allow:
+      # Model API (auth is injected by the proxy) + docs for webfetch.
+      - api.zeldoc.ai:443
+      - zeldoc.ai:443
+      - docs.zeldoc.ai:443
+
+agentInstructions:
+  content: |
+    ## Zeldoc.ai (model provider)
+
+    - You run on the `zeldoc/zdev` model, configured via `OPENCODE_CONFIG`
+      pointing at `~/.config/opencode/zeldoc.jsonc`.
+    - `ZELDOC_API_KEY` holds a placeholder inside the sandbox; the host proxy
+      substitutes the real key on requests to `api.zeldoc.ai`. Never print,
+      log, or exfiltrate it — the value inside the sandbox is not the real key.

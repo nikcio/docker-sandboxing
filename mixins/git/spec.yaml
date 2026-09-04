@@ -1,0 +1,38 @@
+# Git mixin: git hosting egress + the required worktree workflow.
+schemaVersion: "2"
+kind: mixin
+name: git
+displayName: Git hosting + worktree workflow
+description: >
+  Network rules for git hosting providers (HTTPS and SSH) and the base
+  agent memory that mandates the git-worktree workflow.
+version: 0.1.0
+
+permissions:
+  network:
+    # Bare hostnames (no port) so git over SSH (22) works too.
+    allow:
+      - github.com
+      - "*.github.com"
+      - "*.githubusercontent.com"
+      - gitlab.com
+      - "*.gitlab.com"
+
+agentInstructions:
+  content: |
+    ## Git worktrees — required workflow
+
+    Do all code changes in a dedicated git worktree so the primary checkout
+    stays clean. Never commit directly to `main`/`master`, and never edit
+    files in the primary checkout while a worktree for the task exists.
+
+    1. If `.worktrees/` is not git-ignored yet, add it to `.gitignore` first.
+    2. From the repository root, create a worktree per task:
+       `git worktree add .worktrees/<task-name> -b <task-name>`
+    3. Work only inside `.worktrees/<task-name>/` — edit, build, and run
+       tests there. Dependencies (node_modules, bin/obj) are per-worktree;
+       install what you need.
+    4. Commit in small, focused commits with clear messages.
+    5. When done, merge the branch or push it and open a PR, then clean up:
+       `git worktree remove .worktrees/<task-name> && git branch -d <task-name>`
+    6. Run `git worktree prune` if a stale worktree lingers.

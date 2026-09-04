@@ -80,13 +80,22 @@ elif ! grep -q "zeldoc" "${bindings}"; then
     echo "    or approve it interactively on the first 'sbx run'."
 fi
 
-step "Validating kit"
+step "Validating kit and mixins"
+for mixin in "${REPO_ROOT}"/mixins/*/; do
+    sbx kit validate "${mixin}"
+done
 sbx kit validate "${REPO_ROOT}/kit"
 
 cat <<EOF
 
-Done. Launch a sandbox for a project with:
-  sbx run --kit "${REPO_ROOT}/kit" opencode-node-dotnet <path-to-project>
+Done. Launch a fully composed sandbox for a project with:
+  sbx run --kit "${REPO_ROOT}/kit" \\
+    --kit "${REPO_ROOT}/mixins/opencode-runtime" --kit "${REPO_ROOT}/mixins/zeldoc" \\
+    --kit "${REPO_ROOT}/mixins/git" --kit "${REPO_ROOT}/mixins/node" \\
+    --kit "${REPO_ROOT}/mixins/dotnet" --kit "${REPO_ROOT}/mixins/docker" \\
+    --kit "${REPO_ROOT}/mixins/apt" opencode-node-dotnet <path-to-project>
+
+Or use a .sbxenv.yaml (see examples/) — recommended.
 
 Tip: kit changes only apply to NEW sandboxes. Recreate with:
   sbx rm <sandbox-name> && sbx run --kit ...

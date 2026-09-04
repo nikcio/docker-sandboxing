@@ -1,0 +1,20 @@
+# apt mixin: OS package mirrors for `sudo apt-get` inside the sandbox.
+schemaVersion: "2"
+kind: mixin
+name: apt
+displayName: OS packages (apt)
+description: >
+  Network rules for Ubuntu archives and the Microsoft package repo so the
+  agent can install OS packages inside the sandbox.
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # Ubuntu archives (http/https)
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      # Microsoft package repo (dotnet, mssql, powershell via apt)
+      - packages.microsoft.com:443
+      # PPAs
+      - "*.launchpadcontent.net:443"
