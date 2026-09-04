@@ -9,11 +9,15 @@ environment:
   - Node.js LTS via [NVM](https://github.com/nvm-sh/nvm) (`nvm`, `node`)
   - [PNPM](https://pnpm.io) (`pnpm`)
   - Git (+ git-lfs) and common CLI utilities
+  - `o` — PATH shim that (re)launches opencode from any shell
   - Extends the built-in `docker/sandbox-templates:opencode-docker` image
 - **Sandbox kit** (`kit/`, `kind: sandbox`, `extends: opencode`) — thin agent
-  definition: points at the template via `sandbox.image`, sets the entrypoint,
-  and drops a **permissive OpenCode config** (edit/bash/webfetch allowed —
-  the sandbox is the isolation boundary). No network rules of its own.
+  definition: points at the template via `sandbox.image`, sets the entrypoint
+  (a login shell that prints a startup banner, auto-starts opencode, and
+  drops into the shell when opencode quits — exiting that shell ends the
+  session), and drops a **permissive OpenCode config** (edit/bash/webfetch
+  allowed — the sandbox is the isolation boundary). No network rules of its
+  own.
 - **Mixins** (`mixins/<area>/`, `kind: mixin`) — each defines the rules for
   exactly one area and stacks via `--kit` or a `.sbxenv.yaml`:
 
@@ -109,6 +113,14 @@ loaded):
 ```bash
 sbx-new
 ```
+
+## The sandbox shell
+
+Attaching lands you in opencode directly — a startup banner explains the
+flow. Quitting opencode does **not** end the session: you drop into the
+sandbox's login shell (with the startup banner above it), where you can run
+git, builds, `dotnet`/`pnpm`, etc. Relaunch opencode anytime with `o`; exit
+the shell when you're done with the sandbox.
 
 ## The `sbx-new` launcher
 

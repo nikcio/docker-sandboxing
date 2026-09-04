@@ -32,9 +32,11 @@ description: >
   OpenCode agent running on a custom template with the .NET SDK, Node.js via
   NVM, PNPM, and Git preinstalled. Ships a permissive OpenCode config
   (edit/bash/webfetch allowed — the sandbox is the isolation boundary).
+  The entrypoint is a login shell: it prints a startup banner, auto-starts
+  opencode, and drops into the shell when opencode exits (relaunch with `o`).
   Compose the mixins from ../mixins/ to add capabilities (model provider,
   network areas, workflow rules).
-version: 0.3.0
+version: 0.4.0
 
 sandbox:
   # Local template built from ../template/Dockerfile (docker build +
@@ -42,7 +44,41 @@ sandbox:
   # e.g. docker.io/<org>/opencode-node-dotnet:v1 — sbx does not resolve
   # the Docker Hub domain automatically.
   image: opencode-node-dotnet:v1
-  entrypoint: [opencode]
+  # Attach target: a login shell, not opencode directly. It prints the
+  # startup banner, auto-launches opencode, and — when opencode exits —
+  # drops into an interactive login shell so the session stays usable
+  # (relaunch opencode from there with the template's `o` shim). Quitting
+  # that shell ends the session, like quitting opencode used to.
+  entrypoint:
+    - bash
+    - -c
+    - |
+      # Make the kit's AGENTS.md authoritative: the runtime writes a built-in
+      # baseline into the profile at creation and only ever appends kit
+      # content after it, so the entrypoint rewrites the file here — before
+      # opencode starts — from the kit's own copy, preserving the Kits index.
+      __agents="$(dirname "${WORKSPACE_DIR:-}")/AGENTS.md"
+      __mine="$HOME/.sandbox-agents.md"
+      if [ -n "${WORKSPACE_DIR:-}" ] && [ -f "$__agents" ] && [ -f "$__mine" ]; then
+        __kits="$(sed -n '/<!-- sbx:kits-section start -->/,/<!-- sbx:kits-section end -->/p' "$__agents")"
+        { cat "$__mine"; [ -n "$__kits" ] && printf '\n%s\n' "$__kits"; } > "$__agents"
+      fi
+      cat <<'BANNER'
+      ------------------------------------------------------------
+       Sandbox
+      ------------------------------------------------------------
+       opencode is starting automatically.
+       - Quit opencode to drop into this shell
+       - Relaunch opencode anytime with: o or opencode
+      ------------------------------------------------------------
+      BANNER
+      if command -v opencode >/dev/null 2>&1; then
+        opencode
+        echo "opencode exited - back in the sandbox shell (relaunch: o or opencode)"
+      else
+        echo "WARNING: opencode not found in image - dropping to shell" >&2
+      fi
+      exec bash -il
 
 setup:
   startup:
@@ -83,6 +119,11 @@ setup:
       user: "agent"
       description: Register the sandbox MCP gateway in ~/.config/opencode/opencode.json
 
-# This adds a default instruction set
+# Declares the sandbox-managed agent memory file (AGENTS.md next to the
+# workspace). The runtime generates it at creation: a built-in "Project
+# Guidance" baseline plus the Kits index. agentInstructions.content is only
+# ever appended after that baseline, so the entrypoint below rewrites the
+# file from kit/files/home/.sandbox-agents.md instead — keeping the
+# runtime-managed Kits index — before opencode starts.
 agentInstructions:
   filename: AGENTS.md

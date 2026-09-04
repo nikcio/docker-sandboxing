@@ -7,9 +7,10 @@ two Docker Sandboxes artifacts:
 
 - `template/Dockerfile` — the sandbox template image
   (`opencode-node-dotnet:v1`): OpenCode base image + .NET SDK, Node via NVM,
-  PNPM, Git. Rebuild and reload after changes (`scripts/bootstrap.ps1` /
-  `scripts/bootstrap.sh`, or `docker build` + `docker image save` +
-  `sbx template load`).
+  PNPM, Git, and the `o` PATH shim for relaunching opencode (a shim, not an
+  rc alias, so it works in every shell context). Rebuild and reload after
+  changes (`scripts/bootstrap.ps1` / `scripts/bootstrap.sh`, or
+  `docker build` + `docker image save` + `sbx template load`).
 - `kit/` — thin declarative sandbox kit (`schemaVersion: "2"`,
   `kind: sandbox`, `extends: opencode`): template image + entrypoint +
   a permissive OpenCode config (`kit/files/home/.config/opencode/opencode.jsonc`,
@@ -25,6 +26,9 @@ two Docker Sandboxes artifacts:
 
 Constraints to respect:
 
+- The kit entrypoint is a shell wrapper, not opencode directly: it prints a
+  startup banner, auto-runs `opencode`, then `exec`s an interactive login
+  shell — quitting the agent must leave a usable shell. Keep that shape.
 - Sandboxes run with a deny-by-default network policy. The union of the
   composed mixins' `permissions.network` is the agent's only egress. If a
   download fails inside a sandbox, check `sbx policy log`, add the host to
