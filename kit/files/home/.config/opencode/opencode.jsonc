@@ -9,6 +9,7 @@
   // mixin) merge above this file.
   //
   // The sandbox is the isolation boundary — don't nag the agent.
+  "autoupdate": false, // Auto update only runs after first session so it doesn't make sense for this use case.
   "permission": {
     "glob": "allow",
     "edit": "allow",
