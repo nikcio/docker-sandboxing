@@ -34,8 +34,9 @@ environment:
   Drop the mixins you don't need — e.g. a pure Node project skips `dotnet`,
   `docker`, and `apt`.
 
-  Mixin memory notes (`agentInstructions`) are written to `kits-memory/<mixin>.md`
-  next to the main `AGENTS.md` (with an index) when the agent launches.
+  Mixin memory notes are static files (`mixins/<area>/files/home/.sbx-agents.d/<area>.md`)
+  that the kit entrypoint appends directly to the sandbox `AGENTS.md` when the
+  agent launches.
 
 ## Repo layout
 

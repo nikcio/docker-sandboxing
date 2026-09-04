@@ -18,9 +18,6 @@ permissions:
       - gitlab.com
       - "*.gitlab.com"
 
-agentInstructions:
-  content: |
-    ## Git worktrees — required workflow
-
-    Do all code changes in a dedicated git worktree so the primary checkout stays clean. 
-    Never edit files in the primary checkout while a worktree for the task exists.
+# Agent memory: files/home/.sbx-agents.d/git.md — the base kit's entrypoint
+# appends it directly to the sandbox AGENTS.md (agentInstructions would only
+# add a Kits-index side file after the runtime baseline).

@@ -20,7 +20,6 @@ permissions:
       - npmjs.com:443
       - "*.npmjs.com:443"
 
-agentInstructions:
-  content: |
-    - Node is managed by nvm
-    - Prefer `pnpm`
+# Agent memory: files/home/.sbx-agents.d/node.md — the base kit's entrypoint
+# appends it directly to the sandbox AGENTS.md (agentInstructions would only
+# add a Kits-index side file after the runtime baseline).

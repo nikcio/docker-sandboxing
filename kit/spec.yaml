@@ -54,14 +54,25 @@ sandbox:
     - -c
     - |
       # Make the kit's AGENTS.md authoritative: the runtime writes a built-in
-      # baseline into the profile at creation and only ever appends kit
-      # content after it, so the entrypoint rewrites the file here — before
-      # opencode starts — from the kit's own copy, preserving the Kits index.
+      # baseline into the profile at creation and nothing in the kit grammar
+      # can replace it (agentInstructions.content is only ever appended), so
+      # the entrypoint rebuilds the file here — before opencode starts — from
+      # the kit's own copy plus every mixin note in ~/.sbx-agents.d/ (dropped
+      # by mixins/<area>/files/home/.sbx-agents.d/<area>.md), keeping the
+      # runtime's Kits index if one is ever generated again.
       __agents="$(dirname "${WORKSPACE_DIR:-}")/AGENTS.md"
       __mine="$HOME/.sandbox-agents.md"
       if [ -n "${WORKSPACE_DIR:-}" ] && [ -f "$__agents" ] && [ -f "$__mine" ]; then
         __kits="$(sed -n '/<!-- sbx:kits-section start -->/,/<!-- sbx:kits-section end -->/p' "$__agents")"
-        { cat "$__mine"; [ -n "$__kits" ] && printf '\n%s\n' "$__kits"; } > "$__agents"
+        {
+          cat "$__mine"
+          for __note in "$HOME"/.sbx-agents.d/*.md; do
+            [ -f "$__note" ] || continue
+            printf '\n'
+            cat "$__note"
+          done
+          if [ -n "$__kits" ]; then printf '\n%s\n' "$__kits"; fi
+        } > "$__agents"
       fi
       cat <<'BANNER'
       ------------------------------------------------------------
@@ -120,10 +131,11 @@ setup:
       description: Register the sandbox MCP gateway in ~/.config/opencode/opencode.json
 
 # Declares the sandbox-managed agent memory file (AGENTS.md next to the
-# workspace). The runtime generates it at creation: a built-in "Project
-# Guidance" baseline plus the Kits index. agentInstructions.content is only
-# ever appended after that baseline, so the entrypoint below rewrites the
-# file from kit/files/home/.sandbox-agents.md instead — keeping the
-# runtime-managed Kits index — before opencode starts.
+# workspace). The runtime generates it at creation with a built-in baseline
+# that nothing in the kit grammar can replace (agentInstructions.content is
+# only ever appended after it), so the entrypoint above rebuilds the file
+# instead — before opencode starts — from kit/files/home/.sandbox-agents.md
+# plus every mixin note dropped in ~/.sbx-agents.d/ (see
+# mixins/<area>/files/home/.sbx-agents.d/).
 agentInstructions:
   filename: AGENTS.md

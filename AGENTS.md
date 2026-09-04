@@ -29,6 +29,12 @@ Constraints to respect:
 - The kit entrypoint is a shell wrapper, not opencode directly: it prints a
   startup banner, auto-runs `opencode`, then `exec`s an interactive login
   shell — quitting the agent must leave a usable shell. Keep that shape.
+- The sandbox `AGENTS.md` (written next to the workspace) is rebuilt by the
+  kit entrypoint before opencode starts: base content from
+  `kit/files/home/.sandbox-agents.md` plus every mixin's
+  `mixins/<area>/files/home/.sbx-agents.d/<area>.md`, appended directly. Do
+  not use `agentInstructions` for mixin memory — it can only append after
+  the runtime's built-in baseline and lands in a Kits-index side file.
 - Sandboxes run with a deny-by-default network policy. The union of the
   composed mixins' `permissions.network` is the agent's only egress. If a
   download fails inside a sandbox, check `sbx policy log`, add the host to
