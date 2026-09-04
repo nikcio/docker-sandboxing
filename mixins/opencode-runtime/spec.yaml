@@ -1,13 +1,13 @@
 # OpenCode runtime mixin: egress the agent itself needs (updates, model
-# metadata, Zen auth, npm-hosted plugins).
+# metadata, npm-hosted plugins).
 schemaVersion: "2"
 kind: mixin
 name: opencode-runtime
 displayName: OpenCode runtime
 description: >
   Network rules for the OpenCode agent runtime: updates, model lists
-  (models.dev), Zen console auth, and npm-hosted plugins.
-version: 0.1.0
+  (models.dev), and npm-hosted plugins.
+version: 0.1.1
 
 permissions:
   network:
@@ -15,8 +15,6 @@ permissions:
       - opencode.ai:443
       - "*.opencode.ai:443"
       - models.dev:443
-      - console.anomaly.co:443
-      - "*.anomaly.co:443"
       # Plugins and npm-hosted tooling installed by the agent. The node
       # mixin allows the same registry for package managers; rules union.
       - registry.npmjs.org:443

@@ -30,9 +30,11 @@ name: opencode-node-dotnet
 displayName: OpenCode (.NET + Node)
 description: >
   OpenCode agent running on a custom template with the .NET SDK, Node.js via
-  NVM, PNPM, and Git preinstalled. Compose the mixins from ../mixins/ to add
-  capabilities (model provider, network areas, workflow rules).
-version: 0.2.0
+  NVM, PNPM, and Git preinstalled. Ships a permissive OpenCode config
+  (edit/bash/webfetch allowed — the sandbox is the isolation boundary).
+  Compose the mixins from ../mixins/ to add capabilities (model provider,
+  network areas, workflow rules).
+version: 0.3.0
 
 extends: opencode
 
