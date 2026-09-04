@@ -74,6 +74,15 @@ RUN NODE_BIN="$(ls -d "${NVM_DIR}"/versions/node/*/bin | sort -V | tail -n 1)" \
     done \
     && chown agent:agent /home/agent/.bashrc /home/agent/.profile
 
+# `o` — shortcut for opencode. A PATH shim (not an rc-file alias) so it
+# works in every shell context: login shells, `sbx exec`, scripts. The retry
+# rides out self-update: opencode replaces its npm-global
+# binary in place on update, and while that swap is in flight the
+# resolved path transiently vanishes (ENOENT -> "exec: opencode: not found").
+USER root
+RUN printf '#!/bin/sh\nfor i in 1 2 3 4 5; do\n  cmd="$(command -v opencode 2>/dev/null)" && [ -x "$cmd" ] && break\n  sleep 1\ndone\nexec opencode "$@"\n' > /usr/local/bin/o \
+    && chmod 755 /usr/local/bin/o
+
 # Git comfort for bind-mounted workspaces (host UID mapping triggers
 # "dubious ownership" otherwise) — written to the agent's global gitconfig.
 USER agent
