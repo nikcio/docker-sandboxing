@@ -22,11 +22,5 @@ permissions:
 
 agentInstructions:
   content: |
-    ## Node.js / PNPM
-
-    - Node is managed by nvm (`nvm current`, `nvm install <version>`); PNPM is
-      installed globally into the active node version. A system-wide default
-      is also symlinked into `/usr/local/bin`.
-    - If `node` is not on PATH in a shell, run `nvm use` or source
-      `~/.nvm/nvm.sh` first.
-    - Prefer `pnpm` for installs and scripts; the npm registry is allow-listed.
+    - Node is managed by nvm
+    - Prefer `pnpm`

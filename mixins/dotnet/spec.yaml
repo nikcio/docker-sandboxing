@@ -30,11 +30,3 @@ permissions:
       # .NET / Application Insights telemetry. Deny rules win over allow,
       # so this also blocks hosts matching *.microsoft.com above.
       - "*.applicationinsights.azure.com:443"
-
-agentInstructions:
-  content: |
-    ## .NET
-
-    - The `dotnet` SDK is preinstalled system-wide (`DOTNET_ROOT=/usr/share/dotnet`).
-    - NuGet and Microsoft hosts are allow-listed; restore and SDK installs work.
-    - Telemetry is disabled (`DOTNET_CLI_TELEMETRY_OPTOUT`, `DOTNET_NOLOGO`).

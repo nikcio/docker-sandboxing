@@ -46,11 +46,3 @@ sandbox:
 
 agentInstructions:
   filename: AGENTS.md
-  content: |
-    ## Sandbox environment
-
-    - OpenCode runs on the `opencode-node-dotnet` template: the .NET SDK,
-      Node.js (nvm-managed), PNPM, and Git are preinstalled.
-    - Capabilities are composed from mixins; each mixin contributes its own
-      notes file under `kits-memory/` and this file indexes them.
-    - `sudo` is passwordless for package installs.
