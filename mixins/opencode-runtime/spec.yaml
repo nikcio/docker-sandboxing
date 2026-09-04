@@ -21,12 +21,3 @@ permissions:
       # mixin allows the same registry for package managers; rules union.
       - registry.npmjs.org:443
       - "*.npmjs.org:443"
-
-agentInstructions:
-  content: |
-    ## OpenCode runtime
-
-    - Agent updates, model metadata (models.dev), and Zen auth are allow-listed.
-    - OpenCode plugins install from the npm registry; sharing is disabled and
-      the default `opencode` provider is turned off when the zeldoc mixin is
-      composed.
