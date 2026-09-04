@@ -35,8 +35,9 @@ description: >
   The entrypoint is a login shell: it prints a startup banner, auto-starts
   opencode, and drops into the shell when opencode exits (relaunch with `o`).
   Compose the mixins from ../mixins/ to add capabilities (model provider,
-  network areas, workflow rules).
-version: 0.4.0
+  network areas, workflow rules). Enforces a no-.env policy in the workspace:
+  refuses to start in direct mode when one exists, removes it in clone mode.
+version: 0.5.0
 
 sandbox:
   # Local template built from ../template/Dockerfile (docker build +
@@ -53,6 +54,32 @@ sandbox:
     - bash
     - -c
     - |
+      # No-.env guard, scan phase — the report happens under the banner
+      # below. The workspace must never contain a .env file. In clone mode
+      # the workspace is a sandbox-local copy, so offenders are removed. In
+      # direct mode the host tree is mounted in place — deleting here would
+      # delete on the host — so the session is refused instead. The guard
+      # only speaks up when it acts: a WARNING + 5s pause before opencode
+      # when files were deleted (clone mode), a fatal ERROR when the
+      # session is refused (direct mode).
+      __envs=""
+      __clean="workspace clean (no .env files)"
+      __guard_fatal=0
+      if [ -n "${WORKSPACE_DIR:-}" ]; then
+        __envs="$(find "$WORKSPACE_DIR" -type f -name .env -not -path '*/.git/*' 2>/dev/null)"
+      else
+        __clean="workspace not checked (WORKSPACE_DIR is not set)"
+      fi
+      if [ -d /run/sandbox/source ]; then
+        # Clone mode: the workspace is a sandbox-local copy, so offenders
+        # can be removed safely. The host tree (mounted read-only at
+        # /run/sandbox/source) is never touched.
+        if [ -n "$__envs" ]; then
+          printf '%s\n' "$__envs" | while IFS= read -r __f; do rm -f -- "$__f"; done
+        fi
+      elif [ -n "$__envs" ]; then
+        __guard_fatal=1
+      fi
       # Make the kit's AGENTS.md authoritative: the runtime writes a built-in
       # baseline into the profile at creation and nothing in the kit grammar
       # can replace it (agentInstructions.content is only ever appended), so
@@ -83,6 +110,31 @@ sandbox:
        - Relaunch opencode anytime with: o or opencode
       ------------------------------------------------------------
       BANNER
+      # No-.env guard report, under the banner: only speaks up when it
+      # acts — WARNING + 5s pause when .env files were deleted (clone
+      # mode), fatal ERROR + exit when the session is refused (direct).
+      if [ "$__guard_fatal" = "1" ]; then
+        echo "============================================================"
+        echo "ERROR [env-guard]: .env file(s) found in the workspace (direct mode):"
+        printf '%s\n' "$__envs" | sed 's/^/  - /'
+        echo "This sandbox refuses to start with .env files in the workspace."
+        echo "Delete them on the host (they are mounted into the sandbox), then recreate the sandbox."
+        echo "============================================================"
+        exit 1
+      fi
+      if [ -d /run/sandbox/source ]; then
+        if [ -n "$__envs" ]; then
+          echo "============================================================"
+          echo "WARNING [env-guard]: .env file(s) were removed from the"
+          echo "workspace (clone mode - sandbox-local copy):"
+          printf '%s\n' "$__envs" | sed 's/^/  - /'
+          echo "============================================================"
+          echo "[env-guard] opencode opens in 5 seconds..."
+          sleep 5
+        fi
+      else
+        echo "[env-guard] direct mode - $__clean"
+      fi
       if command -v opencode >/dev/null 2>&1; then
         opencode
         echo "opencode exited - back in the sandbox shell (relaunch: o or opencode)"
