@@ -11,8 +11,9 @@ environment:
   - Git (+ git-lfs) and common CLI utilities
   - Extends the built-in `docker/sandbox-templates:opencode-docker` image
 - **Sandbox kit** (`kit/`, `kind: sandbox`, `extends: opencode`) — thin agent
-  definition only: points at the template via `sandbox.image` and sets the
-  entrypoint. No rules of its own.
+  definition: points at the template via `sandbox.image`, sets the entrypoint,
+  and drops a **permissive OpenCode config** (edit/bash/webfetch allowed —
+  the sandbox is the isolation boundary). No network rules of its own.
 - **Mixins** (`mixins/<area>/`, `kind: mixin`) — each defines the rules for
   exactly one area and stacks via `--kit` or a `.sbxenv.yaml`:
 
@@ -23,7 +24,7 @@ environment:
   | `node` | Node toolchain | nodejs.org + npm registry egress, nvm/pnpm notes |
   | `dotnet` | .NET toolchain | NuGet/Microsoft egress, telemetry opt-out, telemetry deny |
   | `docker` | containers | registry egress for the Docker engine inside the sandbox |
-  | `opencode-runtime` | agent runtime | opencode.ai/models.dev/Zen egress, npm-hosted plugins |
+  | `opencode-runtime` | agent runtime | opencode.ai/models.dev egress, npm-hosted plugins |
   | `apt` | OS packages | Ubuntu/Microsoft package mirrors for `sudo apt-get` |
 
   Drop the mixins you don't need — e.g. a pure Node project skips `dotnet`,
@@ -39,7 +40,9 @@ environment:
 ├── template/
 │   └── Dockerfile                             # sandbox template image
 ├── kit/
-│   └── spec.yaml                              # thin sandbox kit (template + entrypoint only)
+│   ├── spec.yaml                              # thin sandbox kit (template + entrypoint)
+│   └── files/home/.config/opencode/opencode.jsonc
+│                                              # permissive OpenCode config (global layer)
 ├── mixins/
 │   ├── zeldoc/                                # provider credential + config + network
 │   │   ├── spec.yaml
@@ -104,15 +107,25 @@ Then launch a sandbox for any project (from a **new** shell so `sbx-new` is
 loaded):
 
 ```bash
-sbx-new /path/to/project
+sbx-new
 ```
 
 ## The `sbx-new` launcher
 
 `sbx-new` (registered by the bootstrap script; wraps `scripts/new-sandbox.*`)
-creates the sandbox with a configurable mixin stack and attaches. If a
-sandbox with the same name already exists it re-attaches instead (kits only
-apply at creation).
+is a **wizard**: run it with no arguments and it guides you through
+
+1. **Workspace** — project directory (created if it doesn't exist yet)
+2. **Mixin profile** — `full`, `node`, `dotnet`, `node-docker`, `none`, or
+   `custom` (pick individual mixins; each is shown with a description)
+3. **Kit source** — fetch from `github.com/nikcio/docker-sandboxing`
+   (recommended, optionally pinned to a branch/tag) or use the local clone
+4. **Sandbox name** — default `opencode-node-dotnet-<workspace>`; if the name
+   already exists you can attach to it, rename, or cancel
+5. **Launch mode** — create & attach, or create only
+6. **Summary** — the full resolved configuration before anything runs
+
+Flags are optional — they skip the wizard for scripted use:
 
 ```bash
 sbx-new <workspace>                      # full profile, kits from GitHub
@@ -120,6 +133,7 @@ sbx-new --profile node <workspace>       # node-only mixin set
 sbx-new --mixins zeldoc,git,node <ws>    # explicit mixin list
 sbx-new --source local <workspace>       # use the local clone instead of GitHub
 sbx-new --detach <workspace>             # create without attaching
+sbx-new --yes                            # no prompts, pure defaults/env
 sbx-new --list-profiles                  # show profiles
 ```
 
@@ -162,7 +176,12 @@ provider is declared in its own config file instead of the sandbox-managed
 2. The mixin sets `OPENCODE_CONFIG=/home/agent/.config/opencode/zeldoc.jsonc`.
    OpenCode merges this between the global and project config layers, so
    sandbox-managed wiring (e.g. the MCP gateway) keeps working.
-3. The mixin's `credentials` block declares the `zeldoc` service
+3. The base kit drops a permissive `opencode.jsonc` into the global config
+   layer (`~/.config/opencode`) — the sandbox-managed `opencode.json` (MCP
+   gateway) is a separate file and both are merged. Config layering, lowest
+   to highest: managed `opencode.json` → kit's permissive `opencode.jsonc`
+   → zeldoc's `OPENCODE_CONFIG` → project config.
+4. The mixin's `credentials` block declares the `zeldoc` service
    (`ZELDOC_API_KEY`, proxy-managed) and injects it as `Authorization: Bearer …`
    on `api.zeldoc.ai` requests. The value inside the sandbox is a placeholder;
    the real key lives in the host secret store (`sbx secret set zeldoc`).
@@ -191,7 +210,7 @@ mixin's `permissions.network.allow` is the only egress. Domains per mixin:
 | Mixin | Hosts |
 | ----- | ----- |
 | `zeldoc` | `api.zeldoc.ai`, `zeldoc.ai`, `docs.zeldoc.ai` |
-| `opencode-runtime` | `opencode.ai`, `models.dev`, `console.anomaly.co`, `*.anomaly.co`, `registry.npmjs.org` (plugins) |
+| `opencode-runtime` | `opencode.ai`, `models.dev`, `registry.npmjs.org` (plugins) |
 | `node` | `nodejs.org`, `*.nodejs.org`, `registry.npmjs.org`, `*.npmjs.org`, `npmjs.com` |
 | `git` | `github.com`, `*.github.com`, `*.githubusercontent.com`, `gitlab.com` (bare hosts → git over SSH works) |
 | `dotnet` | `nuget.org`, `*.nuget.org`, `*.microsoft.com`, `dot.net`, `*.dot.net`, `*.azureedge.net` |

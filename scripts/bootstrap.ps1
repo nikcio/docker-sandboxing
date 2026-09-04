@@ -156,7 +156,8 @@ Invoke-Step "Validating kit and mixins" {
 
 Write-Host ""
 Write-Host "Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:" -ForegroundColor Green
-Write-Host "  sbx-new <path-to-project>                 # full stack, kits from GitHub"
+Write-Host "  sbx-new                                   # guided wizard"
+Write-Host "  sbx-new <path-to-project>                 # scripted: full stack from GitHub"
 Write-Host "  sbx-new -Profile node <path-to-project>   # node-only mixin set"
 Write-Host "  sbx-new -ListProfiles                     # all profiles"
 Write-Host ""

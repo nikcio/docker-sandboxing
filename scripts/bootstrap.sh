@@ -128,7 +128,8 @@ sbx kit validate "${REPO_ROOT}/kit"
 cat <<EOF
 
 Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:
-  sbx-new <path-to-project>                 # full stack, kits from GitHub
+  sbx-new                                   # guided wizard
+  sbx-new <path-to-project>                 # scripted: full stack from GitHub
   sbx-new --profile node <path-to-project>  # node-only mixin set
   sbx-new --list-profiles                   # all profiles
 
