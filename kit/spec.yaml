@@ -36,8 +36,6 @@ description: >
   network areas, workflow rules).
 version: 0.3.0
 
-#extends: opencode
-
 sandbox:
   # Local template built from ../template/Dockerfile (docker build +
   # sbx template load). When pushing to a registry, use the full reference,
@@ -45,3 +43,46 @@ sandbox:
   # the Docker Hub domain automatically.
   image: opencode-node-dotnet:v1
   entrypoint: [opencode]
+
+setup:
+  startup:
+    - command: ["sh", "-c", "command -v apt-get > /dev/null 2>&1 && (apt-get update -qq -y > /dev/null 2>&1 || true) &"]
+      user: "root"
+      description: Update apt package cache in background
+    # Gateway-first MCP registration. sandboxd injects MCP_GATEWAY_URL +
+    # MCP_SENTINEL_TOKEN_NAME into the container env when a gateway has
+    # been reserved. The sentinel name is not a credential — the proxy
+    # substitutes the real token at request time keyed by this name.
+    # No-op when MCP isn't enabled.
+    #
+    # opencode reads MCP server config from ~/.config/opencode/opencode.json.
+    # opencode owns the file (no baseline keys to preserve), so the
+    # script writes it fresh via heredoc.
+    - command:
+        - sh
+        - -c
+        - |
+          set -e
+          [ -n "$MCP_GATEWAY_URL" ] || exit 0
+          mkdir -p "$HOME/.config/opencode"
+          cat > "$HOME/.config/opencode/opencode.json" <<EOF
+          {
+            "\$schema": "https://opencode.ai/config.json",
+            "mcp": {
+              "mcp-gateway": {
+                "type": "remote",
+                "url": "$MCP_GATEWAY_URL",
+                "enabled": true,
+                "headers": {
+                  "Authorization": "Bearer $MCP_SENTINEL_TOKEN_NAME"
+                }
+              }
+            }
+          }
+          EOF
+      user: "agent"
+      description: Register the sandbox MCP gateway in ~/.config/opencode/opencode.json
+
+# This adds a default instruction set
+agentInstructions:
+  filename: AGENTS.md

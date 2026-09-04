@@ -1,0 +1,186 @@
+schemaVersion: "2"
+kind: sandbox
+name: opencode
+sandbox:
+  image: "docker/sandbox-templates:opencode-docker"
+  entrypoint: [opencode]
+
+permissions:
+  network:
+    allow:
+      - openrouter.ai
+
+credentials:
+  - service: anthropic
+    apiKey:
+      name: ANTHROPIC_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: api.anthropic.com
+          header: x-api-key
+          format: "%s"
+        - domain: claude.ai
+          header: x-api-key
+          format: "%s"
+        - domain: console.anthropic.com
+          header: x-api-key
+          format: "%s"
+  - service: github
+    apiKey:
+      name: ""
+      inject:
+        # Copilot hosts and Bearer auth mirror the copilot kit's github
+        # credential. The proxy applies one auth format per service, so the
+        # whole list uses Bearer — the Copilot API rejects "token", GitHub's
+        # REST API accepts both, and git on github.com is re-encoded to
+        # Basic auth by the proxy regardless of the format here.
+        # https://github.blog/changelog/2026-02-13-network-configuration-changes-for-copilot-coding-agent/
+        - domain: api.business.githubcopilot.com # Copilot Business
+          header: Authorization
+          format: Bearer %s
+        - domain: api.enterprise.githubcopilot.com # Copilot Enterprise
+          header: Authorization
+          format: Bearer %s
+        - domain: api.github.com
+          header: Authorization
+          format: Bearer %s
+        - domain: api.githubcopilot.com
+          header: Authorization
+          format: Bearer %s
+        - domain: api.individual.githubcopilot.com # Copilot Pro and Pro+
+          header: Authorization
+          format: Bearer %s
+        - domain: copilot.github.com
+          header: Authorization
+          format: Bearer %s
+        - domain: github.com
+          header: Authorization
+          format: Bearer %s
+        - domain: raw.githubusercontent.com
+          header: Authorization
+          format: Bearer %s
+  - service: google
+    apiKey:
+      name: GOOGLE_GENERATIVE_AI_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: aiplatform.googleapis.com
+          header: x-goog-api-key
+          format: "%s"
+        - domain: generativelanguage.googleapis.com
+          header: x-goog-api-key
+          format: "%s"
+        - domain: oauth2.googleapis.com
+          header: x-goog-api-key
+          format: "%s"
+        - domain: vertexai.googleapis.com
+          header: x-goog-api-key
+          format: "%s"
+  - service: groq
+    apiKey:
+      name: GROQ_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: api.groq.com
+          header: Authorization
+          format: Bearer %s
+  - service: openai
+    apiKey:
+      name: OPENAI_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: api.openai.com
+          header: Authorization
+          format: Bearer %s
+        - domain: openai.com
+          header: Authorization
+          format: Bearer %s
+    # A ChatGPT-subscription token is only accepted at the Codex backend host;
+    # api.openai.com rejects it. OpenCode's built-in codex auth plugin keys off
+    # an "openai" entry of type "oauth" in auth.json: it then rewrites
+    # /v1/responses to chatgpt.com/backend-api/codex/responses and sends the
+    # entry's `access` value as the bearer, which is why the sentinel below is
+    # what reaches the proxy for substitution. The plugin only engages when that
+    # entry exists, and the credential-file hook only renders it when the host
+    # holds a token — so apikey mode still resolves OPENAI_API_KEY as before.
+    #
+    # `expires` carries the host token's real expiry, so OpenCode refreshes
+    # through the intercepted token endpoint (which re-masks the response with
+    # these same sentinels) instead of pinning a token it cannot renew.
+    oauth:
+      tokenEndpoint:
+        host: auth.openai.com
+        path: /oauth/token
+      resourceHosts:
+        - chatgpt.com
+      sentinels:
+        accessToken: oai-oat01-proxy-managed
+        refreshToken: oai-ort01-proxy-managed
+      credentialFile:
+        path: "~/.local/share/opencode/auth.json"
+        structure:
+          openai:
+            type: oauth
+            access: "{{.AccessToken}}"
+            refresh: "{{.RefreshToken}}"
+            expires: "{{.ExpiresAt}}"
+      skipIfEnv:
+        - OPENAI_API_KEY
+  - service: openrouter
+    apiKey:
+      name: OPENROUTER_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: openrouter.ai
+          header: Authorization
+          format: Bearer %s
+  - service: xai
+    apiKey:
+      name: XAI_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: api.x.ai
+          header: Authorization
+          format: Bearer %s
+
+setup:
+  startup:
+    - command: ["sh", "-c", "command -v apt-get > /dev/null 2>&1 && (apt-get update -qq -y > /dev/null 2>&1 || true) &"]
+      user: "root"
+      description: Update apt package cache in background
+    # Gateway-first MCP registration. sandboxd injects MCP_GATEWAY_URL +
+    # MCP_SENTINEL_TOKEN_NAME into the container env when a gateway has
+    # been reserved. The sentinel name is not a credential — the proxy
+    # substitutes the real token at request time keyed by this name.
+    # No-op when MCP isn't enabled.
+    #
+    # opencode reads MCP server config from ~/.config/opencode/opencode.json.
+    # opencode owns the file (no baseline keys to preserve), so the
+    # script writes it fresh via heredoc.
+    - command:
+        - sh
+        - -c
+        - |
+          set -e
+          [ -n "$MCP_GATEWAY_URL" ] || exit 0
+          mkdir -p "$HOME/.config/opencode"
+          cat > "$HOME/.config/opencode/opencode.json" <<EOF
+          {
+            "\$schema": "https://opencode.ai/config.json",
+            "mcp": {
+              "mcp-gateway": {
+                "type": "remote",
+                "url": "$MCP_GATEWAY_URL",
+                "enabled": true,
+                "headers": {
+                  "Authorization": "Bearer $MCP_SENTINEL_TOKEN_NAME"
+                }
+              }
+            }
+          }
+          EOF
+      user: "agent"
+      description: Register the sandbox MCP gateway in ~/.config/opencode/opencode.json
+
+agentInstructions:
+  filename: AGENTS.md
