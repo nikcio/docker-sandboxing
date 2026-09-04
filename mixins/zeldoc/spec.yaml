@@ -32,13 +32,15 @@ environment:
 
 credentials:
   - service: zeldoc
+    description: Zeldoc.ai API key for AI model access.
+    required: true
     apiKey:
       name: ZELDOC_API_KEY
       proxyManaged: true
       inject:
         - domain: api.zeldoc.ai
           header: Authorization
-          format: Bearer %s
+          format: Basic %s
 
 permissions:
   network:
