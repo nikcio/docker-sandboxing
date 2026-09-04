@@ -11,7 +11,7 @@
   "model": "zeldoc/zdev",
   // Keep conversations local and avoid accidentally using another provider.
   "share": "disabled",
-  "disabled_providers": ["opencode"],
+  "enabled_providers": ["zeldoc"],
   // websearch sends queries to a third-party service (Exa); keep it off.
   "permission": {
     "websearch": "deny"
