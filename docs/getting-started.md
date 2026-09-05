@@ -32,6 +32,24 @@ Use this repo's sandbox in three steps:
 The kits are fetched from `github.com/nikcio/docker-sandboxing` and the
 template image is pulled from Docker Hub — no builds needed on your machine.
 
+## Host settings
+
+Two one-time `sbx` settings on your host:
+
+- **Allow the kit source** (required — sbx only fetches kits from allowed
+  sources). The setting replaces the whole list, so merge with your current
+  entries — check them first with `sbx settings get kit.allowedSources`:
+
+  ```bash
+  sbx settings set kit.allowedSources '["docker.io/","github.com/nikcio/"]'
+  ```
+
+- **Optional:** let the sandboxed agent read images you paste:
+
+  ```bash
+  sbx settings set clipboard.imagePaste true
+  ```
+
 ## First run
 
 - The sandbox starts, prints a banner, and launches opencode automatically.

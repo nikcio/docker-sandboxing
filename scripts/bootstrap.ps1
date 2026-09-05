@@ -1,18 +1,14 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-    One-time host setup for the opencode-node-dotnet Docker Sandboxes kit.
+    Local development setup for the template, kit, and mixins.
 
 .DESCRIPTION
-    - Enables clipboard image paste for sandboxes (sbx settings).
-    - Allows the GitHub kit source (kit.allowedSources) so kits/mixins are
-      fetched from github.com/nikcio/docker-sandboxing.
     - Builds the template image and loads it into the sandbox runtime
       (or pushes it when -PushRegistry is given).
     - Registers the Zeldoc.ai API key (proxy-managed — the sandbox never
       sees it) and pre-creates the credential binding. Already-stored
       secrets are skipped; an env var always (re)registers.
-    - Registers the configurable `sbx-new` shell function.
     - Validates the kit and mixins.
 
 .PARAMETER TemplateTag
@@ -27,9 +23,6 @@
 .PARAMETER SkipBuild
     Skip the template build (e.g. template already loaded).
 
-.PARAMETER SkipAlias
-    Skip registering the sbx-new shell function.
-
 .EXAMPLE
     $env:ZELDOC_API_KEY = "zd-..."
     ./scripts/bootstrap.ps1
@@ -38,8 +31,7 @@
 param(
     [string]$TemplateTag = "opencode-node-dotnet:v1",
     [string]$PushRegistry = "",
-    [switch]$SkipBuild,
-    [switch]$SkipAlias
+    [switch]$SkipBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -58,44 +50,6 @@ function Test-SecretStored {
     $list = @()
     try { $list = @(sbx secret ls 2>$null) } catch { $list = @() }
     return [bool]($list | Select-String -Pattern "(^|\s)service\s+$Service(\s|$)" -Quiet)
-}
-
-Invoke-Step "sbx settings: allow clipboard image paste" {
-    sbx settings set clipboard.imagePaste true
-}
-
-# Kits are fetched from GitHub, so the source must be in the allowlist.
-# The setting replaces the whole list — merge, don't overwrite.
-$kitSource = "github.com/nikcio/"
-Invoke-Step "sbx settings: allow kit source $kitSource" {
-    $current = sbx settings get kit.allowedSources
-    $entries = @()
-    try { $entries = @($current | ConvertFrom-Json) } catch { $entries = @() }
-    if ($entries -notcontains $kitSource) {
-        if ($entries -notcontains "docker.io/") { $entries = @("docker.io/") + $entries }
-        $entries = @($entries | Where-Object { $_ }) + $kitSource
-        $json = '["' + ($entries -join '","') + '"]'
-        sbx settings set kit.allowedSources $json
-    }
-}
-
-# Register the configurable `sbx-new` launcher as a shell function.
-# Skip with -SkipAlias. Idempotent (marker comments).
-if (-not $SkipAlias) {
-    $marker = "sbx-new (docker-sandboxing)"
-    $launcher = Join-Path $repoRoot "scripts\new-sandbox.ps1"
-    if (-not (Test-Path $PROFILE)) {
-        New-Item -ItemType File -Force -Path $PROFILE | Out-Null
-    }
-    if (-not (Select-String -Path $PROFILE -SimpleMatch $marker -Quiet)) {
-        Invoke-Step "Registering sbx-new function in PowerShell profile" {
-            Add-Content -Encoding utf8 $PROFILE @"
-
-# $marker — configurable sandbox launcher (see scripts/new-sandbox.ps1)
-function sbx-new { & "$launcher" @args }
-"@
-        }
-    }
 }
 
 if (-not $SkipBuild) {
@@ -173,14 +127,12 @@ Invoke-Step "Validating kit and mixins" {
 }
 
 Write-Host ""
-Write-Host "Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:" -ForegroundColor Green
-Write-Host "  sbx-new                                   # guided wizard"
-Write-Host "  sbx-new <path-to-project>                 # scripted: full stack from GitHub"
-Write-Host "  sbx-new -Profile node <path-to-project>   # node-only mixin set"
-Write-Host "  sbx-new -ListProfiles                     # all profiles"
+Write-Host "Done. Develop the kits/mixins in a sandbox:" -ForegroundColor Green
+Write-Host "  sbx env run                    # from this repo root (uses .\.sbxenv.yaml, local kits)"
+Write-Host "  .\scripts\new-sandbox.ps1      # wizard launcher for any workspace"
 Write-Host ""
 Write-Host "Tip: kit changes only apply to NEW sandboxes. Recreate with:"
-Write-Host "  sbx rm <sandbox-name> && sbx-new <path-to-project>"
+Write-Host "  sbx rm <sandbox-name> && sbx env run"
 Write-Host ""
 Write-Host "GitHub PAT for a sandbox (lets the agent push and open PRs): store it with"
 Write-Host "sbx's own prompt, scoped to the sandbox (see docs/github-pat.md):"

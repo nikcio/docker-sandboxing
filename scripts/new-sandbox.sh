@@ -20,10 +20,10 @@
 # without kit flags (kits only apply at creation).
 #
 # Usage:
-#   sbx-new                          # guided wizard
-#   sbx-new [WORKSPACE] [--name NAME] [--profile PROFILE] [--mixins m1,m2]
-#           [--source git|local] [--repo OWNER/REPO] [--ref REF]
-#           [--repo-dir DIR] [--detach] [--yes] [--list-profiles]
+#   ./scripts/new-sandbox.sh                            # guided wizard
+#   ./scripts/new-sandbox.sh [WORKSPACE] [--name NAME] [--profile PROFILE]
+#           [--mixins m1,m2] [--source git|local] [--repo OWNER/REPO]
+#           [--ref REF] [--repo-dir DIR] [--detach] [--yes] [--list-profiles]
 
 set -euo pipefail
 

@@ -1,21 +1,17 @@
 #!/usr/bin/env bash
-# One-time host setup for the opencode-node-dotnet Docker Sandboxes kit.
+# Local development setup for the template, kit, and mixins.
 #
-#   - Enables clipboard image paste for sandboxes (sbx settings).
-#   - Allows the GitHub kit source (kit.allowedSources) so kits/mixins are
-#     fetched from github.com/nikcio/docker-sandboxing.
 #   - Builds the template image and loads it into the sandbox runtime
 #     (or pushes it when PUSH_REGISTRY is set).
 #   - Registers the Zeldoc.ai API key (proxy-managed — the sandbox never
 #     sees it) and pre-creates the credential binding. Already-stored
 #     secrets are skipped; an env var always (re)registers.
-#   - Registers the configurable `sbx-new` shell function.
 #   - Validates the kit and mixins.
 #
 # Usage:
 #   ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
 #   PUSH_REGISTRY=docker.io/myorg ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
-#   SKIP_BUILD=1 SKIP_ALIAS=1 ./scripts/bootstrap.sh   # selective runs
+#   SKIP_BUILD=1 ./scripts/bootstrap.sh                # skip the template build
 
 set -euo pipefail
 
@@ -31,44 +27,6 @@ step() { printf '\033[36m==> %s\033[0m\n' "$1"; }
 secret_stored() {
     sbx secret ls 2>/dev/null | grep -Eq "(^|[[:space:]])service[[:space:]]+${1}([[:space:]]|$)"
 }
-
-step "sbx settings: allow clipboard image paste"
-sbx settings set clipboard.imagePaste true
-
-# Kits are fetched from GitHub, so the source must be in the allowlist.
-# The setting replaces the whole list — merge, don't overwrite.
-KIT_SOURCE="github.com/nikcio/"
-step "sbx settings: allow kit source ${KIT_SOURCE}"
-current="$(sbx settings get kit.allowedSources 2>/dev/null || echo '[]')"
-if ! grep -qF "${KIT_SOURCE}" <<<"${current}"; then
-    json="["
-    first=1
-    for e in "docker.io/" $(grep -oE '"[^"]+"' <<<"${current}" | tr -d '"' | grep -v '^$' || true) "${KIT_SOURCE}"; do
-        [ -z "$e" ] && continue
-        if printf '%s' "$json" | grep -qF "\"$e\""; then continue; fi
-        [ $first -eq 1 ] || json+=","
-        json+="\"$e\""
-        first=0
-    done
-    json+="]"
-    sbx settings set kit.allowedSources "$json"
-fi
-
-# Register the configurable `sbx-new` launcher as a shell function.
-# Skip with SKIP_ALIAS=1. Idempotent (marker comments).
-if [ -z "${SKIP_ALIAS:-}" ]; then
-    marker="sbx-new (docker-sandboxing)"
-    launcher="${REPO_ROOT}/scripts/new-sandbox.sh"
-    rc_file="${HOME}/.bashrc"
-    if ! grep -qF "$marker" "$rc_file" 2>/dev/null; then
-        step "Registering sbx-new function in ${rc_file}"
-        cat >> "$rc_file" <<EOF
-
-# ${marker} — configurable sandbox launcher (see scripts/new-sandbox.sh)
-sbx-new() { bash "${launcher}" "\$@"; }
-EOF
-    fi
-fi
 
 if [ -z "${SKIP_BUILD}" ]; then
     step "Building template image ${TEMPLATE_TAG}"
@@ -142,14 +100,12 @@ sbx kit validate "${REPO_ROOT}/kit"
 
 cat <<EOF
 
-Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:
-  sbx-new                                   # guided wizard
-  sbx-new <path-to-project>                 # scripted: full stack from GitHub
-  sbx-new --profile node <path-to-project>  # node-only mixin set
-  sbx-new --list-profiles                   # all profiles
+Done. Develop the kits/mixins in a sandbox:
+  sbx env run                    # from this repo root (uses ./.sbxenv.yaml, local kits)
+  ./scripts/new-sandbox.sh       # wizard launcher for any workspace
 
 Tip: kit changes only apply to NEW sandboxes. Recreate with:
-  sbx rm <sandbox-name> && sbx-new <path-to-project>
+  sbx rm <sandbox-name> && sbx env run
 
 GitHub PAT for a sandbox (lets the agent push and open PRs): store it with
 sbx's own prompt, scoped to the sandbox (see docs/github-pat.md):
