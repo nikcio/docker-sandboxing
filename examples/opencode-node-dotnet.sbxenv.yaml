@@ -23,14 +23,14 @@ agent: opencode-node-dotnet
 # When iterating from a clone, swap any ref for a local dir (e.g. ./kit).
 # x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published&ref=v0.5.0           # agent definition (published image)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v0.5.0 # agent runtime
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v0.5.0           # Zeldoc.ai provider
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v0.5.0              # git + worktrees
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=v0.5.0             # node/npm
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet&ref=v0.5.0           # .NET/NuGet
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker&ref=v0.5.0           # in-sandbox docker
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/apt&ref=v0.5.0              # apt mirrors
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published&ref=v0.6.0           # agent definition (published image)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v0.6.0 # agent runtime
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v0.6.0           # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v0.6.0              # git + worktrees
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=v0.6.0             # node/npm
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet&ref=v0.6.0           # .NET/NuGet
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker&ref=v0.6.0           # in-sandbox docker
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/apt&ref=v0.6.0              # apt mirrors
 # x-release-please-end-version
 workspace: ./my-project
 
