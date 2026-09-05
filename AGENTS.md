@@ -1,7 +1,7 @@
 # Docker sandboxing
 
 Docker Sandboxes kits and template images for running OpenCode agents
-(.NET + Node, Python + uv) in sandboxed VMs.
+(.NET + Node, Python + uv, Rust + cargo) in sandboxed VMs.
 
 ## Documentation
 
@@ -48,7 +48,20 @@ these Docker Sandboxes artifacts:
 - `kit-python/` + `kit-published-python/` — Python + uv variants of
   `kit-node-dotnet/` and `kit-published-node-dotnet/` (`opencode-python`):
   same entrypoint/setup/files shape; only the memory base's environment
-  facts and the config comment differ. Keep all four kits in sync when
+  facts and the config comment differ. Keep all six kits in sync when
+  touching shared kit content.
+- `template-rust/Dockerfile` — the Rust variant of the template image
+  (`opencode-rust:v1`): OpenCode base image + rustup-managed Rust
+  (default `RUST_VERSION=1.98`, a partial version rustup resolves to the
+  newest matching release at build time; user-level under the agent home,
+  on PATH via image env) + clippy/rustfmt/rust-analyzer components, the C
+  build toolchain for linking crates (build-essential + pkg-config +
+  libssl-dev), Git, and the same `o` shim. In-sandbox `rustup update` /
+  component installs need the `rust` mixin's static.rust-lang.org egress.
+- `kit-rust/` + `kit-published-rust/` — Rust + cargo variants of
+  `kit-node-dotnet/` and `kit-published-node-dotnet/` (`opencode-rust`):
+  same entrypoint/setup/files shape; only the memory base's environment
+  facts and the config comment differ. Keep all six kits in sync when
   touching shared kit content.
 - `kit-published-node-dotnet/` — published variant of `kit-node-dotnet/`:
   same spec except `sandbox.image` points at the public image on Docker Hub
@@ -56,8 +69,8 @@ these Docker Sandboxes artifacts:
   `kit-node-dotnet/`; release-please bumps its `version:` + image tag (and
   the `&ref=` pins in `examples/*.sbxenv.yaml`) in the release PR.
 - `mixins/<area>/` — one mixin kit per area (`kind: mixin`): `zeldoc`,
-  `git`, `node`, `dotnet`, `python`, `docker`, `opencode-runtime`, `apt`,
-  `browser`
+  `git`, `node`, `dotnet`, `python`, `rust`, `docker`, `opencode-runtime`,
+  `apt`, `browser`
   (Chrome, software only), three playwright levels (`playwright`,
   `playwright-chromium`, `playwright-all`), and `sbx` (the Docker
   Sandboxes CLI for in-sandbox kit authoring). Each mixin
