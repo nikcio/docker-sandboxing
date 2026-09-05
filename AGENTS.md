@@ -32,7 +32,7 @@ these Docker Sandboxes artifacts:
   `docker build` + `docker image save` + `sbx template load`).
 - `template-python/Dockerfile` — the Python variant of the template image
   (`opencode-python:v1`): OpenCode base image + uv-managed CPython
-  (default `PYTHON_VERSION=3.13`, user-level under the agent home, symlinked
+  (default `PYTHON_VERSION=3.14`, user-level under the agent home, symlinked
   to `/usr/local/bin`) + uv (system-wide, unpinned like `gh`; updates come
   from image rebuilds), Git, and the same `o` shim. `UV_LINK_MODE=copy` is
   set because workspace bind mounts live on another filesystem than the uv
