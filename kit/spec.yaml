@@ -9,7 +9,8 @@
 # (template image + entrypoint). Capabilities are composed at launch by
 # stacking the area-specific mixins from ../mixins/:
 #
-#   zeldoc, dotnet, node, git, docker, opencode-runtime, apt
+#   zeldoc, dotnet, node, git, docker, opencode-runtime, apt, browser,
+#   playwright / playwright-chromium / playwright-all, sbx
 #
 # Compose via a .sbxenv.yaml (see ../examples/) or on the CLI:
 #
@@ -22,6 +23,8 @@
 #     --kit ./mixins/dotnet \
 #     --kit ./mixins/docker \
 #     --kit ./mixins/apt \
+#     --kit ./mixins/browser \
+#     --kit ./mixins/playwright \
 #     opencode-node-dotnet <workspace>
 #
 # Note: the spec's `mixins:` field is accepted by the schema but not yet

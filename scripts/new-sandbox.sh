@@ -9,7 +9,7 @@
 # Any argument/flag skips the wizard (scripted mode) — unset values fall
 # back to environment variables, then defaults:
 #
-#   SBX_SANDBOX_PROFILE   full (default) | node | dotnet | node-docker | none
+#   SBX_SANDBOX_PROFILE   full (default) | node | dotnet | node-docker | browser | none
 #   SBX_SANDBOX_MIXINS    comma-separated mixin override, e.g. zeldoc,git,node
 #   SBX_SANDBOX_SOURCE    git (default; fetch from GitHub) | local (clone)
 #   SBX_SANDBOX_REPO      GitHub repo (default: nikcio/docker-sandboxing)
@@ -39,12 +39,18 @@ ALL_MIXINS=(
     "dotnet|.NET/NuGet + Microsoft hosts, telemetry off"
     "docker|container registries for the in-sandbox Docker engine"
     "apt|Ubuntu/Microsoft package mirrors for apt"
+    "browser|Google Chrome browser software (no network rules)"
+    "playwright|Playwright + Chromium headless shell (lightest)"
+    "playwright-chromium|Playwright + full Chromium"
+    "playwright-all|Playwright + Chromium, Firefox, WebKit"
+    "sbx|sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
 )
 
-PROFILES_full="opencode-runtime zeldoc git node dotnet docker apt"
+PROFILES_full="opencode-runtime zeldoc git node dotnet docker apt browser playwright"
 PROFILES_node="opencode-runtime zeldoc git node"
 PROFILES_dotnet="opencode-runtime zeldoc git dotnet"
 PROFILES_node_docker="opencode-runtime zeldoc git node docker"
+PROFILES_browser="opencode-runtime zeldoc git node apt browser playwright"
 PROFILES_none=""
 
 WORKSPACE=""
@@ -126,7 +132,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -n "$LIST_ONLY" ]; then
-    for p in full node dotnet node-docker none; do
+    for p in full node dotnet node-docker browser none; do
         var="PROFILES_${p//-/_}"
         printf "%-12s %s\n" "$p" "$(eval "echo \${${var}}" | tr ' ' ',')"
     done
@@ -167,7 +173,7 @@ if [ "$WIZARD" = "1" ]; then
             default_choice="$PROFILE"
         fi
         opts=()
-        for p in full node dotnet node-docker none; do
+        for p in full node dotnet node-docker browser none; do
             var="PROFILES_${p//-/_}"
             opts+=("${p}|$(eval "echo \${${var}}" | tr ' ' ',')")
         done
@@ -261,7 +267,7 @@ else
     [ -n "$PROFILE" ] || PROFILE="full"
     var="PROFILES_${PROFILE//-/_}"
     if ! eval "[ \"\${${var}+x}\" = x ]"; then
-        echo "Unknown profile '$PROFILE'. Known: full, node, dotnet, node-docker, none (or pass --mixins)." >&2
+        echo "Unknown profile '$PROFILE'. Known: full, node, dotnet, node-docker, browser, none (or pass --mixins)." >&2
         exit 1
     fi
     if [ -z "$WORKSPACE" ]; then WORKSPACE="."; fi
