@@ -265,14 +265,14 @@ else {
 $kits = @()
 if ($Source -eq "git") {
     $gitBase = "git+https://github.com/$Repo.git"
-    $kits += if ($Ref) { "$gitBase#ref=$Ref&dir=kit-published" } else { "$gitBase#dir=kit-published" }
+    $kits += if ($Ref) { "$gitBase#ref=$Ref&dir=kit-published-node-dotnet" } else { "$gitBase#dir=kit-published-node-dotnet" }
     foreach ($m in $Mixins) {
         $kits += if ($Ref) { "$gitBase#ref=$Ref&dir=mixins/$m" } else { "$gitBase#dir=mixins/$m" }
     }
 }
 else {
     $RepoDir = (Resolve-Path $RepoDir).Path
-    $kits += Join-Path $RepoDir "kit"
+    $kits += Join-Path $RepoDir "kit-node-dotnet"
     foreach ($m in $Mixins) { $kits += Join-Path $RepoDir "mixins/$m" }
 }
 

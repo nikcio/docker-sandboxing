@@ -17,7 +17,7 @@ agent: opencode-node-dotnet
 # latest release; release-please bumps them (do not edit by hand).
 # x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published&ref=v0.6.0           # agent definition (published image)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node-dotnet&ref=v0.6.0 # agent definition (published image)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v0.6.0 # agent runtime
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v0.6.0           # Zeldoc.ai provider
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v0.6.0              # git + worktrees

@@ -290,9 +290,9 @@ KITS=()
 if [ "$SOURCE" = "git" ]; then
     git_base="git+https://github.com/${REPO}.git"
     if [ -n "$REF" ]; then
-        KITS+=("${git_base}#ref=${REF}&dir=kit-published")
+        KITS+=("${git_base}#ref=${REF}&dir=kit-published-node-dotnet")
     else
-        KITS+=("${git_base}#dir=kit-published")
+        KITS+=("${git_base}#dir=kit-published-node-dotnet")
     fi
     if [ -n "$MIXINS" ]; then
         for m in $MIXINS; do
@@ -304,7 +304,7 @@ if [ "$SOURCE" = "git" ]; then
         done
     fi
 else
-    KITS+=("$REPO_DIR/kit")
+    KITS+=("$REPO_DIR/kit-node-dotnet")
     if [ -n "$MIXINS" ]; then
         for m in $MIXINS; do
             KITS+=("$REPO_DIR/mixins/$m")

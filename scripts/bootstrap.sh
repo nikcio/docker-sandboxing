@@ -12,10 +12,14 @@
 #   ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
 #   PUSH_REGISTRY=docker.io/myorg ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
 #   SKIP_BUILD=1 ./scripts/bootstrap.sh                # skip the template build
+#   TEMPLATE_DIR=template-python TEMPLATE_TAG=opencode-python:v1 \
+#     KIT_DIR=kit-python ./scripts/bootstrap.sh        # build the python template
 
 set -euo pipefail
 
+TEMPLATE_DIR="${TEMPLATE_DIR:-template-node-dotnet}"
 TEMPLATE_TAG="${TEMPLATE_TAG:-opencode-node-dotnet:v1}"
+KIT_DIR="${KIT_DIR:-kit-node-dotnet}"
 PUSH_REGISTRY="${PUSH_REGISTRY:-}"
 SKIP_BUILD="${SKIP_BUILD:-}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,15 +33,15 @@ secret_stored() {
 }
 
 if [ -z "${SKIP_BUILD}" ]; then
-    step "Building template image ${TEMPLATE_TAG}"
-    docker build -t "${TEMPLATE_TAG}" "${REPO_ROOT}/template"
+    step "Building template image ${TEMPLATE_TAG} (from ${TEMPLATE_DIR}/)"
+    docker build -t "${TEMPLATE_TAG}" "${REPO_ROOT}/${TEMPLATE_DIR}"
 
     if [ -n "${PUSH_REGISTRY}" ]; then
         remote="${PUSH_REGISTRY}/${TEMPLATE_TAG}"
         step "Pushing template to ${remote}"
         docker tag "${TEMPLATE_TAG}" "${remote}"
         docker push "${remote}"
-        echo "    Update sandbox.image in kit/spec.yaml to: ${remote}"
+        echo "    Update sandbox.image in ${KIT_DIR}/spec.yaml to: ${remote}"
     else
         mkdir -p "${REPO_ROOT}/dist"
         tar_path="${REPO_ROOT}/dist/$(echo "${TEMPLATE_TAG}" | tr ':/' '--').tar"
@@ -96,7 +100,9 @@ step "Validating kit and mixins"
 for mixin in "${REPO_ROOT}"/mixins/*/; do
     sbx kit validate "${mixin}"
 done
-sbx kit validate "${REPO_ROOT}/kit"
+for kit in "${REPO_ROOT}"/kit*/; do
+    sbx kit validate "${kit}"
+done
 
 cat <<EOF
 

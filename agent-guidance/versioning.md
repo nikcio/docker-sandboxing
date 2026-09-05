@@ -14,8 +14,8 @@ A single SemVer version for the whole repo, managed by
    `APP_CLIENT_ID` + `APP_PRIVATE_KEY`; the App needs Contents and Pull
    requests read/write) and opens a release PR that bumps:
    - `CHANGELOG.md`
-   - `version` + the `sandbox.image` tag in `kit-published/spec.yaml`
-   - the `&ref=vX.Y.Z` git pins in `examples/opencode-node-dotnet.sbxenv.yaml`
+   - `version` + the `sandbox.image` tag in `kit-published-*/spec.yaml`
+   - the `&ref=vX.Y.Z` git pins in `examples/*.sbxenv.yaml`
 3. Merging the release PR tags `vX.Y.Z` and publishes the GitHub release.
 4. The `publish-image.yml` workflow builds every image in `images.json` and
    pushes `docker.io/nikcio/<name>:vX.Y.Z` (plus `:latest`) as public
@@ -34,15 +34,17 @@ A single SemVer version for the whole repo, managed by
 
 - Never bump pinned versions by hand — the release PR owns every
   `x-release-please` block.
-- `kit/spec.yaml` (dev kit) and `.sbxenv.yaml` (dev env) are never bumped.
-- `kit-published/` must stay in sync with `kit/` — the only intended
-  difference is the published `sandbox.image` (see the header of
-  `kit-published/spec.yaml`).
+- `kit-<stack>/spec.yaml` (dev kits) and `.sbxenv.yaml` (dev env) are never
+  bumped.
+- `kit-published-*/` must stay in sync with their dev kits — the only
+  intended difference is the published `sandbox.image` (see the header of
+  `kit-published-node-dotnet/spec.yaml`).
 
 ## Adding an image
 
 1. Dockerfile in a new directory (e.g. `template-python/`).
 2. A published kit spec pinning `docker.io/nikcio/<name>:vX.Y.Z` inside an
-   `x-release-please` block (copy `kit-published/`).
+   `x-release-please` block (copy `kit-published-node-dotnet/` or
+   `kit-published-python/`), plus a matching dev kit.
 3. An entry in `images.json` and the spec in
    `.release-please-config.json` → `extra-files`.
