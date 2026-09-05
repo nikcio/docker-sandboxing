@@ -11,7 +11,7 @@
     Any argument/flag skips the wizard (scripted mode) — unset values fall
     back to environment variables, then defaults:
 
-        SBX_SANDBOX_PROFILE   full (default) | node | dotnet | node-docker | none
+        SBX_SANDBOX_PROFILE   full (default) | node | dotnet | node-docker | browser | none
         SBX_SANDBOX_MIXINS    comma-separated mixin override, e.g. zeldoc,git,node
         SBX_SANDBOX_SOURCE    git (default; fetch from GitHub) | local (clone)
         SBX_SANDBOX_REPO      GitHub repo (default: nikcio/docker-sandboxing)
@@ -65,7 +65,7 @@ $profiles = [ordered]@{
     node          = @("opencode-runtime", "zeldoc", "git", "node")
     dotnet        = @("opencode-runtime", "zeldoc", "git", "dotnet")
     "node-docker" = @("opencode-runtime", "zeldoc", "git", "node", "docker")
-    browser       = @("opencode-runtime", "zeldoc", "git", "node", "browser", "playwright")
+    browser       = @("opencode-runtime", "zeldoc", "git", "node", "apt", "browser", "playwright")
     none          = @()
 }
 
