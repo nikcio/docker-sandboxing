@@ -1,0 +1,41 @@
+# Rust mixin: crates.io/cargo egress, rustup dist egress, and agent notes.
+schemaVersion: "2"
+kind: mixin
+name: rust
+displayName: Rust / cargo
+description: >
+  Network rules for the Rust toolchain: the crates.io index/API and its
+  package CDN for cargo downloads, the rustup dist server for toolchain and
+  component installs plus `rustup update`, the sh.rustup.rs installer
+  (reinstalling rustup in-sandbox gets a newer release than the one baked
+  into the image), and the Rust docs sites so the agent can look up language
+  and crate docs (doc.rust-lang.org, docs.rs).
+  Git dependencies and rustup's script host redirect reuse the git mixin's
+  GitHub egress.
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # crates.io (index/API queries, `cargo search`/`cargo info`) — the
+      # wildcard also covers index.crates.io (the sparse index cargo uses)
+      - crates.io:443
+      - "*.crates.io:443"
+      # Package files served from the crates.io CDN
+      - static.crates.io:443
+      # rustup: toolchain + component downloads, `rustup update` and
+      # `rustup toolchain install`
+      - static.rust-lang.org:443
+      # rustup installer (`curl -fsSL https://sh.rustup.rs | sh`) — the
+      # short link redirects the installer script to
+      # raw.githubusercontent.com, which is covered by the git mixin;
+      # rustup-init binaries come from static.rust-lang.org above
+      - sh.rustup.rs:443
+      # Rust docs and release info for agent lookups (doc.rust-lang.org,
+      # www.rust-lang.org, editions and release notes) + crate docs (docs.rs)
+      - rust-lang.org:443
+      - "*.rust-lang.org:443"
+      - docs.rs:443
+
+# Agent memory note: files/home/.sbx-agents.d/rust.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).
