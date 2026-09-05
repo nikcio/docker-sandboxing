@@ -5,8 +5,11 @@ name: python
 displayName: Python / uv
 description: >
   Network rules for the Python toolchain: the PyPI index and package files
-  for uv/pip installs and fetches. Interpreter downloads via
-  `uv python install` reuse the git mixin's GitHub egress.
+  for uv/pip installs and fetches, plus astral.sh for the uv installer
+  (reinstalling uv in-sandbox gets a newer release than the one baked into
+  the image; `uv self update` is disabled for unmanaged installs).
+  Interpreter downloads via `uv python install` reuse the git mixin's
+  GitHub egress.
 version: 0.1.0
 
 permissions:
@@ -18,6 +21,9 @@ permissions:
       # Package files served from the PyPI CDN
       - files.pythonhosted.org:443
       - "*.pythonhosted.org:443"
+      # uv installer (`curl -LsSf https://astral.sh/uv/install.sh | sh`);
+      # the binaries it downloads come from GitHub releases (git mixin)
+      - astral.sh:443
 
 # Agent memory note: files/home/.sbx-agents.d/python.md (appended to the
 # sandbox AGENTS.md by the kit entrypoint).

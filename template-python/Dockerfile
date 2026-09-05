@@ -50,8 +50,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 # uv — system-wide (as root so every shell and user finds `uv`/`uvx`).
 # UV_UNMANAGED_INSTALL keeps the installer from editing shell rc files and
-# disables `uv self update`: uv ships from astral.sh/github.com, which is not
-# in any mixin's network allowlist. Updates come from image rebuilds.
+# disables `uv self update` (unmanaged installs can't self-update): the
+# baked binary updates with image rebuilds, or in-sandbox by rerunning the
+# astral.sh installer (astral.sh egress lives in the python mixin).
 RUN curl -LsSf https://astral.sh/uv/install.sh \
         | env UV_UNMANAGED_INSTALL="/usr/local/bin" sh \
     && uv --version
