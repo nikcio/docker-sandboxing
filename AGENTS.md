@@ -41,6 +41,12 @@ these Docker Sandboxes artifacts:
   `python` mixin allows), Git, and the same `o` shim. `UV_LINK_MODE=copy` is
   set because workspace bind mounts live on another filesystem than the uv
   cache.
+- `template-go/Dockerfile` — the Go variant of the template image
+  (`opencode-go:v1`): OpenCode base image + the official Go toolchain
+  (default `GO_VERSION=1.27.1`, system-wide under `/usr/local/go`; toolchain
+  updates come from image rebuilds or in-sandbox via GOTOOLCHAIN=auto, which
+  downloads toolchain modules through the proxy the `go` mixin allows;
+  `go install`-ed tools land in `~/go/bin`), Git, and the same `o` shim.
 - `kit-node-dotnet/` — thin declarative sandbox kit (`schemaVersion: "2"`,
   `kind: sandbox`, `extends: opencode`): template image + entrypoint +
   a permissive OpenCode config
@@ -53,14 +59,18 @@ these Docker Sandboxes artifacts:
   same entrypoint/setup/files shape; only the memory base's environment
   facts and the config comment differ. Keep all four kits in sync when
   touching shared kit content.
+- `kit-go/` + `kit-published-go/` — Go variants of `kit-node-dotnet/` and
+  `kit-published-node-dotnet/` (`opencode-go`): same entrypoint/setup/files
+  shape; only the memory base's environment facts and the config comment
+  differ. Keep all six kits in sync when touching shared kit content.
 - `kit-published-node-dotnet/` — published variant of `kit-node-dotnet/`:
   same spec except `sandbox.image` points at the public image on Docker Hub
   (`docker.io/nikcio/opencode-node-dotnet:vX.Y.Z`). Keep it in sync with
   `kit-node-dotnet/`; release-please bumps its `version:` + image tag (and
   the `&ref=` pins in `examples/*.sbxenv.yaml`) in the release PR.
 - `mixins/<area>/` — one mixin kit per area (`kind: mixin`): `zeldoc`,
-  `git`, `node`, `dotnet`, `python`, `docker`, `opencode-runtime`, `apt`,
-  `browser`
+  `git`, `node`, `dotnet`, `python`, `go`, `docker`, `opencode-runtime`,
+  `apt`, `browser`
   (Chrome, software only), three playwright levels (`playwright`,
   `playwright-chromium`, `playwright-all`), and `sbx` (the Docker
   Sandboxes CLI for in-sandbox kit authoring). Each mixin
