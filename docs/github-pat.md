@@ -56,10 +56,6 @@ you change `bindings:`, recreate the environment.
 The sandbox still works for **public** repositories and for **git over SSH**
 (your host SSH agent is forwarded; private keys stay on the host).
 
-If the sandbox starts and prints a `[git-auth]` note, GitHub auth is not
-working — run the store command above on your host; it takes effect
-immediately, no restart needed.
-
 ## Vault alternative
 
 ```bash

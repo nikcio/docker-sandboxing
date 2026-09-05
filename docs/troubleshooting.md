@@ -18,12 +18,12 @@ sbx rm <sandbox-name>
 sbx env run
 ```
 
-## The sandbox prints a `[git-auth]` note at startup
+## Git push / `gh` fails with auth errors
 
-GitHub auth is not working — `git push` / `gh` over HTTPS will fail. Store a
-fine-grained PAT on your host (see [github-pat.md](github-pat.md)); it takes
-effect immediately, no restart needed. Public repos and git over SSH keep
-working without a token.
+GitHub auth is not configured for this sandbox — store a fine-grained PAT
+on your host (see [github-pat.md](github-pat.md)); it takes effect
+immediately, no restart needed. Public repos and git over SSH keep working
+without a token.
 
 `gh auth status` showing "not logged in" inside the sandbox is expected —
 the sandbox only sees a placeholder token; the real one is injected by the

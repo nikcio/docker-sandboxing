@@ -109,24 +109,6 @@ sandbox:
         echo "[env-guard] direct mode - $__clean"
       fi
 
-      # Git auth probe: api.github.com/user answers 401 without a valid
-      # proxy-injected token, 200 with one — speak up only when git/gh over
-      # HTTPS would fail. Blocked/unreachable hosts stay silent.
-      if command -v curl >/dev/null 2>&1; then
-        __gh="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 https://api.github.com/user 2>/dev/null || true)"
-        if [ "$__gh" = "401" ]; then
-          echo "============================================================"
-          echo "NOTE [git-auth]: GitHub auth is not working (api.github.com"
-          echo "returned 401) - git push / gh over HTTPS will fail."
-          echo "On the HOST, provision a fine-grained PAT into sbx's secret"
-          echo "store, scoped to this sandbox:"
-          echo "  sbx secret set github --sandbox ${SANDBOX_NAME:-<sandbox-name>}"
-          echo "(sbx prompts; skip this if you only use public repos or git"
-          echo "over SSH.)"
-          echo "============================================================"
-        fi
-      fi
-
       if command -v opencode >/dev/null 2>&1; then
         opencode
         echo "opencode exited - back in the sandbox shell (relaunch: o or opencode)"
