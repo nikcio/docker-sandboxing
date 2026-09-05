@@ -15,7 +15,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
 | `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry |
 | `dotnet` | .NET/NuGet egress + telemetry opt-out |
-| `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer) |
+| `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer), python.org docs |
 | `docker` | Registry egress for the Docker engine inside the sandbox |
 | `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` |
 | `browser` | Google Chrome install (no network rules — sites stay gated by the other mixins) |
