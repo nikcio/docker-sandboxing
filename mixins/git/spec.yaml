@@ -1,5 +1,9 @@
-# Git mixin: git hosting egress, GitHub CLI authentication, and the
-# required worktree workflow.
+# Git mixin: git hosting egress, proxy-managed GitHub auth, and the
+# worktree workflow.
+#
+# Provision the token per sandbox (fine-grained PATs only — never the
+# broad-scope host `gh` token): `sbx-env`, or manually with
+# `sbx secret set github --sandbox <sandbox-name>`. See docs/github-pat.md.
 schemaVersion: "2"
 kind: mixin
 name: git
@@ -11,28 +15,11 @@ description: >
 version: 0.2.0
 
 credentials:
-  # GitHub token for `gh` and git over HTTPS. Proxy-managed: the sandbox
-  # only ever sees the GH_TOKEN=proxy-managed placeholder; the host-side
-  # proxy swaps in the real value on the hosts below. Set it PER
-  # ENVIRONMENT: the token lives in sbx's secret store (the OS keychain)
-  # scoped to the sandbox (`sbx env rm` removes it again — nothing is
-  # stored globally). Provision it through the `sbx-env` launcher (see
-  # examples/opencode-node-dotnet.sbxenv.yaml): it checks the keychain and,
-  # when the token is missing, runs `sbx secret set github --sandbox
-  # <sandbox-name>` so sbx prompts ("Enter secret:") before `sbx env run`.
-  # Do NOT put an interactive prompt in a `secrets.*.command:` entry: sbx
-  # resolves those non-interactively ("host shell command whose standard
-  # output becomes the secret" — stdout is captured as the token and stderr
-  # only surfaces on failures), so the prompt would be invisible. Store it
-  # manually / rotate with:
-  #
-  #   sbx secret set github --sandbox <sandbox-name>
-  #
-  # Fine-grained PATs only — never the broad-scope host `gh auth token`.
-  # Optional: without a stored token the mixin still works for public
-  # repositories and for git over SSH (SSH agent forwarding). The inject
-  # domains must stay inside permissions.network.allow below; github.com
-  # requests from git are re-encoded to Basic auth by the proxy.
+  # Proxy-managed: the sandbox only ever sees the GH_TOKEN=proxy-managed
+  # placeholder; the host-side proxy swaps in the real value on the hosts
+  # below. Optional — without a stored token, public repos and git over SSH
+  # still work (SSH agent forwarding). The inject domains must stay inside
+  # permissions.network.allow.
   - service: github
     description: >
       GitHub personal access token for the gh CLI and git over HTTPS.
@@ -43,19 +30,15 @@ credentials:
       name: GH_TOKEN
       proxyManaged: true
       inject:
-        # gh CLI REST/GraphQL API.
-        - domain: api.github.com
+        - domain: api.github.com          # gh REST/GraphQL API
           header: Authorization
           format: Bearer %s
-        # git over HTTPS (clone/fetch/push).
-        - domain: github.com
+        - domain: github.com              # git over HTTPS (proxy re-encodes to Basic)
           header: Authorization
           format: Bearer %s
-        # Release asset uploads (`gh release upload`).
-        - domain: uploads.github.com
+        - domain: uploads.github.com      # `gh release upload`
           header: Authorization
           format: Bearer %s
-        # Raw file fetches.
         - domain: raw.githubusercontent.com
           header: Authorization
           format: Bearer %s
@@ -70,6 +53,5 @@ permissions:
       - gitlab.com
       - "*.gitlab.com"
 
-# Agent memory: files/home/.sbx-agents.d/git.md — the base kit's entrypoint
-# appends it directly to the sandbox AGENTS.md (agentInstructions would only
-# add a Kits-index side file after the runtime baseline).
+# Agent memory note: files/home/.sbx-agents.d/git.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).

@@ -6,13 +6,12 @@
 #     fetched from github.com/nikcio/docker-sandboxing.
 #   - Builds the template image and loads it into the sandbox runtime
 #     (or pushes it when PUSH_REGISTRY is set).
-#   - Registers the Zeldoc.ai API key as a proxy-managed service secret
-#     (the real key never enters the sandbox) and pre-creates the
-#     credential binding. Secrets already stored with `sbx secret` are
-#     skipped (an env var always (re)registers).
-#   - Registers the configurable `sbx-new` and `sbx-env` shell functions.
-#     `sbx-env` pre-flights the environment's GitHub PAT through sbx's own
-#     prompt (stored only in sbx's secret store) before `sbx env run`.
+#   - Registers the Zeldoc.ai API key (proxy-managed — the sandbox never
+#     sees it) and pre-creates the credential binding. Already-stored
+#     secrets are skipped; an env var always (re)registers.
+#   - Registers the `sbx-new` and `sbx-env` shell functions (`sbx-env`
+#     provisions the sandbox's GitHub PAT via sbx's prompt before
+#     `sbx env run`).
 #   - Validates the kit and mixins.
 #
 # Usage:
@@ -119,9 +118,9 @@ else
 fi
 unset ZELDOC_API_KEY
 
-# GitHub tokens are provisioned PER ENVIRONMENT (a `secrets.github` entry in
-# the project's .sbxenv.yaml, stored at the sandbox scope) — never globally
-# here. See README, "GitHub CLI + a scoped personal access token".
+# GitHub tokens are provisioned PER SANDBOX (`sbx secret set github
+# --sandbox <name>`; the sbx-env launcher automates it) — never globally
+# here. See docs/github-pat.md.
 
 # Third-party v2 kits need a credential binding approval. The first
 # interactive `sbx run` prompts for it; pre-create it for unattended use.

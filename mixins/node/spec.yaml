@@ -20,6 +20,5 @@ permissions:
       - npmjs.com:443
       - "*.npmjs.com:443"
 
-# Agent memory: files/home/.sbx-agents.d/node.md — the base kit's entrypoint
-# appends it directly to the sandbox AGENTS.md (agentInstructions would only
-# add a Kits-index side file after the runtime baseline).
+# Agent memory note: files/home/.sbx-agents.d/node.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).

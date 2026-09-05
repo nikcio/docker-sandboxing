@@ -1,15 +1,12 @@
 # Playwright mixin (level 3 of 3): Playwright + Chromium, Firefox, WebKit.
 #
-# Everything Playwright can drive, preinstalled. Large download (~1 GB+)
-# and slower sandbox creation — pick ../playwright/ or
-# ../playwright-chromium/ if Chromium alone is enough.
+# Everything Playwright can drive, preinstalled. Large download (~1 GB+) and
+# slower sandbox creation — pick ../playwright/ or ../playwright-chromium/ if
+# Chromium alone is enough. Needs the apt mixin for the OS libraries
+# (--with-deps).
 #
-# Browser binaries land in /home/agent/.cache/ms-playwright (the default
-# lookup path for the agent user; installed as root via
-# PLAYWRIGHT_BROWSERS_PATH, then chowned).
-#
-# Egress needed at creation: npm registry (this mixin) and the Ubuntu
-# archives for `--with-deps` (own them by composing the `apt` mixin).
+# Browser binaries land in /home/agent/.cache/ms-playwright (the agent
+# user's default lookup path; installed as root, then chowned).
 schemaVersion: "2"
 kind: mixin
 name: playwright-all
@@ -22,6 +19,8 @@ version: 0.1.0
 
 setup:
   install:
+    # unset NPM_CONFIG_PREFIX: the template sets it for its own npm-global
+    # dir, and nvm-managed npm refuses to run while it is set.
     - command: >
         unset NPM_CONFIG_PREFIX
         && npm install -g playwright
@@ -31,7 +30,7 @@ setup:
 permissions:
   network:
     allow:
-      # npm package install (also covered by the node mixin)
+      # npm package install (also covered by the node mixin — rules union)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"
       # Playwright browser downloads (current CDN + legacy azureedge)
@@ -39,7 +38,5 @@ permissions:
       - "*.cdn.playwright.dev:443"
       - playwright.azureedge.net:443
 
-# Agent memory: files/home/.sbx-agents.d/playwright-all.md — the base kit's
-# entrypoint appends it directly to the sandbox AGENTS.md
-# (agentInstructions would only add a Kits-index side file after the
-# runtime baseline).
+# Agent memory note: files/home/.sbx-agents.d/playwright-all.md (appended to
+# the sandbox AGENTS.md by the kit entrypoint).

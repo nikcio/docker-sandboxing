@@ -15,7 +15,6 @@ permissions:
       - opencode.ai:443
       - "*.opencode.ai:443"
       - models.dev:443
-      # Plugins and npm-hosted tooling installed by the agent. The node
-      # mixin allows the same registry for package managers; rules union.
+      # npm registry (plugins; also covered by the node mixin — rules union)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"

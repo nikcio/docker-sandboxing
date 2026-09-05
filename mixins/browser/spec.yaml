@@ -1,16 +1,11 @@
-# Browser mixin: Google Chrome for the agent to drive.
+# Browser mixin: installs Google Chrome for the agent to drive.
 #
-# Software only — this mixin deliberately declares NO network rules. The
-# sandbox policy stays deny-by-default; whichever mixins are composed own
-# the egress (the agent memory note says so). Chrome itself is self-
-# contained: the .deb ships its dependencies, and its apt repo entry is
-# removed after install (mirroring the template's gh pattern) so the
-# sandbox's background `apt-get update` never contacts dl.google.com,
-# which is in no mixin's allowlist.
+# Software only — no network rules. The sandbox policy stays
+# deny-by-default; the composed mixins own all egress.
 #
-# Note: the creation-time download below needs dl.google.com to be
-# reachable through the proxy. If sandbox creation fails on it, check
-# `sbx policy log` and compose a kit/mixin that allows the host.
+# The creation-time download needs dl.google.com reachable through the
+# proxy. If sandbox creation fails on it, check `sbx policy log` and compose
+# a kit/mixin that allows the host.
 schemaVersion: "2"
 kind: mixin
 name: browser
@@ -23,6 +18,9 @@ version: 0.1.0
 
 setup:
   install:
+    # The .deb is self-contained. The apt repo entry is removed after
+    # install so the sandbox's background `apt-get update` never contacts
+    # dl.google.com (not in any mixin's allowlist).
     - command: >
         curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
         -o /tmp/google-chrome.deb
@@ -32,6 +30,5 @@ setup:
         && rm -f /etc/apt/sources.list.d/google-chrome.list
         && rm -rf /var/lib/apt/lists/*
 
-# Agent memory: files/home/.sbx-agents.d/browser.md — the base kit's entrypoint
-# appends it directly to the sandbox AGENTS.md (agentInstructions would only
-# add a Kits-index side file after the runtime baseline).
+# Agent memory note: files/home/.sbx-agents.d/browser.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).

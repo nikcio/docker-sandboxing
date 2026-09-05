@@ -1,30 +1,16 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-    Launcher for `sbx env run` that provisions the environment's GitHub PAT
+    Launcher for `sbx env run` that provisions the sandbox's GitHub PAT
     first, using sbx's own prompt.
 
 .DESCRIPTION
-    sbx resolves `secrets.*.command` entries non-interactively (a "host
-    shell command whose standard output becomes the secret", per the
-    environment-files docs), so an interactive prompt inside a secret
-    command can never work: sbx captures stdout as the secret and only
-    surfaces stderr on failures. The token therefore lives in sbx's secret
-    store (the OS keychain), scoped per sandbox, and this launcher makes
-    sure it exists BEFORE `sbx env run` provisions secrets:
-
-    1. Reads `name:` from the environment file (first non-flag argument,
-       else .\.sbxenv.yaml / .\.sbxenv.yml).
-    2. If `sbx secret ls` has no github entry scoped to that sandbox, runs
-       `sbx secret set github --sandbox <name>` - sbx prompts ("Enter
-       secret:") and stores the value in the keychain. Fine-grained PATs
-       only - never the broad-scope host `gh auth token`. Skipping (empty
-       input) is fine: public repos and git over SSH keep working, and the
-       in-sandbox [git-auth] banner will point at this same command.
-    3. Runs `sbx env run` with all arguments.
-
-    Rotation: re-run `sbx secret set github --sandbox <name>`, or remove
-    and recreate the environment.
+    sbx can't prompt while resolving a `secrets.*.command` entry (stdout is
+    captured as the secret), so this launcher checks `sbx secret ls` for a
+    github entry scoped to the environment file's `name:` and, when missing,
+    runs `sbx secret set github --sandbox <name>` before `sbx env run`.
+    Empty input skips the token — public repos and git over SSH keep
+    working. Rotation is the same command.
 
 .EXAMPLE
     sbx-env                          # environment in the current directory
@@ -64,9 +50,6 @@ if ($envFile) {
 }
 
 if ($sandboxName) {
-    # Provision the per-sandbox GitHub token through sbx's own prompt when
-    # it is not stored yet. sbx captures stdout as the secret, so this must
-    # happen outside secret resolution - hence this launcher.
     $stored = [bool](@((sbx secret ls 2>$null)) | Select-String -Pattern "(^|\s)$([regex]::Escape($sandboxName))\s+service\s+github(\s|$)" -Quiet)
     if (-not $stored) {
         Write-Host "No GitHub token stored for sandbox '$sandboxName' yet." -ForegroundColor Cyan
