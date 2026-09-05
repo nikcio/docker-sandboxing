@@ -1,0 +1,39 @@
+# Go mixin: Go module proxy + checksum database egress and agent notes.
+schemaVersion: "2"
+kind: mixin
+name: go
+displayName: Go / Go modules
+description: >
+  Network rules for the Go toolchain: the module proxy (go get, go mod
+  download, go install) and the checksum database that verifies every
+  download. The proxy also serves toolchain modules, so GOTOOLCHAIN=auto
+  (the default) can fetch a newer Go than the one baked into the image
+  without root or a rebuild. dl.google.com covers go.dev/dl artifact
+  downloads (golang.org/dl wrapper installs), and the go.dev/golang.org
+  sites serve the language docs and release info for agent lookups.
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # Module proxy (`go get`, `go mod download`, `go install`) — also
+      # serves GOTOOLCHAIN=auto toolchain downloads (golang.org/toolchain
+      # modules)
+      - proxy.golang.org:443
+      # Checksum database (default GOSUMDB) — verifies every module and
+      # toolchain download
+      - sum.golang.org:443
+      # go.dev: docs lookups, /dl/ download redirects, release info
+      - go.dev:443
+      - "*.go.dev:443"
+      # golang.org (redirects to go.dev; x/ module paths resolve via the
+      # proxy)
+      - golang.org:443
+      - "*.golang.org:443"
+      # dl.google.com: go.dev/dl download targets (e.g. golang.org/dl
+      # wrapper SDK downloads: `go install golang.org/dl/go1.x@latest`
+      # then `go1.x download`)
+      - dl.google.com:443
+
+# Agent memory note: files/home/.sbx-agents.d/go.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).

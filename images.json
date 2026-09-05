@@ -12,6 +12,11 @@
       "spec": "kit-published-python/spec.yaml"
     },
     {
+      "name": "opencode-go",
+      "context": "template-go",
+      "spec": "kit-published-go/spec.yaml"
+    },
+    {
       "name": "opencode-rust",
       "context": "template-rust",
       "spec": "kit-published-rust/spec.yaml"
