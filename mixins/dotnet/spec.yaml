@@ -28,6 +28,10 @@ permissions:
       # dotnet-install script + feeds
       - dot.net:443
       - "*.dot.net:443"
+      # Microsoft's short-link redirect service — dotnet-install.sh resolves
+      # its primary SDK/workload download URL by following aka.ms/dotnet/...
+      # short links (it silently falls back to the CDNs above when blocked)
+      - aka.ms:443
       # Legacy download CDNs
       - "*.azureedge.net:443"
       # Certificate revocation (OCSP/CRL) + timestamp endpoints hit by
