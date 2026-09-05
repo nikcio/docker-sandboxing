@@ -9,3 +9,6 @@
   releases, so compose the `git` mixin)
 - Other interpreters: `uv python install <version>` — downloads from GitHub
   releases, so compose the `git` mixin (github.com + *.githubusercontent.com)
+- Docs lookups: the python.org sites are reachable (docs.python.org,
+  devguide.python.org, www.python.org — language docs, release status
+  and downloads, PEPs)
