@@ -13,8 +13,9 @@ Use based on your task:
 - **[Commit Messages](agent-guidance/commit-messages.md)** — Conventional
   Commits style, types, scopes, examples. Read when writing commit messages.
 - **User guides (`docs/`)** — consumer-facing step guides (getting started,
-  Zeldoc API key, GitHub PAT, mixins, troubleshooting). Keep them simple and
-  step-based: `examples/` stays a minimal "copy → adjust → `sbx env run`"
+  Zeldoc API key, GitHub PAT, mixins, in-project kits, troubleshooting).
+  Keep them simple and step-based: `examples/` stays a minimal
+  "copy → adjust → `sbx env run`"
   template, and every "how do I …" that a user needs belongs in `docs/`,
   not in spec comments.
 

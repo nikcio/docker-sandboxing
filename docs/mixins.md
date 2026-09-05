@@ -51,3 +51,7 @@ Kit changes only apply to **new** sandboxes:
 sbx rm <sandbox-name>
 sbx env run
 ```
+
+Need something specific to your project (a private feed, env vars, an
+agent note)? Add an in-project kit — see
+[project-kit.md](project-kit.md).
