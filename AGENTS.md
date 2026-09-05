@@ -34,7 +34,8 @@ these Docker Sandboxes artifacts:
   (`opencode-python:v1`): OpenCode base image + uv-managed CPython
   (default `PYTHON_VERSION=3.14`, user-level under the agent home, symlinked
   to `/usr/local/bin`) + uv (system-wide, unpinned like `gh`; updates come
-  from image rebuilds), Git, and the same `o` shim. `UV_LINK_MODE=copy` is
+  from image rebuilds or in-sandbox reinstalls via astral.sh, which the
+  `python` mixin allows), Git, and the same `o` shim. `UV_LINK_MODE=copy` is
   set because workspace bind mounts live on another filesystem than the uv
   cache.
 - `kit-node-dotnet/` — thin declarative sandbox kit (`schemaVersion: "2"`,
