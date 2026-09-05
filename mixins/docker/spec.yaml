@@ -16,5 +16,6 @@ permissions:
       - "*.docker.io"
       - "*.docker.com"
       - production.cloudflare.docker.com
+      - production.cloudfront.docker.com
       - ghcr.io:443
       - "*.ghcr.io:443"
