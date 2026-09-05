@@ -3,8 +3,9 @@
 Use this repo's sandbox in three steps:
 
 1. **Copy the example.** Copy the example matching your stack —
-   `examples/opencode-node-dotnet.sbxenv.yaml` (.NET + Node) or
-   `examples/opencode-python.sbxenv.yaml` (Python + uv) — into your
+   `examples/opencode-node-dotnet.sbxenv.yaml` (.NET + Node),
+   `examples/opencode-python.sbxenv.yaml` (Python + uv), or
+   `examples/opencode-go.sbxenv.yaml` (Go) — into your
    project's root and rename it `.sbxenv.yaml`. Commit it so teammates get
    the same sandbox.
 

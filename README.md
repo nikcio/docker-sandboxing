@@ -3,9 +3,9 @@
 A [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) sandbox for
 [OpenCode](https://opencode.ai), composed from a **template image**, a thin
 **sandbox kit**, and optional **mixins** (one capability area each: model
-provider, git, node, dotnet, python, docker, apt, browser automation, …). Two
-templates ship: **.NET + Node.js** (NVM + PNPM) and **Python + uv**, both with
-Git and GitHub CLI preinstalled.
+provider, git, node, dotnet, python, go, docker, apt, browser automation,
+…). Three templates ship: **.NET + Node.js** (NVM + PNPM), **Python + uv**,
+and **Go**, all with Git and GitHub CLI preinstalled.
 
 The sandbox is the isolation boundary: outbound network is deny-by-default
 (only the composed mixins' hosts are allowed), and API keys are injected by
@@ -14,8 +14,9 @@ a proxy — the sandbox only ever sees placeholders.
 ## Use it in your project
 
 1. **Copy the example.** Copy the example matching your stack —
-   `examples/opencode-node-dotnet.sbxenv.yaml` (.NET + Node) or
-   `examples/opencode-python.sbxenv.yaml` (Python + uv) — into your project's
+   `examples/opencode-node-dotnet.sbxenv.yaml` (.NET + Node),
+   `examples/opencode-python.sbxenv.yaml` (Python + uv), or
+   `examples/opencode-go.sbxenv.yaml` (Go) — into your project's
    root and rename it `.sbxenv.yaml`. Commit it so teammates get the same
    sandbox.
 2. **Adjust the config to your project.** Set `name:`; drop the mixin lines
@@ -49,6 +50,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | `node` | nodejs.org + npm registry egress |
 | `dotnet` | NuGet/Microsoft egress, telemetry opt-out |
 | `python` | PyPI egress for uv/pip |
+| `go` | Go module proxy + checksum DB egress (`go get`/`go install`, GOTOOLCHAIN downloads) |
 | `docker` | registry egress for the in-sandbox Docker engine |
 | `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` |
 | `browser` | Google Chrome install (software only) |
@@ -57,7 +59,8 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 
 Drop what you don't need — a pure Node project keeps only `opencode-runtime`,
 `zeldoc`, `git`, `node`; a pure Python project keeps `opencode-runtime`,
-`zeldoc`, `git`, `python`. The `playwright*` and `sbx` mixins need the `apt`
+`zeldoc`, `git`, `python`; a pure Go project keeps `opencode-runtime`,
+`zeldoc`, `git`, `go`. The `playwright*` and `sbx` mixins need the `apt`
 mixin. Details: [docs/mixins.md](docs/mixins.md).
 
 ## The sandbox shell
@@ -74,10 +77,13 @@ Everything below is for developing the template, kit, and mixins.
 ```text
 ├── template-node-dotnet/Dockerfile         # sandbox template image (.NET + Node)
 ├── template-python/Dockerfile              # sandbox template image (Python + uv)
+├── template-go/Dockerfile                  # sandbox template image (Go)
 ├── kit-node-dotnet/                        # sandbox kit (local image, .NET + Node)
 ├── kit-published-node-dotnet/              # same kit, published image tag
 ├── kit-python/                             # sandbox kit (local image, Python + uv)
 ├── kit-published-python/                   # same kit, published image tag
+├── kit-go/                                 # sandbox kit (local image, Go)
+├── kit-published-go/                       # same kit, published image tag
 ├── mixins/<area>/                          # one mixin per capability area
 ├── scripts/
 │   ├── bootstrap.ps1 / bootstrap.sh        # local dev setup (build, load, secrets, validate)
@@ -89,19 +95,24 @@ Everything below is for developing the template, kit, and mixins.
 ```
 
 - **Templates** (`template-node-dotnet/Dockerfile` → `opencode-node-dotnet:v1`,
-  `template-python/Dockerfile` → `opencode-python:v1`): the Node image ships
+  `template-python/Dockerfile` → `opencode-python:v1`,
+  `template-go/Dockerfile` → `opencode-go:v1`): the Node image ships
   the .NET SDK, Node LTS via NVM, PNPM, Git (+ git-lfs), `gh`, and the `o`
   PATH shim for relaunching opencode; the Python image ships uv-managed
-  CPython, uv, Git (+ git-lfs), `gh`, and the same `o` shim. Both extend
+  CPython, uv, Git (+ git-lfs), `gh`, and the same `o` shim; the Go image
+  ships the official Go toolchain (`GO_VERSION` build-arg, GOTOOLCHAIN=auto
+  for newer toolchains through the module proxy), Git (+ git-lfs), `gh`,
+  and the same `o` shim. All extend
   `docker/sandbox-templates:opencode-docker`.
-- **Kits** (`kit-node-dotnet/`, `kit-python/`, `kind: sandbox`): point at the
-  local template images, set the entrypoint (banner → auto-start opencode →
-  login shell on exit), drop a permissive OpenCode config, and rebuild the
-  sandbox `AGENTS.md` from the kit's base plus every composed mixin's note.
-- **`kit-published-node-dotnet/`, `kit-published-python/`**: same kits,
-  `sandbox.image` pinned to the public Docker Hub tags. Release-please bumps
-  versions + tags; keep them in sync with `kit-node-dotnet/` and
-  `kit-python/`.
+- **Kits** (`kit-node-dotnet/`, `kit-python/`, `kit-go/`, `kind: sandbox`):
+  point at the local template images, set the entrypoint (banner →
+  auto-start opencode → login shell on exit), drop a permissive OpenCode
+  config, and rebuild the sandbox `AGENTS.md` from the kit's base plus every
+  composed mixin's note.
+- **`kit-published-node-dotnet/`, `kit-published-python/`,
+  `kit-published-go/`**: same kits, `sandbox.image` pinned to the public
+  Docker Hub tags. Release-please bumps versions + tags; keep them in sync
+  with `kit-node-dotnet/`, `kit-python/`, and `kit-go/`.
 - **Mixins** (`mixins/<area>/`, `kind: mixin`): network rules, env vars,
   credentials, install steps, and an agent memory note
   (`files/home/.sbx-agents.d/<area>.md`) for one area each. Compose
