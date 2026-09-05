@@ -33,6 +33,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | [Set your Zeldoc API key](docs/zeldoc-api-key.md) | get, register, and approve the model provider key |
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
 | [Mixins](docs/mixins.md) | what each mixin adds, common sets, changing them |
+| [Project-specific config](docs/project-kit.md) | an in-project kit: project feeds, env vars, files, agent notes |
 | [Troubleshooting](docs/troubleshooting.md) | blocked downloads, git auth, the .env guard, stale changes |
 
 ## Mixins
