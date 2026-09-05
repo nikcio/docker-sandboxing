@@ -16,9 +16,9 @@ FROM ${BASE_IMAGE}
 
 # Pin toolchains here; override at build time with --build-arg.
 ARG DOTNET_CHANNEL=10.0
-ARG NVM_VERSION=v0.40.3
+ARG NVM_VERSION=v0.40.7
 ARG NODE_VERSION=24
-ARG PNPM_VERSION=10
+ARG PNPM_VERSION=12
 
 ENV DOTNET_ROOT=/usr/share/dotnet \
     DOTNET_CLI_TELEMETRY_OPTOUT=1 \

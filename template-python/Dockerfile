@@ -16,7 +16,7 @@ FROM ${BASE_IMAGE}
 # Pin toolchains here; override at build time with --build-arg.
 # uv itself is intentionally unpinned (like gh): the installer bakes the
 # current release at build time — rebuild the image for uv updates.
-ARG PYTHON_VERSION=3.13
+ARG PYTHON_VERSION=3.14
 
 ENV UV_LINK_MODE=copy \
     UV_PYTHON_INSTALL_DIR=/home/agent/.local/share/uv/python
