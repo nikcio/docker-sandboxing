@@ -10,6 +10,11 @@
       "name": "opencode-python",
       "context": "template-python",
       "spec": "kit-published-python/spec.yaml"
+    },
+    {
+      "name": "opencode-rust",
+      "context": "template-rust",
+      "spec": "kit-published-rust/spec.yaml"
     }
   ]
 }
