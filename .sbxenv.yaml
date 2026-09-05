@@ -22,7 +22,9 @@ kits:
   - ./mixins/docker           # in-sandbox docker
   - ./mixins/apt              # apt mirrors
   - ./mixins/sbx              # sbx CLI (kit authoring inside the sandbox)
-workspace: .
+workspace:
+  path: .
+  clone: false # Set this to true to disconnect the agent from your local folder. This is better for security as the agent could install malicious git hooks in your local folder.
 
 env:
   NODE_ENV: development
@@ -36,3 +38,36 @@ ports:
     host: 5000
   - sandbox: 3000 # node / vite dev server
     host: 3000
+
+# GitHub auth for the gh CLI and git over HTTPS — the token lives ONLY in
+# sbx's secret store (the OS keychain), scoped to THIS sandbox; `sbx env rm`
+# removes it again. No `secrets:` entry here on purpose: sbx resolves
+# `secrets.*.command` non-interactively (docs: "host shell command whose
+# standard output becomes the secret" — stdout is captured as the token,
+# stderr only surfaces on failures), so an interactive prompt inside one can
+# never work. Provision instead via sbx's own prompt:
+#
+#   sbx-env                                     # this repo's launcher (scripts/
+#                                               # sbx-env.*, registered by
+#                                               # scripts/bootstrap.*): checks
+#                                               # the keychain, prompts via
+#                                               # `sbx secret set`, then runs
+#                                               # `sbx env run`
+#   sbx secret set github --sandbox docker-sandboxing   # manually / rotate
+#
+# Fine-grained PATs only — never the broad-scope host `gh` token. Skipping
+# is fine: public repos and git over SSH keep working, and the sandbox's
+# [git-auth] startup banner points at the same command when git/gh over
+# HTTPS would fail.
+#
+# Credential injection approvals (merged into the host's global
+# credentials.yaml — approvals only, never secret values). Keep the domains
+# in sync with mixins/git/spec.yaml.
+bindings:
+  github:
+    apiKey:
+      domains:
+        - api.github.com
+        - github.com
+        - uploads.github.com
+        - raw.githubusercontent.com

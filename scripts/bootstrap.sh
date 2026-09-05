@@ -10,18 +10,14 @@
 #     (the real key never enters the sandbox) and pre-creates the
 #     credential binding. Secrets already stored with `sbx secret` are
 #     skipped (an env var always (re)registers).
-#   - Optionally registers a GitHub token for the gh CLI / git over HTTPS
-#     (GITHUB_PAT env or prompted; empty input skips it — use a
-#     fine-grained PAT scoped to the repos the agent should reach) and
-#     pre-creates its credential binding.
-#   - Registers the configurable `sbx-new` shell function (skip with
-#     SKIP_ALIAS=1).
+#   - Registers the configurable `sbx-new` and `sbx-env` shell functions.
+#     `sbx-env` pre-flights the environment's GitHub PAT through sbx's own
+#     prompt (stored only in sbx's secret store) before `sbx env run`.
 #   - Validates the kit and mixins.
 #
 # Usage:
 #   ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
 #   PUSH_REGISTRY=docker.io/myorg ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
-#   GITHUB_PAT=github_pat_... ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
 #   SKIP_BUILD=1 SKIP_ALIAS=1 ./scripts/bootstrap.sh   # selective runs
 
 set -euo pipefail
@@ -61,8 +57,8 @@ if ! grep -qF "${KIT_SOURCE}" <<<"${current}"; then
     sbx settings set kit.allowedSources "$json"
 fi
 
-# Register the configurable `sbx-new` launcher as a shell function.
-# Skip with SKIP_ALIAS=1. Idempotent (marker comment).
+# Register the configurable `sbx-new` and `sbx-env` launchers as shell
+# functions. Skip with SKIP_ALIAS=1. Idempotent (marker comments).
 if [ -z "${SKIP_ALIAS:-}" ]; then
     marker="sbx-new (docker-sandboxing)"
     launcher="${REPO_ROOT}/scripts/new-sandbox.sh"
@@ -73,6 +69,16 @@ if [ -z "${SKIP_ALIAS:-}" ]; then
 
 # ${marker} — configurable sandbox launcher (see scripts/new-sandbox.sh)
 sbx-new() { bash "${launcher}" "\$@"; }
+EOF
+    fi
+    marker="sbx-env (docker-sandboxing)"
+    launcher="${REPO_ROOT}/scripts/sbx-env.sh"
+    if ! grep -qF "$marker" "$rc_file" 2>/dev/null; then
+        step "Registering sbx-env function in ${rc_file}"
+        cat >> "$rc_file" <<EOF
+
+# ${marker} — GitHub-PAT-aware \`sbx env run\` launcher (see scripts/sbx-env.sh)
+sbx-env() { bash "${launcher}" "\$@"; }
 EOF
     fi
 fi
@@ -113,26 +119,9 @@ else
 fi
 unset ZELDOC_API_KEY
 
-# Optional: register a GitHub token for the gh CLI and git over HTTPS.
-# Prefer a fine-grained PAT scoped to only the repos/permissions the agent
-# needs (README: "GitHub CLI + a scoped personal access token"). Empty
-# input skips it — public repos and SSH agent forwarding keep working.
-step "Registering GitHub token (optional — empty to skip)"
-if [ -n "${GITHUB_PAT:-}" ]; then
-    printf '%s\n' "${GITHUB_PAT}" | sbx secret set github
-elif secret_stored github; then
-    echo "    Already registered - skipping (set \$GITHUB_PAT to update it)."
-else
-    read -r -s -p "GitHub PAT (fine-grained, scoped; empty to skip): " GH_PAT
-    echo
-    if [ -n "${GH_PAT}" ]; then
-        printf '%s\n' "${GH_PAT}" | sbx secret set github
-    else
-        echo "    Skipped. Public repos and SSH agent forwarding still work;"
-        echo "    add later with: sbx secret set github"
-    fi
-fi
-unset GITHUB_PAT GH_PAT
+# GitHub tokens are provisioned PER ENVIRONMENT (a `secrets.github` entry in
+# the project's .sbxenv.yaml, stored at the sandbox scope) — never globally
+# here. See README, "GitHub CLI + a scoped personal access token".
 
 # Third-party v2 kits need a credential binding approval. The first
 # interactive `sbx run` prompts for it; pre-create it for unattended use.
@@ -142,7 +131,7 @@ else
     bindings="${XDG_CONFIG_HOME:-$HOME/.config}/sbx/credentials.yaml"
 fi
 if [ ! -f "${bindings}" ]; then
-    step "Pre-creating credential bindings for zeldoc + github (${bindings})"
+    step "Pre-creating credential bindings for zeldoc (${bindings})"
     mkdir -p "$(dirname "${bindings}")"
     cat > "${bindings}" <<'YAML'
 bindings:
@@ -150,23 +139,11 @@ bindings:
     apiKey:
       domains:
         - api.zeldoc.ai
-  github:
-    apiKey:
-      domains:
-        - api.github.com
-        - github.com
-        - uploads.github.com
-        - raw.githubusercontent.com
 YAML
 else
     if ! grep -q "zeldoc" "${bindings}"; then
         echo "    Hint: add a 'zeldoc' apiKey binding (domains: api.zeldoc.ai) to ${bindings},"
         echo "    or approve it interactively on the first 'sbx run'."
-    fi
-    if ! grep -q "github" "${bindings}"; then
-        echo "    Hint: add a 'github' apiKey binding (domains: api.github.com, github.com,"
-        echo "    uploads.github.com, raw.githubusercontent.com) to ${bindings}, or approve"
-        echo "    it interactively on the first 'sbx run'."
     fi
 fi
 
@@ -178,7 +155,7 @@ sbx kit validate "${REPO_ROOT}/kit"
 
 cat <<EOF
 
-Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:
+Done. Open a NEW shell so 'sbx-new' and 'sbx-env' are loaded, then launch with:
   sbx-new                                   # guided wizard
   sbx-new <path-to-project>                 # scripted: full stack from GitHub
   sbx-new --profile node <path-to-project>  # node-only mixin set
@@ -186,4 +163,8 @@ Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:
 
 Tip: kit changes only apply to NEW sandboxes. Recreate with:
   sbx rm <sandbox-name> && sbx-new <path-to-project>
+
+GitHub PAT for a sandbox environment: launch with 'sbx-env' - it prompts
+via sbx at first run (stored only in sbx's secret store). Rotate with:
+  sbx secret set github --sandbox <environment-name>
 EOF

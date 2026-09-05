@@ -24,7 +24,7 @@ environment:
   | Mixin | Area | Provides |
   | ----- | ---- | -------- |
   | `zeldoc` | model provider | Zeldoc.ai credential (proxy-managed key), provider config (`OPENCODE_CONFIG`), Zeldoc hosts |
-  | `git` | git workflow | git hosting egress (HTTPS + SSH), proxy-managed GitHub auth for `gh`/git-over-HTTPS (scoped PAT), the mandatory worktree workflow + gh guidance in agent memory |
+  | `git` | git workflow | git hosting egress (HTTPS + SSH), proxy-managed GitHub auth for `gh`/git-over-HTTPS (per-environment secret), the mandatory worktree workflow + gh guidance in agent memory |
   | `node` | Node toolchain | nodejs.org + npm registry egress, nvm/pnpm notes |
   | `dotnet` | .NET toolchain | NuGet/Microsoft egress, telemetry opt-out, telemetry deny |
   | `docker` | containers | registry egress for the Docker engine inside the sandbox |
@@ -76,7 +76,9 @@ environment:
 │   ├── bootstrap.ps1                          # host setup (Windows)
 │   ├── bootstrap.sh                           # host setup (Linux/macOS/Git Bash)
 │   ├── new-sandbox.ps1                        # configurable `sbx-new` launcher (Windows)
-│   └── new-sandbox.sh                         # configurable `sbx-new` launcher (bash)
+│   ├── new-sandbox.sh                         # configurable `sbx-new` launcher (bash)
+│   ├── sbx-env.ps1                            # `sbx-env` launcher: prompts for the GitHub PAT (Windows)
+│   └── sbx-env.sh                             # `sbx-env` launcher (bash)
 └── examples/
     └── opencode-node-dotnet.sbxenv.yaml       # project .sbxenv.yaml example (composition)
 ```
@@ -91,14 +93,16 @@ environment:
 - A [Zeldoc.ai](https://zeldoc.ai) API key
   ([setup guide](https://docs.zeldoc.ai/connect-opencode))
 - Optional: a fine-grained [GitHub personal access token](#github-cli--a-scoped-personal-access-token)
-  so the agent can use `gh` and push over HTTPS (public repos and SSH agent
-  forwarding work without one)
+  so the agent can use `gh` and push over HTTPS — launch with **`sbx-env`**
+  and it prompts through sbx at first run, stored **per sandbox** in sbx's
+  secret store, never the host `gh` login token and never in files on disk
+  (public repos and SSH agent forwarding work without one)
 
 ## Quick start
 
 Run the bootstrap script — it flips the host settings, builds/loads the
-template, registers your Zeldoc key, registers the `sbx-new` shell function,
-and validates the kit and every mixin:
+template, registers your Zeldoc key, registers the `sbx-new` and `sbx-env`
+shell functions, and validates the kit and every mixin:
 
 PowerShell:
 
@@ -122,12 +126,12 @@ What it does:
 | Build + load template | `docker build` → `docker image save` → `sbx template load` | bakes .NET/Node/PNPM/Git into the image; no per-sandbox installs |
 | *(or push)* | `PUSH_REGISTRY=docker.io/myorg ./scripts/bootstrap.sh` | share the template; then update `sandbox.image` in `kit/spec.yaml` |
 | Register Zeldoc key | `sbx secret set zeldoc` (+ pre-creates the credential binding) — skipped if already stored; an env var always re-registers | proxy substitutes the real key on `api.zeldoc.ai` requests; the sandbox only sees a placeholder |
-| Register GitHub token *(optional)* | `sbx secret set github` (prompted, or `GITHUB_PAT`; empty input skips) — skipped if already stored; an env var always re-registers. Pre-creates the credential binding | proxy substitutes the real token on GitHub requests; the sandbox only sees a placeholder |
-| Register `sbx-new` | appends a function to your PowerShell profile / `~/.bashrc` | configurable alias for creating sandboxes (skip: `-SkipAlias` / `SKIP_ALIAS=1`) |
+| Register `sbx-new` | appends a function to your PowerShell profile / `~/.bashrc` | configurable alias for creating sandboxes |
+| Register `sbx-env` | appends a function to your PowerShell profile / `~/.bashrc` | `sbx env run` launcher that prompts for the GitHub PAT via sbx (skip: `-SkipAlias` / `SKIP_ALIAS=1`) |
 | Validate kits | `sbx kit validate kit/` + every `mixins/<area>/` | catches spec errors early |
 
-Then launch a sandbox for any project (from a **new** shell so `sbx-new` is
-loaded):
+Then launch a sandbox for any project (from a **new** shell so `sbx-new` and
+`sbx-env` are loaded):
 
 ```bash
 sbx-new
@@ -202,7 +206,7 @@ provider is declared in its own config file instead of the sandbox-managed
 `~/.config/opencode/opencode.json`:
 
 1. `mixins/zeldoc/files/.../zeldoc.jsonc` defines the `zeldoc` provider
-   (`api.zeldoc.ai/v1`, model `zdev`), sets `model: zeldoc/zdev`, disables
+   (`api.zeldoc.ai/v1`, model `zdev-2`), sets `model: zeldoc/zdev-2`, disables
    sharing and the default `opencode` provider, and denies `websearch`.
 2. The mixin sets `OPENCODE_CONFIG=/home/agent/.config/opencode/zeldoc.jsonc`.
    OpenCode merges this between the global and project config layers, so
@@ -213,7 +217,7 @@ provider is declared in its own config file instead of the sandbox-managed
    to highest: managed `opencode.json` → kit's permissive `opencode.jsonc`
    → zeldoc's `OPENCODE_CONFIG` → project config.
 4. The mixin's `credentials` block declares the `zeldoc` service
-   (`ZELDOC_API_KEY`, proxy-managed) and injects it as `Authorization: Bearer …`
+   (`ZELDOC_API_KEY`, proxy-managed) and injects it as `Authorization: Basic …`
    on `api.zeldoc.ai` requests. The value inside the sandbox is a placeholder;
    the real key lives in the host secret store (`sbx secret set zeldoc`).
    Because this is a third-party v2 kit, the credential also needs a one-time
@@ -258,20 +262,46 @@ touch**, not your host `gh` login.
      to `.github/workflows/`, i.e. cannot alter your CI.
    - No **Administration**, no **Secrets**, no org-wide permissions.
 
-Register it host-side (the bootstrap script does this too — prompted, or set
-`GITHUB_PAT`; empty input skips it):
+Provision it **per environment** — the token is stored only in sbx's secret
+store (the OS keychain; on Windows the Credential Manager), scoped to that
+sandbox, never in a file on disk, and never the host `gh` login token (it
+carries whatever scopes your CLI has: `repo`, `workflow`, `read:org`, …).
 
-```bash
-sbx secret set github
-# non-interactive:
-printf '%s\n' "github_pat_..." | sbx secret set github
+Launch the environment with **`sbx-env`** (registered by `scripts/bootstrap.*`
+beside `sbx-new`): it reads the environment's `name:`, checks whether a
+github token is already stored for that sandbox, and — when missing — runs
+`sbx secret set github --sandbox <name>` so **sbx prompts you** ("Enter
+secret:") before `sbx env run` starts. You can also run that command
+yourself; rotation is the same command, and `sbx env rm` removes the scoped
+secret again.
+
+```console
+$ sbx-env
+No GitHub token stored for sandbox "my-project" yet.
+sbx will prompt for a fine-grained PAT (stored only in sbx's secret store).
+Enter secret: ********************************
 ```
 
-Third-party v2 kits also need a one-time **credential binding approval** for
-`github` (same mechanism as `zeldoc`): approve it interactively on the first
-`sbx run`, or pre-create it in `%APPDATA%\sbx\credentials.yaml`
-(Linux/macOS: `~/.config/sbx/credentials.yaml`) — the bootstrap script
-writes it:
+Why not a `secrets.github.command` prompt in the environment file? sbx
+resolves `command:` sources non-interactively — the docs define it as a
+"host shell command whose standard output becomes the secret": stdout is
+captured as the token and stderr only surfaces on failures, so a prompt
+inside the command is invisible and can never be answered. The command form
+is for non-interactive host tools only (e.g. `command: gh auth token` —
+not recommended here; the host `gh` token is too broad — see below).
+
+The sandbox also tells you when a token is missing: at every start the kit
+entrypoint probes `api.github.com` through the proxy and prints a
+`[git-auth]` note with the exact command when `git push`/`gh` over HTTPS
+would fail. A newly stored token takes effect immediately — no restart
+needed.
+
+Vault alternative: `sbx secret set github --ref 'op://Private/GitHub/pat'`.
+
+Third-party v2 kits also need a **credential binding approval** for `github`
+(same mechanism as `zeldoc`). Declare it in the same environment file —
+`sbx env run` merges it into the host's global `credentials.yaml`
+(approvals only, never secret values):
 
 ```yaml
 bindings:
@@ -280,18 +310,24 @@ bindings:
       domains: [api.github.com, github.com, uploads.github.com, raw.githubusercontent.com]
 ```
 
+For a sandbox created via `sbx run` / `sbx-new` (no environment file), scope
+the secret to that one sandbox instead (the command prompts for the
+fine-grained PAT):
+
+```bash
+sbx secret set github --sandbox <sandbox-name>
+```
+
 Notes:
 
 - Without a stored token the `git` mixin still works for **public**
   repositories and for **git over SSH** (the sandbox forwards your host SSH
   agent; private keys stay on the host).
-- If you'd rather reuse your host `gh` login instead of a scoped PAT:
-  `sbx secret set github --command 'gh auth token'` — but that token carries
-  whatever scopes your CLI has (`repo`, `workflow`, `read:org`, …). The
-  scoped PAT is the recommended path.
-- Rotate or revoke the PAT from GitHub anytime (`sbx secret rm github` to
-  forget it host-side). Recreate a running sandbox after changing a global
-  secret for it to take effect.
+- Rotate or revoke the PAT from GitHub anytime. `sbx env rm` removes the
+  environment's scoped secret; for `--sandbox`-scoped secrets use
+  `sbx secret rm github`. Re-create the environment after changing its
+  `secrets:`/`bindings:` entries — secrets and bindings only apply at
+  creation.
 
 > Note: because the sandbox kit extends the built-in `opencode` agent, it
 > inherits the builtin provider credentials (anthropic, github, openai, …).
@@ -313,7 +349,7 @@ mixin's `permissions.network.allow` is the only egress. Domains per mixin:
 | `node` | `nodejs.org`, `*.nodejs.org`, `registry.npmjs.org`, `*.npmjs.org`, `npmjs.com` |
 | `git` | `github.com`, `*.github.com`, `*.githubusercontent.com`, `gitlab.com` (bare hosts → git over SSH works) |
 | `dotnet` | `nuget.org`, `*.nuget.org`, `*.microsoft.com`, `dot.net`, `*.dot.net`, `*.azureedge.net`, `*.digicert.com`, `*.symcd.com`, `*.symcb.com`, `*.ws.symantec.com` (CA OCSP/CRL + timestamp checks) |
-| `docker` | `docker.io`, `*.docker.io`, `*.docker.com`, `production.cloudflare.docker.com`, `ghcr.io` |
+| `docker` | `docker.io`, `*.docker.io`, `*.docker.com`, `production.cloudflare.docker.com`, `ghcr.io`, `*.ghcr.io` |
 | `apt` | `archive.ubuntu.com`, `security.ubuntu.com`, `packages.microsoft.com`, `*.launchpadcontent.net` |
 | `browser` | *(none — software only; every site stays gated by the composed mixins)* |
 | `playwright` / `playwright-chromium` / `playwright-all` | `registry.npmjs.org`, `*.npmjs.org`, `cdn.playwright.dev`, `*.cdn.playwright.dev`, `playwright.azureedge.net` |
@@ -374,8 +410,9 @@ sbx env run
   placeholder and the proxy rewrites the auth header.
 - The GitHub token is the same deal (`GH_TOKEN` holds a placeholder in the
   sandbox; the proxy injects the real token only on the hosts the `git`
-  mixin declares). Use a fine-grained PAT scoped to the repos the agent
-  should reach — see
+  mixin declares) and is provisioned **per environment** — the `.sbxenv.yaml`
+  `secrets:` block stores it at that sandbox's scope only, never globally.
+  Use a fine-grained PAT scoped to the repos the agent should reach — see
   [GitHub CLI + a scoped personal access token](#github-cli--a-scoped-personal-access-token).
 - Never commit secrets, `dist/`, `*.tar`, `*.zip`, or `local.sbxenv.yaml`
   (see `.gitignore`).

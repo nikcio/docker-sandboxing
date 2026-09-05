@@ -6,12 +6,16 @@ The proxy injects GitHub credentials for HTTPS Git operations — no `gh auth lo
 ## If `git push` fails with auth errors
 
 `fatal: could not read Username for 'https://github.com'` means no GitHub token secret is
-configured yet. Ask the user to run on their host, using `$SANDBOX_NAME` (not the branch or
-worktree path):
+provisioned for this sandbox yet. Tokens are set per environment — **fine-grained PATs only,
+never the broad-scope host `gh` token**. Ask the user to add a `secrets.github` entry to the
+project's `.sbxenv.yaml` — an inline `command:` that resolves the environment's own variable
+(e.g. `GITHUB_PAT_MY_PROJECT`) and prompts on `/dev/tty` when it is unset, plus a
+`bindings.github` block (see `examples/opencode-node-dotnet.sbxenv.yaml`) — and recreate the
+environment. Or, for an immediate fix on this sandbox only, run on their host, using
+`$SANDBOX_NAME` (not the branch or worktree path):
 
 ```bash
-sbx secret set github --sandbox <sandbox-name> -t "$(gh auth token)"  # existing sandbox, immediate
-sbx secret set github -t "$(gh auth token)"                           # global; needs sandbox recreate
+sbx secret set github --sandbox <sandbox-name>   # prompts for the fine-grained PAT
 ```
 
 ## Pushing and PRs
