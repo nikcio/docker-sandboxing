@@ -71,8 +71,8 @@ Everything below is for developing the template, kit, and mixins.
 ├── kit-published/                          # same kit, published image tag
 ├── mixins/<area>/                          # one mixin per capability area
 ├── scripts/
-│   ├── bootstrap.ps1 / bootstrap.sh        # host setup (build, load, secrets, alias)
-│   └── new-sandbox.ps1 / new-sandbox.sh    # `sbx-new` wizard launcher
+│   ├── bootstrap.ps1 / bootstrap.sh        # local dev setup (build, load, secrets, validate)
+│   └── new-sandbox.ps1 / new-sandbox.sh    # sandbox creation wizard
 ├── examples/opencode-node-dotnet.sbxenv.yaml  # consumer environment example
 ├── docs/                                   # user guides (see above)
 ├── agent-guidance/                         # versioning + commit conventions
@@ -100,14 +100,15 @@ Everything below is for developing the template, kit, and mixins.
 ### Working on the repo
 
 ```bash
-./scripts/bootstrap.sh     # or bootstrap.ps1: build + load template, register
-                           # the Zeldoc key, register sbx-new, validate
+./scripts/bootstrap.sh     # or bootstrap.ps1: build + load the template,
+                           # register the Zeldoc key, validate kit + mixins
 sbx kit validate kit/      # validate a kit or mixin after edits
-sbx-new                    # wizard launcher for a dev sandbox (uses ./.sbxenv.yaml
-                           # equivalents; --source local picks up uncommitted edits)
+./scripts/new-sandbox.sh   # wizard launcher for a dev sandbox
+                           # (--source local picks up uncommitted edits)
 ```
 
-Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx-new`.
+Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`
+(or the wizard again).
 Releases are cut by release-please from Conventional Commits on `main` —
 see [agent-guidance/versioning.md](agent-guidance/versioning.md) and
 [agent-guidance/commit-messages.md](agent-guidance/commit-messages.md).

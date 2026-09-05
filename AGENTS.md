@@ -67,18 +67,22 @@ Constraints to respect:
   the owning mixin, and recreate the sandbox (kit changes never apply to
   running sandboxes).
 - Kits are fetched from this GitHub repo by default; `github.com/nikcio/`
-  must stay in the host's `kit.allowedSources` setting (bootstrap merges it).
-- `scripts/new-sandbox.*` is the configurable `sbx-new` launcher —
+  must stay in the host's `kit.allowedSources` setting (documented as a
+  standard `sbx settings set` command in `docs/getting-started.md`).
+- `scripts/new-sandbox.*` is the sandbox creation wizard —
   wizard-first (no args = guided prompts; prompts must go to stderr in bash
   so command substitution only captures the answer), flags/env for scripted
   use (profiles, git/local source, ref pinning). Keep the PS and bash
-  variants in sync.
+  variants in sync. Nothing registers it automatically; docs call it as
+  `./scripts/new-sandbox.*`.
 - Do not touch the sandbox-managed `~/.config/opencode/opencode.json` from
   any kit. The base kit's permissive config lives in the sibling
   `opencode.jsonc` (merged by OpenCode); the Zeldoc provider lives in its
   own file referenced by `OPENCODE_CONFIG`.
-- Host-side settings (e.g. `clipboard.imagePaste`) belong in
-  `scripts/bootstrap.*`, not in the kit.
+- Host-side settings (e.g. `clipboard.imagePaste`) are documented as
+  standard `sbx settings set` commands in the user guides (`docs/`), never
+  in the kit — and `bootstrap.*` only automates template/kit/mixin
+  development (build, load, secrets, validate).
 - Never commit secrets. The Zeldoc key is registered host-side via
   `sbx secret set zeldoc` (service secret; a binding approval lives in
   `%APPDATA%\sbx\credentials.yaml` / `~/.config/sbx/credentials.yaml`) and

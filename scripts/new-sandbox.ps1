@@ -22,10 +22,16 @@
     without kit flags (kits only apply at creation).
 
 .EXAMPLE
-    sbx-new                          # guided wizard
-    sbx-new D:\code\my-project       # scripted: everything else defaults
-    sbx-new -Profile node D:\code\web
-    sbx-new -Mixins zeldoc,git,node -Source local .
+    .\scripts\new-sandbox.ps1                          # guided wizard
+
+.EXAMPLE
+    .\scripts\new-sandbox.ps1 D:\code\my-project       # scripted: everything else defaults
+
+.EXAMPLE
+    .\scripts\new-sandbox.ps1 -Profile node D:\code\web
+
+.EXAMPLE
+    .\scripts\new-sandbox.ps1 -Mixins zeldoc,git,node -Source local .
 #>
 [CmdletBinding()]
 param(
