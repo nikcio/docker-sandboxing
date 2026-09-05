@@ -17,6 +17,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `dotnet` | .NET/NuGet egress + telemetry opt-out |
 | `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer), python.org docs |
 | `go` | Go toolchain egress: module proxy + checksum DB (`go get`/`go install`, GOTOOLCHAIN toolchain downloads), dl.google.com (go.dev/dl artifacts), go.dev/golang.org docs |
+| `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs |
 | `docker` | Registry egress for the Docker engine inside the sandbox |
 | `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` |
 | `browser` | Google Chrome install (no network rules — sites stay gated by the other mixins) |
@@ -37,6 +38,7 @@ Network hosts per mixin are listed at the top of each
 | .NET only | `opencode-runtime`, `zeldoc`, `git`, `dotnet` |
 | Python only | `opencode-runtime`, `zeldoc`, `git`, `python` |
 | Go only | `opencode-runtime`, `zeldoc`, `git`, `go` |
+| Rust only | `opencode-runtime`, `zeldoc`, `git`, `rust` |
 | Node + in-sandbox Docker | `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
 | Browser automation | `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
 

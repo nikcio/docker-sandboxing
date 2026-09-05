@@ -18,6 +18,10 @@
         },
         {
           "type": "generic",
+          "path": "kit-published-rust/spec.yaml"
+        },
+        {
+          "type": "generic",
           "path": "examples/opencode-node-dotnet.sbxenv.yaml"
         },
         {
@@ -27,6 +31,10 @@
         {
           "type": "generic",
           "path": "examples/opencode-go.sbxenv.yaml"
+        },
+        {
+          "type": "generic",
+          "path": "examples/opencode-rust.sbxenv.yaml"
         }
       ]
     }

@@ -1,0 +1,56 @@
+# OpenCode sandbox environment (Rust + cargo).
+#
+# 1. Copy this file into your project's root and rename it .sbxenv.yaml
+#    (commit it so teammates get the same sandbox).
+# 2. Adjust `name:` below and drop the kit lines your project doesn't need
+#    (see ../docs/mixins.md).
+# 3. Run from your project root:  sbx env run
+#
+# The rust mixin owns crates.io + rust-lang egress for cargo/rustup; git
+# dependencies ride the git mixin's GitHub egress (mixins/rust).
+#
+# Full guide: ../docs/getting-started.md
+# Environment file docs: https://docs.docker.com/ai/sandboxes/configuration/environment-files/
+
+schemaVersion: "1"
+name: my-project
+agent: opencode-rust
+
+# The sandbox kit plus the mixins your project needs. Refs are pinned to the
+# latest release; release-please bumps them (do not edit by hand).
+# x-release-please-start-version
+kits:
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-rust&ref=v0.7.0         # agent definition (published image)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v0.7.0    # agent runtime
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v0.7.0              # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v0.7.0                 # git + worktrees
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/rust&ref=v0.7.0                # Rust toolchain (crates.io egress)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker&ref=v0.7.0              # in-sandbox docker
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/apt&ref=v0.7.0                 # apt mirrors
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/browser&ref=v0.7.0             # Google Chrome
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v0.7.0          # Playwright + Chromium headless shell
+# x-release-please-end-version
+
+workspace:
+  path: . # the repo itself; point elsewhere if the env file sits outside the project
+  clone: false # true = sandbox works on its own copy (safer: the agent cannot touch your local folder)
+
+sandboxOptions:
+  cpus: 4
+  memory: 8g
+
+ports:
+  - sandbox: 8080 # actix-web / axum dev server
+    host: 8080
+  - sandbox: 3000 # web UI / API port
+    host: 3000
+
+# Approves GitHub token injection for the sandbox (docs/github-pat.md).
+bindings:
+  github:
+    apiKey:
+      domains:
+        - api.github.com
+        - github.com
+        - uploads.github.com
+        - raw.githubusercontent.com
