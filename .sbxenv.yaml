@@ -37,8 +37,8 @@ ports:
   - sandbox: 3000 # node / vite dev server
     host: 3000
 
-# GitHub token for the sandbox: provision with sbx-env (or
-# `sbx secret set github --sandbox docker-sandboxing`), see docs/github-pat.md.
+# GitHub token for the sandbox: provision with
+# `sbx secret set github --sandbox docker-sandboxing` (see docs/github-pat.md).
 bindings:
   github:
     apiKey:

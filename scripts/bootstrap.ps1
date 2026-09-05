@@ -12,9 +12,7 @@
     - Registers the Zeldoc.ai API key (proxy-managed — the sandbox never
       sees it) and pre-creates the credential binding. Already-stored
       secrets are skipped; an env var always (re)registers.
-    - Registers the `sbx-new` and `sbx-env` shell functions (`sbx-env`
-      provisions the sandbox's GitHub PAT via sbx's prompt before
-      `sbx env run`).
+    - Registers the configurable `sbx-new` shell function.
     - Validates the kit and mixins.
 
 .PARAMETER TemplateTag
@@ -81,8 +79,8 @@ Invoke-Step "sbx settings: allow kit source $kitSource" {
     }
 }
 
-# Register the configurable `sbx-new` and `sbx-env` launchers as shell
-# functions. Skip with -SkipAlias. Idempotent (marker comments).
+# Register the configurable `sbx-new` launcher as a shell function.
+# Skip with -SkipAlias. Idempotent (marker comments).
 if (-not $SkipAlias) {
     $marker = "sbx-new (docker-sandboxing)"
     $launcher = Join-Path $repoRoot "scripts\new-sandbox.ps1"
@@ -95,17 +93,6 @@ if (-not $SkipAlias) {
 
 # $marker — configurable sandbox launcher (see scripts/new-sandbox.ps1)
 function sbx-new { & "$launcher" @args }
-"@
-        }
-    }
-    $marker = "sbx-env (docker-sandboxing)"
-    $launcher = Join-Path $repoRoot "scripts\sbx-env.ps1"
-    if (-not (Select-String -Path $PROFILE -SimpleMatch $marker -Quiet)) {
-        Invoke-Step "Registering sbx-env function in PowerShell profile" {
-            Add-Content -Encoding utf8 $PROFILE @"
-
-# $marker — GitHub-PAT-aware `sbx env run` launcher (see scripts/sbx-env.ps1)
-function sbx-env { & "$launcher" @args }
 "@
         }
     }
@@ -152,9 +139,9 @@ Invoke-Step "Registering Zeldoc API key (proxy-managed; never enters the sandbox
     Clear-Variable key
 }
 
-# GitHub tokens are provisioned PER SANDBOX (`sbx secret set github
-# --sandbox <name>`; the sbx-env launcher automates it) — never globally
-# here. See docs/github-pat.md.
+# GitHub tokens are provisioned PER SANDBOX with sbx's own prompt
+# (`sbx secret set github --sandbox <name>`) — never globally here.
+# See docs/github-pat.md.
 
 # Third-party v2 kits need a credential binding approval. The first
 # interactive `sbx run` prompts for it; pre-create it for unattended use.
@@ -186,7 +173,7 @@ Invoke-Step "Validating kit and mixins" {
 }
 
 Write-Host ""
-Write-Host "Done. Open a NEW shell so 'sbx-new' and 'sbx-env' are loaded, then launch with:" -ForegroundColor Green
+Write-Host "Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:" -ForegroundColor Green
 Write-Host "  sbx-new                                   # guided wizard"
 Write-Host "  sbx-new <path-to-project>                 # scripted: full stack from GitHub"
 Write-Host "  sbx-new -Profile node <path-to-project>   # node-only mixin set"
@@ -195,6 +182,6 @@ Write-Host ""
 Write-Host "Tip: kit changes only apply to NEW sandboxes. Recreate with:"
 Write-Host "  sbx rm <sandbox-name> && sbx-new <path-to-project>"
 Write-Host ""
-Write-Host "GitHub PAT for a sandbox environment: launch with 'sbx-env' - it prompts"
-Write-Host "via sbx at first run (stored only in sbx's secret store). Rotate with:"
-Write-Host "  sbx secret set github --sandbox <environment-name>"
+Write-Host "GitHub PAT for a sandbox (lets the agent push and open PRs): store it with"
+Write-Host "sbx's own prompt, scoped to the sandbox (see docs/github-pat.md):"
+Write-Host "  sbx secret set github --sandbox <sandbox-name>"
