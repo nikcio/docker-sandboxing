@@ -1,10 +1,10 @@
 # OpenCode sandbox environment (.NET + Node).
 #
-# 1. Copy this file into a folder NEXT TO your project and rename it .sbxenv.yaml
-#    (keep it OUTSIDE the project folder — it becomes the sandbox's parent).
-# 2. Adjust `name:` and `workspace.path:` below; drop the kit lines your
-#    project doesn't need (see ../docs/mixins.md).
-# 3. Run:  sbx env run
+# 1. Copy this file into your project's root and rename it .sbxenv.yaml
+#    (like this repo does — commit it so teammates get the same sandbox).
+# 2. Adjust `name:` below and drop the kit lines your project doesn't need
+#    (see ../docs/mixins.md).
+# 3. Run from your project root:  sbx env run
 #
 # Full guide: ../docs/getting-started.md
 # Environment file docs: https://docs.docker.com/ai/sandboxes/configuration/environment-files/
@@ -30,7 +30,7 @@ kits:
 # x-release-please-end-version
 
 workspace:
-  path: ./my-project
+  path: . # the repo itself; point elsewhere if the env file sits outside the project
   clone: false # true = sandbox works on its own copy (safer: the agent cannot touch your local folder)
 
 env:

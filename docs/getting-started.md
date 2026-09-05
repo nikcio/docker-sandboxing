@@ -2,22 +2,19 @@
 
 Use this repo's sandbox in three steps:
 
-1. **Copy the example.** Copy `examples/opencode-node-dotnet.sbxenv.yaml` into a
-   folder *next to* (not inside) your project and rename it `.sbxenv.yaml`:
-
-   ```
-   my-project-env/
-   ├── .sbxenv.yaml          <- the example, renamed
-   └── my-project/           <- your code (becomes the workspace)
-   ```
+1. **Copy the example.** Copy `examples/opencode-node-dotnet.sbxenv.yaml`
+   into your project's root and rename it `.sbxenv.yaml` — the same pattern
+   this repo uses for its own development sandbox. Commit it so teammates
+   get the same sandbox.
 
 2. **Adjust the config to your project.** In `.sbxenv.yaml`:
    - `name:` — a unique name for this sandbox (used by `sbx-env`, secrets, etc.)
-   - `workspace.path:` — relative path to your project folder
    - `kits:` — drop the mixin lines your project doesn't need (see
      [mixins.md](mixins.md))
+   - `workspace.path` is `.` (the repo itself); point it elsewhere only if
+     the env file sits outside the project
 
-3. **Run it.**
+3. **Run it** from your project root.
 
    ```bash
    sbx env run
@@ -45,8 +42,7 @@ template image is pulled from Docker Hub — no builds needed on your machine.
 
 ## Daily use
 
-- Start the sandbox again with `sbx env run` from the folder containing the
-  `.sbxenv.yaml`.
+- Start the sandbox again with `sbx env run` from your project root.
 - Changed the `kits:` list? Kit changes only apply to **new** sandboxes —
   recreate with `sbx rm <name>` and `sbx env run` again.
 - Remove the sandbox (and its scoped secrets) with `sbx env rm`.
