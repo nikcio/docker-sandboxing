@@ -8,7 +8,8 @@
 #     (or pushes it when PUSH_REGISTRY is set).
 #   - Registers the Zeldoc.ai API key as a proxy-managed service secret
 #     (the real key never enters the sandbox) and pre-creates the
-#     credential binding.
+#     credential binding. Secrets already stored with `sbx secret` are
+#     skipped (an env var always (re)registers).
 #   - Optionally registers a GitHub token for the gh CLI / git over HTTPS
 #     (GITHUB_PAT env or prompted; empty input skips it — use a
 #     fine-grained PAT scoped to the repos the agent should reach) and
@@ -31,6 +32,12 @@ SKIP_BUILD="${SKIP_BUILD:-}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 step() { printf '\033[36m==> %s\033[0m\n' "$1"; }
+
+# secret_stored <service> — true when sbx already holds a secret for the
+# service (matched on the TYPE/NAME columns of `sbx secret ls`).
+secret_stored() {
+    sbx secret ls 2>/dev/null | grep -Eq "(^|[[:space:]])service[[:space:]]+${1}([[:space:]]|$)"
+}
 
 step "sbx settings: allow clipboard image paste"
 sbx settings set clipboard.imagePaste true
@@ -91,15 +98,19 @@ if [ -z "${SKIP_BUILD}" ]; then
 fi
 
 step "Registering Zeldoc API key (proxy-managed; never enters the sandbox)"
-if [ -z "${ZELDOC_API_KEY:-}" ]; then
+if [ -n "${ZELDOC_API_KEY:-}" ]; then
+    printf '%s\n' "${ZELDOC_API_KEY}" | sbx secret set zeldoc
+elif secret_stored zeldoc; then
+    echo "    Already registered - skipping (set \$ZELDOC_API_KEY to update it)."
+else
     read -r -s -p "ZELDOC_API_KEY: " ZELDOC_API_KEY
     echo
+    if [ -z "${ZELDOC_API_KEY}" ]; then
+        echo "No Zeldoc API key provided (set \$ZELDOC_API_KEY or re-run)." >&2
+        exit 1
+    fi
+    printf '%s\n' "${ZELDOC_API_KEY}" | sbx secret set zeldoc
 fi
-if [ -z "${ZELDOC_API_KEY}" ]; then
-    echo "No Zeldoc API key provided (set \$ZELDOC_API_KEY or re-run)." >&2
-    exit 1
-fi
-printf '%s\n' "${ZELDOC_API_KEY}" | sbx secret set zeldoc
 unset ZELDOC_API_KEY
 
 # Optional: register a GitHub token for the gh CLI and git over HTTPS.
@@ -107,16 +118,19 @@ unset ZELDOC_API_KEY
 # needs (README: "GitHub CLI + a scoped personal access token"). Empty
 # input skips it — public repos and SSH agent forwarding keep working.
 step "Registering GitHub token (optional — empty to skip)"
-GH_PAT="${GITHUB_PAT:-}"
-if [ -z "${GH_PAT}" ]; then
+if [ -n "${GITHUB_PAT:-}" ]; then
+    printf '%s\n' "${GITHUB_PAT}" | sbx secret set github
+elif secret_stored github; then
+    echo "    Already registered - skipping (set \$GITHUB_PAT to update it)."
+else
     read -r -s -p "GitHub PAT (fine-grained, scoped; empty to skip): " GH_PAT
     echo
-fi
-if [ -n "${GH_PAT}" ]; then
-    printf '%s\n' "${GH_PAT}" | sbx secret set github
-else
-    echo "    Skipped. Public repos and SSH agent forwarding still work;"
-    echo "    add later with: sbx secret set github"
+    if [ -n "${GH_PAT}" ]; then
+        printf '%s\n' "${GH_PAT}" | sbx secret set github
+    else
+        echo "    Skipped. Public repos and SSH agent forwarding still work;"
+        echo "    add later with: sbx secret set github"
+    fi
 fi
 unset GITHUB_PAT GH_PAT
 

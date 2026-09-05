@@ -11,7 +11,8 @@
       (or pushes it when -PushRegistry is given).
     - Registers the Zeldoc.ai API key as a proxy-managed service secret
       (the real key never enters the sandbox) and pre-creates the
-      credential binding.
+      credential binding. Secrets already stored with `sbx secret` are
+      skipped (an env var always (re)registers).
     - Optionally registers a GitHub token for the gh CLI / git over HTTPS
       ($env:GITHUB_PAT or prompted; empty input skips it - use a
       fine-grained PAT scoped to the repos the agent should reach) and
@@ -59,6 +60,15 @@ function Invoke-Step {
     param([string]$Message, [scriptblock]$Action)
     Write-Host "==> $Message" -ForegroundColor Cyan
     & $Action
+}
+
+# Returns $true when sbx already holds a secret for the service (matched on
+# the TYPE/NAME columns of `sbx secret ls`).
+function Test-SecretStored {
+    param([string]$Service)
+    $list = @()
+    try { $list = @(sbx secret ls 2>$null) } catch { $list = @() }
+    return [bool]($list | Select-String -Pattern "(^|\s)service\s+$Service(\s|$)" -Quiet)
 }
 
 Invoke-Step "sbx settings: allow clipboard image paste" {
@@ -126,6 +136,10 @@ if (-not $SkipBuild) {
 
 Invoke-Step "Registering Zeldoc API key (proxy-managed; never enters the sandbox)" {
     $key = $env:ZELDOC_API_KEY
+    if (-not $key -and (Test-SecretStored zeldoc)) {
+        Write-Host "    Already registered - skipping (set `$env:ZELDOC_API_KEY to update it)."
+        return
+    }
     if (-not $key) {
         $secure = Read-Host "ZELDOC_API_KEY" -AsSecureString
         $key = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
@@ -142,6 +156,10 @@ Invoke-Step "Registering Zeldoc API key (proxy-managed; never enters the sandbox
 # input skips it - public repos and SSH agent forwarding keep working.
 Invoke-Step "Registering GitHub token (optional - empty to skip)" {
     $pat = $env:GITHUB_PAT
+    if (-not $pat -and (Test-SecretStored github)) {
+        Write-Host "    Already registered - skipping (set `$env:GITHUB_PAT to update it)."
+        return
+    }
     if (-not $pat) {
         $secure = Read-Host "GitHub PAT (fine-grained, scoped; empty to skip)" -AsSecureString
         $pat = [Runtime.InteropServices.Marshal]::PtrToStringAuto(

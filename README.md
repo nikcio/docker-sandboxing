@@ -107,8 +107,8 @@ What it does:
 | Allow the kit source | merges `github.com/nikcio/` into `kit.allowedSources` | kits/mixins are fetched from this GitHub repo (list is merged, never overwritten) |
 | Build + load template | `docker build` → `docker image save` → `sbx template load` | bakes .NET/Node/PNPM/Git into the image; no per-sandbox installs |
 | *(or push)* | `PUSH_REGISTRY=docker.io/myorg ./scripts/bootstrap.sh` | share the template; then update `sandbox.image` in `kit/spec.yaml` |
-| Register Zeldoc key | `sbx secret set zeldoc` (+ pre-creates the credential binding) | proxy substitutes the real key on `api.zeldoc.ai` requests; the sandbox only sees a placeholder |
-| Register GitHub token *(optional)* | `sbx secret set github` (prompted, or `GITHUB_PAT`; empty input skips) + pre-creates the credential binding | proxy substitutes the real token on GitHub requests; the sandbox only sees a placeholder |
+| Register Zeldoc key | `sbx secret set zeldoc` (+ pre-creates the credential binding) — skipped if already stored; an env var always re-registers | proxy substitutes the real key on `api.zeldoc.ai` requests; the sandbox only sees a placeholder |
+| Register GitHub token *(optional)* | `sbx secret set github` (prompted, or `GITHUB_PAT`; empty input skips) — skipped if already stored; an env var always re-registers. Pre-creates the credential binding | proxy substitutes the real token on GitHub requests; the sandbox only sees a placeholder |
 | Register `sbx-new` | appends a function to your PowerShell profile / `~/.bashrc` | configurable alias for creating sandboxes (skip: `-SkipAlias` / `SKIP_ALIAS=1`) |
 | Validate kits | `sbx kit validate kit/` + every `mixins/<area>/` | catches spec errors early |
 
