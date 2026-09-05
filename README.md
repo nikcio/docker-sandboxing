@@ -8,7 +8,7 @@ environment:
   - .NET SDK (LTS, `dotnet`)
   - Node.js LTS via [NVM](https://github.com/nvm-sh/nvm) (`nvm`, `node`)
   - [PNPM](https://pnpm.io) (`pnpm`)
-  - Git (+ git-lfs) and common CLI utilities
+  - Git (+ git-lfs), GitHub CLI (`gh`), and common CLI utilities
   - `o` — PATH shim that (re)launches opencode from any shell
   - Extends the built-in `docker/sandbox-templates:opencode-docker` image
 - **Sandbox kit** (`kit/`, `kind: sandbox`, `extends: opencode`) — thin agent
@@ -24,7 +24,7 @@ environment:
   | Mixin | Area | Provides |
   | ----- | ---- | -------- |
   | `zeldoc` | model provider | Zeldoc.ai credential (proxy-managed key), provider config (`OPENCODE_CONFIG`), Zeldoc hosts |
-  | `git` | git workflow | git hosting egress (HTTPS + SSH) + the mandatory worktree workflow in agent memory |
+  | `git` | git workflow | git hosting egress (HTTPS + SSH), proxy-managed GitHub auth for `gh`/git-over-HTTPS (scoped PAT), the mandatory worktree workflow + gh guidance in agent memory |
   | `node` | Node toolchain | nodejs.org + npm registry egress, nvm/pnpm notes |
   | `dotnet` | .NET toolchain | NuGet/Microsoft egress, telemetry opt-out, telemetry deny |
   | `docker` | containers | registry egress for the Docker engine inside the sandbox |
@@ -52,7 +52,7 @@ environment:
 │   ├── zeldoc/                                # provider credential + config + network
 │   │   ├── spec.yaml
 │   │   └── files/home/.config/opencode/zeldoc.jsonc
-│   ├── git/                                   # git egress + worktree workflow memory
+│   ├── git/                                   # git egress + gh auth + worktree memory
 │   ├── node/                                  # node/npm egress
 │   ├── dotnet/                                # nuget/microsoft egress + telemetry deny
 │   ├── docker/                                # registry egress
@@ -76,6 +76,9 @@ environment:
   `git+https`, or use `git+ssh` / `-Source local` from a clone)
 - A [Zeldoc.ai](https://zeldoc.ai) API key
   ([setup guide](https://docs.zeldoc.ai/connect-opencode))
+- Optional: a fine-grained [GitHub personal access token](#github-cli--a-scoped-personal-access-token)
+  so the agent can use `gh` and push over HTTPS (public repos and SSH agent
+  forwarding work without one)
 
 ## Quick start
 
@@ -105,6 +108,7 @@ What it does:
 | Build + load template | `docker build` → `docker image save` → `sbx template load` | bakes .NET/Node/PNPM/Git into the image; no per-sandbox installs |
 | *(or push)* | `PUSH_REGISTRY=docker.io/myorg ./scripts/bootstrap.sh` | share the template; then update `sandbox.image` in `kit/spec.yaml` |
 | Register Zeldoc key | `sbx secret set zeldoc` (+ pre-creates the credential binding) | proxy substitutes the real key on `api.zeldoc.ai` requests; the sandbox only sees a placeholder |
+| Register GitHub token *(optional)* | `sbx secret set github` (prompted, or `GITHUB_PAT`; empty input skips) + pre-creates the credential binding | proxy substitutes the real token on GitHub requests; the sandbox only sees a placeholder |
 | Register `sbx-new` | appends a function to your PowerShell profile / `~/.bashrc` | configurable alias for creating sandboxes (skip: `-SkipAlias` / `SKIP_ALIAS=1`) |
 | Validate kits | `sbx kit validate kit/` + every `mixins/<area>/` | catches spec errors early |
 
@@ -207,6 +211,74 @@ If ZDev ever reports "encountered an error", the model's context limit likely
 changed — update `"limit".context` in `zeldoc.jsonc` per the
 [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode) (currently `1000000`).
 
+## GitHub CLI + a scoped personal access token
+
+The template ships [`gh`](https://cli.github.com), and the `git` mixin wires
+its authentication through the sandbox's proxy-managed credential flow: the
+sandbox boots with `GH_TOKEN=proxy-managed` (a placeholder), and the
+host-side proxy swaps in the real token on requests to
+`api.github.com`, `github.com`, `uploads.github.com`, and
+`raw.githubusercontent.com`. The token itself never enters the sandbox VM —
+`gh auth status` inside the sandbox only ever sees the placeholder, which is
+expected.
+
+Because the token is what the agent acts with, keep its blast radius small:
+use a **fine-grained PAT scoped to just the repositories the agent should
+touch**, not your host `gh` login.
+
+1. On GitHub: **Settings → Developer settings → Personal access tokens →
+   Fine-grained tokens → Generate new token**.
+2. Resource owner: you (or the org that owns the repos). Expiration per your
+   policy (e.g. 90 days).
+3. **Repository access → Only select repositories** — pick the repositories
+   the agent works on. This is the main safety lever: everything not listed
+   is invisible to the agent.
+4. Repository permissions — start from this minimum:
+   - **Metadata: Read** (mandatory, set automatically)
+   - **Contents: Read and write** — clone, commit, push, tags
+   - **Pull requests: Read and write**
+   - **Issues: Read and write** *(optional)*
+   - **Actions: Read** *(optional — view CI status)*
+5. Deliberately leave out anything the agent doesn't need:
+   - **Workflows: leave unset** — without it the agent cannot push changes
+     to `.github/workflows/`, i.e. cannot alter your CI.
+   - No **Administration**, no **Secrets**, no org-wide permissions.
+
+Register it host-side (the bootstrap script does this too — prompted, or set
+`GITHUB_PAT`; empty input skips it):
+
+```bash
+sbx secret set github
+# non-interactive:
+printf '%s\n' "github_pat_..." | sbx secret set github
+```
+
+Third-party v2 kits also need a one-time **credential binding approval** for
+`github` (same mechanism as `zeldoc`): approve it interactively on the first
+`sbx run`, or pre-create it in `%APPDATA%\sbx\credentials.yaml`
+(Linux/macOS: `~/.config/sbx/credentials.yaml`) — the bootstrap script
+writes it:
+
+```yaml
+bindings:
+  github:
+    apiKey:
+      domains: [api.github.com, github.com, uploads.github.com, raw.githubusercontent.com]
+```
+
+Notes:
+
+- Without a stored token the `git` mixin still works for **public**
+  repositories and for **git over SSH** (the sandbox forwards your host SSH
+  agent; private keys stay on the host).
+- If you'd rather reuse your host `gh` login instead of a scoped PAT:
+  `sbx secret set github --command 'gh auth token'` — but that token carries
+  whatever scopes your CLI has (`repo`, `workflow`, `read:org`, …). The
+  scoped PAT is the recommended path.
+- Rotate or revoke the PAT from GitHub anytime (`sbx secret rm github` to
+  forget it host-side). Recreate a running sandbox after changing a global
+  secret for it to take effect.
+
 > Note: because the sandbox kit extends the built-in `opencode` agent, it
 > inherits the builtin provider credentials (anthropic, github, openai, …).
 > Third-party kits don't carry builtin provenance, so `sbx` notes at creation
@@ -282,6 +354,11 @@ sbx env run
 
 - The Zeldoc API key is registered host-side only; sandboxes see a
   placeholder and the proxy rewrites the auth header.
+- The GitHub token is the same deal (`GH_TOKEN` holds a placeholder in the
+  sandbox; the proxy injects the real token only on the hosts the `git`
+  mixin declares). Use a fine-grained PAT scoped to the repos the agent
+  should reach — see
+  [GitHub CLI + a scoped personal access token](#github-cli--a-scoped-personal-access-token).
 - Never commit secrets, `dist/`, `*.tar`, `*.zip`, or `local.sbxenv.yaml`
   (see `.gitignore`).
 - Kit install commands run with root privileges inside the sandbox — these

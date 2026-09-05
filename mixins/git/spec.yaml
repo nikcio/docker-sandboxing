@@ -1,12 +1,53 @@
-# Git mixin: git hosting egress + the required worktree workflow.
+# Git mixin: git hosting egress, GitHub CLI authentication, and the
+# required worktree workflow.
 schemaVersion: "2"
 kind: mixin
 name: git
 displayName: Git hosting + worktree workflow
 description: >
-  Network rules for git hosting providers (HTTPS and SSH) and the base
+  Network rules for git hosting providers (HTTPS and SSH), proxy-managed
+  GitHub authentication for the gh CLI and git over HTTPS, and the base
   agent memory that mandates the git-worktree workflow.
-version: 0.1.0
+version: 0.2.0
+
+credentials:
+  # GitHub token for `gh` and git over HTTPS. Proxy-managed: the sandbox
+  # only ever sees the GH_TOKEN=proxy-managed placeholder; the host-side
+  # proxy swaps in the real value on the hosts below. Register the value
+  # host-side with `sbx secret set github` (a fine-grained PAT scoped to
+  # the repos the agent should reach — see README, "GitHub CLI + a scoped
+  # personal access token").
+  #
+  # Optional: without a stored token the mixin still works for public
+  # repositories and for git over SSH (SSH agent forwarding). The inject
+  # domains must stay inside permissions.network.allow below; github.com
+  # requests from git are re-encoded to Basic auth by the proxy.
+  - service: github
+    description: >
+      GitHub personal access token for the gh CLI and git over HTTPS.
+      Use a fine-grained PAT scoped to only the repositories and
+      permissions the agent needs.
+    required: false
+    apiKey:
+      name: GH_TOKEN
+      proxyManaged: true
+      inject:
+        # gh CLI REST/GraphQL API.
+        - domain: api.github.com
+          header: Authorization
+          format: Bearer %s
+        # git over HTTPS (clone/fetch/push).
+        - domain: github.com
+          header: Authorization
+          format: Bearer %s
+        # Release asset uploads (`gh release upload`).
+        - domain: uploads.github.com
+          header: Authorization
+          format: Bearer %s
+        # Raw file fetches.
+        - domain: raw.githubusercontent.com
+          header: Authorization
+          format: Bearer %s
 
 permissions:
   network:

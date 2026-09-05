@@ -3,7 +3,7 @@
 # Docker Sandboxes template: OpenCode agent environment with
 #   - .NET SDK (LTS)
 #   - Node.js via NVM (LTS) + PNPM
-#   - Git and common CLI utilities
+#   - Git, GitHub CLI (gh), and common CLI utilities
 #
 # Build:   docker build -t opencode-node-dotnet:v1 template/
 # Load:    docker image save opencode-node-dotnet:v1 -o dist/opencode-node-dotnet-v1.tar
@@ -39,6 +39,20 @@ RUN apt-get update \
         unzip \
         zip \
     && rm -rf /var/lib/apt/lists/*
+
+# GitHub CLI (`gh`) — official apt repo for a current version (the Ubuntu
+# universe build lags). The repo + keyring are removed after install so the
+# sandbox's background `apt-get update` never contacts cli.github.com, which
+# is not in any mixin's network allowlist. Rebuild the image for gh updates.
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends gh \
+    && rm -rf /var/lib/apt/lists/* \
+        /etc/apt/sources.list.d/github-cli.list \
+        /usr/share/keyrings/githubcli-archive-keyring.gpg
 
 # .NET SDK, system-wide (as root so every shell finds `dotnet`)
 RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \

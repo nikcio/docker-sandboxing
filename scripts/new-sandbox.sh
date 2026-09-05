@@ -34,7 +34,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ALL_MIXINS=(
     "opencode-runtime|OpenCode runtime egress: updates, models.dev, Zen, plugins"
     "zeldoc|Zeldoc.ai (zdev) model provider: proxy-managed key + network"
-    "git|git hosting (GitHub/GitLab) + worktree workflow rules"
+    "git|git hosting (GitHub/GitLab) + gh auth + worktree workflow"
     "node|Node.js/NVM/PNPM: nodejs.org + npm registry"
     "dotnet|.NET/NuGet + Microsoft hosts, telemetry off"
     "docker|container registries for the in-sandbox Docker engine"

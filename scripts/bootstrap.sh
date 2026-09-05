@@ -9,6 +9,10 @@
 #   - Registers the Zeldoc.ai API key as a proxy-managed service secret
 #     (the real key never enters the sandbox) and pre-creates the
 #     credential binding.
+#   - Optionally registers a GitHub token for the gh CLI / git over HTTPS
+#     (GITHUB_PAT env or prompted; empty input skips it — use a
+#     fine-grained PAT scoped to the repos the agent should reach) and
+#     pre-creates its credential binding.
 #   - Registers the configurable `sbx-new` shell function (skip with
 #     SKIP_ALIAS=1).
 #   - Validates the kit and mixins.
@@ -16,6 +20,7 @@
 # Usage:
 #   ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
 #   PUSH_REGISTRY=docker.io/myorg ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
+#   GITHUB_PAT=github_pat_... ZELDOC_API_KEY=zd-... ./scripts/bootstrap.sh
 #   SKIP_BUILD=1 SKIP_ALIAS=1 ./scripts/bootstrap.sh   # selective runs
 
 set -euo pipefail
@@ -97,6 +102,24 @@ fi
 printf '%s\n' "${ZELDOC_API_KEY}" | sbx secret set zeldoc
 unset ZELDOC_API_KEY
 
+# Optional: register a GitHub token for the gh CLI and git over HTTPS.
+# Prefer a fine-grained PAT scoped to only the repos/permissions the agent
+# needs (README: "GitHub CLI + a scoped personal access token"). Empty
+# input skips it — public repos and SSH agent forwarding keep working.
+step "Registering GitHub token (optional — empty to skip)"
+GH_PAT="${GITHUB_PAT:-}"
+if [ -z "${GH_PAT}" ]; then
+    read -r -s -p "GitHub PAT (fine-grained, scoped; empty to skip): " GH_PAT
+    echo
+fi
+if [ -n "${GH_PAT}" ]; then
+    printf '%s\n' "${GH_PAT}" | sbx secret set github
+else
+    echo "    Skipped. Public repos and SSH agent forwarding still work;"
+    echo "    add later with: sbx secret set github"
+fi
+unset GITHUB_PAT GH_PAT
+
 # Third-party v2 kits need a credential binding approval. The first
 # interactive `sbx run` prompts for it; pre-create it for unattended use.
 if [ -n "${APPDATA:-}" ] && [ -d "${APPDATA}" ]; then
@@ -105,7 +128,7 @@ else
     bindings="${XDG_CONFIG_HOME:-$HOME/.config}/sbx/credentials.yaml"
 fi
 if [ ! -f "${bindings}" ]; then
-    step "Pre-creating credential binding for zeldoc (${bindings})"
+    step "Pre-creating credential bindings for zeldoc + github (${bindings})"
     mkdir -p "$(dirname "${bindings}")"
     cat > "${bindings}" <<'YAML'
 bindings:
@@ -113,10 +136,24 @@ bindings:
     apiKey:
       domains:
         - api.zeldoc.ai
+  github:
+    apiKey:
+      domains:
+        - api.github.com
+        - github.com
+        - uploads.github.com
+        - raw.githubusercontent.com
 YAML
-elif ! grep -q "zeldoc" "${bindings}"; then
-    echo "    Hint: add a 'zeldoc' apiKey binding (domains: api.zeldoc.ai) to ${bindings},"
-    echo "    or approve it interactively on the first 'sbx run'."
+else
+    if ! grep -q "zeldoc" "${bindings}"; then
+        echo "    Hint: add a 'zeldoc' apiKey binding (domains: api.zeldoc.ai) to ${bindings},"
+        echo "    or approve it interactively on the first 'sbx run'."
+    fi
+    if ! grep -q "github" "${bindings}"; then
+        echo "    Hint: add a 'github' apiKey binding (domains: api.github.com, github.com,"
+        echo "    uploads.github.com, raw.githubusercontent.com) to ${bindings}, or approve"
+        echo "    it interactively on the first 'sbx run'."
+    fi
 fi
 
 step "Validating kit and mixins"
