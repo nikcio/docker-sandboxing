@@ -80,6 +80,8 @@ sandbox:
       elif [ -n "$__envs" ]; then
         __guard_fatal=1
       fi
+
+
       # Make the kit's AGENTS.md authoritative: the runtime writes a built-in
       # baseline into the profile at creation and nothing in the kit grammar
       # can replace it (agentInstructions.content is only ever appended), so
@@ -101,6 +103,8 @@ sandbox:
           if [ -n "$__kits" ]; then printf '\n%s\n' "$__kits"; fi
         } > "$__agents"
       fi
+
+
       cat <<'BANNER'
       ------------------------------------------------------------
        Sandbox
@@ -110,6 +114,8 @@ sandbox:
        - Relaunch opencode anytime with: o or opencode
       ------------------------------------------------------------
       BANNER
+
+
       # No-.env guard report, under the banner: only speaks up when it
       # acts — WARNING + 5s pause when .env files were deleted (clone
       # mode), fatal ERROR + exit when the session is refused (direct).
@@ -135,6 +141,8 @@ sandbox:
       else
         echo "[env-guard] direct mode - $__clean"
       fi
+
+      
       if command -v opencode >/dev/null 2>&1; then
         opencode
         echo "opencode exited - back in the sandbox shell (relaunch: o or opencode)"
