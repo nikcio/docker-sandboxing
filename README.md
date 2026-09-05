@@ -15,7 +15,6 @@ a proxy — the sandbox only ever sees placeholders.
 
 1. **Copy the example.** Copy the example matching your stack —
    `examples/opencode-node-dotnet.sbxenv.yaml` (.NET + Node),
-   `examples/opencode-python.sbxenv.yaml` (Python + uv), or
    `examples/opencode-python.sbxenv.yaml` (Python + uv),
    `examples/opencode-go.sbxenv.yaml` (Go), or
    `examples/opencode-rust.sbxenv.yaml` (Rust + cargo) — into your project's
