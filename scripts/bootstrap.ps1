@@ -13,12 +13,9 @@
       (the real key never enters the sandbox) and pre-creates the
       credential binding. Secrets already stored with `sbx secret` are
       skipped (an env var always (re)registers).
-    - Optionally registers a GitHub token for the gh CLI / git over HTTPS
-      ($env:GITHUB_PAT or prompted; empty input skips it - use a
-      fine-grained PAT scoped to the repos the agent should reach) and
-      pre-creates its credential binding.
-    - Registers the configurable `sbx-new` shell function (skip with
-      -SkipAlias).
+    - Registers the configurable `sbx-new` and `sbx-env` shell functions.
+      `sbx-env` pre-flights the environment's GitHub PAT through sbx's own
+      prompt (stored only in sbx's secret store) before `sbx env run`.
     - Validates the kit and mixins.
 
 .PARAMETER TemplateTag
@@ -38,11 +35,6 @@
 
 .EXAMPLE
     $env:ZELDOC_API_KEY = "zd-..."
-    ./scripts/bootstrap.ps1
-
-.EXAMPLE
-    $env:ZELDOC_API_KEY = "zd-..."
-    $env:GITHUB_PAT = "github_pat_..."
     ./scripts/bootstrap.ps1
 #>
 [CmdletBinding()]
@@ -90,8 +82,8 @@ Invoke-Step "sbx settings: allow kit source $kitSource" {
     }
 }
 
-# Register the configurable `sbx-new` launcher as a shell function.
-# Skip with -SkipAlias. Idempotent (marker comment).
+# Register the configurable `sbx-new` and `sbx-env` launchers as shell
+# functions. Skip with -SkipAlias. Idempotent (marker comments).
 if (-not $SkipAlias) {
     $marker = "sbx-new (docker-sandboxing)"
     $launcher = Join-Path $repoRoot "scripts\new-sandbox.ps1"
@@ -104,6 +96,17 @@ if (-not $SkipAlias) {
 
 # $marker — configurable sandbox launcher (see scripts/new-sandbox.ps1)
 function sbx-new { & "$launcher" @args }
+"@
+        }
+    }
+    $marker = "sbx-env (docker-sandboxing)"
+    $launcher = Join-Path $repoRoot "scripts\sbx-env.ps1"
+    if (-not (Select-String -Path $PROFILE -SimpleMatch $marker -Quiet)) {
+        Invoke-Step "Registering sbx-env function in PowerShell profile" {
+            Add-Content -Encoding utf8 $PROFILE @"
+
+# $marker — GitHub-PAT-aware `sbx env run` launcher (see scripts/sbx-env.ps1)
+function sbx-env { & "$launcher" @args }
 "@
         }
     }
@@ -150,37 +153,15 @@ Invoke-Step "Registering Zeldoc API key (proxy-managed; never enters the sandbox
     Clear-Variable key
 }
 
-# Optional: register a GitHub token for the gh CLI and git over HTTPS.
-# Prefer a fine-grained PAT scoped to only the repos/permissions the agent
-# needs (README: "GitHub CLI + a scoped personal access token"). Empty
-# input skips it - public repos and SSH agent forwarding keep working.
-Invoke-Step "Registering GitHub token (optional - empty to skip)" {
-    $pat = $env:GITHUB_PAT
-    if (-not $pat -and (Test-SecretStored github)) {
-        Write-Host "    Already registered - skipping (set `$env:GITHUB_PAT to update it)."
-        return
-    }
-    if (-not $pat) {
-        $secure = Read-Host "GitHub PAT (fine-grained, scoped; empty to skip)" -AsSecureString
-        $pat = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-            [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
-    }
-    if ($pat) {
-        $pat | sbx secret set github
-    }
-    else {
-        Write-Host "    Skipped. Public repos and SSH agent forwarding still work;"
-        Write-Host "    add later with: sbx secret set github"
-    }
-    Clear-Variable pat
-}
-Remove-Item Env:GITHUB_PAT -ErrorAction SilentlyContinue
+# GitHub tokens are provisioned PER ENVIRONMENT (a `secrets.github` entry in
+# the project's .sbxenv.yaml, stored at the sandbox scope) — never globally
+# here. See README, "GitHub CLI + a scoped personal access token".
 
 # Third-party v2 kits need a credential binding approval. The first
 # interactive `sbx run` prompts for it; pre-create it for unattended use.
 $bindingsPath = Join-Path $env:APPDATA "sbx\credentials.yaml"
 if (-not (Test-Path $bindingsPath)) {
-    Invoke-Step "Pre-creating credential bindings for zeldoc + github ($bindingsPath)" {
+    Invoke-Step "Pre-creating credential bindings for zeldoc ($bindingsPath)" {
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $bindingsPath) | Out-Null
         @'
 bindings:
@@ -188,13 +169,6 @@ bindings:
     apiKey:
       domains:
         - api.zeldoc.ai
-  github:
-    apiKey:
-      domains:
-        - api.github.com
-        - github.com
-        - uploads.github.com
-        - raw.githubusercontent.com
 '@ | Set-Content -Encoding utf8 $bindingsPath
     }
 }
@@ -202,11 +176,6 @@ else {
     if (-not (Select-String -Path $bindingsPath -Pattern "zeldoc" -Quiet)) {
         Write-Host "    Hint: add a 'zeldoc' apiKey binding (domains: api.zeldoc.ai) to $bindingsPath,"
         Write-Host "    or approve it interactively on the first 'sbx run'."
-    }
-    if (-not (Select-String -Path $bindingsPath -Pattern "github" -Quiet)) {
-        Write-Host "    Hint: add a 'github' apiKey binding (domains: api.github.com, github.com,"
-        Write-Host "    uploads.github.com, raw.githubusercontent.com) to $bindingsPath, or approve"
-        Write-Host "    it interactively on the first 'sbx run'."
     }
 }
 
@@ -218,7 +187,7 @@ Invoke-Step "Validating kit and mixins" {
 }
 
 Write-Host ""
-Write-Host "Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:" -ForegroundColor Green
+Write-Host "Done. Open a NEW shell so 'sbx-new' and 'sbx-env' are loaded, then launch with:" -ForegroundColor Green
 Write-Host "  sbx-new                                   # guided wizard"
 Write-Host "  sbx-new <path-to-project>                 # scripted: full stack from GitHub"
 Write-Host "  sbx-new -Profile node <path-to-project>   # node-only mixin set"
@@ -226,3 +195,7 @@ Write-Host "  sbx-new -ListProfiles                     # all profiles"
 Write-Host ""
 Write-Host "Tip: kit changes only apply to NEW sandboxes. Recreate with:"
 Write-Host "  sbx rm <sandbox-name> && sbx-new <path-to-project>"
+Write-Host ""
+Write-Host "GitHub PAT for a sandbox environment: launch with 'sbx-env' - it prompts"
+Write-Host "via sbx at first run (stored only in sbx's secret store). Rotate with:"
+Write-Host "  sbx secret set github --sandbox <environment-name>"
