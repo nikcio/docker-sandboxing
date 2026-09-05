@@ -31,6 +31,8 @@ kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet&ref=v0.5.0           # .NET/NuGet
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker&ref=v0.5.0           # in-sandbox docker
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/apt&ref=v0.5.0              # apt mirrors
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/browser&ref=v0.5.0          # Google Chrome
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v0.5.0       # Playwright + Chromium headless shell
 # x-release-please-end-version
 workspace: ./my-project
 

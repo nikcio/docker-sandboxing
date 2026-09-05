@@ -39,12 +39,18 @@ ALL_MIXINS=(
     "dotnet|.NET/NuGet + Microsoft hosts, telemetry off"
     "docker|container registries for the in-sandbox Docker engine"
     "apt|Ubuntu/Microsoft package mirrors for apt"
+    "browser|Google Chrome browser software (no network rules)"
+    "playwright|Playwright + Chromium headless shell (lightest)"
+    "playwright-chromium|Playwright + full Chromium"
+    "playwright-all|Playwright + Chromium, Firefox, WebKit"
+    "sbx|sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
 )
 
-PROFILES_full="opencode-runtime zeldoc git node dotnet docker apt"
+PROFILES_full="opencode-runtime zeldoc git node dotnet docker apt browser playwright"
 PROFILES_node="opencode-runtime zeldoc git node"
 PROFILES_dotnet="opencode-runtime zeldoc git dotnet"
 PROFILES_node_docker="opencode-runtime zeldoc git node docker"
+PROFILES_browser="opencode-runtime zeldoc git node browser playwright"
 PROFILES_none=""
 
 WORKSPACE=""
@@ -167,7 +173,7 @@ if [ "$WIZARD" = "1" ]; then
             default_choice="$PROFILE"
         fi
         opts=()
-        for p in full node dotnet node-docker none; do
+        for p in full node dotnet node-docker browser none; do
             var="PROFILES_${p//-/_}"
             opts+=("${p}|$(eval "echo \${${var}}" | tr ' ' ',')")
         done
@@ -261,7 +267,7 @@ else
     [ -n "$PROFILE" ] || PROFILE="full"
     var="PROFILES_${PROFILE//-/_}"
     if ! eval "[ \"\${${var}+x}\" = x ]"; then
-        echo "Unknown profile '$PROFILE'. Known: full, node, dotnet, node-docker, none (or pass --mixins)." >&2
+        echo "Unknown profile '$PROFILE'. Known: full, node, dotnet, node-docker, browser, none (or pass --mixins)." >&2
         exit 1
     fi
     if [ -z "$WORKSPACE" ]; then WORKSPACE="."; fi

@@ -30,9 +30,18 @@ environment:
   | `docker` | containers | registry egress for the Docker engine inside the sandbox |
   | `opencode-runtime` | agent runtime | opencode.ai/models.dev egress, npm-hosted plugins |
   | `apt` | OS packages | Ubuntu/Microsoft package mirrors for `sudo apt-get` |
+  | `browser` | browser software | Google Chrome install + agent notes (no network rules — the composed mixins own all egress) |
+  | `playwright` | browser automation | Playwright (npm global) + Chromium headless shell, Playwright CDN egress |
+  | `playwright-chromium` | browser automation | Playwright + the full Chromium build |
+  | `playwright-all` | browser automation | Playwright + Chromium, Firefox, and WebKit (~1 GB+ download) |
+  | `sbx` | sandbox tooling | `docker-sbx` CLI from Docker's apt repo — kit authoring inside the sandbox (`sbx kit validate/inspect/pack`); not in the `full` profile |
 
   Drop the mixins you don't need — e.g. a pure Node project skips `dotnet`,
   `docker`, and `apt`.
+
+  The `playwright*` mixins and `sbx` run apt at creation (OS libraries /
+  Docker's repo) — compose the `apt` mixin with them (the `full` and
+  `browser` profiles already do).
 
   Mixin memory notes are static files (`mixins/<area>/files/home/.sbx-agents.d/<area>.md`)
   that the kit entrypoint appends directly to the sandbox `AGENTS.md` when the
@@ -57,7 +66,12 @@ environment:
 │   ├── dotnet/                                # nuget/microsoft egress + telemetry deny
 │   ├── docker/                                # registry egress
 │   ├── opencode-runtime/                      # agent runtime egress
-│   └── apt/                                   # package mirror egress
+│   ├── apt/                                   # package mirror egress
+│   ├── browser/                               # Google Chrome install (software only)
+│   ├── playwright/                            # Playwright + Chromium headless shell
+│   ├── playwright-chromium/                   # Playwright + full Chromium
+│   ├── playwright-all/                        # Playwright + Chromium/Firefox/WebKit
+│   └── sbx/                                   # sbx CLI install (kit authoring in-sandbox)
 ├── scripts/
 │   ├── bootstrap.ps1                          # host setup (Windows)
 │   ├── bootstrap.sh                           # host setup (Linux/macOS/Git Bash)
@@ -133,8 +147,8 @@ the shell when you're done with the sandbox.
 is a **wizard**: run it with no arguments and it guides you through
 
 1. **Workspace** — project directory (created if it doesn't exist yet)
-2. **Mixin profile** — `full`, `node`, `dotnet`, `node-docker`, `none`, or
-   `custom` (pick individual mixins; each is shown with a description)
+2. **Mixin profile** — `full`, `node`, `dotnet`, `node-docker`, `browser`,
+   `none`, or `custom` (pick individual mixins; each is shown with a description)
 3. **Kit source** — fetch from `github.com/nikcio/docker-sandboxing`
    (recommended, optionally pinned to a branch/tag) or use the local clone
 4. **Sandbox name** — default `opencode-node-dotnet-<workspace>`; if the name
@@ -155,7 +169,7 @@ sbx-new --list-profiles                  # show profiles
 ```
 
 Profiles: `full` (default: all mixins), `node`, `dotnet`, `node-docker`,
-`none`. Persist your own defaults via environment variables:
+`browser`, `none`. Persist your own defaults via environment variables:
 
 | Variable | Default | Meaning |
 | -------- | ------- | ------- |
@@ -301,6 +315,9 @@ mixin's `permissions.network.allow` is the only egress. Domains per mixin:
 | `dotnet` | `nuget.org`, `*.nuget.org`, `*.microsoft.com`, `dot.net`, `*.dot.net`, `*.azureedge.net`, `*.digicert.com`, `*.symcd.com`, `*.symcb.com`, `*.ws.symantec.com` (CA OCSP/CRL + timestamp checks) |
 | `docker` | `docker.io`, `*.docker.io`, `*.docker.com`, `production.cloudflare.docker.com`, `ghcr.io` |
 | `apt` | `archive.ubuntu.com`, `security.ubuntu.com`, `packages.microsoft.com`, `*.launchpadcontent.net` |
+| `browser` | *(none — software only; every site stays gated by the composed mixins)* |
+| `playwright` / `playwright-chromium` / `playwright-all` | `registry.npmjs.org`, `*.npmjs.org`, `cdn.playwright.dev`, `*.cdn.playwright.dev`, `playwright.azureedge.net` |
+| `sbx` | `download.docker.com` |
 
 `dotnet` also denies `*.applicationinsights.azure.com`; deny rules win over
 allow rules. A sandbox composed without a mixin simply has no egress for that

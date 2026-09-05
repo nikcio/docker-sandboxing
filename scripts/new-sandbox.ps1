@@ -53,13 +53,19 @@ $allMixins = [ordered]@{
     "dotnet"           = ".NET/NuGet + Microsoft hosts, telemetry off"
     "docker"           = "container registries for the in-sandbox Docker engine"
     "apt"              = "Ubuntu/Microsoft package mirrors for apt"
+    "browser"          = "Google Chrome browser software (no network rules)"
+    "playwright"       = "Playwright + Chromium headless shell (lightest)"
+    "playwright-chromium" = "Playwright + full Chromium"
+    "playwright-all"   = "Playwright + Chromium, Firefox, WebKit"
+    "sbx"              = "sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
 }
 
 $profiles = [ordered]@{
-    full          = @("opencode-runtime", "zeldoc", "git", "node", "dotnet", "docker", "apt")
+    full          = @("opencode-runtime", "zeldoc", "git", "node", "dotnet", "docker", "apt", "browser", "playwright")
     node          = @("opencode-runtime", "zeldoc", "git", "node")
     dotnet        = @("opencode-runtime", "zeldoc", "git", "dotnet")
     "node-docker" = @("opencode-runtime", "zeldoc", "git", "node", "docker")
+    browser       = @("opencode-runtime", "zeldoc", "git", "node", "browser", "playwright")
     none          = @()
 }
 
@@ -233,7 +239,7 @@ else {
     }
     if (-not $Mixins) {
         if (-not $profiles.Contains($Profile)) {
-            throw "Unknown profile '$Profile'. Known: $(($profiles.Keys -join ', ')) (or pass -Mixins)."
+                throw "Unknown profile '$Profile'. Known: $(($profiles.Keys -join ', ')) (or pass -Mixins)."
         }
         $Mixins = $profiles[$Profile]
     }

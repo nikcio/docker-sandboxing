@@ -35,7 +35,10 @@ these Docker Sandboxes artifacts:
   `kit/`; release-please bumps its `version:` + image tag (and the `&ref=`
   pins in `examples/opencode-node-dotnet.sbxenv.yaml`) in the release PR.
 - `mixins/<area>/` — one mixin kit per area (`kind: mixin`): `zeldoc`,
-  `git`, `node`, `dotnet`, `docker`, `opencode-runtime`, `apt`. Each mixin
+  `git`, `node`, `dotnet`, `docker`, `opencode-runtime`, `apt`, `browser`
+  (Chrome, software only), three playwright levels (`playwright`,
+  `playwright-chromium`, `playwright-all`), and `sbx` (the Docker
+  Sandboxes CLI for in-sandbox kit authoring). Each mixin
   must stay single-purpose — only the network rules, env vars, credentials,
   files, and memory notes for its own area. Composition is explicit at
   launch (`--kit` flags or a `.sbxenv.yaml` `kits:` list); the spec's

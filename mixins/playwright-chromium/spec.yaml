@@ -1,0 +1,44 @@
+# Playwright mixin (level 2 of 3): Playwright + full Chromium.
+#
+# Same as ../playwright/ but with the full Chromium build (headed-capable
+# APIs, devtools protocol — still runs headless in this sandbox, which has
+# no display server). For Firefox + WebKit too use ../playwright-all/.
+#
+# Browser binaries land in /home/agent/.cache/ms-playwright (the default
+# lookup path for the agent user; installed as root via
+# PLAYWRIGHT_BROWSERS_PATH, then chowned).
+#
+# Egress needed at creation: npm registry (this mixin) and the Ubuntu
+# archives for `--with-deps` (own them by composing the `apt` mixin).
+schemaVersion: "2"
+kind: mixin
+name: playwright-chromium
+displayName: Playwright (full Chromium)
+description: >
+  Playwright installed globally via npm with the full Chromium build
+  preinstalled. Needs the apt mixin for the OS libraries (--with-deps).
+version: 0.1.0
+
+setup:
+  install:
+    - command: >
+        unset NPM_CONFIG_PREFIX
+        && npm install -g playwright
+        && PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium
+        && chown -R agent:agent /home/agent/.cache/ms-playwright
+
+permissions:
+  network:
+    allow:
+      # npm package install (also covered by the node mixin)
+      - registry.npmjs.org:443
+      - "*.npmjs.org:443"
+      # Playwright browser downloads (current CDN + legacy azureedge)
+      - cdn.playwright.dev:443
+      - "*.cdn.playwright.dev:443"
+      - playwright.azureedge.net:443
+
+# Agent memory: files/home/.sbx-agents.d/playwright-chromium.md — the base
+# kit's entrypoint appends it directly to the sandbox AGENTS.md
+# (agentInstructions would only add a Kits-index side file after the
+# runtime baseline).
