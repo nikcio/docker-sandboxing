@@ -54,14 +54,14 @@ description: >
 # The version and the image tag are bumped together by release-please
 # (everything between the x-release-please markers below).
 # x-release-please-start-version
-version: 0.5.0
+version: 0.6.0
 
 sandbox:
   # Published public image on Docker Hub. The publish-image workflow
   # builds template/Dockerfile and pushes this tag (plus `latest`)
   # whenever a release is published. Full docker.io prefix — sbx does
   # not resolve the Docker Hub domain automatically.
-  image: docker.io/nikcio/opencode-node-dotnet:v0.5.0
+  image: docker.io/nikcio/opencode-node-dotnet:v0.6.0
 # x-release-please-end-version
   # Attach target: a login shell, not opencode directly. It prints the
   # startup banner, auto-launches opencode, and — when opencode exits —
