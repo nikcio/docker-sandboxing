@@ -21,6 +21,10 @@ permissions:
       - "*.nuget.org:443"
       # SDK/workload downloads, MS Build hosts, packages.microsoft.com
       - "*.microsoft.com:443"
+      # SDK download CDN — dot.net's install script redirects SDK/workload
+      # downloads here (builds.dotnet.microsoft.com; the single-label rule
+      # above doesn't match the sub-subdomain)
+      - "*.dotnet.microsoft.com:443"
       # dotnet-install script + feeds
       - dot.net:443
       - "*.dot.net:443"
