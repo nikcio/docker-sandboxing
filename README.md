@@ -202,7 +202,7 @@ provider is declared in its own config file instead of the sandbox-managed
 `~/.config/opencode/opencode.json`:
 
 1. `mixins/zeldoc/files/.../zeldoc.jsonc` defines the `zeldoc` provider
-   (`api.zeldoc.ai/v1`, model `zdev`), sets `model: zeldoc/zdev`, disables
+   (`api.zeldoc.ai/v1`, model `zdev-2`), sets `model: zeldoc/zdev-2`, disables
    sharing and the default `opencode` provider, and denies `websearch`.
 2. The mixin sets `OPENCODE_CONFIG=/home/agent/.config/opencode/zeldoc.jsonc`.
    OpenCode merges this between the global and project config layers, so
@@ -213,7 +213,7 @@ provider is declared in its own config file instead of the sandbox-managed
    to highest: managed `opencode.json` → kit's permissive `opencode.jsonc`
    → zeldoc's `OPENCODE_CONFIG` → project config.
 4. The mixin's `credentials` block declares the `zeldoc` service
-   (`ZELDOC_API_KEY`, proxy-managed) and injects it as `Authorization: Bearer …`
+   (`ZELDOC_API_KEY`, proxy-managed) and injects it as `Authorization: Basic …`
    on `api.zeldoc.ai` requests. The value inside the sandbox is a placeholder;
    the real key lives in the host secret store (`sbx secret set zeldoc`).
    Because this is a third-party v2 kit, the credential also needs a one-time
@@ -313,7 +313,7 @@ mixin's `permissions.network.allow` is the only egress. Domains per mixin:
 | `node` | `nodejs.org`, `*.nodejs.org`, `registry.npmjs.org`, `*.npmjs.org`, `npmjs.com` |
 | `git` | `github.com`, `*.github.com`, `*.githubusercontent.com`, `gitlab.com` (bare hosts → git over SSH works) |
 | `dotnet` | `nuget.org`, `*.nuget.org`, `*.microsoft.com`, `dot.net`, `*.dot.net`, `*.azureedge.net`, `*.digicert.com`, `*.symcd.com`, `*.symcb.com`, `*.ws.symantec.com` (CA OCSP/CRL + timestamp checks) |
-| `docker` | `docker.io`, `*.docker.io`, `*.docker.com`, `production.cloudflare.docker.com`, `ghcr.io` |
+| `docker` | `docker.io`, `*.docker.io`, `*.docker.com`, `production.cloudflare.docker.com`, `ghcr.io`, `*.ghcr.io` |
 | `apt` | `archive.ubuntu.com`, `security.ubuntu.com`, `packages.microsoft.com`, `*.launchpadcontent.net` |
 | `browser` | *(none — software only; every site stays gated by the composed mixins)* |
 | `playwright` / `playwright-chromium` / `playwright-all` | `registry.npmjs.org`, `*.npmjs.org`, `cdn.playwright.dev`, `*.cdn.playwright.dev`, `playwright.azureedge.net` |
