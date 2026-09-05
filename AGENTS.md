@@ -7,6 +7,9 @@ Docker Sandboxes kits and template images for running OpenCode agents
 
 Use based on your task:
 
+- **[Worktrees](agent-guidance/worktrees.md)** — the mandatory isolated
+  workspace for every code change. Read before writing any code in this
+  repo.
 - **[Versioning](agent-guidance/versioning.md)** — release-please flow,
   version bumps, image publishing, adding an image. Read when preparing a
   release or touching pinned versions.
@@ -69,6 +72,10 @@ these Docker Sandboxes artifacts:
 
 Constraints to respect:
 
+- Always work in a dedicated git worktree branched from `origin/main` —
+  never in the main checkout: multiple agent sessions share it, it can
+  switch branches under you, and its untracked files are not yours. See
+  [agent-guidance/worktrees.md](agent-guidance/worktrees.md).
 - The kit entrypoint is a shell wrapper, not opencode directly: it prints a
   startup banner, auto-runs `opencode`, then `exec`s an interactive login
   shell — quitting the agent must leave a usable shell. Keep that shape.

@@ -112,6 +112,10 @@ Everything below is for developing the template, kit, and mixins.
 
 ### Working on the repo
 
+Work in a git worktree branched from `main`
+([agent-guidance/worktrees.md](agent-guidance/worktrees.md)) — other agent
+sessions share this checkout concurrently.
+
 ```bash
 ./scripts/bootstrap.sh     # or bootstrap.ps1: build + load the template,
                            # register the Zeldoc key, validate kit + mixins
