@@ -2,9 +2,11 @@
 
 Use this repo's sandbox in three steps:
 
-1. **Copy the example.** Copy `examples/opencode-node-dotnet.sbxenv.yaml`
-   into your project's root and rename it `.sbxenv.yaml`. Commit it so
-   teammates get the same sandbox.
+1. **Copy the example.** Copy the example matching your stack —
+   `examples/opencode-node-dotnet.sbxenv.yaml` (.NET + Node) or
+   `examples/opencode-python.sbxenv.yaml` (Python + uv) — into your
+   project's root and rename it `.sbxenv.yaml`. Commit it so teammates get
+   the same sandbox.
 
 2. **Adjust the config to your project.** In `.sbxenv.yaml`:
    - `name:` — a unique name for this sandbox (used to scope its secrets)

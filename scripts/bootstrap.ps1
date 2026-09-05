@@ -13,12 +13,21 @@
 
 .PARAMETER TemplateTag
     Tag for the template image. Defaults to opencode-node-dotnet:v1
-    (must match sandbox.image in kit/spec.yaml).
+    (must match sandbox.image in kit-node-dotnet/spec.yaml).
+
+.PARAMETER TemplateDir
+    Directory holding the Dockerfile to build. Defaults to
+    "template-node-dotnet" (use "template-python" with -TemplateTag
+    opencode-python:v1 and -KitDir kit-python to build the python template).
+
+.PARAMETER KitDir
+    Kit directory referenced by the push hint. Defaults to
+    "kit-node-dotnet".
 
 .PARAMETER PushRegistry
     Optional registry prefix, e.g. docker.io/myorg. When set, the template is
     pushed there instead of loaded locally. Remember to update sandbox.image
-    in kit/spec.yaml to "<PushRegistry>/opencode-node-dotnet:v1".
+    in kit-node-dotnet/spec.yaml to "<PushRegistry>/opencode-node-dotnet:v1".
 
 .PARAMETER SkipBuild
     Skip the template build (e.g. template already loaded).
@@ -30,6 +39,8 @@
 [CmdletBinding()]
 param(
     [string]$TemplateTag = "opencode-node-dotnet:v1",
+    [string]$TemplateDir = "template-node-dotnet",
+    [string]$KitDir = "kit-node-dotnet",
     [string]$PushRegistry = "",
     [switch]$SkipBuild
 )
@@ -53,8 +64,8 @@ function Test-SecretStored {
 }
 
 if (-not $SkipBuild) {
-    Invoke-Step "Building template image $TemplateTag" {
-        docker build -t $TemplateTag (Join-Path $repoRoot "template")
+    Invoke-Step "Building template image $TemplateTag (from $TemplateDir/)" {
+        docker build -t $TemplateTag (Join-Path $repoRoot $TemplateDir)
     }
 
     if ($PushRegistry) {
@@ -63,7 +74,7 @@ if (-not $SkipBuild) {
             docker tag $TemplateTag $remote
             docker push $remote
         }
-        Write-Host "    Update sandbox.image in kit/spec.yaml to: $remote"
+        Write-Host "    Update sandbox.image in $KitDir/spec.yaml to: $remote"
     }
     else {
         New-Item -ItemType Directory -Force -Path (Join-Path $repoRoot "dist") | Out-Null
@@ -123,7 +134,11 @@ Invoke-Step "Validating kit and mixins" {
     Get-ChildItem -Directory (Join-Path $repoRoot "mixins") | ForEach-Object {
         sbx kit validate $_.FullName
     }
-    sbx kit validate (Join-Path $repoRoot "kit")
+    Get-ChildItem -Directory (Join-Path $repoRoot ".") |
+        Where-Object { $_.Name -like "kit*" } |
+        ForEach-Object {
+            sbx kit validate $_.FullName
+        }
 }
 
 Write-Host ""

@@ -3,8 +3,13 @@
   "images": [
     {
       "name": "opencode-node-dotnet",
-      "context": "template",
-      "spec": "kit-published/spec.yaml"
+      "context": "template-node-dotnet",
+      "spec": "kit-published-node-dotnet/spec.yaml"
+    },
+    {
+      "name": "opencode-python",
+      "context": "template-python",
+      "spec": "kit-published-python/spec.yaml"
     }
   ]
 }

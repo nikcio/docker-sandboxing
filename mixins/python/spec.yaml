@@ -1,0 +1,23 @@
+# Python mixin: PyPI egress and agent notes.
+schemaVersion: "2"
+kind: mixin
+name: python
+displayName: Python / uv
+description: >
+  Network rules for the Python toolchain: the PyPI index and package files
+  for uv/pip installs and fetches. Interpreter downloads via
+  `uv python install` reuse the git mixin's GitHub egress.
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # PyPI (uv/pip installs, index queries)
+      - pypi.org:443
+      - "*.pypi.org:443"
+      # Package files served from the PyPI CDN
+      - files.pythonhosted.org:443
+      - "*.pythonhosted.org:443"
+
+# Agent memory note: files/home/.sbx-agents.d/python.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).

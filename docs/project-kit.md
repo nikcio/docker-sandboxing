@@ -73,7 +73,7 @@ of the stock mixins.
 
    ```yaml
    kits:
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published&ref=v0.6.0
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node-dotnet&ref=v0.6.0
      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v0.6.0
      # ...the other stock mixins your project keeps...
      - ./sandbox-kit

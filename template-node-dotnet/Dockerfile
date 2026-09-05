@@ -5,11 +5,11 @@
 #   - Node.js via NVM (LTS) + PNPM
 #   - Git, GitHub CLI (gh), and common CLI utilities
 #
-# Build:   docker build -t opencode-node-dotnet:v1 template/
+# Build:   docker build -t opencode-node-dotnet:v1 template-node-dotnet/
 # Load:    docker image save opencode-node-dotnet:v1 -o dist/opencode-node-dotnet-v1.tar
 #          sbx template load dist/opencode-node-dotnet-v1.tar
 #
-# The kit in ../kit/ points at this image via `sandbox.image`.
+# The kit in ../kit-node-dotnet/ points at this image via `sandbox.image`.
 
 ARG BASE_IMAGE=docker/sandbox-templates:opencode-docker
 FROM ${BASE_IMAGE}

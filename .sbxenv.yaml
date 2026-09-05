@@ -10,7 +10,7 @@ name: docker-sandboxing
 agent: opencode-node-dotnet
 
 kits:
-  - ./kit                     # agent definition (dev kit, local image)
+  - ./kit-node-dotnet         # agent definition (dev kit, local image)
   - ./mixins/opencode-runtime # agent runtime
   - ./mixins/zeldoc           # Zeldoc.ai provider
   - ./mixins/git              # git + worktrees

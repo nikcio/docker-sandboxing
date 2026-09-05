@@ -1,7 +1,7 @@
 # Docker sandboxing
 
 Docker Sandboxes kits and template images for running OpenCode agents
-(.NET + Node) in sandboxed VMs.
+(.NET + Node, Python + uv) in sandboxed VMs.
 
 ## Documentation
 
@@ -24,24 +24,39 @@ Use based on your task:
 This repo is published at `github.com/nikcio/docker-sandboxing` and produces
 these Docker Sandboxes artifacts:
 
-- `template/Dockerfile` — the sandbox template image
+- `template-node-dotnet/Dockerfile` — the sandbox template image
   (`opencode-node-dotnet:v1`): OpenCode base image + .NET SDK, Node via NVM,
   PNPM, Git, and the `o` PATH shim for relaunching opencode (a shim, not an
   rc alias, so it works in every shell context). Rebuild and reload after
   changes (`scripts/bootstrap.ps1` / `scripts/bootstrap.sh`, or
   `docker build` + `docker image save` + `sbx template load`).
-- `kit/` — thin declarative sandbox kit (`schemaVersion: "2"`,
+- `template-python/Dockerfile` — the Python variant of the template image
+  (`opencode-python:v1`): OpenCode base image + uv-managed CPython
+  (default `PYTHON_VERSION=3.13`, user-level under the agent home, symlinked
+  to `/usr/local/bin`) + uv (system-wide, unpinned like `gh`; updates come
+  from image rebuilds), Git, and the same `o` shim. `UV_LINK_MODE=copy` is
+  set because workspace bind mounts live on another filesystem than the uv
+  cache.
+- `kit-node-dotnet/` — thin declarative sandbox kit (`schemaVersion: "2"`,
   `kind: sandbox`, `extends: opencode`): template image + entrypoint +
-  a permissive OpenCode config (`kit/files/home/.config/opencode/opencode.jsonc`,
+  a permissive OpenCode config
+  (`kit-node-dotnet/files/home/.config/opencode/opencode.jsonc`,
   dropped into the global config layer; edit/bash/webfetch allowed — the
-  sandbox is the isolation boundary). Validate with `sbx kit validate kit/`.
-- `kit-published/` — published variant of `kit/`: same spec except
-  `sandbox.image` points at the public image on Docker Hub
+  sandbox is the isolation boundary). Validate with
+  `sbx kit validate kit-node-dotnet/`.
+- `kit-python/` + `kit-published-python/` — Python + uv variants of
+  `kit-node-dotnet/` and `kit-published-node-dotnet/` (`opencode-python`):
+  same entrypoint/setup/files shape; only the memory base's environment
+  facts and the config comment differ. Keep all four kits in sync when
+  touching shared kit content.
+- `kit-published-node-dotnet/` — published variant of `kit-node-dotnet/`:
+  same spec except `sandbox.image` points at the public image on Docker Hub
   (`docker.io/nikcio/opencode-node-dotnet:vX.Y.Z`). Keep it in sync with
-  `kit/`; release-please bumps its `version:` + image tag (and the `&ref=`
-  pins in `examples/opencode-node-dotnet.sbxenv.yaml`) in the release PR.
+  `kit-node-dotnet/`; release-please bumps its `version:` + image tag (and
+  the `&ref=` pins in `examples/*.sbxenv.yaml`) in the release PR.
 - `mixins/<area>/` — one mixin kit per area (`kind: mixin`): `zeldoc`,
-  `git`, `node`, `dotnet`, `docker`, `opencode-runtime`, `apt`, `browser`
+  `git`, `node`, `dotnet`, `python`, `docker`, `opencode-runtime`, `apt`,
+  `browser`
   (Chrome, software only), three playwright levels (`playwright`,
   `playwright-chromium`, `playwright-all`), and `sbx` (the Docker
   Sandboxes CLI for in-sandbox kit authoring). Each mixin
@@ -57,8 +72,8 @@ Constraints to respect:
   startup banner, auto-runs `opencode`, then `exec`s an interactive login
   shell — quitting the agent must leave a usable shell. Keep that shape.
 - The sandbox `AGENTS.md` (written next to the workspace) is rebuilt by the
-  kit entrypoint before opencode starts: base content from
-  `kit/files/home/.sandbox-agents.md` plus every mixin's
+  kit entrypoint before opencode starts: base content from the dev kit's
+  `files/home/.sandbox-agents.md` plus every mixin's
   `mixins/<area>/files/home/.sbx-agents.d/<area>.md`, appended directly. Do
   not use `agentInstructions` for mixin memory — it can only append after
   the runtime's built-in baseline and lands in a Kits-index side file.

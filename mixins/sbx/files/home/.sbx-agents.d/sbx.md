@@ -4,7 +4,7 @@
   (download.docker.com — owned by this mixin)
 - What works inside the sandbox: kit authoring — `sbx kit validate`,
   `sbx kit inspect`, `sbx kit pack <dir> -o <file.zip>` on this repo's
-  `kit/`, `kit-published/`, and `mixins/<area>/`
+  `kit-*/`, `kit-published-*/`, and `mixins/<area>/`
 - What does not: sandbox lifecycle commands (`sbx run/create`,
   `sbx template load`) — they need KVM and a signed-in Docker account
   (`sbx login` opens a browser); both are unavailable inside the sandbox
