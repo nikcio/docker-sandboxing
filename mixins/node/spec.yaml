@@ -4,8 +4,9 @@ kind: mixin
 name: node
 displayName: Node.js / NVM / PNPM
 description: >
-  Network rules for the Node.js toolchain: nodejs.org distribution servers
-  for nvm installs and the npm registry for pnpm/npm/npx.
+  Network rules for the Node.js toolchain: the nodejs.org and iojs.org
+  distribution servers for nvm installs and the npm registry for
+  pnpm/npm/npx.
 version: 0.1.0
 
 permissions:
@@ -14,6 +15,9 @@ permissions:
       # nvm install / nodejs.org distribution
       - nodejs.org:443
       - "*.nodejs.org:443"
+      # nvm's io.js mirror (fetched by every `nvm ls-remote`; needed for
+      # io.js listings and installs)
+      - iojs.org:443
       # npm registry (pnpm/npm/npx installs and fetches)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"
