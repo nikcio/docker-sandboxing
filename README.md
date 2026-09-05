@@ -13,9 +13,8 @@ a proxy — the sandbox only ever sees placeholders.
 ## Use it in your project
 
 1. **Copy the example.** Copy `examples/opencode-node-dotnet.sbxenv.yaml`
-   into your project's root and rename it `.sbxenv.yaml` — the same pattern
-   this repo uses for its own development sandbox. Commit it so teammates
-   get the same sandbox.
+   into your project's root and rename it `.sbxenv.yaml`. Commit it so
+   teammates get the same sandbox.
 2. **Adjust the config to your project.** Set `name:`; drop the mixin lines
    your project doesn't need (`workspace.path: .` targets the repo itself).
 3. **Run it** from your project root.

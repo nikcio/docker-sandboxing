@@ -3,9 +3,8 @@
 Use this repo's sandbox in three steps:
 
 1. **Copy the example.** Copy `examples/opencode-node-dotnet.sbxenv.yaml`
-   into your project's root and rename it `.sbxenv.yaml` — the same pattern
-   this repo uses for its own development sandbox. Commit it so teammates
-   get the same sandbox.
+   into your project's root and rename it `.sbxenv.yaml`. Commit it so
+   teammates get the same sandbox.
 
 2. **Adjust the config to your project.** In `.sbxenv.yaml`:
    - `name:` — a unique name for this sandbox (used by `sbx-env`, secrets, etc.)
