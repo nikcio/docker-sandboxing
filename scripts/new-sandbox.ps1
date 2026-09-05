@@ -253,7 +253,7 @@ else {
 $kits = @()
 if ($Source -eq "git") {
     $gitBase = "git+https://github.com/$Repo.git"
-    $kits += if ($Ref) { "$gitBase#ref=$Ref&dir=kit" } else { "$gitBase#dir=kit" }
+    $kits += if ($Ref) { "$gitBase#ref=$Ref&dir=kit-published" } else { "$gitBase#dir=kit-published" }
     foreach ($m in $Mixins) {
         $kits += if ($Ref) { "$gitBase#ref=$Ref&dir=mixins/$m" } else { "$gitBase#dir=mixins/$m" }
     }

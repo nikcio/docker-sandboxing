@@ -284,9 +284,9 @@ KITS=()
 if [ "$SOURCE" = "git" ]; then
     git_base="git+https://github.com/${REPO}.git"
     if [ -n "$REF" ]; then
-        KITS+=("${git_base}#ref=${REF}&dir=kit")
+        KITS+=("${git_base}#ref=${REF}&dir=kit-published")
     else
-        KITS+=("${git_base}#dir=kit")
+        KITS+=("${git_base}#dir=kit-published")
     fi
     if [ -n "$MIXINS" ]; then
         for m in $MIXINS; do

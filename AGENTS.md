@@ -1,9 +1,22 @@
 # Docker sandboxing
 
+Docker Sandboxes kits and template images for running OpenCode agents
+(.NET + Node) in sandboxed VMs.
+
+## Documentation
+
+Use based on your task:
+
+- **[Versioning](agent-guidance/versioning.md)** — release-please flow,
+  version bumps, image publishing, adding an image. Read when preparing a
+  release or touching pinned versions.
+- **[Commit Messages](agent-guidance/commit-messages.md)** — Conventional
+  Commits style, types, scopes, examples. Read when writing commit messages.
+
 ## Repository specifics
 
 This repo is published at `github.com/nikcio/docker-sandboxing` and produces
-two Docker Sandboxes artifacts:
+these Docker Sandboxes artifacts:
 
 - `template/Dockerfile` — the sandbox template image
   (`opencode-node-dotnet:v1`): OpenCode base image + .NET SDK, Node via NVM,
@@ -16,6 +29,11 @@ two Docker Sandboxes artifacts:
   a permissive OpenCode config (`kit/files/home/.config/opencode/opencode.jsonc`,
   dropped into the global config layer; edit/bash/webfetch allowed — the
   sandbox is the isolation boundary). Validate with `sbx kit validate kit/`.
+- `kit-published/` — published variant of `kit/`: same spec except
+  `sandbox.image` points at the public image on Docker Hub
+  (`docker.io/nikcio/opencode-node-dotnet:vX.Y.Z`). Keep it in sync with
+  `kit/`; release-please bumps its `version:` + image tag (and the `&ref=`
+  pins in `examples/opencode-node-dotnet.sbxenv.yaml`) in the release PR.
 - `mixins/<area>/` — one mixin kit per area (`kind: mixin`): `zeldoc`,
   `git`, `node`, `dotnet`, `docker`, `opencode-runtime`, `apt`. Each mixin
   must stay single-purpose — only the network rules, env vars, credentials,
@@ -59,3 +77,10 @@ Constraints to respect:
   stays out of the sandbox VM.
 - Do not commit build outputs: `dist/`, `*.tar`, `*.zip`,
   `local.sbxenv.yaml`.
+- Releases are cut by release-please from Conventional Commits on `main`
+  (`feat`/`fix`/`deps` trigger a release; other types do not). Merging the
+  release PR tags `vX.Y.Z`, and `publish-image.yml` pushes every image in
+  `images.json` to Docker Hub as public `:vX.Y.Z` + `:latest` images
+  (needs `DOCKERHUB_USERNAME` + `DOCKERHUB_TOKEN` repo secrets). Never
+  bump pinned versions by hand — the release PR owns every
+  `x-release-please` block.

@@ -7,17 +7,20 @@ agent: opencode-node-dotnet
 # Composition: the sandbox kit (template + entrypoint) plus the area-specific
 # mixins you want. Drop or add lines to scope the sandbox to your project —
 # each mixin only contributes its own network rules, settings, and notes.
-# Git refs fetch from github.com/nikcio/docker-sandboxing; pin with &ref=vX.Y.Z.
-# When iterating from a clone, swap any ref for a local dir (e.g. ./kit).
+# Development variant: kits load from this working copy and use the locally
+# built image (opencode-node-dotnet:v1 — docker build + sbx template load,
+# see scripts/bootstrap.*). For the released variant (git refs pinned to a
+# release, public image on Docker Hub) see
+# examples/opencode-node-dotnet.sbxenv.yaml.
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit                     # agent definition
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime # agent runtime
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc           # Zeldoc.ai provider
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git              # git + worktrees
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node             # node/npm
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet           # .NET/NuGet
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker           # in-sandbox docker
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/apt              # apt mirrors
+  - ./kit                     # agent definition (dev kit, local image)
+  - ./mixins/opencode-runtime # agent runtime
+  - ./mixins/zeldoc           # Zeldoc.ai provider
+  - ./mixins/git              # git + worktrees
+  - ./mixins/node             # node/npm
+  - ./mixins/dotnet           # .NET/NuGet
+  - ./mixins/docker           # in-sandbox docker
+  - ./mixins/apt              # apt mirrors
 workspace: .
 
 env:

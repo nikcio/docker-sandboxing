@@ -1,0 +1,10 @@
+{
+  "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each context and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). Pair every image with a published kit spec that pins docker.io/nikcio/<name>:vX.Y.Z and register that spec in .release-please-config.json (extra-files) so releases bump it.",
+  "images": [
+    {
+      "name": "opencode-node-dotnet",
+      "context": "template",
+      "spec": "kit-published/spec.yaml"
+    }
+  ]
+}

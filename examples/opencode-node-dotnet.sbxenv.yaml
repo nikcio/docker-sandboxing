@@ -16,17 +16,22 @@ agent: opencode-node-dotnet
 # Composition: the sandbox kit (template + entrypoint) plus the area-specific
 # mixins you want. Drop or add lines to scope the sandbox to your project —
 # each mixin only contributes its own network rules, settings, and notes.
-# Git refs fetch from github.com/nikcio/docker-sandboxing; pin with &ref=vX.Y.Z.
+# Git refs are pinned to the latest release (&ref=vX.Y.Z); release-please
+# bumps the pins with each release. The agent kit is the published variant
+# (kit-published/), whose sandbox.image points at the public image on
+# Docker Hub pushed by the release workflow.
 # When iterating from a clone, swap any ref for a local dir (e.g. ./kit).
+# x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit                     # agent definition
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime # agent runtime
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc           # Zeldoc.ai provider
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git              # git + worktrees
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node             # node/npm
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet           # .NET/NuGet
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker           # in-sandbox docker
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/apt              # apt mirrors
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published&ref=v0.5.0           # agent definition (published image)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v0.5.0 # agent runtime
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v0.5.0           # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v0.5.0              # git + worktrees
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=v0.5.0             # node/npm
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet&ref=v0.5.0           # .NET/NuGet
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker&ref=v0.5.0           # in-sandbox docker
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/apt&ref=v0.5.0              # apt mirrors
+# x-release-please-end-version
 workspace: ./my-project
 
 env:
