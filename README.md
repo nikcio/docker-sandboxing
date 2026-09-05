@@ -72,8 +72,8 @@ environment:
 - [Docker Desktop](https://docs.docker.com/desktop/) with the `sbx` CLI
   installed and signed in (`sbx login`), version 0.39.0+
 - This repository published at `github.com/nikcio/docker-sandboxing` (kits
-  are fetched from there by default; the repo must be **public** for
-  `git+https`, or use `git+ssh` / `-Source local` from a clone)
+  are fetched from there by default). The repo can be public or private —
+  you just need access to it
 - A [Zeldoc.ai](https://zeldoc.ai) API key
   ([setup guide](https://docs.zeldoc.ai/connect-opencode))
 - Optional: a fine-grained [GitHub personal access token](#github-cli--a-scoped-personal-access-token)
@@ -339,7 +339,8 @@ sbx env run
 ## Publishing
 
 - **Push this repo** to `github.com/nikcio/docker-sandboxing` — that's where
-  `sbx-new` fetches kits from by default. For reproducible launches, pin a
+  `sbx-new` fetches kits from by default. The repo can be public or
+  private; you just need access to it. For reproducible launches, pin a
   tag: `SBX_SANDBOX_REF=v1.0.0 sbx-new <workspace>` (or pass `--ref`).
 - **OCI alternative**: pack/push each directory (`sbx kit pack kit/ -o …`,
   `sbx kit push mixins/zeldoc/ <oci-ref>`, …). Any non-Docker-Hub kit source
