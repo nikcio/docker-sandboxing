@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Shell scripts must stay LF even when the working tree lives on a Windows
+# mount (CRLF breaks bash parsing, and text=auto hides it from git status).
+*.sh text eol=lf

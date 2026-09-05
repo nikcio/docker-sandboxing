@@ -6,7 +6,7 @@ displayName: .NET / NuGet
 description: >
   Network rules and settings for .NET work: NuGet restore, SDK and workload
   downloads, Microsoft package hosts, plus CLI telemetry opt-out.
-version: 0.1.0
+version: 0.2.0
 
 environment:
   variables:
@@ -26,6 +26,13 @@ permissions:
       - "*.dot.net:443"
       # Legacy download CDNs
       - "*.azureedge.net:443"
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints hit by
+      # .NET's X509 chain engine during NuGet restore/package signature
+      # validation. Blocking them only adds latency (TLS soft-fails).
+      - "*.digicert.com:443"
+      - "*.symcd.com:443"
+      - "*.symcb.com:443"
+      - "*.ws.symantec.com:443"
     deny:
       # .NET / Application Insights telemetry. Deny rules win over allow,
       # so this also blocks hosts matching *.microsoft.com above.

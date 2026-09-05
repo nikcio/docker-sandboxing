@@ -298,7 +298,7 @@ mixin's `permissions.network.allow` is the only egress. Domains per mixin:
 | `opencode-runtime` | `opencode.ai`, `models.dev`, `registry.npmjs.org` (plugins) |
 | `node` | `nodejs.org`, `*.nodejs.org`, `registry.npmjs.org`, `*.npmjs.org`, `npmjs.com` |
 | `git` | `github.com`, `*.github.com`, `*.githubusercontent.com`, `gitlab.com` (bare hosts → git over SSH works) |
-| `dotnet` | `nuget.org`, `*.nuget.org`, `*.microsoft.com`, `dot.net`, `*.dot.net`, `*.azureedge.net` |
+| `dotnet` | `nuget.org`, `*.nuget.org`, `*.microsoft.com`, `dot.net`, `*.dot.net`, `*.azureedge.net`, `*.digicert.com`, `*.symcd.com`, `*.symcb.com`, `*.ws.symantec.com` (CA OCSP/CRL + timestamp checks) |
 | `docker` | `docker.io`, `*.docker.io`, `*.docker.com`, `production.cloudflare.docker.com`, `ghcr.io` |
 | `apt` | `archive.ubuntu.com`, `security.ubuntu.com`, `packages.microsoft.com`, `*.launchpadcontent.net` |
 
