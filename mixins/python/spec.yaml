@@ -5,12 +5,13 @@ name: python
 displayName: Python / uv
 description: >
   Network rules for the Python toolchain: the PyPI index and package files
-  for uv/pip installs and fetches, astral.sh for the uv installer
-  (reinstalling uv in-sandbox gets a newer release than the one baked into
-  the image; `uv self update` is disabled for unmanaged installs), and the
-  python.org docs sites so the agent can look up language docs and
-  release/version info. Interpreter downloads via `uv python install`
-  reuse the git mixin's GitHub egress.
+  for uv/pip installs and fetches, astral.sh and its releases.astral.sh
+  redirect/artifact host for the uv installer (reinstalling uv in-sandbox
+  gets a newer release than the one baked into the image; `uv self update`
+  is disabled for unmanaged installs), and the python.org docs sites so
+  the agent can look up language docs and release/version info.
+  Interpreter downloads via `uv python install` reuse the git mixin's
+  GitHub egress.
 version: 0.1.0
 
 permissions:
@@ -22,9 +23,12 @@ permissions:
       # Package files served from the PyPI CDN
       - files.pythonhosted.org:443
       - "*.pythonhosted.org:443"
-      # uv installer (`curl -LsSf https://astral.sh/uv/install.sh | sh`);
-      # the binaries it downloads come from GitHub releases (git mixin)
+      # uv installer (`curl -LsSf https://astral.sh/uv/install.sh | sh`) —
+      # astral.sh 301-redirects the installer script to releases.astral.sh,
+      # which is also the installer's primary artifact host (binaries fall
+      # back to GitHub releases, covered by the git mixin)
       - astral.sh:443
+      - releases.astral.sh:443
       # Python docs and release info for agent lookups (docs.python.org,
       # www.python.org/ftp, devguide.python.org lifecycles, peps.python.org)
       - python.org:443
