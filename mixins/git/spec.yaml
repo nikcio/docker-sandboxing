@@ -1,9 +1,10 @@
 # Git mixin: git hosting egress, proxy-managed GitHub auth, and the
 # worktree workflow.
 #
-# Provision the token per sandbox (fine-grained PATs only — never the
-# broad-scope host `gh` token): `sbx-env`, or manually with
-# `sbx secret set github --sandbox <sandbox-name>`. See docs/github-pat.md.
+# Provision the token per sandbox with sbx's own prompt (fine-grained PATs
+# only — never the broad-scope host `gh` token):
+#   sbx secret set github --sandbox <sandbox-name>
+# See docs/github-pat.md.
 schemaVersion: "2"
 kind: mixin
 name: git

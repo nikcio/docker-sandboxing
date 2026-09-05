@@ -71,9 +71,8 @@ Everything below is for developing the template, kit, and mixins.
 ├── kit-published/                          # same kit, published image tag
 ├── mixins/<area>/                          # one mixin per capability area
 ├── scripts/
-│   ├── bootstrap.ps1 / bootstrap.sh        # host setup (build, load, secrets, aliases)
-│   ├── new-sandbox.ps1 / new-sandbox.sh    # `sbx-new` wizard launcher
-│   └── sbx-env.ps1 / sbx-env.sh            # `sbx-env` GitHub-PAT launcher
+│   ├── bootstrap.ps1 / bootstrap.sh        # host setup (build, load, secrets, alias)
+│   └── new-sandbox.ps1 / new-sandbox.sh    # `sbx-new` wizard launcher
 ├── examples/opencode-node-dotnet.sbxenv.yaml  # consumer environment example
 ├── docs/                                   # user guides (see above)
 ├── agent-guidance/                         # versioning + commit conventions
@@ -102,7 +101,7 @@ Everything below is for developing the template, kit, and mixins.
 
 ```bash
 ./scripts/bootstrap.sh     # or bootstrap.ps1: build + load template, register
-                           # the Zeldoc key, register sbx-new/sbx-env, validate
+                           # the Zeldoc key, register sbx-new, validate
 sbx kit validate kit/      # validate a kit or mixin after edits
 sbx-new                    # wizard launcher for a dev sandbox (uses ./.sbxenv.yaml
                            # equivalents; --source local picks up uncommitted edits)

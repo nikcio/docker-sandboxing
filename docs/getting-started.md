@@ -7,7 +7,7 @@ Use this repo's sandbox in three steps:
    teammates get the same sandbox.
 
 2. **Adjust the config to your project.** In `.sbxenv.yaml`:
-   - `name:` — a unique name for this sandbox (used by `sbx-env`, secrets, etc.)
+   - `name:` — a unique name for this sandbox (used to scope its secrets)
    - `kits:` — drop the mixin lines your project doesn't need (see
      [mixins.md](mixins.md))
    - `workspace.path` is `.` (the repo itself); point it elsewhere only if

@@ -9,9 +9,7 @@
 #   - Registers the Zeldoc.ai API key (proxy-managed — the sandbox never
 #     sees it) and pre-creates the credential binding. Already-stored
 #     secrets are skipped; an env var always (re)registers.
-#   - Registers the `sbx-new` and `sbx-env` shell functions (`sbx-env`
-#     provisions the sandbox's GitHub PAT via sbx's prompt before
-#     `sbx env run`).
+#   - Registers the configurable `sbx-new` shell function.
 #   - Validates the kit and mixins.
 #
 # Usage:
@@ -56,8 +54,8 @@ if ! grep -qF "${KIT_SOURCE}" <<<"${current}"; then
     sbx settings set kit.allowedSources "$json"
 fi
 
-# Register the configurable `sbx-new` and `sbx-env` launchers as shell
-# functions. Skip with SKIP_ALIAS=1. Idempotent (marker comments).
+# Register the configurable `sbx-new` launcher as a shell function.
+# Skip with SKIP_ALIAS=1. Idempotent (marker comments).
 if [ -z "${SKIP_ALIAS:-}" ]; then
     marker="sbx-new (docker-sandboxing)"
     launcher="${REPO_ROOT}/scripts/new-sandbox.sh"
@@ -68,16 +66,6 @@ if [ -z "${SKIP_ALIAS:-}" ]; then
 
 # ${marker} — configurable sandbox launcher (see scripts/new-sandbox.sh)
 sbx-new() { bash "${launcher}" "\$@"; }
-EOF
-    fi
-    marker="sbx-env (docker-sandboxing)"
-    launcher="${REPO_ROOT}/scripts/sbx-env.sh"
-    if ! grep -qF "$marker" "$rc_file" 2>/dev/null; then
-        step "Registering sbx-env function in ${rc_file}"
-        cat >> "$rc_file" <<EOF
-
-# ${marker} — GitHub-PAT-aware \`sbx env run\` launcher (see scripts/sbx-env.sh)
-sbx-env() { bash "${launcher}" "\$@"; }
 EOF
     fi
 fi
@@ -118,9 +106,9 @@ else
 fi
 unset ZELDOC_API_KEY
 
-# GitHub tokens are provisioned PER SANDBOX (`sbx secret set github
-# --sandbox <name>`; the sbx-env launcher automates it) — never globally
-# here. See docs/github-pat.md.
+# GitHub tokens are provisioned PER SANDBOX with sbx's own prompt
+# (`sbx secret set github --sandbox <name>`) — never globally here.
+# See docs/github-pat.md.
 
 # Third-party v2 kits need a credential binding approval. The first
 # interactive `sbx run` prompts for it; pre-create it for unattended use.
@@ -154,7 +142,7 @@ sbx kit validate "${REPO_ROOT}/kit"
 
 cat <<EOF
 
-Done. Open a NEW shell so 'sbx-new' and 'sbx-env' are loaded, then launch with:
+Done. Open a NEW shell so 'sbx-new' is loaded, then launch with:
   sbx-new                                   # guided wizard
   sbx-new <path-to-project>                 # scripted: full stack from GitHub
   sbx-new --profile node <path-to-project>  # node-only mixin set
@@ -163,7 +151,7 @@ Done. Open a NEW shell so 'sbx-new' and 'sbx-env' are loaded, then launch with:
 Tip: kit changes only apply to NEW sandboxes. Recreate with:
   sbx rm <sandbox-name> && sbx-new <path-to-project>
 
-GitHub PAT for a sandbox environment: launch with 'sbx-env' - it prompts
-via sbx at first run (stored only in sbx's secret store). Rotate with:
-  sbx secret set github --sandbox <environment-name>
+GitHub PAT for a sandbox (lets the agent push and open PRs): store it with
+sbx's own prompt, scoped to the sandbox (see docs/github-pat.md):
+  sbx secret set github --sandbox <sandbox-name>
 EOF

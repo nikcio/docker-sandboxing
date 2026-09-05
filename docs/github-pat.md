@@ -33,20 +33,9 @@ touch**, not your host `gh` login (that one carries broad scopes like
 sbx secret set github --sandbox <sandbox-name>
 ```
 
-sbx prompts for the token and stores it in the keychain at that sandbox's
-scope. `<sandbox-name>` is the environment's `name:` from your
-`.sbxenv.yaml`.
-
-Easier: launch with this repo's `sbx-env` script (registered by
-`scripts/bootstrap.*`) — it checks the keychain first and only prompts when
-the token is missing:
-
-```console
-$ sbx-env
-No GitHub token stored for sandbox "my-project" yet.
-sbx will prompt for a fine-grained PAT (stored only in sbx's secret store).
-Enter secret: ********************************
-```
+sbx prompts for the token ("Enter secret:") and stores it in its secret
+store (the OS keychain) at that sandbox's scope. `<sandbox-name>` is the
+environment's `name:` from your `.sbxenv.yaml`.
 
 ## 3. Approve the credential binding
 
