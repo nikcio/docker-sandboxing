@@ -1,29 +1,9 @@
-# sbx mixin: the Docker Sandboxes CLI (`sbx`) inside the sandbox.
+# sbx mixin: the Docker Sandboxes CLI (`sbx`) inside the sandbox, for kit
+# authoring (validate/inspect/pack) from within a sandbox.
 #
-# Installs the `docker-sbx` package from Docker's official apt repo so the
-# agent can author/verify this repo's kits and mixins from inside a sandbox:
-#
-#   sbx kit validate <dir>   sbx kit inspect <dir>   sbx kit pack <dir> -o ...
-#
-# Sandbox lifecycle commands (`sbx run/create`, template load) need KVM and
-# a signed-in Docker account (browser OAuth) — not available inside the
-# sandbox VM; expect those to fail. See the agent memory note.
-#
-# The apt repo entry is kept (unlike the template's gh pattern) because
-# download.docker.com is allowed by this mixin — the agent can
-# apt-get update/upgrade docker-sbx later.
-#
-# Needs the `apt` mixin composed: `apt-get update` at install time reads
-# the Ubuntu archives, which that mixin owns.
-#
-# The update+install run against a private lists dir
-# (-o Dir::State::lists=...): at sandbox start the kit's background
-# `apt-get update` startup hook may still hold /var/lib/apt/lists/lock,
-# and apt-get update has no lock-wait option — without the private dir
-# this install fails with "Could not get lock /var/lib/apt/lists/lock
-# (held by process N (apt-get))", exit 100. The install step itself needs
-# no lists lock (only the dpkg + archives locks), so the shared lists dir
-# is left to the startup hook and the private dir is removed after.
+# Sandbox lifecycle commands (`sbx run/create`, template load) fail inside
+# the sandbox VM — they need KVM and a signed-in Docker account. Needs the
+# apt mixin for the Ubuntu archive reads at install time.
 schemaVersion: "2"
 kind: mixin
 name: sbx
@@ -37,6 +17,12 @@ version: 0.1.0
 
 setup:
   install:
+    # The apt repo entry is kept (download.docker.com is allowed) so the
+    # agent can upgrade docker-sbx later. The update+install run against a
+    # private lists dir: the kit's background `apt-get update` startup hook
+    # may still hold /var/lib/apt/lists/lock (apt-get update has no
+    # lock-wait option), and this install only needs the dpkg + archives
+    # locks.
     - command: >
         install -m 0755 -d /etc/apt/keyrings
         && curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
@@ -52,6 +38,5 @@ permissions:
       # Docker apt repo (docker-sbx package + keyring; kept for upgrades)
       - download.docker.com:443
 
-# Agent memory: files/home/.sbx-agents.d/sbx.md — the base kit's entrypoint
-# appends it directly to the sandbox AGENTS.md (agentInstructions would only
-# add a Kits-index side file after the runtime baseline).
+# Agent memory note: files/home/.sbx-agents.d/sbx.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).

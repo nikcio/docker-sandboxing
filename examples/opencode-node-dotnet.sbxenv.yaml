@@ -1,26 +1,20 @@
-# Example Docker Sandboxes environment file for the opencode-node-dotnet kit.
+# OpenCode sandbox environment (.NET + Node).
 #
-# Copy this NEXT TO your project directory (keep it OUTSIDE every mounted
-# workspace) and adjust the paths, then run:  sbx env run
+# 1. Copy this file into a folder NEXT TO your project and rename it .sbxenv.yaml
+#    (keep it OUTSIDE the project folder — it becomes the sandbox's parent).
+# 2. Adjust `name:` and `workspace.path:` below; drop the kit lines your
+#    project doesn't need (see ../docs/mixins.md).
+# 3. Run:  sbx env run
 #
-#   my-project-env/
-#   ├── .sbxenv.yaml          <- this file, renamed
-#   └── my-project/           <- your code (becomes the workspace)
-#
-# See https://docs.docker.com/ai/sandboxes/configuration/environment-files/
+# Full guide: ../docs/getting-started.md
+# Environment file docs: https://docs.docker.com/ai/sandboxes/configuration/environment-files/
 
 schemaVersion: "1"
 name: my-project
-# The agent defined by this repo's sandbox kit (kit/spec.yaml `name:`).
 agent: opencode-node-dotnet
-# Composition: the sandbox kit (template + entrypoint) plus the area-specific
-# mixins you want. Drop or add lines to scope the sandbox to your project —
-# each mixin only contributes its own network rules, settings, and notes.
-# Git refs are pinned to the latest release (&ref=vX.Y.Z); release-please
-# bumps the pins with each release. The agent kit is the published variant
-# (kit-published/), whose sandbox.image points at the public image on
-# Docker Hub pushed by the release workflow.
-# When iterating from a clone, swap any ref for a local dir (e.g. ./kit).
+
+# The sandbox kit plus the mixins your project needs. Refs are pinned to the
+# latest release; release-please bumps them (do not edit by hand).
 # x-release-please-start-version
 kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published&ref=v0.6.0           # agent definition (published image)
@@ -34,9 +28,10 @@ kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/browser&ref=v0.6.0          # Google Chrome
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v0.6.0       # Playwright + Chromium headless shell
 # x-release-please-end-version
+
 workspace:
   path: ./my-project
-  clone: false # Set this to true to disconnect the agent from your local folder. This is better for security as the agent could install malicious git hooks in your local folder.
+  clone: false # true = sandbox works on its own copy (safer: the agent cannot touch your local folder)
 
 env:
   NODE_ENV: development
@@ -51,31 +46,7 @@ ports:
   - sandbox: 3000 # node / vite dev server
     host: 3000
 
-# GitHub auth for the gh CLI and git over HTTPS — the token lives ONLY in
-# sbx's secret store (the OS keychain), scoped to THIS sandbox; `sbx env rm`
-# removes it again. No `secrets:` entry here on purpose: sbx resolves
-# `secrets.*.command` non-interactively (docs: "host shell command whose
-# standard output becomes the secret" — stdout is captured as the token,
-# stderr only surfaces on failures), so an interactive prompt inside one can
-# never work. Provision instead via sbx's own prompt (use YOUR environment's
-# `name:` as the scope):
-#
-#   sbx-env                                     # this repo's launcher (scripts/
-#                                               # sbx-env.*, registered by
-#                                               # scripts/bootstrap.*): checks
-#                                               # the keychain, prompts via
-#                                               # `sbx secret set`, then runs
-#                                               # `sbx env run`
-#   sbx secret set github --sandbox my-project          # manually / rotate
-#
-# Fine-grained PATs only — never the broad-scope host `gh` token. Skipping
-# is fine: public repos and git over SSH keep working, and the sandbox's
-# [git-auth] startup banner points at the same command when git/gh over
-# HTTPS would fail.
-#
-# Credential injection approvals (merged into the host's global
-# credentials.yaml — approvals only, never secret values). Keep the domains
-# in sync with mixins/git/spec.yaml.
+# Approves GitHub token injection for the sandbox (docs/github-pat.md).
 bindings:
   github:
     apiKey:

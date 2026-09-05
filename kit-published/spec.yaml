@@ -1,43 +1,19 @@
-# Docker Sandboxes kit: OpenCode agent on the dotnet+node template.
+# Sandbox kit: OpenCode agent on the dotnet+node template.
 #
 # PUBLISHED VARIANT — what remote consumers fetch at a release tag:
-#
 #   git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published&ref=vX.Y.Z
 #
-# sandbox.image points at the public template image on Docker Hub, built
-# and pushed by .github/workflows/publish-image.yml when a release is
-# published. Keep this file in sync with ../kit/spec.yaml (the dev
-# kit, which uses the locally built image); the version + sandbox.image
-# lines below are the only intended differences and are bumped by
-# release-please.
+# sandbox.image points at the public template image on Docker Hub, built and
+# pushed by .github/workflows/publish-image.yml when a release is published.
+# release-please bumps the version + image tag between the x-release-please
+# markers. Keep in sync with ../kit/spec.yaml (the dev kit).
 #
-# This kit is intentionally thin — it only defines the agent itself
-# (template image + entrypoint). Capabilities are composed at launch by
-# stacking the area-specific mixins from ../mixins/:
+# The kit is intentionally thin: template image + entrypoint + permissive
+# OpenCode config. Compose capabilities at launch with the mixins from
+# ../mixins/ via --kit flags or a .sbxenv.yaml kits: list (the spec's
+# `mixins:` field is not applied by the runtime yet). See ../docs/.
 #
-#   zeldoc, dotnet, node, git, docker, opencode-runtime, apt, browser,
-#   playwright / playwright-chromium / playwright-all, sbx
-#
-# Compose via a .sbxenv.yaml (see ../examples/) or on the CLI:
-#
-#   sbx run \
-#     --kit <this kit> \
-#     --kit ./mixins/opencode-runtime \
-#     --kit ./mixins/zeldoc \
-#     --kit ./mixins/git \
-#     --kit ./mixins/node \
-#     --kit ./mixins/dotnet \
-#     --kit ./mixins/docker \
-#     --kit ./mixins/apt \
-#     --kit ./mixins/browser \
-#     --kit ./mixins/playwright \
-#     opencode-node-dotnet <workspace>
-#
-# Note: the spec's `mixins:` field is accepted by the schema but not yet
-# applied by the runtime, so composition is explicit (see above).
-#
-# Validate:  sbx kit validate kit-published/ && sbx kit validate mixins/<area>/
-# Schema:    https://docs.docker.com/ai/sandboxes/customize/kits/
+# Validate: sbx kit validate kit-published/
 schemaVersion: "2"
 kind: sandbox
 name: opencode-node-dotnet
@@ -51,35 +27,25 @@ description: >
   Compose the mixins from ../mixins/ to add capabilities (model provider,
   network areas, workflow rules). Enforces a no-.env policy in the workspace:
   refuses to start in direct mode when one exists, removes it in clone mode.
-# The version and the image tag are bumped together by release-please
-# (everything between the x-release-please markers below).
+# The version and the image tag are bumped together by release-please.
 # x-release-please-start-version
 version: 0.6.0
 
 sandbox:
-  # Published public image on Docker Hub. The publish-image workflow
-  # builds template/Dockerfile and pushes this tag (plus `latest`)
-  # whenever a release is published. Full docker.io prefix — sbx does
-  # not resolve the Docker Hub domain automatically.
+  # Public image on Docker Hub, pushed by the publish-image workflow
+  # (full docker.io prefix — sbx does not resolve the Docker Hub domain).
   image: docker.io/nikcio/opencode-node-dotnet:v0.6.0
 # x-release-please-end-version
-  # Attach target: a login shell, not opencode directly. It prints the
-  # startup banner, auto-launches opencode, and — when opencode exits —
-  # drops into an interactive login shell so the session stays usable
-  # (relaunch opencode from there with the template's `o` shim). Quitting
-  # that shell ends the session, like quitting opencode used to.
+  # Login shell: banner, auto-start opencode, drop into the shell when
+  # opencode exits (relaunch with `o`); quitting the shell ends the session.
   entrypoint:
     - bash
     - -c
     - |
-      # No-.env guard, scan phase — the report happens under the banner
-      # below. The workspace must never contain a .env file. In clone mode
-      # the workspace is a sandbox-local copy, so offenders are removed. In
-      # direct mode the host tree is mounted in place — deleting here would
-      # delete on the host — so the session is refused instead. The guard
-      # only speaks up when it acts: a WARNING + 5s pause before opencode
-      # when files were deleted (clone mode), a fatal ERROR when the
-      # session is refused (direct mode).
+      # Env guard, scan phase (reported under the banner below). The
+      # workspace must never contain a .env file. Clone mode removes
+      # offenders from the sandbox-local copy; direct mode (host tree
+      # mounted in place) refuses to start instead of deleting host files.
       __envs=""
       __clean="workspace clean (no .env files)"
       __guard_fatal=0
@@ -89,9 +55,6 @@ sandbox:
         __clean="workspace not checked (WORKSPACE_DIR is not set)"
       fi
       if [ -d /run/sandbox/source ]; then
-        # Clone mode: the workspace is a sandbox-local copy, so offenders
-        # can be removed safely. The host tree (mounted read-only at
-        # /run/sandbox/source) is never touched.
         if [ -n "$__envs" ]; then
           printf '%s\n' "$__envs" | while IFS= read -r __f; do rm -f -- "$__f"; done
         fi
@@ -99,14 +62,10 @@ sandbox:
         __guard_fatal=1
       fi
 
-
-      # Make the kit's AGENTS.md authoritative: the runtime writes a built-in
-      # baseline into the profile at creation and nothing in the kit grammar
-      # can replace it (agentInstructions.content is only ever appended), so
-      # the entrypoint rebuilds the file here — before opencode starts — from
-      # the kit's own copy plus every mixin note in ~/.sbx-agents.d/ (dropped
-      # by mixins/<area>/files/home/.sbx-agents.d/<area>.md), keeping the
-      # runtime's Kits index if one is ever generated again.
+      # Rebuild the sandbox AGENTS.md: the runtime's baseline can't be
+      # replaced from the kit grammar, so overwrite it before opencode
+      # starts with the kit's copy (~/.sandbox-agents.md) plus every mixin
+      # note in ~/.sbx-agents.d/, keeping the runtime's Kits index section.
       __agents="$(dirname "${WORKSPACE_DIR:-}")/AGENTS.md"
       __mine="$HOME/.sandbox-agents.md"
       if [ -n "${WORKSPACE_DIR:-}" ] && [ -f "$__agents" ] && [ -f "$__mine" ]; then
@@ -122,7 +81,6 @@ sandbox:
         } > "$__agents"
       fi
 
-
       cat <<'BANNER'
       ------------------------------------------------------------
        Sandbox
@@ -133,10 +91,8 @@ sandbox:
       ------------------------------------------------------------
       BANNER
 
-
-      # No-.env guard report, under the banner: only speaks up when it
-      # acts — WARNING + 5s pause when .env files were deleted (clone
-      # mode), fatal ERROR + exit when the session is refused (direct).
+      # Env guard report: WARNING + 5s pause when files were deleted
+      # (clone mode), fatal ERROR when the session is refused (direct).
       if [ "$__guard_fatal" = "1" ]; then
         echo "============================================================"
         echo "ERROR [env-guard]: .env file(s) found in the workspace (direct mode):"
@@ -160,13 +116,9 @@ sandbox:
         echo "[env-guard] direct mode - $__clean"
       fi
 
-      # GitHub auth probe, under the banner: api.github.com/user answers
-      # 401 without a (valid) proxy-injected token and 200 with one, so it
-      # says something only when git/gh over HTTPS would actually fail. A
-      # blocked or unreachable host (git mixin not composed, offline)
-      # yields no status at all and stays silent. The token lives only in
-      # sbx's host-side secret store — never in files — and takes effect
-      # immediately, no restart needed.
+      # Git auth probe: api.github.com/user answers 401 without a valid
+      # proxy-injected token, 200 with one — speak up only when git/gh over
+      # HTTPS would fail. Blocked/unreachable hosts stay silent.
       if command -v curl >/dev/null 2>&1; then
         __gh="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 https://api.github.com/user 2>/dev/null || true)"
         if [ "$__gh" = "401" ]; then
@@ -182,7 +134,6 @@ sandbox:
         fi
       fi
 
-      
       if command -v opencode >/dev/null 2>&1; then
         opencode
         echo "opencode exited - back in the sandbox shell (relaunch: o or opencode)"
@@ -196,15 +147,10 @@ setup:
     - command: ["sh", "-c", "command -v apt-get > /dev/null 2>&1 && (apt-get update -qq -y > /dev/null 2>&1 || true) &"]
       user: "root"
       description: Update apt package cache in background
-    # Gateway-first MCP registration. sandboxd injects MCP_GATEWAY_URL +
-    # MCP_SENTINEL_TOKEN_NAME into the container env when a gateway has
-    # been reserved. The sentinel name is not a credential — the proxy
-    # substitutes the real token at request time keyed by this name.
-    # No-op when MCP isn't enabled.
-    #
-    # opencode reads MCP server config from ~/.config/opencode/opencode.json.
-    # opencode owns the file (no baseline keys to preserve), so the
-    # script writes it fresh via heredoc.
+    # MCP gateway registration (no-op when MCP isn't enabled). sandboxd
+    # injects MCP_GATEWAY_URL + MCP_SENTINEL_TOKEN_NAME; the sentinel name
+    # is not a credential — the proxy substitutes the real token at request
+    # time. opencode owns ~/.config/opencode/opencode.json, so write it fresh.
     - command:
         - sh
         - -c
@@ -230,12 +176,8 @@ setup:
       user: "agent"
       description: Register the sandbox MCP gateway in ~/.config/opencode/opencode.json
 
-# Declares the sandbox-managed agent memory file (AGENTS.md next to the
-# workspace). The runtime generates it at creation with a built-in baseline
-# that nothing in the kit grammar can replace (agentInstructions.content is
-# only ever appended after it), so the entrypoint above rebuilds the file
-# instead — before opencode starts — from kit/files/home/.sandbox-agents.md
-# plus every mixin note dropped in ~/.sbx-agents.d/ (see
-# mixins/<area>/files/home/.sbx-agents.d/).
+# The runtime's generated AGENTS.md baseline can't be replaced from the kit
+# grammar — the entrypoint above rebuilds the file instead (kit copy +
+# ~/.sbx-agents.d/ mixin notes).
 agentInstructions:
   filename: AGENTS.md
