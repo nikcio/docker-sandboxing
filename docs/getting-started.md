@@ -84,8 +84,8 @@ The agent needs a model provider:
   [copilot-setup.md](copilot-setup.md). Both compose.
 
 Optional: a GitHub personal access token so the agent can push and open PRs
-— see [github-pat.md](github-pat.md). Public repos and git over SSH work
-without one.
+— see [github-pat.md](github-pat.md). Cloning public repos (read-only) and
+git over SSH work without one; pushing over HTTPS always needs it.
 
 The kits are fetched from `github.com/nikcio/docker-sandboxing` and the
 template image is pulled from Docker Hub — no builds needed on your machine.

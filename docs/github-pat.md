@@ -53,8 +53,9 @@ you change `bindings:`, recreate the environment.
 
 ## Without a token
 
-The sandbox still works for **public** repositories and for **git over SSH**
-(your host SSH agent is forwarded; private keys stay on the host).
+The sandbox can still **clone and fetch public repositories** and use **git
+over SSH** (your host SSH agent is forwarded; private keys stay on the host).
+Pushing over HTTPS always needs a token — even for public repositories.
 
 ## Vault alternative
 

@@ -18,8 +18,9 @@ version: 0.2.0
 credentials:
   # Proxy-managed: the sandbox only ever sees the GH_TOKEN=proxy-managed
   # placeholder; the host-side proxy swaps in the real value on the hosts
-  # below. Optional — without a stored token, public repos and git over SSH
-  # still work (SSH agent forwarding). The inject domains must stay inside
+  # below. Optional — without a stored token, cloning public repos
+  # (read-only) and git over SSH still work (SSH agent forwarding); pushing
+  # over HTTPS always needs a token. The inject domains must stay inside
   # permissions.network.allow.
   - service: github
     description: >
