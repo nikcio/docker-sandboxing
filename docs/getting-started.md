@@ -71,3 +71,5 @@ Two one-time `sbx` settings on your host:
 - Changed the `kits:` list? Kit changes only apply to **new** sandboxes —
   recreate with `sbx rm <name>` and `sbx env run` again.
 - Remove the sandbox (and its scoped secrets) with `sbx env rm`.
+- Want your host's global agent skills available to the sandboxed agent? See
+  [agent-skills.md](agent-skills.md).
