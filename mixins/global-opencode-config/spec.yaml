@@ -27,10 +27,11 @@
 #   relaunched from the login shell keep working even if a runtime
 #   skipped mixin env injection.
 #
-# Pairs with mixins/base (entrypoint runtime + agent guidance + MCP
-# gateway); mixins/env-guard adds the .env guard and mixins/banner the
-# startup banner. No network rules: capability egress comes from the
-# other mixins.
+# Required when composing a model provider (zeldoc, copilot): their
+# fragments only merge through this mixin. Pairs with mixins/base
+# (entrypoint runtime + agent guidance + MCP gateway); mixins/env-guard
+# adds the .env guard and mixins/banner the startup banner. No network
+# rules: capability egress comes from the other mixins.
 schemaVersion: "2"
 kind: mixin
 name: global-opencode-config

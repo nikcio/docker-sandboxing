@@ -21,10 +21,10 @@ a proxy — the sandbox only ever sees placeholders.
    root and rename it `.sbxenv.yaml`. Commit it so teammates get the same
    sandbox.
 2. **Adjust the config to your project.** Set `name:`; drop the mixin lines
-   your project doesn't need, but keep the required mixins `base`,
-   `global-opencode-config`, and `env-guard` (every kit requires them;
-   `banner` is optional but in the examples)
-   (`workspace.path: .` targets the repo itself).
+   your project doesn't need, but keep `base` (every kit requires it) and
+   add `global-opencode-config` when using a model provider (`zeldoc`,
+   `copilot`); the examples also compose `env-guard` (the no-.env policy)
+   and `banner` (`workspace.path: .` targets the repo itself).
 3. **Run it** from your project root.
 
    ```bash
@@ -54,8 +54,8 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | Mixin | Adds |
 | ----- | ---- |
 | `base` | the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance (shared `AGENTS.md` base + guidance files), the AGENTS.md rebuild hook, MCP gateway registration (required by every kit) |
-| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) (required by every kit) |
-| `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) (required by every kit) |
+| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) (required with a model provider: `zeldoc`, `copilot`) |
+| `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) (optional — the examples compose it) |
 | `banner` | the startup banner (cosmetic — the examples compose it) |
 | `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) |
@@ -74,9 +74,9 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | `playwright` / `playwright-chromium` / `playwright-all` | Playwright + the listed browsers |
 | `sbx` | the `sbx` CLI inside the sandbox (kit authoring) |
 
-Drop what you don't need, but keep the required mixins `base`,
-`global-opencode-config`, `env-guard` (every kit requires them; `banner`
-is optional but in the examples) — a pure
+Drop what you don't need, but keep `base` (every kit requires it) and
+`global-opencode-config` when using a model provider (`zeldoc`,
+`copilot`) — a pure
 Node project keeps `base`, `global-opencode-config`, `env-guard`, `banner`,
 `opencode-runtime`, `zeldoc`, `git`, `node`; a pure Python project keeps
 `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`,

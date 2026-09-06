@@ -12,7 +12,7 @@
 #   and a short pause), direct mode (host tree mounted in place) refuses
 #   to start when one exists, and the all-clear line reports the result.
 #
-# Compose it for the no-.env policy the kits advertise. Pairs with
+# Optional — compose it to enforce the no-.env policy. Pairs with
 # mixins/base (entrypoint runtime + agent guidance + MCP gateway) and
 # mixins/global-opencode-config (permissive OpenCode config + provider
 # merge); mixins/banner adds the startup banner. No network rules:

@@ -89,11 +89,12 @@ of the stock mixins.
      - ./sandbox-kit
    ```
 
-   Keep the stock agent kit (`kit-published`) and the required mixins
-   (`base`, `global-opencode-config`, `env-guard`) — the kit defines
-   the image and entrypoint wrapper, the mixins ship the entrypoint
-   runtime, OpenCode config (+ provider merge), agent guidance, and the
-   .env guard; your kit only adds capabilities.
+   Keep the stock agent kit (`kit-published`) and `base` (required) —
+   the kit defines the image and entrypoint wrapper, the `base` mixin
+   ships the entrypoint runtime, agent guidance, and the MCP gateway.
+   Add `global-opencode-config` when composing a model provider; the
+   list above also includes the optional `env-guard` (the no-.env
+   policy) and `banner`. Your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new
    sandboxes):

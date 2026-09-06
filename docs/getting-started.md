@@ -13,13 +13,12 @@ Use this repo's sandbox in three steps:
 2. **Adjust the config to your project.** In `.sbxenv.yaml`:
    - `name:` — a unique name for this sandbox (used to scope its secrets)
    - `kits:` — drop the mixin lines your project doesn't need, but keep
-     the required mixins `base`, `global-opencode-config`, and `env-guard`
-     (entrypoint runtime + agent guidance + MCP gateway, permissive
-     OpenCode config + provider merge, the no-.env policy — every kit
-     requires them; `banner` is optional but in the examples; see
-     [mixins.md](mixins.md)); need project-specific settings (private
-     feeds, env vars, agent notes)? see
-     [project-kit.md](project-kit.md)
+     `base` (every kit requires it) and add `global-opencode-config` when
+     using a model provider (`zeldoc`, `copilot` — their config fragments
+     only merge through it; see [mixins.md](mixins.md)); the examples
+     also compose `env-guard` (the no-.env policy) and `banner`. Need
+     project-specific settings (private feeds, env vars, agent notes)?
+     see [project-kit.md](project-kit.md)
    - `workspace.path` is `.` (the repo itself); point it elsewhere only if
      the env file sits outside the project
 

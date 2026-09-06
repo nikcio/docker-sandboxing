@@ -11,8 +11,8 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | Mixin | Adds |
 | ----- | ---- |
 | `base` | The entrypoint runtime + AGENTS.md logic + MCP gateway every kit needs: the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance files, the shared `AGENTS.md` base, the AGENTS.md rebuild hook, MCP gateway registration (startup hook + backstop). Required by every kit — keep this line |
-| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required by every kit — keep this line |
-| `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Required by every kit — keep this line |
+| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
+| `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `banner` | The startup banner (cosmetic — the examples compose it) |
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
@@ -54,11 +54,12 @@ Network hosts per mixin are listed at the top of each
 
 Notes:
 
-- Three mixins are required by every kit: `base` (entrypoint runtime,
-  agent guidance, AGENTS.md rebuild, MCP gateway), `global-opencode-config`
-  (permissive OpenCode config + provider merge), and `env-guard` (the
-  no-.env policy). Keep all three in every set; `banner` (startup banner)
-  is optional but in the examples.
+- Only `base` (entrypoint runtime, agent guidance, AGENTS.md rebuild,
+  MCP gateway) is required by every kit. `global-opencode-config` is
+  required when composing a model provider (`zeldoc`, `copilot`) — their
+  config fragments only merge through it. `env-guard` (the no-.env
+  policy) and `banner` (startup banner) are optional but in the
+  examples.
 - The `playwright*` mixins and `sbx` run `apt` at creation — compose the
   `apt` mixin with them.
 - Every set should include at least one model provider (`zeldoc` and/or
@@ -70,7 +71,9 @@ Provider mixins don't fight over one config file: each ships a
 pure-JSON fragment to `~/.config/opencode/providers.d/NN-<provider>.json`
 inside the sandbox, and the `global-opencode-config` mixin merges all
 fragments into the single config OpenCode loads via `OPENCODE_CONFIG`
-at every start:
+at every start. Compose `global-opencode-config` with any provider
+mixin — it is required with them (their fragments only merge through
+it):
 
 - `enabled_providers` lists are **unioned** — compose `zeldoc` and
   `copilot` together and both stay selectable with `/models`.

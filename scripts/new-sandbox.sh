@@ -33,8 +33,8 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # Canonical mixins ("area|description").
 ALL_MIXINS=(
     "base|entrypoint runtime (hooks, opencode autostart, login shell) + agent guidance + MCP gateway (required)"
-    "global-opencode-config|permissive OpenCode config + provider config merge (required)"
-    "env-guard|workspace .env guard: refuses/removes .env files (required)"
+    "global-opencode-config|permissive OpenCode config + provider config merge (required with model providers)"
+    "env-guard|workspace .env guard: refuses/removes .env files"
     "banner|startup banner (cosmetic)"
     "opencode-runtime|OpenCode runtime egress: updates, models.dev, Zen, plugins"
     "zeldoc|Zeldoc.ai (zdev) model provider: proxy-managed key + network"

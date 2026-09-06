@@ -65,9 +65,11 @@ Use based on your task:
   (`files/home/.sandbox-kit/hooks.d/banner.sh`, sourced by the entrypoint
   runtime) printing the "opencode is starting automatically" notice.
   Cosmetic — the examples compose it.
-- The first three mixins (`base`, `global-opencode-config`, `env-guard`)
-  are required by every kit: every kit's `kits:` list must include all of
-  them.
+- The `base` mixin is required by every kit: every kit's `kits:` list
+  must include it. `global-opencode-config` is required when composing a
+  model provider (`zeldoc`, `copilot`) — their fragments only merge
+  through it. `env-guard` and `banner` are optional (the examples compose
+  both).
 - `mixins/<area>/` — one single-purpose mixin kit per area (`kind: mixin`):
   only the network rules, env vars, credentials, files, and memory notes
   for its own area. Composition is explicit at launch (`--kit` flags or a

@@ -10,10 +10,11 @@
 # docs/copilot-setup.md.
 #
 # Config fragments: every provider mixin ships a pure-JSON fragment to
-# ~/.config/opencode/providers.d/ (see mixins/zeldoc). The global-opencode-config
-# mixin merges all fragments into the combined OPENCODE_CONFIG file at
-# every start; enabled_providers lists are unioned, so this mixin
-# composes alongside the zeldoc mixin (and any future provider mixin).
+# ~/.config/opencode/providers.d/ (see mixins/zeldoc). Requires the
+# global-opencode-config mixin: it merges all fragments into the combined
+# OPENCODE_CONFIG file at every start; enabled_providers lists are
+# unioned, so this mixin composes alongside the zeldoc mixin (and any
+# future provider mixin).
 schemaVersion: "2"
 kind: mixin
 name: copilot
