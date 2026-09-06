@@ -52,6 +52,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $allMixins = [ordered]@{
+    "base"             = "shared baseline (required): entrypoint runtime, opencode config, agent guidance"
     "opencode-runtime" = "OpenCode runtime egress: updates, models.dev, Zen, plugins"
     "zeldoc"           = "Zeldoc.ai (zdev) model provider: proxy-managed key + network"
     "git"              = "git hosting (GitHub/GitLab) + gh auth + worktree workflow"
@@ -67,11 +68,11 @@ $allMixins = [ordered]@{
 }
 
 $profiles = [ordered]@{
-    full          = @("opencode-runtime", "zeldoc", "git", "node", "dotnet", "docker", "apt", "browser", "playwright")
-    node          = @("opencode-runtime", "zeldoc", "git", "node")
-    dotnet        = @("opencode-runtime", "zeldoc", "git", "dotnet")
-    "node-docker" = @("opencode-runtime", "zeldoc", "git", "node", "docker")
-    browser       = @("opencode-runtime", "zeldoc", "git", "node", "apt", "browser", "playwright")
+    full          = @("base", "opencode-runtime", "zeldoc", "git", "node", "dotnet", "docker", "apt", "browser", "playwright")
+    node          = @("base", "opencode-runtime", "zeldoc", "git", "node")
+    dotnet        = @("base", "opencode-runtime", "zeldoc", "git", "dotnet")
+    "node-docker" = @("base", "opencode-runtime", "zeldoc", "git", "node", "docker")
+    browser       = @("base", "opencode-runtime", "zeldoc", "git", "node", "apt", "browser", "playwright")
     none          = @()
 }
 

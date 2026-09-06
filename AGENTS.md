@@ -29,15 +29,23 @@ Use based on your task:
   after changes (`scripts/bootstrap.ps1` / `scripts/bootstrap.sh`, or
   `docker build` + `docker image save` + `sbx template load`).
 - `kit-<stack>/` — thin declarative sandbox kits (`schemaVersion: "2"`,
-  `kind: sandbox`, `extends: opencode`): template image + entrypoint + a
-  permissive OpenCode config
-  (`kit-<stack>/files/home/.config/opencode/opencode.jsonc`, dropped into
-  the global config layer; edit/bash/webfetch allowed — the sandbox is the
-  isolation boundary). Validate with `sbx kit validate kit-<stack>/`.
+  `kind: sandbox`, `extends: opencode`): template image + a one-line
+  entrypoint wrapper that execs the shared runtime from `mixins/base/`.
+  Validate with `sbx kit validate kit-<stack>/`.
 - `kit-published-<stack>/` — same spec as the dev kit except
   `sandbox.image` points at the public Docker Hub image; release-please
   bumps its `version:` + image tag (and the `&ref=` pins in
   `examples/*.sbxenv.yaml`) in the release PR.
+- `mixins/base/` — the shared baseline every OpenCode kit sandbox composes
+  (`kind: mixin`): the permissive OpenCode config
+  (`files/home/.config/opencode/opencode.jsonc`, dropped into the global
+  config layer; edit/bash/webfetch allowed — the sandbox is the isolation
+  boundary), the agent guidance files (`files/home/.sandbox-agents/*.md`),
+  the shared `AGENTS.md` base (`files/home/.sandbox-agents.md`), the
+  entrypoint runtime (`files/home/.sandbox-kit/entrypoint.sh`), and the
+  startup hooks (background apt cache update, MCP gateway registration —
+  the runtime script carries an idempotent MCP backstop). Kits refuse to
+  start without it; every kit's `kits:` list must include `mixins/base`.
 - `mixins/<area>/` — one single-purpose mixin kit per area (`kind: mixin`):
   only the network rules, env vars, credentials, files, and memory notes
   for its own area. Composition is explicit at launch (`--kit` flags or a
@@ -56,16 +64,21 @@ Use based on your task:
   switch branches under you, and its untracked files are not yours. See
   [agent-guidance/worktrees.md](agent-guidance/worktrees.md).
 - Keep all eight kits in sync when touching shared kit content — the only
-  intended differences are the image reference and the stack-specific
-  memory lines.
-- The kit entrypoint is a shell wrapper, not opencode directly: it prints a
-  startup banner, best-effort upgrades opencode to the newest release
-  (egress from the `opencode-runtime` mixin), auto-runs `opencode`, then
-  `exec`s an interactive login shell — quitting the agent must leave a
-  usable shell. Keep that shape.
+  intended differences are the image reference and the version. Shared
+  content (entrypoint runtime, permissive OpenCode config, guidance files,
+  startup hooks) lives once in `mixins/base/`; don't reintroduce copies
+  into the kits.
+- The kit entrypoint is a shell wrapper, not opencode directly: it execs
+  the shared runtime script from the `base` mixin
+  (`~/.sandbox-kit/entrypoint.sh`), which prints a startup banner,
+  best-effort upgrades opencode to the newest release (egress from the
+  `opencode-runtime` mixin), auto-runs `opencode`, then `exec`s an
+  interactive login shell — quitting the agent must leave a usable shell.
+  Keep that shape; the wrapper must error clearly (and still drop into a
+  login shell) when the `base` mixin is missing.
 - The sandbox `AGENTS.md` (written next to the workspace) is rebuilt by the
-  kit entrypoint before opencode starts: base content from the dev kit's
-  `files/home/.sandbox-agents.md` plus every mixin's
+  shared entrypoint script before opencode starts: base content from the
+  base mixin's `files/home/.sandbox-agents.md` plus every mixin's
   `mixins/<area>/files/home/.sbx-agents.d/<area>.md`, appended directly. Do
   not use `agentInstructions` for mixin memory — it can only append after
   the runtime's built-in baseline and lands in a Kits-index side file.
@@ -81,7 +94,7 @@ Use based on your task:
   substitution only captures the answer. Keep the PS and bash variants in
   sync.
 - Do not touch the sandbox-managed `~/.config/opencode/opencode.json` from
-  any kit. The base kit's permissive config lives in the sibling
+  any kit. The permissive config lives in the base mixin's sibling
   `opencode.jsonc` (merged by OpenCode); the Zeldoc provider lives in its
   own file referenced by `OPENCODE_CONFIG`.
 - Host-side settings are documented as standard `sbx settings set` commands

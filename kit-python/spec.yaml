@@ -4,10 +4,16 @@
 # scripts/bootstrap.*). Remote consumers use ../kit-published-python/
 # (public image on Docker Hub, bumped by release-please).
 #
-# The kit is intentionally thin: template image + entrypoint + permissive
-# OpenCode config. Compose capabilities at launch with the mixins from
-# ../mixins/ via --kit flags or a .sbxenv.yaml kits: list (the spec's
-# `mixins:` field is not applied by the runtime yet). See ../docs/.
+# The kit is intentionally thin: template image + entrypoint. Everything
+# shared across the kits lives in ../mixins/base/ — the entrypoint runtime
+# (banner, opencode upgrade + autostart, .env guard, AGENTS.md rebuild),
+# the permissive OpenCode config, the agent guidance files, and the
+# startup hooks. Every sandbox using this kit must compose that mixin;
+# the entrypoint below execs the shared script and refuses to start (with
+# a clear error) if it is missing. Compose further capabilities at launch
+# with the mixins from ../mixins/ via --kit flags or a .sbxenv.yaml kits:
+# list (the spec's `mixins:` field is not applied by the runtime yet).
+# See ../docs/.
 #
 # Validate: sbx kit validate kit-python/
 schemaVersion: "2"
@@ -15,162 +21,41 @@ kind: sandbox
 name: opencode-python
 displayName: OpenCode (Python)
 description: >
-  OpenCode agent running on a custom template with Python (uv-managed CPython)
-  and uv preinstalled. Ships a permissive OpenCode config (edit/bash/webfetch
-  allowed — the sandbox is the isolation boundary). The entrypoint is a login
-  shell: it prints a startup banner, upgrades opencode to the newest release
-  (best-effort), auto-starts it, and drops into the shell when opencode exits
-  (relaunch with `o`). Compose the mixins from
-  ../mixins/ to add capabilities (model provider, network areas, workflow
-  rules). Enforces a no-.env policy in the workspace: refuses to start in
-  direct mode when one exists, removes it in clone mode.
+  OpenCode agent running on a custom template with Python (uv-managed CPython) and uv preinstalled. Ships the permissive OpenCode config (edit/bash/webfetch allowed —
+  the sandbox is the isolation boundary), the agent guidance files, and
+  the entrypoint runtime through the shared baseline mixin (../mixins/base,
+  required). The entrypoint is a login shell: it prints a startup banner,
+  upgrades opencode to the newest release (best-effort), auto-starts it,
+  and drops into the shell when opencode exits (relaunch with `o`).
+  Compose the mixins from ../mixins/ to add capabilities (model provider,
+  network areas, workflow rules). Enforces a no-.env policy in the
+  workspace: refuses to start in direct mode when one exists, removes it
+  in clone mode.
 version: 0.1.0
 
 sandbox:
   # Local template built from ../template-python/Dockerfile. A registry push
   # needs the full reference (e.g. docker.io/<org>/opencode-python:v1).
   image: opencode-python:v1
-  # Login shell: banner, best-effort opencode upgrade, auto-start opencode,
-  # drop into the shell when opencode exits (relaunch with `o`); quitting
-  # the shell ends the session.
+  # Wrapper: the real runtime lives in the base mixin
+  # (~/.sandbox-kit/entrypoint.sh) — see that script for the behavior
+  # (banner, best-effort opencode upgrade, auto-start opencode, drop into
+  # the shell when opencode exits; quitting the shell ends the session).
   entrypoint:
     - bash
     - -c
     - |
-      # Env guard, scan phase (reported under the banner below). The
-      # workspace must never contain a .env file. Clone mode removes
-      # offenders from the sandbox-local copy; direct mode (host tree
-      # mounted in place) refuses to start instead of deleting host files.
-      __envs=""
-      __clean="workspace clean (no .env files)"
-      __guard_fatal=0
-      if [ -n "${WORKSPACE_DIR:-}" ]; then
-        __envs="$(find "$WORKSPACE_DIR" -type f -name .env -not -path '*/.git/*' 2>/dev/null)"
-      else
-        __clean="workspace not checked (WORKSPACE_DIR is not set)"
+      if [ -f "$HOME/.sandbox-kit/entrypoint.sh" ]; then
+        exec bash "$HOME/.sandbox-kit/entrypoint.sh"
       fi
-      if [ -d /run/sandbox/source ]; then
-        if [ -n "$__envs" ]; then
-          printf '%s\n' "$__envs" | while IFS= read -r __f; do rm -f -- "$__f"; done
-        fi
-      elif [ -n "$__envs" ]; then
-        __guard_fatal=1
-      fi
-
-      # Rebuild the sandbox AGENTS.md: the runtime's baseline can't be
-      # replaced from the kit grammar, so overwrite it before opencode
-      # starts with the kit's copy (~/.sandbox-agents.md) plus every mixin
-      # note in ~/.sbx-agents.d/, keeping the runtime's Kits index section.
-      __agents="$(dirname "${WORKSPACE_DIR:-}")/AGENTS.md"
-      __mine="$HOME/.sandbox-agents.md"
-      if [ -n "${WORKSPACE_DIR:-}" ] && [ -f "$__agents" ] && [ -f "$__mine" ]; then
-        __kits="$(sed -n '/<!-- sbx:kits-section start -->/,/<!-- sbx:kits-section end -->/p' "$__agents")"
-        {
-          cat "$__mine"
-          for __note in "$HOME"/.sbx-agents.d/*.md; do
-            [ -f "$__note" ] || continue
-            printf '\n'
-            cat "$__note"
-          done
-          if [ -n "$__kits" ]; then printf '\n%s\n' "$__kits"; fi
-        } > "$__agents"
-      fi
-
-      cat <<'BANNER'
-      ------------------------------------------------------------
-       Sandbox
-      ------------------------------------------------------------
-       opencode is starting automatically.
-       - Updates to the newest release on every start
-       - Quit opencode to drop into this shell
-       - Relaunch opencode anytime with: o or opencode
-      ------------------------------------------------------------
-      BANNER
-
-      # Env guard report: WARNING + 5s pause when files were deleted
-      # (clone mode), fatal ERROR when the session is refused (direct).
-      if [ "$__guard_fatal" = "1" ]; then
-        echo "============================================================"
-        echo "ERROR [env-guard]: .env file(s) found in the workspace (direct mode):"
-        printf '%s\n' "$__envs" | sed 's/^/  - /'
-        echo "This sandbox refuses to start with .env files in the workspace."
-        echo "Delete them on the host (they are mounted into the sandbox), then recreate the sandbox."
-        echo "============================================================"
-        exit 1
-      fi
-      if [ -d /run/sandbox/source ]; then
-        if [ -n "$__envs" ]; then
-          echo "============================================================"
-          echo "WARNING [env-guard]: .env file(s) were removed from the"
-          echo "workspace (clone mode - sandbox-local copy):"
-          printf '%s\n' "$__envs" | sed 's/^/  - /'
-          echo "============================================================"
-          echo "[env-guard] opencode opens in 5 seconds..."
-          sleep 5
-        fi
-      else
-        echo "[env-guard] direct mode - $__clean"
-      fi
-
-      if command -v opencode >/dev/null 2>&1; then
-        # Always start the newest opencode release: self-upgrade before
-        # launch. Best-effort - the egress comes from the opencode-runtime
-        # mixin; on failure (mixin missing, offline) the version baked into
-        # the image keeps running.
-        __upgrade_log="$(mktemp)"
-        if timeout 120 opencode upgrade >"$__upgrade_log" 2>&1; then
-          __upgraded="$(sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' "$__upgrade_log" | grep -am 1 'From ' | sed 's/^.*From /From /')"
-          if [ -n "$__upgraded" ]; then
-            echo "opencode updated: $__upgraded"
-          fi
-        else
-          echo "WARNING: opencode upgrade failed - continuing with the version baked into the image:" >&2
-          sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' "$__upgrade_log" | grep -av '^[[:space:]]*$' | tail -n 1 | sed 's/^/  /' >&2
-        fi
-        rm -f "$__upgrade_log"
-        opencode
-        echo "opencode exited - back in the sandbox shell (relaunch: o or opencode)"
-      else
-        echo "WARNING: opencode not found in image - dropping to shell" >&2
-      fi
+      echo "ERROR [entrypoint]: $HOME/.sandbox-kit/entrypoint.sh is missing." >&2
+      echo "This kit requires the shared baseline mixin (mixins/base) in the sandbox's kits list." >&2
+      echo "Add it and recreate the sandbox." >&2
       exec bash -il
 
-setup:
-  startup:
-    - command: ["sh", "-c", "command -v apt-get > /dev/null 2>&1 && (apt-get update -qq -y > /dev/null 2>&1 || true) &"]
-      user: "root"
-      description: Update apt package cache in background
-    # MCP gateway registration (no-op when MCP isn't enabled). sandboxd
-    # injects MCP_GATEWAY_URL + MCP_SENTINEL_TOKEN_NAME; the sentinel name
-    # is not a credential — the proxy substitutes the real token at request
-    # time. opencode owns ~/.config/opencode/opencode.json, so write it fresh.
-    - command:
-        - sh
-        - -c
-        - |
-          set -e
-          [ -n "$MCP_GATEWAY_URL" ] || exit 0
-          mkdir -p "$HOME/.config/opencode"
-          cat > "$HOME/.config/opencode/opencode.json" <<EOF
-          {
-            "\$schema": "https://opencode.ai/config.json",
-            "mcp": {
-              "mcp-gateway": {
-                "type": "remote",
-                "url": "$MCP_GATEWAY_URL",
-                "enabled": true,
-                "headers": {
-                  "Authorization": "Bearer $MCP_SENTINEL_TOKEN_NAME"
-                }
-              }
-            }
-          }
-          EOF
-      user: "agent"
-      description: Register the sandbox MCP gateway in ~/.config/opencode/opencode.json
-
 # The runtime's generated AGENTS.md baseline can't be replaced from the kit
-# grammar — the entrypoint above rebuilds the file instead (kit copy +
-# ~/.sbx-agents.d/ mixin notes).
+# grammar — the shared entrypoint script rebuilds the file instead (the
+# base mixin's ~/.sandbox-agents.md + every mixin note in
+# ~/.sbx-agents.d/).
 agentInstructions:
   filename: AGENTS.md

@@ -32,6 +32,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Canonical mixins ("area|description").
 ALL_MIXINS=(
+    "base|shared baseline (required): entrypoint runtime, opencode config, agent guidance"
     "opencode-runtime|OpenCode runtime egress: updates, models.dev, Zen, plugins"
     "zeldoc|Zeldoc.ai (zdev) model provider: proxy-managed key + network"
     "git|git hosting (GitHub/GitLab) + gh auth + worktree workflow"
@@ -46,11 +47,11 @@ ALL_MIXINS=(
     "sbx|sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
 )
 
-PROFILES_full="opencode-runtime zeldoc git node dotnet docker apt browser playwright"
-PROFILES_node="opencode-runtime zeldoc git node"
-PROFILES_dotnet="opencode-runtime zeldoc git dotnet"
-PROFILES_node_docker="opencode-runtime zeldoc git node docker"
-PROFILES_browser="opencode-runtime zeldoc git node apt browser playwright"
+PROFILES_full="base opencode-runtime zeldoc git node dotnet docker apt browser playwright"
+PROFILES_node="base opencode-runtime zeldoc git node"
+PROFILES_dotnet="base opencode-runtime zeldoc git dotnet"
+PROFILES_node_docker="base opencode-runtime zeldoc git node docker"
+PROFILES_browser="base opencode-runtime zeldoc git node apt browser playwright"
 PROFILES_none=""
 
 WORKSPACE=""

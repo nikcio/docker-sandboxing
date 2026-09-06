@@ -75,13 +75,15 @@ of the stock mixins.
    ```yaml
    kits:
       - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node-dotnet&ref=v0.6.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v0.6.0
      # ...the other stock mixins your project keeps...
      - ./sandbox-kit
    ```
 
-   Keep the stock agent kit (`kit-published`) — it defines the image
-   and entrypoint; your kit only adds capabilities.
+   Keep the stock agent kit (`kit-published`) and the `base` mixin — the
+   kit defines the image and entrypoint wrapper, the `base` mixin ships
+   the entrypoint runtime, OpenCode config, and agent guidance; your kit
+   only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new
    sandboxes):
