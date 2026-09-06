@@ -50,6 +50,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) |
 | `git` | git hosting egress, proxy-managed GitHub auth, worktree workflow |
 | `node` | nodejs.org + npm registry egress |
+| `openapi-ts` | openapi-ts.dev docs egress (openapi-typescript / openapi-fetch) |
 | `dotnet` | NuGet/Microsoft egress, telemetry opt-out |
 | `python` | PyPI egress for uv/pip |
 | `go` | Go module proxy + checksum DB egress (`go get`/`go install`, GOTOOLCHAIN downloads) |

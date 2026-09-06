@@ -14,6 +14,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config, Zeldoc hosts) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
 | `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry |
+| `openapi-ts` | openapi-ts.dev docs egress for the openapi-typescript + openapi-fetch packages |
 | `dotnet` | .NET/NuGet egress + telemetry opt-out |
 | `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer), python.org docs |
 | `go` | Go toolchain egress: module proxy + checksum DB (`go get`/`go install`, GOTOOLCHAIN toolchain downloads), dl.google.com (go.dev/dl artifacts), go.dev/golang.org docs |
@@ -39,6 +40,7 @@ Network hosts per mixin are listed at the top of each
 | Python only | `opencode-runtime`, `zeldoc`, `git`, `python` |
 | Go only | `opencode-runtime`, `zeldoc`, `git`, `go` |
 | Rust only | `opencode-runtime`, `zeldoc`, `git`, `rust` |
+| Node + typed API client (openapi-typescript) | `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
 | Node + in-sandbox Docker | `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
 | Browser automation | `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
 
