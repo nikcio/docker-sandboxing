@@ -84,7 +84,7 @@ these Docker Sandboxes artifacts:
 - `mixins/<area>/` — one mixin kit per area (`kind: mixin`): `zeldoc`,
   `git`, `node`, `openapi-ts`, `dotnet`, `python`, `go`, `rust`, `docker`,
   `uniform` (uniform.app docs + proxy-managed API key), `omnium` (Omnium
-  OMS API, proxy-managed client secret), `opencode-runtime`,
+  OMS API, proxy-managed bearer token), `opencode-runtime`,
   `apt`, `browser`
   (Chrome, software only), three playwright levels (`playwright`,
   `playwright-chromium`, `playwright-all`), and `sbx` (the Docker

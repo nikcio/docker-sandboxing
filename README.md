@@ -48,7 +48,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | ----- | ---- |
 | `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) |
-| `omnium` | Omnium OMS/e-commerce API egress (in-sandbox token minting, proxy-managed client secret) |
+| `omnium` | Omnium OMS/e-commerce API egress (proxy-managed bearer token) |
 | `git` | git hosting egress, proxy-managed GitHub auth, worktree workflow |
 | `node` | nodejs.org + npm registry egress |
 | `openapi-ts` | openapi-ts.dev docs egress (openapi-typescript / openapi-fetch) |
