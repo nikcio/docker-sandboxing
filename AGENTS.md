@@ -29,7 +29,7 @@ Use based on your task:
   after changes (`scripts/bootstrap.ps1` / `scripts/bootstrap.sh`, or
   `docker build` + `docker image save` + `sbx template load`).
 - `kit-<stack>/` — thin declarative sandbox kits (`schemaVersion: "2"`,
-  `kind: sandbox`, `extends: opencode`): template image + a one-line
+  `kind: sandbox`): template image + a one-line
   entrypoint wrapper that execs the shared runtime from `mixins/base/`.
   Validate with `sbx kit validate kit-<stack>/`.
 - `kit-published-<stack>/` — same spec as the dev kit except
@@ -65,7 +65,7 @@ Use based on your task:
   (`files/home/.sandbox-kit/hooks.d/banner.sh`, sourced by the entrypoint
   runtime) printing the "opencode is starting automatically" notice.
   Cosmetic — the examples compose it.
-- The `base` mixin is required by every kit: every kit's `kits:` list
+- The `base` mixin is required by every kit: every sandbox's `kits:` list
   must include it. `global-opencode-config` is required when composing a
   model provider (`zeldoc`, `copilot`) — their fragments only merge
   through it. `env-guard` and `banner` are optional (the examples compose
@@ -101,16 +101,16 @@ Use based on your task:
 - The kit entrypoint is a shell wrapper, not opencode directly: it execs
   the shared runtime script from the `base` mixin
   (`~/.sandbox-kit/entrypoint.sh`), which runs the composed mixins' hooks
-  from `~/.sandbox-kit/hooks.d/` (the env-guard mixin's guard, the banner
-  mixin's banner, the config mixin's provider merge, the base mixin's
-  AGENTS.md rebuild + MCP backstop), then auto-runs `opencode` and `exec`s
-  an interactive login shell — quitting the agent must leave a usable
-  shell. Keep that shape; the wrapper must error clearly (and still drop
-  into a login shell) when the `base` mixin is missing. Entry-point
-  ordering (guard refusal, AGENTS.md rebuild, provider merge, banner)
-  must stay in these hooks, not `setup.startup` — startup commands run
-  alongside the entrypoint without gating it and without a terminal
-  (kit reference: setup.startup).
+  from `~/.sandbox-kit/hooks.d/` in glob order (the base mixin's
+  AGENTS.md rebuild + MCP backstop, the banner mixin's banner, the
+  env-guard mixin's guard, the config mixin's provider merge), then
+  auto-runs `opencode` and `exec`s an interactive login shell — quitting
+  the agent must leave a usable shell. Keep that shape; the wrapper must
+  error clearly (and still drop into a login shell) when the `base` mixin
+  is missing. Entry-point ordering (AGENTS.md rebuild, banner, guard
+  refusal, MCP backstop, provider merge) must stay in these hooks, not
+  `setup.startup` — startup commands run alongside the entrypoint without
+  gating it and without a terminal (kit reference: setup.startup).
 - The sandbox `AGENTS.md` (written next to the workspace) is rebuilt
   before opencode starts: the entrypoint runtime sources the base mixin's
   rebuild hook (`files/home/.sandbox-kit/hooks.d/agents-md.sh`), which
