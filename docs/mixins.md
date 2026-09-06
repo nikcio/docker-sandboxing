@@ -13,7 +13,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config, Zeldoc hosts) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
-| `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry |
+| `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry, pnpm.io docs; pnpm installs gated to versions published ≥24h ago |
 | `openapi-ts` | openapi-ts.dev docs egress for the openapi-typescript + openapi-fetch packages |
 | `dotnet` | .NET/NuGet egress + telemetry opt-out |
 | `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer), python.org docs |
