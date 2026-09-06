@@ -39,6 +39,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
 | [Mixins](docs/mixins.md) | what each mixin adds, common sets, changing them |
 | [Project-specific config](docs/project-kit.md) | an in-project kit: project feeds, env vars, files, agent notes |
+| [Local overrides](docs/local-overrides.md) | personal settings in a gitignored `local.sbxenv.yaml`, merged over the team's `.sbxenv.yaml` |
 | [Troubleshooting](docs/troubleshooting.md) | blocked downloads, git auth, the .env guard, stale changes |
 
 ## Mixins

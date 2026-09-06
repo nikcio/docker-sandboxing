@@ -66,6 +66,8 @@ Two one-time `sbx` settings on your host:
 ## Daily use
 
 - Start the sandbox again with `sbx env run` from your project root.
+- Want personal tweaks (more memory, debug env vars)? Keep them in a
+  gitignored `local.sbxenv.yaml` — see [local-overrides.md](local-overrides.md).
 - Changed the `kits:` list? Kit changes only apply to **new** sandboxes —
   recreate with `sbx rm <name>` and `sbx env run` again.
 - Remove the sandbox (and its scoped secrets) with `sbx env rm`.
