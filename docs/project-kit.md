@@ -95,11 +95,11 @@ of the stock mixins.
 
    ```yaml
    kits:
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node-dotnet&ref=v1.0.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v1.0.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v1.0.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v1.0.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/banner&ref=v1.0.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node-dotnet&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/banner&ref=v0.6.0
      # ...the other stock mixins your project keeps...
      - ./sandbox-kit
    ```
