@@ -61,6 +61,6 @@ if [ -z "${SBX_ASPIRE_NOPROXY_DONE:-}" ]; then
 fi
 ```
 
-The bracketed literal stays out of the default `NO_PROXY` because some clients (e.g. the Azure
-DevOps MCP's `typed-rest-client`) parse `NO_PROXY` entries as regular expressions, where `[::1]`
-matches every host and would disable the proxy, breaking credential injection.
+Do not add the bracketed literal outside this scoped block: some clients
+parse `NO_PROXY` entries as regular expressions, where `[::1]` matches
+every host and would disable the proxy, breaking credential injection.

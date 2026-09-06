@@ -10,9 +10,7 @@ A single SemVer version for the whole repo, managed by
 ## Release flow
 
 1. Conventional commits land on `main` (see [commit-messages.md](commit-messages.md)).
-2. The release-please workflow runs as a GitHub App (repo secrets
-   `APP_CLIENT_ID` + `APP_PRIVATE_KEY`; the App needs Contents and Pull
-   requests read/write) and opens a release PR that bumps:
+2. The release-please workflow opens a release PR that bumps:
    - `CHANGELOG.md`
    - `version` + the `sandbox.image` tag in `kit-published-*/spec.yaml`
    - the `&ref=vX.Y.Z` git pins in `examples/*.sbxenv.yaml`
