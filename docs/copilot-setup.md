@@ -32,19 +32,21 @@ isn't signed in yet (fresh sandbox = fresh sign-in):
    **in your host browser** and enter it.
 3. Run `/models` to pick a model.
 
-The default model is `github-copilot/gpt-5-mini`; some models (e.g. the
-flagship Claude/GPT ones) need a higher Copilot plan
-([plans](https://github.com/features/copilot/plans)) — if a model errors,
-pick another with `/models`.
+No default model is picked for you — set it in a project-level
+`opencode.jsonc` (see [project-kit.md](project-kit.md)) or pick per
+session with `/models`; some models (e.g. the flagship Claude/GPT ones)
+need a higher Copilot plan
+([plans](https://github.com/features/copilot/plans)) — if a model
+errors, pick another with `/models`.
 
 ## Zeldoc and Copilot together
 
 Compose both mixins and both providers stay enabled (the sandbox merges
 each provider's config fragment; `enabled_providers` lists are unioned).
-With both composed, the default model stays `zeldoc/zdev-2` — override it
-per project by committing an `opencode.jsonc` with `"model":
-"github-copilot/<model-id>"` in the repo root, or just switch models per
-session with `/models`. Details: [mixins.md](mixins.md).
+The default model comes from your project-level `opencode.jsonc` —
+commit one in the repo root with `"model": "github-copilot/<model-id>"`
+(or a Zeldoc model), or just switch models per session with `/models`.
+Details: [mixins.md](mixins.md).
 
 ## Good to know
 

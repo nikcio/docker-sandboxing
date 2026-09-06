@@ -4,7 +4,8 @@ Two ways to customize the sandbox for your project — pick the lightest
 one that fits:
 
 1. **OpenCode settings only** → commit an `opencode.jsonc` in your repo
-   root. No kit needed (see below).
+   root. No kit needed (see below) — this is also where the default
+   model lives.
 2. **Network egress, env vars, files, agent notes** → add a small
    *in-project kit* to your repo and list it in `.sbxenv.yaml`.
 
@@ -14,6 +15,20 @@ OpenCode merges the global config with a project-level config file at
 the workspace root. Since `workspace.path` points at your repo, just
 commit an `opencode.jsonc` (or `opencode.json`) in the project root —
 it is picked up when opencode starts.
+
+The sandbox's provider mixins do not set a default model, so the
+project config owns it — point `model` at one of the composed
+providers:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "zeldoc/zdev-2"
+}
+```
+
+Without a `model` key opencode falls back to its own default; pick a
+different one any time with `/models` in the TUI.
 
 Do not write `~/.config/opencode/opencode.json` from a kit — the
 sandbox owns that file (it is rewritten at startup for MCP wiring). Do

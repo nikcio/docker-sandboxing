@@ -84,9 +84,10 @@ Node project keeps `base`, `global-opencode-config`, `env-guard`, `banner`,
 `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`,
 `git`, `go`; a pure Rust project keeps `base`, `global-opencode-config`,
 `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `rust`. Swap
-`zeldoc` for `copilot` (or compose both — the default model stays Zeldoc's)
-to run on your GitHub Copilot subscription. The `playwright*` and `sbx`
-mixins need the `apt` mixin. Details: [docs/mixins.md](docs/mixins.md).
+`zeldoc` for `copilot` (or compose both — the project's `opencode.jsonc`
+sets the default model) to run on your GitHub Copilot subscription. The
+`playwright*` and `sbx` mixins need the `apt` mixin. Details:
+[docs/mixins.md](docs/mixins.md).
 
 ## The sandbox shell
 

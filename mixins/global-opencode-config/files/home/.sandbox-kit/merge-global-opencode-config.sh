@@ -17,9 +17,11 @@
 #     hand-edits are lost.
 #   - enabled_providers / disabled_providers are UNIONED across fragments
 #     (everything else: objects merge recursively, later fragments win
-#     scalar conflicts — e.g. `model`). That is what lets provider mixins
-#     compose: zeldoc + copilot both stay enabled, and the default model
-#     is whichever fragment sorts last (zeldoc's 20- beats copilot's 10-).
+#     scalar conflicts). That is what lets provider mixins compose:
+#     zeldoc + copilot both stay enabled. Fragments never set the
+#     default model — the project-level opencode config owns it (it
+#     merges above this file; opencode falls back to its own default
+#     when no config sets one).
 #   - Fragments must be comment-free JSON (jq does the merging); a
 #     .jsonc fragment in the directory is a hard error.
 #

@@ -13,10 +13,11 @@
 #   every provider mixin (zeldoc, copilot, ...) ships a pure-JSON
 #   fragment to ~/.config/opencode/providers.d/NN-<name>.json and the
 #   merge below rebuilds that file at every start
-#   (enabled_providers lists union, later fragments win scalar conflicts
-#   like `model`). Never set OPENCODE_CONFIG in another mixin or kit —
-#   this variable is the single owner, which is what lets any number of
-#   provider mixins compose.
+#   (enabled_providers lists union; fragments never set the default
+#   model — the project-level opencode config owns it). Never set
+#   OPENCODE_CONFIG in another mixin or kit — this variable is the
+#   single owner, which is what lets any number of provider mixins
+#   compose.
 # - files/home/.sandbox-kit/merge-global-opencode-config.sh — the provider
 #   config fragment merger (jq; enabled_providers union, later fragments
 #   win scalar conflicts; seeds a valid empty config when there are no
@@ -55,8 +56,8 @@ environment:
     # ~/.sandbox-kit/merge-global-opencode-config.sh (called by this mixin's
     # provider-config hook, which also re-exports this var defensively).
     # Merges between the global and project config layers, so sandbox
-    # wiring in the managed opencode.json is preserved and a project
-    # opencode.jsonc can still override the default model. Owned here —
+    # wiring in the managed opencode.json is preserved and the project
+    # opencode.jsonc owns the default model. Owned here —
     # provider mixins/kits must not set OPENCODE_CONFIG.
     OPENCODE_CONFIG: /home/agent/.config/opencode/providers.jsonc
 
