@@ -5,12 +5,18 @@
   //
   // This file sits in the global config layer (~/.config/opencode) as
   // opencode.jsonc; the sandbox-managed opencode.json (MCP gateway wiring)
-  // is a separate file and both are merged by OpenCode. Kit layers loaded
-  // through OPENCODE_CONFIG (e.g. the Zeldoc provider from the zeldoc
-  // mixin) merge above this file.
+  // is a separate file and both are merged by OpenCode. Provider mixins
+  // (zeldoc, copilot, ...) ship fragments to ~/.config/opencode/providers.d/
+  // which this mixin (opencode-config) merges at every start into the
+  // combined file loaded through OPENCODE_CONFIG — that file merges above
+  // this one.
   //
   // The sandbox is the isolation boundary — don't nag the agent.
   "autoupdate": false, // Auto update only runs after first session so it doesn't make sense for this use case.
+  // Keep conversations local: sharing sends them to opencode's share
+  // service. Applies to every provider mix (moved here from the provider
+  // fragments so any provider composition inherits it).
+  "share": "disabled",
   "permission": {
     "glob": "allow",
     "edit": "allow",
@@ -25,5 +31,7 @@
     "todowrite": "allow",
     "webfetch": "allow",
     "external_directory": "allow",
+    // websearch sends queries to a third-party service (Exa); keep it off.
+    "websearch": "deny",
   }
 }

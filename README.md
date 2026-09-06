@@ -38,6 +38,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | ----- | ------ |
 | [Getting started](docs/getting-started.md) | prerequisites, the three steps, first run, daily use |
 | [Set your Zeldoc API key](docs/zeldoc-api-key.md) | get, register, and approve the model provider key |
+| [Use GitHub Copilot](docs/copilot-setup.md) | run the agent on your Copilot subscription (or both providers) |
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
 | [Mixins](docs/mixins.md) | what each mixin adds, common sets, changing them |
 | [Project-specific config](docs/project-kit.md) | an in-project kit: project feeds, env vars, files, agent notes |
@@ -56,6 +57,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | `opencode-entrypoint` | entrypoint runtime: startup banner, mixin hook runner, opencode autostart, `.env` guard, login shell on exit (required by every kit) |
 | `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) |
+| `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) |
 | `omnium` | Omnium OMS/e-commerce API egress (proxy-managed bearer token) |
 | `git` | git hosting egress, proxy-managed GitHub auth, worktree workflow |
 | `node` | nodejs.org + npm registry egress |
@@ -78,9 +80,10 @@ Node project keeps `base`, `opencode-config`, `opencode-entrypoint`,
 `zeldoc`, `git`, `python`; a pure Go project keeps `base`,
 `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`,
 `git`, `go`; a pure Rust project keeps `base`, `opencode-config`,
-`opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `rust`. The
-`playwright*` and `sbx` mixins need the `apt` mixin. Details:
-[docs/mixins.md](docs/mixins.md).
+`opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `rust`. Swap
+`zeldoc` for `copilot` (or compose both — the default model stays Zeldoc's)
+to run on your GitHub Copilot subscription. The `playwright*` and `sbx`
+mixins need the `apt` mixin. Details: [docs/mixins.md](docs/mixins.md).
 
 ## The sandbox shell
 
@@ -150,7 +153,9 @@ Everything below is for developing the template, kit, and mixins.
 - **`mixins/opencode-config/`** (`kind: mixin`): the permissive OpenCode
   config (`~/.config/opencode/opencode.jsonc`, dropped into the global
   config layer; edit/bash/webfetch allowed — the sandbox is the isolation
-  boundary).
+  boundary; sharing + websearch disabled) plus the combined provider
+  config (`OPENCODE_CONFIG` points at it; provider mixins ship fragments
+  that this mixin's merge script combines at every start).
 - **`mixins/opencode-entrypoint/`** (`kind: mixin`): the entrypoint
   runtime (`~/.sandbox-kit/entrypoint.sh`: `.env` guard, mixin hook
   runner, banner, opencode autostart, login shell on exit) the kit

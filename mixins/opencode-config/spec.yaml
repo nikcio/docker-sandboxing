@@ -1,13 +1,31 @@
-# Permissive OpenCode config, dropped into the global config layer.
+# OpenCode config: the permissive global-layer config plus the combined
+# provider config mechanism.
 #
 # Ships:
 # - files/home/.config/opencode/opencode.jsonc — the permissive OpenCode
 #   config (edit/bash/webfetch allowed; the sandbox is the isolation
-#   boundary). Lives in the global config layer as opencode.jsonc; the
-#   sandbox-managed opencode.json (MCP gateway wiring) is a separate file
-#   and both are merged by OpenCode. Kit layers loaded through
-#   OPENCODE_CONFIG (e.g. the Zeldoc provider from the zeldoc mixin) merge
-#   above this file.
+#   boundary; sharing + websearch disabled). Lives in the global config
+#   layer as opencode.jsonc; the sandbox-managed opencode.json (MCP
+#   gateway wiring) is a separate file and both are merged by OpenCode.
+#   Provider mixins layer on top via fragments (see below).
+# - environment.variables.OPENCODE_CONFIG — points at the combined
+#   provider config (~/.config/opencode/providers.jsonc). OWNED HERE:
+#   every provider mixin (zeldoc, copilot, ...) ships a pure-JSON
+#   fragment to ~/.config/opencode/providers.d/NN-<name>.json and the
+#   merge below rebuilds that file at every start
+#   (enabled_providers lists union, later fragments win scalar conflicts
+#   like `model`). Never set OPENCODE_CONFIG in another mixin or kit —
+#   this variable is the single owner, which is what lets any number of
+#   provider mixins compose.
+# - files/home/.sandbox-kit/merge-opencode-config.sh — the provider
+#   config fragment merger (jq; enabled_providers union, later fragments
+#   win scalar conflicts; seeds a valid empty config when there are no
+#   fragments).
+# - files/home/.sandbox-kit/hooks.d/provider-config.sh — the hook the
+#   opencode-entrypoint runtime sources before the banner: exports
+#   OPENCODE_CONFIG defensively and runs the merge, so `o`/`opencode`
+#   relaunched from the login shell keep working even if a runtime
+#   skipped mixin env injection.
 #
 # Pairs with mixins/opencode-entrypoint (entrypoint runtime) and
 # mixins/base (agent guidance + MCP gateway). No network rules: capability
@@ -18,12 +36,28 @@ name: opencode-config
 displayName: Permissive OpenCode config
 description: >
   The permissive OpenCode config (edit/bash/webfetch allowed — the sandbox
-  is the isolation boundary), dropped into the global config layer as
-  opencode.jsonc. Merged with the sandbox-managed opencode.json (MCP
-  gateway wiring) and any OPENCODE_CONFIG layers (e.g. the Zeldoc provider
-  from the zeldoc mixin). No network rules — capability egress comes from
-  the other mixins.
-version: 0.1.0
+  is the isolation boundary; sharing + websearch disabled), dropped into
+  the global config layer as opencode.jsonc, plus the combined provider
+  config: OPENCODE_CONFIG points at ~/.config/opencode/providers.jsonc,
+  rebuilt at every start from the provider mixins' fragments in
+  providers.d/ by merge-opencode-config.sh (sourced via the entrypoint's
+  hook runner). Merged with the sandbox-managed opencode.json (MCP gateway
+  wiring) and any project config layer. No network rules — capability
+  egress comes from the other mixins.
+version: 0.2.0
+
+environment:
+  variables:
+    # The combined OpenCode provider config, rebuilt at every start from
+    # ~/.config/opencode/providers.d/*.json by
+    # ~/.sandbox-kit/merge-opencode-config.sh (called by this mixin's
+    # provider-config hook, which also re-exports this var defensively).
+    # Merges between the global and project config layers, so sandbox
+    # wiring in the managed opencode.json is preserved and a project
+    # opencode.jsonc can still override the default model. Owned here —
+    # provider mixins/kits must not set OPENCODE_CONFIG.
+    OPENCODE_CONFIG: /home/agent/.config/opencode/providers.jsonc
 
 # Files dropped into the sandbox home (see the header for the layout):
-# .config/opencode/opencode.jsonc.
+# .config/opencode/opencode.jsonc, .sandbox-kit/merge-opencode-config.sh,
+# .sandbox-kit/hooks.d/provider-config.sh.

@@ -1,23 +1,9 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  // Zeldoc.ai provider setup, per https://docs.zeldoc.ai/connect-opencode
-  //
-  // This file is injected by the opencode-node-dotnet kit and loaded through
-  // the OPENCODE_CONFIG environment variable, so it merges with (instead of
-  // replacing) the sandbox-managed ~/.config/opencode/opencode.json.
-  //
-  // ZELDOC_API_KEY holds a proxy-managed placeholder inside the sandbox; the
-  // host proxy swaps in the real key on requests to api.zeldoc.ai.
   "model": "zeldoc/zdev-2",
-  // Keep conversations local and avoid accidentally using another provider.
-  "share": "disabled",
   "enabled_providers": [
     "zeldoc"
   ],
-  // websearch sends queries to a third-party service (Exa); keep it off.
-  "permission": {
-    "websearch": "deny"
-  },
   "provider": {
     "zeldoc": {
       "npm": "@ai-sdk/openai-compatible",
@@ -85,7 +71,7 @@
               "reasoningEffort": "max"
             }
           }
-        },
+        }
       }
     }
   }

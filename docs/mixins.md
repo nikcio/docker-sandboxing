@@ -14,7 +14,8 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer. Required by every kit — keep this line |
 | `opencode-entrypoint` | The entrypoint runtime: startup banner, mixin hook runner, opencode autostart, `.env` guard, login shell on exit. Required by every kit — keep this line |
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
-| `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config, Zeldoc hosts) |
+| `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
+| `copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
 | `uniform` | Uniform DXP egress: docs site, dashboard + Management API (uniform.app), Edge Delivery API (uniform.global, incl. EU + image CDN), proxy-managed `x-api-key` auth (see [uniform-api-key.md](uniform-api-key.md)) |
 | `omnium` | Omnium OMS/e-commerce egress: REST API hosts (production/test/dev, each with Swagger), tech docs, proxy-managed `Authorization: Bearer` auth (see [omnium-api-key.md](omnium-api-key.md)) |
@@ -58,8 +59,28 @@ Notes:
   in every set.
 - The `playwright*` mixins and `sbx` run `apt` at creation — compose the
   `apt` mixin with them.
-- Every set should include `zeldoc` (the model provider) and
-  `opencode-runtime` (the agent's own egress).
+- Every set should include at least one model provider (`zeldoc` and/or
+  `copilot`) and `opencode-runtime` (the agent's own egress).
+
+## Model providers (zeldoc / copilot)
+
+Provider mixins don't fight over one config file: each ships a
+pure-JSON fragment to `~/.config/opencode/providers.d/NN-<provider>.json`
+inside the sandbox, and the `opencode-config` mixin merges all
+fragments into the single config OpenCode loads via `OPENCODE_CONFIG`
+at every start:
+
+- `enabled_providers` lists are **unioned** — compose `zeldoc` and
+  `copilot` together and both stay selectable with `/models`.
+- Fragments merge in filename order and later fragments win conflicts —
+  the `20-` zeldoc fragment sorts after the `10-` copilot one, so the
+  **default model stays `zeldoc/zdev-2`** when both are composed. Point
+  `model` at a Copilot model in a project-level `opencode.jsonc` (see
+  [project-kit.md](project-kit.md)) to flip the default.
+- Composing only one provider keeps that provider's default model.
+
+Swapping providers (or changing any mixin) only applies to **new**
+sandboxes — see "Changing mixins" below.
 
 ## Changing mixins
 

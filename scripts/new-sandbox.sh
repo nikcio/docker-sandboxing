@@ -37,6 +37,7 @@ ALL_MIXINS=(
     "opencode-entrypoint|entrypoint runtime: banner, opencode autostart, .env guard (required)"
     "opencode-runtime|OpenCode runtime egress: updates, models.dev, Zen, plugins"
     "zeldoc|Zeldoc.ai (zdev) model provider: proxy-managed key + network"
+    "copilot|GitHub Copilot model provider: device-flow sign-in + network"
     "git|git hosting (GitHub/GitLab) + gh auth + worktree workflow"
     "node|Node.js/NVM/PNPM: nodejs.org + npm registry"
     "dotnet|.NET/NuGet + Microsoft hosts, telemetry off"

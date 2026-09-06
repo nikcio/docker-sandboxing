@@ -19,9 +19,10 @@
 # - setup.startup — MCP gateway registration (the hook that normally wins;
 #   the backstop only covers runtimes that skip mixin startup hooks).
 #
-# The permissive OpenCode config ships with mixins/opencode-config and the
-# entrypoint runtime with mixins/opencode-entrypoint. No network rules:
-# capability egress comes from the other mixins.
+# The permissive OpenCode config (and the combined provider config)
+# ships with mixins/opencode-config and the entrypoint runtime with
+# mixins/opencode-entrypoint. No network rules: capability egress comes
+# from the other mixins.
 schemaVersion: "2"
 kind: mixin
 name: base

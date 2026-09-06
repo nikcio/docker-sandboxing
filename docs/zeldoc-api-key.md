@@ -30,5 +30,10 @@ Start the sandbox (`sbx env run`); opencode should start with the model
 
 If ZDev ever reports "encountered an error", the model's context limit
 likely changed — update `"limit".context` in
-`mixins/zeldoc/files/home/.config/opencode/zeldoc.jsonc` per the
-[Zeldoc guide](https://docs.zeldoc.ai/connect-opencode) (currently `1000000`).
+`mixins/zeldoc/files/home/.config/opencode/providers.d/20-zeldoc.json`
+per the [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode)
+(currently `1000000`).
+
+Prefer your GitHub Copilot subscription instead? See
+[copilot-setup.md](copilot-setup.md) — the two mixins compose (both
+providers stay enabled).

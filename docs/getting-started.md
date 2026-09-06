@@ -32,8 +32,11 @@ Use this repo's sandbox in three steps:
 
 - [Docker Desktop](https://docs.docker.com/desktop/) with the `sbx` CLI
   installed and signed in (`sbx login`), version 0.39.0+
-- A [Zeldoc.ai](https://zeldoc.ai) API key — see
-  [zeldoc-api-key.md](zeldoc-api-key.md)
+- A model provider for the agent:
+  - [Zeldoc.ai](https://zeldoc.ai) API key (the default the examples use)
+    — see [zeldoc-api-key.md](zeldoc-api-key.md), or
+  - a GitHub Copilot subscription (no key needed; sign in inside the
+    sandbox) — see [copilot-setup.md](copilot-setup.md). Both compose.
 - Optional: a GitHub personal access token so the agent can push and open PRs
   — see [github-pat.md](github-pat.md). Public repos and git over SSH work
   without one.

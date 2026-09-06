@@ -2,22 +2,27 @@
 #
 # - Proxy-managed API key (the real key never enters the VM); provision
 #   host-side with `sbx secret set zeldoc` — see docs/zeldoc-api-key.md
-# - Provider config injected via OPENCODE_CONFIG (merged with the
-#   sandbox-managed ~/.config/opencode/opencode.json)
+# - Provider config shipped as a pure-JSON fragment to
+#   ~/.config/opencode/providers.d/20-zeldoc.json. The opencode-config
+#   mixin merges all provider fragments into the combined OPENCODE_CONFIG
+#   file at every start (enabled_providers lists are unioned, so this
+#   mixin composes with the copilot mixin and any future provider mixin).
+#   Never set OPENCODE_CONFIG in a mixin — the opencode-config mixin owns
+#   it.
+# - Fragment notes: files sort in filename order and later files win
+#   scalar conflicts — the 20- prefix keeps `zeldoc/zdev-2` the default
+#   model even when the copilot mixin (10-) is also composed. The model's
+#   context limit lives in `"limit".context` (currently 1000000, per the
+#   Zeldoc connect guide). Fragments must stay comment-free JSON: the
+#   merge runs through jq.
 schemaVersion: "2"
 kind: mixin
 name: zeldoc
 displayName: Zeldoc.ai provider
 description: >
   Zeldoc.ai (zdev) model provider for OpenCode: proxy-managed API key,
-  provider config file, and network rules for the Zeldoc hosts.
-version: 0.1.0
-
-environment:
-  variables:
-    # Merges between the global and project config layers, so sandbox
-    # wiring in the managed opencode.json is preserved.
-    OPENCODE_CONFIG: /home/agent/.config/opencode/zeldoc.jsonc
+  provider config fragment, and network rules for the Zeldoc hosts.
+version: 0.2.0
 
 credentials:
   - service: zeldoc

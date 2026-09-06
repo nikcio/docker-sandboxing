@@ -17,7 +17,13 @@ it is picked up when opencode starts.
 
 Do not write `~/.config/opencode/opencode.json` from a kit — the
 sandbox owns that file (it is rewritten at startup for MCP wiring). Do
-not set `OPENCODE_CONFIG` either — the `zeldoc` mixin owns it.
+not set `OPENCODE_CONFIG` either — the `opencode-config` mixin owns it
+(it points at the combined provider config that the mixin rebuilds from
+`~/.config/opencode/providers.d/`). To contribute a provider, ship a
+comment-free JSON fragment at
+`files/home/.config/opencode/providers.d/30-<name>.json` in your kit —
+the opencode-config mixin merges it with the stock provider fragments
+(see [mixins.md](mixins.md)).
 
 ## Add an in-project kit
 

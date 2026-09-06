@@ -10,7 +10,8 @@
 #      from the sandbox-local copy; direct mode refuses to start).
 #   2. Sources the composed mixins' hooks from ~/.sandbox-kit/hooks.d/*.sh
 #      (glob order) — e.g. the base mixin's AGENTS.md rebuild and MCP
-#      gateway backstop.
+#      gateway backstop, and the opencode-config mixin's provider config
+#      merge.
 #   3. Prints the startup banner and reports the env-guard result.
 #   4. Auto-starts opencode.
 #   5. When opencode exits, execs an interactive login shell (relaunch
