@@ -59,8 +59,10 @@ Use based on your task:
   intended differences are the image reference and the stack-specific
   memory lines.
 - The kit entrypoint is a shell wrapper, not opencode directly: it prints a
-  startup banner, auto-runs `opencode`, then `exec`s an interactive login
-  shell — quitting the agent must leave a usable shell. Keep that shape.
+  startup banner, best-effort upgrades opencode to the newest release
+  (egress from the `opencode-runtime` mixin), auto-runs `opencode`, then
+  `exec`s an interactive login shell — quitting the agent must leave a
+  usable shell. Keep that shape.
 - The sandbox `AGENTS.md` (written next to the workspace) is rebuilt by the
   kit entrypoint before opencode starts: base content from the dev kit's
   `files/home/.sandbox-agents.md` plus every mixin's
