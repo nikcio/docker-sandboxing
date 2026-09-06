@@ -46,7 +46,8 @@ Full walkthrough (prerequisites, first run, daily use):
 
 ## Common setups
 
-A typical project keeps these mixins (the examples ship them already):
+The example you copied already composes this set of mixins — yours will look
+the same with your stack's mixin in place of the last line:
 
 ```
 base, global-opencode-config, env-guard, banner, opencode-runtime,
