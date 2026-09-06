@@ -111,22 +111,47 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 
 Everything below is for developing the template, kit, and mixins.
 
-| Path | What it is |
-| ---- | ---------- |
-| `template-*/Dockerfile` | the four template images: `opencode-node-dotnet:v1`, `opencode-python:v1`, `opencode-go:v1`, `opencode-rust:v1` — all extend `docker/sandbox-templates:opencode-docker` and ship Git (+ git-lfs), `gh`, and the `o` PATH shim for relaunching opencode |
-| `template-node-dotnet/Dockerfile` | the .NET + Node stack: .NET SDK, Node LTS via NVM, PNPM |
-| `template-python/Dockerfile` | the Python stack: uv-managed CPython, uv |
-| `template-go/Dockerfile` | the Go stack: the official Go toolchain (`GO_VERSION` build-arg, `GOTOOLCHAIN=auto` for newer toolchains through the module proxy) |
-| `template-rust/Dockerfile` | the Rust stack: rustup-managed stable toolchain (clippy + rustfmt + rust-analyzer), cargo, the C build toolchain for linking crates |
-| `kit-<stack>/` | sandbox kits (`kind: sandbox`): the template image plus a one-line entrypoint wrapper that execs the shared runtime script from the `base` mixin (mixin hooks → auto-start opencode → login shell on exit) and errors clearly when that mixin is missing |
-| `kit-published-<stack>/` | the same kits with `sandbox.image` pinned to the public Docker Hub tags — release-please bumps versions + tags, keep them in sync with `kit-<stack>/` |
-| `mixins/base/` | the shared runtime the kit wrappers exec: the entrypoint (`~/.sandbox-kit/entrypoint.sh`), the agent guidance files (`~/.sandbox-agents/*.md`, `~/.sandbox-agents.md`), and the hooks (`~/.sandbox-kit/hooks.d/agents-md.sh`, `~/.sandbox-kit/hooks.d/mcp-gateway.sh`) — what it adds is in the mixin reference above |
-| `mixins/global-opencode-config/` | owns `OPENCODE_CONFIG`: the permissive OpenCode config (`~/.config/opencode/opencode.jsonc`, edit/bash/webfetch allowed; sharing + websearch disabled) plus the provider-fragment merge (`merge-global-opencode-config.sh`) that provider mixins feed via `providers.d/` fragments |
-| `mixins/env-guard/` | the `.env` guard hook (`files/home/.sandbox-kit/hooks.d/env-guard.sh`) — behavior in the mixin reference above |
-| `mixins/banner/` | the banner hook (`files/home/.sandbox-kit/hooks.d/banner.sh`) — behavior in the mixin reference above |
-| `mixins/<area>/` | one single-purpose mixin per area (`kind: mixin`): network rules, env vars, credentials, install steps, and an agent memory note (`files/home/.sbx-agents.d/<area>.md`) — composed explicitly at launch (`--kit` flags or a `.sbxenv.yaml` `kits:` list) |
-| `opencode-builtin-kit.spec.yaml` | reference snapshot of Docker's built-in `opencode` kit (providers, MCP wiring) — the upstream of the template image all four Dockerfiles build on; nothing in this repo loads it |
-| `scripts/` | `bootstrap.*`: local dev setup (build + load the template, register the Zeldoc key, validate kit + mixins); `new-sandbox.*`: sandbox creation wizard (`--source local` picks up uncommitted edits) |
+```text
+├── template-node-dotnet/Dockerfile   # → opencode-node-dotnet:v1: .NET SDK, Node LTS via NVM, PNPM
+├── template-python/Dockerfile        # → opencode-python:v1: uv-managed CPython, uv
+├── template-go/Dockerfile            # → opencode-go:v1: official Go toolchain (GO_VERSION build-arg,
+│                                     #   GOTOOLCHAIN=auto for newer toolchains via the module proxy)
+├── template-rust/Dockerfile          # → opencode-rust:v1: rustup-managed stable toolchain
+│                                     #   (clippy + rustfmt + rust-analyzer), cargo, C build toolchain
+├── kit-node-dotnet/                  # sandbox kit (kind: sandbox): template image + one-line
+├── kit-python/                       #   entrypoint wrapper that execs the shared runtime from the
+├── kit-go/                           #   base mixin (mixin hooks → auto-start opencode → login shell
+├── kit-rust/                         #   on exit); errors clearly when that mixin is missing
+├── kit-published-<stack>/            # same kits, sandbox.image pinned to the public Docker Hub
+│                                     #   tags — release-please bumps versions + tags; keep in
+│                                     #   sync with kit-<stack>/
+├── mixins/
+│   ├── base/                         # the shared runtime the kit wrappers exec: the entrypoint
+│   │                                 #   (~/.sandbox-kit/entrypoint.sh), agent guidance
+│   │                                 #   (~/.sandbox-agents/*.md), hooks (agents-md.sh,
+│   │                                 #   mcp-gateway.sh) — what it adds: mixin reference above
+│   ├── global-opencode-config/       # owns OPENCODE_CONFIG: permissive OpenCode config
+│   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
+│   │                                 #   merge (merge-global-opencode-config.sh) fed by
+│   │                                 #   provider mixins' providers.d/ fragments
+│   ├── env-guard/                    # the .env guard hook (hooks.d/env-guard.sh)
+│   ├── banner/                       # the banner hook (hooks.d/banner.sh)
+│   └── <area>/                       # one single-purpose mixin per area (kind: mixin): network
+│                                     #   rules, env vars, credentials, install steps, agent
+│   │                                 #   memory note (.sbx-agents.d/<area>.md) — composed
+│                                     #   explicitly at launch (--kit flags or kits: list)
+├── scripts/
+│   ├── bootstrap.ps1 / bootstrap.sh  # local dev setup (build, load, secrets, validate)
+│   └── new-sandbox.ps1 / new-sandbox.sh  # sandbox creation wizard
+├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack)
+├── docs/                             # user guides (see above)
+├── agent-guidance/                   # worktrees, versioning, commit conventions
+└── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in opencode kit —
+                                      #   upstream of the template image; nothing loads it
+```
+
+All four templates extend `docker/sandbox-templates:opencode-docker` and ship
+Git (+ git-lfs), `gh`, and the `o` PATH shim for relaunching opencode.
 
 ### Working on the repo
 
