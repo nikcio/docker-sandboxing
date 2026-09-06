@@ -1,6 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "zeldoc/zdev-2",
   "enabled_providers": [
     "zeldoc"
   ],

@@ -38,13 +38,14 @@ requests can override opencode's own Copilot auth headers — remove the
 stored PAT (`sbx secret rm github`), sign in again, and re-store the PAT
 only if git/`gh` auth still works.
 
-## The agent uses the wrong model provider
+## The agent uses the wrong model
 
 Model providers are mixins (`zeldoc`, `copilot`); their configs are
-merged fragments — see [mixins.md](mixins.md). With both composed,
-`zeldoc/zdev-2` is the default model; switch with `/models` or set
-`model` in a project-level `opencode.jsonc`. Provider changes only apply
-to new sandboxes: recreate with `sbx rm <name>` + `sbx env run`.
+merged fragments — see [mixins.md](mixins.md). The default model comes
+from your project-level `opencode.jsonc` (`"model": "<provider>/<model>"`)
+— set it there, or switch per session with `/models`. Provider changes
+only apply to new sandboxes: recreate with `sbx rm <name>` +
+`sbx env run`.
 
 ## The sandbox refuses to start (.env files)
 

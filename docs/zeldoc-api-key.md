@@ -25,8 +25,10 @@ you're done.
 
 ## Verify
 
-Start the sandbox (`sbx env run`); opencode should start with the model
-`zeldoc/zdev-2`.
+Start the sandbox (`sbx env run`); opencode starts with the Zeldoc
+provider enabled. No default model is picked for you — set `"model":
+"zeldoc/zdev-2"` in a project-level `opencode.jsonc` (see
+[project-kit.md](project-kit.md)) or pick it with `/models`.
 
 If ZDev ever reports "encountered an error", the model's context limit
 likely changed — update `"limit".context` in

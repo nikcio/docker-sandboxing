@@ -77,12 +77,12 @@ it):
 
 - `enabled_providers` lists are **unioned** — compose `zeldoc` and
   `copilot` together and both stay selectable with `/models`.
-- Fragments merge in filename order and later fragments win conflicts —
-  the `20-` zeldoc fragment sorts after the `10-` copilot one, so the
-  **default model stays `zeldoc/zdev-2`** when both are composed. Point
-  `model` at a Copilot model in a project-level `opencode.jsonc` (see
-  [project-kit.md](project-kit.md)) to flip the default.
-- Composing only one provider keeps that provider's default model.
+- Fragments merge in filename order and later fragments win conflicts,
+  but **no fragment sets the default model** — the project-level
+  `opencode.jsonc` owns it. Commit one in the repo root (see
+  [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or
+  `"model": "github-copilot/<model-id>"`; without it opencode falls back
+  to its own default, and `/models` always works per session.
 
 Swapping providers (or changing any mixin) only applies to **new**
 sandboxes — see "Changing mixins" below.

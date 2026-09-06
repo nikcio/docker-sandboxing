@@ -26,7 +26,7 @@ description: >
   plus a provider config fragment merged by the global-opencode-config mixin.
   Sign in with
   /connect in the opencode TUI. Composes with the zeldoc mixin.
-version: 0.1.0
+version: 0.2.0
 
 permissions:
   network:
