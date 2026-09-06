@@ -1,37 +1,65 @@
 # docker-sandboxing
 
-A [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) sandbox for
-[OpenCode](https://opencode.ai), composed from a **template image**, a thin
-**sandbox kit**, and optional **mixins** (one capability area each: model
-provider, git, node, dotnet, python, go, rust, docker, apt, browser automation,
-…). Four templates ship: **.NET + Node.js** (NVM + PNPM), **Python + uv**,
-**Go**, and **Rust + cargo** (rustup), all with Git and GitHub CLI preinstalled.
+Run [OpenCode](https://opencode.ai) in a sandboxed [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/)
+VM inside your own repo. Pick a template for your stack — **.NET + Node.js**,
+**Python + uv**, **Go**, or **Rust + cargo** (all with Git and GitHub CLI
+preinstalled) — copy one example file into your project, and run one command.
 
-The sandbox is the isolation boundary: outbound network is deny-by-default
-(only the composed mixins' hosts are allowed), and API keys are injected by
-a proxy — the sandbox only ever sees placeholders.
+The sandbox is the isolation boundary: outbound network is deny-by-default and
+API keys are injected by a proxy — the sandbox only ever sees placeholders.
 
 ## Use it in your project
 
-1. **Copy the example.** Copy the example matching your stack —
-   `examples/opencode-node-dotnet.sbxenv.yaml` (.NET + Node),
-   `examples/opencode-python.sbxenv.yaml` (Python + uv),
-   `examples/opencode-go.sbxenv.yaml` (Go), or
-   `examples/opencode-rust.sbxenv.yaml` (Rust + cargo) — into your project's
-   root and rename it `.sbxenv.yaml`. Commit it so teammates get the same
-   sandbox.
-2. **Adjust the config to your project.** Set `name:`; drop the mixin lines
-   your project doesn't need, but keep `base` (every kit requires it) and
-   add `global-opencode-config` when using a model provider (`zeldoc`,
-   `copilot`); the examples also compose `env-guard` (the no-.env policy)
-   and `banner`. `workspace.path: .` targets the repo itself.
-3. **Run it** from your project root.
+### 1. Copy the example for your stack
 
-   ```bash
-   sbx env run
-   ```
+Copy the example matching your stack into your project's root and rename it
+`.sbxenv.yaml`. Commit it so teammates get the same sandbox.
 
-Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
+| Your stack | Copy this example |
+| ---------- | ----------------- |
+| .NET + Node.js | [`examples/opencode-node-dotnet.sbxenv.yaml`](examples/opencode-node-dotnet.sbxenv.yaml) |
+| Python + uv | [`examples/opencode-python.sbxenv.yaml`](examples/opencode-python.sbxenv.yaml) |
+| Go | [`examples/opencode-go.sbxenv.yaml`](examples/opencode-go.sbxenv.yaml) |
+| Rust + cargo | [`examples/opencode-rust.sbxenv.yaml`](examples/opencode-rust.sbxenv.yaml) |
+
+### 2. Adjust the config to your project
+
+- Set `name:` to your project's name.
+- Drop the `kits:` lines your project doesn't need. Two rules:
+  - always keep `base`,
+  - keep `global-opencode-config` when using a model provider (`zeldoc`,
+    `copilot`).
+- Leave `workspace.path: .` as is — it targets your repo.
+
+### 3. Run it
+
+From your project root:
+
+```bash
+sbx env run
+```
+
+OpenCode starts automatically. Quitting it drops you into the sandbox's login
+shell (git, builds, `dotnet`/`pnpm`, …) — relaunch opencode anytime with `o`,
+and exit the shell when you're done with the sandbox.
+
+Full walkthrough (prerequisites, first run, daily use):
+[docs/getting-started.md](docs/getting-started.md).
+
+## Common setups
+
+A typical project keeps these mixins (the examples ship them already):
+
+```
+base, global-opencode-config, env-guard, banner, opencode-runtime,
+zeldoc (or copilot), git, <your stack>
+```
+
+- Swap `zeldoc` for `copilot` — or compose both — to run on your GitHub
+  Copilot subscription (the project's `opencode.jsonc` sets the default
+  model). See [docs/copilot-setup.md](docs/copilot-setup.md).
+- `env-guard` protects your `.env` files; `banner` is cosmetic. Both optional.
+- The `playwright*` and `sbx` mixins need the `apt` mixin.
 
 ## Guides
 
@@ -51,7 +79,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | [Troubleshooting](docs/troubleshooting.md) | blocked downloads, git auth, the .env guard, stale changes |
 | [GitHub repo setup](docs/repo-setup.md) | maintainer setup: release App, secrets, branch protection, Docker Hub |
 
-## Mixins
+## Mixin reference
 
 | Mixin | Adds |
 | ----- | ---- |
@@ -77,27 +105,9 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | `playwright` / `playwright-chromium` / `playwright-all` | Playwright + the listed browsers |
 | `sbx` | the `sbx` CLI inside the sandbox (kit authoring) |
 
-Drop what you don't need, but keep `base` (every kit requires it) and
-`global-opencode-config` when using a model provider (`zeldoc`,
-`copilot`) — a pure
-Node project keeps `base`, `global-opencode-config`, `env-guard`, `banner`,
-`opencode-runtime`, `zeldoc`, `git`, `node`; a pure Python project keeps
-`base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`,
-`zeldoc`, `git`, `python`; a pure Go project keeps `base`,
-`global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`,
-`git`, `go`; a pure Rust project keeps `base`, `global-opencode-config`,
-`env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `rust`. Swap
-`zeldoc` for `copilot` (or compose both — the project's `opencode.jsonc`
-sets the default model) to run on your GitHub Copilot subscription. The
-`playwright*` and `sbx` mixins need the `apt` mixin. Details:
-[docs/mixins.md](docs/mixins.md).
+Full mixin details: [docs/mixins.md](docs/mixins.md).
 
-## The sandbox shell
-
-Attaching lands you in opencode directly. Quitting opencode drops you into
-the sandbox's login shell (git, builds, `dotnet`/`pnpm`, …) — relaunch
-opencode anytime with `o`, and exit the shell when you're done with the
-sandbox.
+---
 
 ## Developing this repo
 
