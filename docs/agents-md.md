@@ -61,14 +61,55 @@ Because it is generated:
    notes): add a note to your in-project kit — see
    [project-kit.md](project-kit.md).
 
+## Loading both files
+
+When your repo has its own `AGENTS.md`, the sandbox environment file is
+skipped (first match wins). Two ways to get both — pick one:
+
+### Option 1: point at it from your repo's `AGENTS.md`
+
+Add a short section to the repo `AGENTS.md` and commit it. The agent
+reads the file on demand — nothing else to configure:
+
+```markdown
+## Sandbox environment
+
+This repo is developed inside a Docker sandbox. The sandbox's own
+environment notes (network blocks, git auth, workspace mode) live in
+`../AGENTS.md`, next to the project folder — outside this repo.
+
+- When network requests fail with HTTP 403, git push fails with auth
+  errors, or you need to reason about how changes reach the host, read
+  `../AGENTS.md` first and follow its guidance-file index.
+- Skip it for tasks that don't touch the sandbox.
+```
+
+### Option 2: load it unconditionally via opencode config
+
+Commit an `opencode.jsonc` in the repo root (see
+[project-kit.md](project-kit.md)) and list the file under
+`instructions`:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Sandbox environment file, generated next to the workspace folder.
+  "instructions": ["../AGENTS.md"]
+}
+```
+
+opencode combines `instructions` files with the `AGENTS.md` files, so
+the agent gets your repo file and the sandbox environment file in every
+session. The path is relative to the project root, and a missing file is
+skipped without error — safe before the first `sbx env run` too. Plain
+`opencode.json` works the same (drop the comment).
+
 ## Caveats
 
 - **Repo file shadows the generated one.** First match wins: when your
   repo has its own `AGENTS.md`, the agent never reads the sandbox
-  environment file. If the agent seems unaware of sandbox facts (HTTP 403
-  block shapes, proxy-injected git auth), point it at the generated file
-  next to the workspace folder — or copy the lines you always want into
-  your repo's `AGENTS.md`.
+  environment file. Surface it with one of the two options under
+  **Loading both files** above.
 - **Parent folders don't cascade.** Rules in an `AGENTS.md` above the
   repo (or above the workspace) are skipped — only the first match
   loads.
