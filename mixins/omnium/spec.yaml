@@ -1,51 +1,33 @@
-# Omnium mixin: Omnium OMS/e-commerce platform egress and proxy-managed
-# API auth (orders, products, inventory, customers, carts, ...).
+# Omnium mixin: Omnium OMS/e-commerce platform egress so apps and the agent
+# can call the Omnium REST API (orders, products, inventory, customers,
+# carts, ...) and mint their own API tokens.
 #
-# Omnium has no static API key: an API user's ClientId + ClientSecret
-# (host-side only) are exchanged for a JWT at POST /api/token on the API
-# host, and that JWT is the Authorization: Bearer credential. The
-# ClientSecret never enters the VM — the user mints the JWT host-side and
-# registers it (`sbx secret set omnium` — see docs/omnium-api-key.md); the
-# host proxy swaps it into the Authorization header on the hosts below.
+# Omnium auth is client-credentials: POST /api/token?clientId=...&client-
+# Secret=... on an API host returns a 10-day JWT used as Authorization:
+# Bearer. Apps in the sandbox perform that exchange themselves — the proxy
+# keeps the ClientSecret out of the VM while they do it. Register the
+# secret host-side as a custom secret (`sbx secret set-custom --host
+# apitest.omnium.no --host api.omnium.no --host apidev.omnium.no --env
+# OMNIUM_CLIENT_SECRET` — see docs/omnium-api-key.md): the sandbox sees
+# only a generated placeholder in OMNIUM_CLIENT_SECRET, and the proxy
+# swaps in the real value wherever the placeholder appears in a request
+# to those hosts, including the /api/token query string. The ClientId is
+# not a secret — the project's .sbxenv.yaml passes it as OMNIUM_CLIENT_ID.
+#
+# No kit-declared credential on purpose: a kit credential injects a fixed
+# header value on matching hosts, which would clobber the Authorization
+# bearer the app mints for itself, and kit credentials never deliver a
+# secret as a readable env var.
 schemaVersion: "2"
 kind: mixin
 name: omnium
 displayName: Omnium (omnium.no)
 description: >
   Omnium OMS/e-commerce platform egress: the REST API hosts (production,
-  test, and dev — each serving its Swagger UI under /documentation), the
-  tech docs site, and a proxy-managed API bearer token injected as the
-  Authorization header so the sandbox can call the Omnium API.
+  test, and dev — each serving its Swagger UI under /documentation) and
+  the tech docs site. Omnium credentials are provisioned host-side (sbx
+  custom secret); apps in the sandbox mint their own API tokens.
 version: 0.1.0
-
-credentials:
-  # Proxy-managed: the sandbox only ever sees the OMNIUM_API_KEY=proxy-
-  # managed placeholder; the host proxy swaps in the real value on the hosts
-  # below. The stored value is a JWT minted host-side from an API user's
-  # ClientId + ClientSecret (Omnium's credential model — there is no static
-  # API key); tokens are valid for 10 days. Optional — without a stored
-  # token, docs access still works but API calls fail with 401. The inject
-  # domains must stay inside permissions.network.allow.
-  - service: omnium
-    description: >
-      Omnium API access token (JWT) for the environment you target — mint
-      it host-side by POSTing the API user's ClientId + ClientSecret to
-      /api/token on that environment's API host. Create API users in the
-      Omnium GUI under Configuration > Authorization > API Users.
-    required: false
-    apiKey:
-      name: OMNIUM_API_KEY
-      proxyManaged: true
-      inject:
-        - domain: api.omnium.no          # production API
-          header: Authorization
-          format: Bearer %s
-        - domain: apitest.omnium.no      # test API (mirrors the next release)
-          header: Authorization
-          format: Bearer %s
-        - domain: apidev.omnium.no       # dev API (shares data with test)
-          header: Authorization
-          format: Bearer %s
 
 permissions:
   network:
@@ -55,8 +37,8 @@ permissions:
       - api.omnium.no:443
       - apitest.omnium.no:443
       - apidev.omnium.no:443
-      # Tech docs (docs.omnium.no), user docs, and system status — all
-      # reachable without a token, for research.
+      # Tech docs (docs.omnium.no), user docs, and system status —
+      # reachable without credentials, for research.
       - docs.omnium.no:443
       - help.omnium.no:443
       - status.omnium.no:443

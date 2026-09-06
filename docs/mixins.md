@@ -14,7 +14,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config, Zeldoc hosts) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
 | `uniform` | Uniform DXP egress: docs site, dashboard + Management API (uniform.app), Edge Delivery API (uniform.global, incl. EU + image CDN), proxy-managed `x-api-key` auth (see [uniform-api-key.md](uniform-api-key.md)) |
-| `omnium` | Omnium OMS/e-commerce egress: REST API hosts (production/test/dev, each with Swagger), tech docs, proxy-managed `Authorization: Bearer` auth (see [omnium-api-key.md](omnium-api-key.md)) |
+| `omnium` | Omnium OMS/e-commerce egress: REST API hosts (production/test/dev, each with Swagger), tech docs; apps mint their own API tokens — ClientSecret proxy-managed via sbx custom secret (see [omnium-api-key.md](omnium-api-key.md)) |
 | `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry, pnpm.io docs; pnpm installs gated to versions published ≥24h ago |
 | `openapi-ts` | openapi-ts.dev docs egress for the openapi-typescript + openapi-fetch packages |
 | `dotnet` | .NET/NuGet egress + telemetry opt-out |
