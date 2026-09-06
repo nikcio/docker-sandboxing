@@ -1,0 +1,65 @@
+# Omnium mixin: Omnium OMS/e-commerce platform egress and proxy-managed
+# API auth (orders, products, inventory, customers, carts, ...).
+#
+# Omnium has no static API key: an API user's ClientId + ClientSecret
+# (host-side only) are exchanged for a JWT at POST /api/token on the API
+# host, and that JWT is the Authorization: Bearer credential. The
+# ClientSecret never enters the VM — the user mints the JWT host-side and
+# registers it (`sbx secret set omnium` — see docs/omnium-api-key.md); the
+# host proxy swaps it into the Authorization header on the hosts below.
+schemaVersion: "2"
+kind: mixin
+name: omnium
+displayName: Omnium (omnium.no)
+description: >
+  Omnium OMS/e-commerce platform egress: the REST API hosts (production,
+  test, and dev — each serving its Swagger UI under /documentation), the
+  tech docs site, and a proxy-managed API bearer token injected as the
+  Authorization header so the sandbox can call the Omnium API.
+version: 0.1.0
+
+credentials:
+  # Proxy-managed: the sandbox only ever sees the OMNIUM_API_KEY=proxy-
+  # managed placeholder; the host proxy swaps in the real value on the hosts
+  # below. The stored value is a JWT minted host-side from an API user's
+  # ClientId + ClientSecret (Omnium's credential model — there is no static
+  # API key); tokens are valid for 10 days. Optional — without a stored
+  # token, docs access still works but API calls fail with 401. The inject
+  # domains must stay inside permissions.network.allow.
+  - service: omnium
+    description: >
+      Omnium API access token (JWT) for the environment you target — mint
+      it host-side by POSTing the API user's ClientId + ClientSecret to
+      /api/token on that environment's API host. Create API users in the
+      Omnium GUI under Configuration > Authorization > API Users.
+    required: false
+    apiKey:
+      name: OMNIUM_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: api.omnium.no          # production API
+          header: Authorization
+          format: Bearer %s
+        - domain: apitest.omnium.no      # test API (mirrors the next release)
+          header: Authorization
+          format: Bearer %s
+        - domain: apidev.omnium.no       # dev API (shares data with test)
+          header: Authorization
+          format: Bearer %s
+
+permissions:
+  network:
+    allow:
+      # REST API: production, test, and dev. The Swagger UI is served on
+      # each host under /documentation.
+      - api.omnium.no:443
+      - apitest.omnium.no:443
+      - apidev.omnium.no:443
+      # Tech docs (docs.omnium.no), user docs, and system status — all
+      # reachable without a token, for research.
+      - docs.omnium.no:443
+      - help.omnium.no:443
+      - status.omnium.no:443
+
+# Agent memory note: files/home/.sbx-agents.d/omnium.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).
