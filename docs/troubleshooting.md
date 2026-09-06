@@ -22,8 +22,8 @@ sbx env run
 
 GitHub auth is not configured for this sandbox — store a fine-grained PAT
 on your host (see [github-pat.md](github-pat.md)); it takes effect
-immediately, no restart needed. Public repos and git over SSH keep working
-without a token.
+immediately, no restart needed. Cloning public repos (read-only) and git
+over SSH keep working without a token — pushing over HTTPS never does.
 
 `gh auth status` showing "not logged in" inside the sandbox is expected —
 the sandbox only sees a placeholder token; the real one is injected by the
