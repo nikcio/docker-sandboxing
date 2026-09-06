@@ -83,7 +83,8 @@ these Docker Sandboxes artifacts:
   the `&ref=` pins in `examples/*.sbxenv.yaml`) in the release PR.
 - `mixins/<area>/` — one mixin kit per area (`kind: mixin`): `zeldoc`,
   `git`, `node`, `openapi-ts`, `dotnet`, `python`, `go`, `rust`, `docker`,
-  `opencode-runtime`, `apt`, `browser`
+  `uniform` (uniform.app docs + proxy-managed API key), `opencode-runtime`,
+  `apt`, `browser`
   (Chrome, software only), three playwright levels (`playwright`,
   `playwright-chromium`, `playwright-all`), and `sbx` (the Docker
   Sandboxes CLI for in-sandbox kit authoring). Each mixin

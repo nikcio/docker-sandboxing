@@ -13,6 +13,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config, Zeldoc hosts) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
+| `uniform` | Uniform DXP egress: docs site, dashboard + Management API (uniform.app), Edge Delivery API (uniform.global, incl. EU + image CDN), proxy-managed `x-api-key` auth (see [uniform-api-key.md](uniform-api-key.md)) |
 | `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry, pnpm.io docs; pnpm installs gated to versions published ≥24h ago |
 | `openapi-ts` | openapi-ts.dev docs egress for the openapi-typescript + openapi-fetch packages |
 | `dotnet` | .NET/NuGet egress + telemetry opt-out |
@@ -42,6 +43,7 @@ Network hosts per mixin are listed at the top of each
 | Rust only | `opencode-runtime`, `zeldoc`, `git`, `rust` |
 | Node + typed API client (openapi-typescript) | `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
 | Node + in-sandbox Docker | `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
+| Node frontend with Uniform | `opencode-runtime`, `zeldoc`, `git`, `node`, `uniform` |
 | Browser automation | `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
 
 Notes:
