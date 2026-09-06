@@ -1,12 +1,28 @@
-# apt mixin: OS package mirrors for `sudo apt-get` inside the sandbox.
+# apt mixin: OS package mirrors for `sudo apt-get` inside the sandbox,
+# plus a background cache warm at sandbox start so the first
+# `apt-get install` in a session isn't slow.
 schemaVersion: "2"
 kind: mixin
 name: apt
 displayName: OS packages (apt)
 description: >
   Network rules for Ubuntu archives and the Microsoft package repo so the
-  agent can install OS packages inside the sandbox.
-version: 0.1.0
+  agent can install OS packages inside the sandbox, plus a background
+  apt-get update at sandbox start (no-op when apt-get is missing or these
+  hosts are blocked — failures are swallowed by design).
+version: 0.2.0
+
+setup:
+  startup:
+    # Background cache warm: the first `apt-get install` in a session
+    # shouldn't wait for a full index download. No-op when apt-get is
+    # missing (non-Debian images) or the mirror hosts are blocked (this
+    # mixin isn't composed) — failures are swallowed by design. The sbx
+    # mixin's install step runs against a private lists dir to dodge the
+    # lock race with this hook.
+    - command: ["sh", "-c", "command -v apt-get > /dev/null 2>&1 && (apt-get update -qq -y > /dev/null 2>&1 || true) &"]
+      user: "root"
+      description: Update apt package cache in background
 
 permissions:
   network:

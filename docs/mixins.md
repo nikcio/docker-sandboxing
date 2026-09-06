@@ -10,7 +10,10 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 
 | Mixin | Adds |
 | ----- | ---- |
-| `base` | The shared baseline every OpenCode kit sandbox needs: permissive OpenCode config, agent guidance files, the shared `AGENTS.md` base, the entrypoint runtime (banner, opencode autostart, `.env` guard), startup hooks. Required by every kit — keep this line |
+| `base` | The entrypoint runtime + AGENTS.md logic + MCP gateway every kit needs: the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance files, the shared `AGENTS.md` base, the AGENTS.md rebuild hook, MCP gateway registration (startup hook + backstop). Required by every kit — keep this line |
+| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
+| `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
+| `banner` | The startup banner (cosmetic — the examples compose it) |
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
@@ -24,7 +27,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `go` | Go toolchain egress: module proxy + checksum DB (`go get`/`go install`, GOTOOLCHAIN toolchain downloads), dl.google.com (go.dev/dl artifacts), go.dev/golang.org docs |
 | `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs |
 | `docker` | Registry egress for the Docker engine inside the sandbox |
-| `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` |
+| `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` + background package-cache update at start |
 | `browser` | Google Chrome install (no network rules — sites stay gated by the other mixins) |
 | `playwright` | Playwright + Chromium headless shell (smallest download) |
 | `playwright-chromium` | Playwright + full Chromium |
@@ -39,21 +42,24 @@ Network hosts per mixin are listed at the top of each
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `base`, `opencode-runtime`, `zeldoc`, `git`, `node` |
-| .NET only | `base`, `opencode-runtime`, `zeldoc`, `git`, `dotnet` |
-| Python only | `base`, `opencode-runtime`, `zeldoc`, `git`, `python` |
-| Go only | `base`, `opencode-runtime`, `zeldoc`, `git`, `go` |
-| Rust only | `base`, `opencode-runtime`, `zeldoc`, `git`, `rust` |
-| Node + typed API client (openapi-typescript) | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
-| Node frontend with Uniform | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `uniform` |
-| Browser automation | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
+| Node only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node` |
+| .NET only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `dotnet` |
+| Python only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `python` |
+| Go only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `go` |
+| Rust only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `rust` |
+| Node + typed API client (openapi-typescript) | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
+| Node frontend with Uniform | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node`, `uniform` |
+| Browser automation | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
 
 Notes:
 
-- The `base` mixin is required by every kit — the entrypoint runtime, the
-  permissive OpenCode config, and the agent guidance files ship with it.
-  Keep it in every set.
+- Only `base` (entrypoint runtime, agent guidance, AGENTS.md rebuild,
+  MCP gateway) is required by every kit. `global-opencode-config` is
+  required when composing a model provider (`zeldoc`, `copilot`) — their
+  config fragments only merge through it. `env-guard` (the no-.env
+  policy) and `banner` (startup banner) are optional but in the
+  examples.
 - The `playwright*` mixins and `sbx` run `apt` at creation — compose the
   `apt` mixin with them.
 - Every set should include at least one model provider (`zeldoc` and/or
@@ -63,9 +69,11 @@ Notes:
 
 Provider mixins don't fight over one config file: each ships a
 pure-JSON fragment to `~/.config/opencode/providers.d/NN-<provider>.json`
-inside the sandbox, and the `base` mixin's entrypoint merges all
+inside the sandbox, and the `global-opencode-config` mixin merges all
 fragments into the single config OpenCode loads via `OPENCODE_CONFIG`
-at every start:
+at every start. Compose `global-opencode-config` with any provider
+mixin — it is required with them (their fragments only merge through
+it):
 
 - `enabled_providers` lists are **unioned** — compose `zeldoc` and
   `copilot` together and both stay selectable with `/models`.

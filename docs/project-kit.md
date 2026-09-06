@@ -17,13 +17,13 @@ it is picked up when opencode starts.
 
 Do not write `~/.config/opencode/opencode.json` from a kit — the
 sandbox owns that file (it is rewritten at startup for MCP wiring). Do
-not set `OPENCODE_CONFIG` either — the `base` mixin owns it (it points
-at the combined provider config that the entrypoint rebuilds from
+not set `OPENCODE_CONFIG` either — the `global-opencode-config` mixin owns it
+(it points at the combined provider config that the mixin rebuilds from
 `~/.config/opencode/providers.d/`). To contribute a provider, ship a
 comment-free JSON fragment at
 `files/home/.config/opencode/providers.d/30-<name>.json` in your kit —
-the entrypoint merges it with the stock provider fragments (see
-[mixins.md](mixins.md)).
+the global-opencode-config mixin merges it with the stock provider fragments
+(see [mixins.md](mixins.md)).
 
 ## Add an in-project kit
 
@@ -82,14 +82,19 @@ of the stock mixins.
    kits:
       - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node-dotnet&ref=v0.6.0
      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/banner&ref=v0.6.0
      # ...the other stock mixins your project keeps...
      - ./sandbox-kit
    ```
 
-   Keep the stock agent kit (`kit-published`) and the `base` mixin — the
-   kit defines the image and entrypoint wrapper, the `base` mixin ships
-   the entrypoint runtime, OpenCode config, and agent guidance; your kit
-   only adds capabilities.
+   Keep the stock agent kit (`kit-published`) and `base` (required) —
+   the kit defines the image and entrypoint wrapper, the `base` mixin
+   ships the entrypoint runtime, agent guidance, and the MCP gateway.
+   Add `global-opencode-config` when composing a model provider; the
+   list above also includes the optional `env-guard` (the no-.env
+   policy) and `banner`. Your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new
    sandboxes):

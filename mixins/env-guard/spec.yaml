@@ -1,0 +1,34 @@
+# Workspace .env guard: the workspace must never contain a .env file.
+#
+# Why a hook and not setup.startup: startup commands don't gate the agent
+# entrypoint (they run alongside it, without a terminal) — the guard's
+# refuse-to-start semantic and its report ordering must run inside the
+# entrypoint (kit reference: setup.startup).
+#
+# Ships:
+# - files/home/.sandbox-kit/hooks.d/env-guard.sh — the guard, sourced by
+#   the base mixin's entrypoint runtime before opencode starts: clone
+#   mode removes .env files from the sandbox-local copy (with a warning
+#   and a short pause), direct mode (host tree mounted in place) refuses
+#   to start when one exists, and the all-clear line reports the result.
+#
+# Optional — compose it to enforce the no-.env policy. Pairs with
+# mixins/base (entrypoint runtime + agent guidance + MCP gateway) and
+# mixins/global-opencode-config (permissive OpenCode config + provider
+# merge); mixins/banner adds the startup banner. No network rules:
+# capability egress comes from the other mixins.
+schemaVersion: "2"
+kind: mixin
+name: env-guard
+displayName: Workspace .env guard
+description: >
+  Enforces the no-.env policy in the workspace: clone mode removes .env
+  files from the sandbox-local copy (warning + short pause), direct mode
+  refuses to start when one exists. Ships the guard as a hook
+  (~/.sandbox-kit/hooks.d/env-guard.sh) sourced by the base mixin's
+  entrypoint runtime. No network rules — capability egress comes from the
+  other mixins.
+version: 0.1.0
+
+# Files dropped into the sandbox home (see the header for the layout):
+# .sandbox-kit/hooks.d/env-guard.sh.

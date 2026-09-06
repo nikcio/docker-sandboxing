@@ -19,10 +19,10 @@ setup:
   install:
     # The apt repo entry is kept (download.docker.com is allowed) so the
     # agent can upgrade docker-sbx later. The update+install run against a
-    # private lists dir: the kit's background `apt-get update` startup hook
-    # may still hold /var/lib/apt/lists/lock (apt-get update has no
-    # lock-wait option), and this install only needs the dpkg + archives
-    # locks.
+    # private lists dir: the apt mixin's background `apt-get update`
+    # startup hook may still hold /var/lib/apt/lists/lock (apt-get update
+    # has no lock-wait option), and this install only needs the dpkg +
+    # archives locks.
     - command: >
         install -m 0755 -d /etc/apt/keyrings
         && curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc

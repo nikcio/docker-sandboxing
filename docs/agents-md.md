@@ -33,9 +33,10 @@ If `AGENTS.md` and `CLAUDE.md` sit at the same level, only the
 
 ## What the sandbox environment file contains
 
-The shared entrypoint runtime (shipped by the `base` mixin, `mixins/base/`
-in the docker-sandboxing repo, and exec'd by every OpenCode kit's
-entrypoint) rebuilds it before opencode starts, from:
+The entrypoint runtime (shipped by the `base` mixin,
+`mixins/base/` in the docker-sandboxing repo, and exec'd by every OpenCode
+kit's entrypoint) sources the base mixin's rebuild hook before opencode
+starts, rebuilding the file from:
 
 - the shared base (`mixins/base/files/home/.sandbox-agents.md`) —
   environment facts plus an index of guidance files (network blocks, git

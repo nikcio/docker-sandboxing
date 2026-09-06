@@ -10,10 +10,11 @@
 # docs/copilot-setup.md.
 #
 # Config fragments: every provider mixin ships a pure-JSON fragment to
-# ~/.config/opencode/providers.d/ (see mixins/zeldoc). The base mixin's
-# entrypoint merges all fragments into the combined OPENCODE_CONFIG file
-# at every start; enabled_providers lists are unioned, so this mixin
-# composes alongside the zeldoc mixin (and any future provider mixin).
+# ~/.config/opencode/providers.d/ (see mixins/zeldoc). Requires the
+# global-opencode-config mixin: it merges all fragments into the combined
+# OPENCODE_CONFIG file at every start; enabled_providers lists are
+# unioned, so this mixin composes alongside the zeldoc mixin (and any
+# future provider mixin).
 schemaVersion: "2"
 kind: mixin
 name: copilot
@@ -22,7 +23,8 @@ description: >
   GitHub Copilot model provider for OpenCode: network egress for the
   OAuth device-flow sign-in (github.com), the Copilot session token
   endpoint (api.github.com), and the Copilot API (api.githubcopilot.com),
-  plus a provider config fragment merged by the base mixin. Sign in with
+  plus a provider config fragment merged by the global-opencode-config mixin.
+  Sign in with
   /connect in the opencode TUI. Composes with the zeldoc mixin.
 version: 0.1.0
 

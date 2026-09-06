@@ -21,8 +21,10 @@ a proxy — the sandbox only ever sees placeholders.
    root and rename it `.sbxenv.yaml`. Commit it so teammates get the same
    sandbox.
 2. **Adjust the config to your project.** Set `name:`; drop the mixin lines
-   your project doesn't need, but keep `base` (the shared baseline every
-   kit requires) (`workspace.path: .` targets the repo itself).
+   your project doesn't need, but keep `base` (every kit requires it) and
+   add `global-opencode-config` when using a model provider (`zeldoc`,
+   `copilot`); the examples also compose `env-guard` (the no-.env policy)
+   and `banner` (`workspace.path: .` targets the repo itself).
 3. **Run it** from your project root.
 
    ```bash
@@ -51,7 +53,10 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 
 | Mixin | Adds |
 | ----- | ---- |
-| `base` | shared baseline every kit requires: OpenCode config, agent guidance, entrypoint runtime, startup hooks |
+| `base` | the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance (shared `AGENTS.md` base + guidance files), the AGENTS.md rebuild hook, MCP gateway registration (required by every kit) |
+| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) (required with a model provider: `zeldoc`, `copilot`) |
+| `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) (optional — the examples compose it) |
+| `banner` | the startup banner (cosmetic — the examples compose it) |
 | `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) |
 | `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) |
@@ -64,20 +69,24 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | `go` | Go module proxy + checksum DB egress (`go get`/`go install`, GOTOOLCHAIN downloads) |
 | `rust` | crates.io + rustup egress for cargo |
 | `docker` | registry egress for the in-sandbox Docker engine |
-| `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` |
+| `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` + background package-cache update at start |
 | `browser` | Google Chrome install (software only) |
 | `playwright` / `playwright-chromium` / `playwright-all` | Playwright + the listed browsers |
 | `sbx` | the `sbx` CLI inside the sandbox (kit authoring) |
 
-Drop what you don't need, but keep `base` (required by every kit) — a pure
-Node project keeps `base`, `opencode-runtime`, `zeldoc`, `git`, `node`; a
-pure Python project keeps `base`, `opencode-runtime`, `zeldoc`, `git`,
-`python`; a pure Go project keeps `base`, `opencode-runtime`, `zeldoc`,
-`git`, `go`; a pure Rust project keeps `base`, `opencode-runtime`,
-`zeldoc`, `git`, `rust`. Swap `zeldoc` for `copilot` (or compose both —
-the default model stays Zeldoc's) to run on your GitHub Copilot
-subscription. The `playwright*` and `sbx` mixins need the `apt`
-mixin. Details: [docs/mixins.md](docs/mixins.md).
+Drop what you don't need, but keep `base` (every kit requires it) and
+`global-opencode-config` when using a model provider (`zeldoc`,
+`copilot`) — a pure
+Node project keeps `base`, `global-opencode-config`, `env-guard`, `banner`,
+`opencode-runtime`, `zeldoc`, `git`, `node`; a pure Python project keeps
+`base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`,
+`zeldoc`, `git`, `python`; a pure Go project keeps `base`,
+`global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`,
+`git`, `go`; a pure Rust project keeps `base`, `global-opencode-config`,
+`env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `rust`. Swap
+`zeldoc` for `copilot` (or compose both — the default model stays Zeldoc's)
+to run on your GitHub Copilot subscription. The `playwright*` and `sbx`
+mixins need the `apt` mixin. Details: [docs/mixins.md](docs/mixins.md).
 
 ## The sandbox shell
 
@@ -129,21 +138,33 @@ Everything below is for developing the template, kit, and mixins.
 - **Kits** (`kit-node-dotnet/`, `kit-python/`, `kit-go/`, `kit-rust/`,
   `kind: sandbox`): intentionally thin — the template image plus a
   one-line entrypoint wrapper. The wrapper execs the shared runtime script
-  from the `base` mixin (banner → auto-start opencode →
-  login shell on exit) and errors clearly when that mixin is missing.
+  from the `base` mixin (mixin hooks → auto-start opencode → login shell
+  on exit) and errors clearly when that mixin is missing.
 - **`kit-published-node-dotnet/`, `kit-published-python/`,
   `kit-published-go/`, `kit-published-rust/`**: same kits, `sandbox.image`
   pinned to the public Docker Hub tags. Release-please bumps versions +
   tags; keep them in sync with `kit-node-dotnet/`, `kit-python/`, `kit-go/`,
   and `kit-rust/`.
-- **`mixins/base/`** (`kind: mixin`): the shared baseline every kit sandbox
-  composes — the permissive OpenCode config, the combined provider config
-  (`OPENCODE_CONFIG` points at it; provider mixins ship fragments that the
-  entrypoint's merge script combines), the agent guidance files
-  (`~/.sandbox-agents/*.md`), the shared `AGENTS.md` base
-  (`~/.sandbox-agents.md`), the entrypoint runtime
-  (`~/.sandbox-kit/entrypoint.sh`), and the startup hooks (background apt
-  cache update, MCP gateway registration).
+- **`mixins/base/`** (`kind: mixin`): the entrypoint runtime, AGENTS.md
+  logic, and MCP gateway every kit sandbox composes — the entrypoint
+  runtime (`~/.sandbox-kit/entrypoint.sh`: mixin hook runner, opencode
+  autostart, login shell on exit) the kit wrappers exec, the agent
+  guidance files (`~/.sandbox-agents/*.md`), the shared `AGENTS.md` base
+  (`~/.sandbox-agents.md`), the AGENTS.md rebuild hook
+  (`~/.sandbox-kit/hooks.d/agents-md.sh`), and MCP gateway registration
+  (startup hook + idempotent backstop in
+  `~/.sandbox-kit/hooks.d/mcp-gateway.sh`).
+- **`mixins/global-opencode-config/`** (`kind: mixin`): the permissive OpenCode
+  config (`~/.config/opencode/opencode.jsonc`, dropped into the global
+  config layer; edit/bash/webfetch allowed — the sandbox is the isolation
+  boundary; sharing + websearch disabled) plus the combined provider
+  config (`OPENCODE_CONFIG` points at it; provider mixins ship fragments
+  that this mixin's merge script combines at every start).
+- **`mixins/env-guard/`** (`kind: mixin`): the workspace `.env` guard —
+  removes `.env` files in clone mode, refuses to start in direct mode
+  (hook sourced by the entrypoint runtime).
+- **`mixins/banner/`** (`kind: mixin`): the startup banner (cosmetic —
+  the examples compose it).
 - **Mixins** (`mixins/<area>/`, `kind: mixin`): network rules, env vars,
   credentials, install steps, and an agent memory note
   (`files/home/.sbx-agents.d/<area>.md`) for one area each. Compose
