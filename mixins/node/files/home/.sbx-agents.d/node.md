@@ -1,6 +1,7 @@
 ## Node.js / NVM / PNPM
 
-- Node is managed by nvm
+- Node is managed by nvm (`node`/`npm`/`npx`/`pnpm` resolve to the
+  nvm-managed install, symlinked into /usr/local/bin)
 - Prefer `pnpm`
 - pnpm installs only package versions published at least 24h ago
   (supply-chain safety, applies to transitive deps too). If a version is

@@ -10,6 +10,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 
 | Mixin | Adds |
 | ----- | ---- |
+| `base` | The shared baseline every OpenCode kit sandbox needs: permissive OpenCode config, agent guidance files, the shared `AGENTS.md` base, the entrypoint runtime (banner, opencode autostart, `.env` guard), startup hooks. Required by every kit — keep this line |
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config, Zeldoc hosts) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
@@ -37,18 +38,21 @@ Network hosts per mixin are listed at the top of each
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `opencode-runtime`, `zeldoc`, `git`, `node` |
-| .NET only | `opencode-runtime`, `zeldoc`, `git`, `dotnet` |
-| Python only | `opencode-runtime`, `zeldoc`, `git`, `python` |
-| Go only | `opencode-runtime`, `zeldoc`, `git`, `go` |
-| Rust only | `opencode-runtime`, `zeldoc`, `git`, `rust` |
-| Node + typed API client (openapi-typescript) | `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
-| Node frontend with Uniform | `opencode-runtime`, `zeldoc`, `git`, `node`, `uniform` |
-| Browser automation | `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
+| Node only | `base`, `opencode-runtime`, `zeldoc`, `git`, `node` |
+| .NET only | `base`, `opencode-runtime`, `zeldoc`, `git`, `dotnet` |
+| Python only | `base`, `opencode-runtime`, `zeldoc`, `git`, `python` |
+| Go only | `base`, `opencode-runtime`, `zeldoc`, `git`, `go` |
+| Rust only | `base`, `opencode-runtime`, `zeldoc`, `git`, `rust` |
+| Node + typed API client (openapi-typescript) | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
+| Node frontend with Uniform | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `uniform` |
+| Browser automation | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
 
 Notes:
 
+- The `base` mixin is required by every kit — the entrypoint runtime, the
+  permissive OpenCode config, and the agent guidance files ship with it.
+  Keep it in every set.
 - The `playwright*` mixins and `sbx` run `apt` at creation — compose the
   `apt` mixin with them.
 - Every set should include `zeldoc` (the model provider) and

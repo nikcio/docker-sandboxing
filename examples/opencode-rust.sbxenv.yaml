@@ -21,6 +21,7 @@ agent: opencode-rust
 # x-release-please-start-version
 kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-rust&ref=v0.7.0         # agent definition (published image)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v0.7.0                # shared baseline (required by the kit)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v0.7.0    # agent runtime
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v0.7.0              # Zeldoc.ai provider
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v0.7.0                 # git + worktrees

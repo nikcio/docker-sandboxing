@@ -12,7 +12,9 @@ Use this repo's sandbox in three steps:
 
 2. **Adjust the config to your project.** In `.sbxenv.yaml`:
    - `name:` — a unique name for this sandbox (used to scope its secrets)
-   - `kits:` — drop the mixin lines your project doesn't need (see
+   - `kits:` — drop the mixin lines your project doesn't need, but keep
+     `base` (the shared baseline: OpenCode config, agent guidance,
+     entrypoint runtime — every kit requires it; see
      [mixins.md](mixins.md)); need project-specific settings (private
      feeds, env vars, agent notes)? see
      [project-kit.md](project-kit.md)

@@ -21,7 +21,8 @@ a proxy — the sandbox only ever sees placeholders.
    root and rename it `.sbxenv.yaml`. Commit it so teammates get the same
    sandbox.
 2. **Adjust the config to your project.** Set `name:`; drop the mixin lines
-   your project doesn't need (`workspace.path: .` targets the repo itself).
+   your project doesn't need, but keep `base` (the shared baseline every
+   kit requires) (`workspace.path: .` targets the repo itself).
 3. **Run it** from your project root.
 
    ```bash
@@ -49,6 +50,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 
 | Mixin | Adds |
 | ----- | ---- |
+| `base` | shared baseline every kit requires: OpenCode config, agent guidance, entrypoint runtime, startup hooks |
 | `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) |
 | `omnium` | Omnium OMS/e-commerce API egress (proxy-managed bearer token) |
@@ -65,10 +67,11 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | `playwright` / `playwright-chromium` / `playwright-all` | Playwright + the listed browsers |
 | `sbx` | the `sbx` CLI inside the sandbox (kit authoring) |
 
-Drop what you don't need — a pure Node project keeps only `opencode-runtime`,
-`zeldoc`, `git`, `node`; a pure Python project keeps `opencode-runtime`,
-`zeldoc`, `git`, `python`; a pure Go project keeps `opencode-runtime`,
-`zeldoc`, `git`, `go`; a pure Rust project keeps `opencode-runtime`,
+Drop what you don't need, but keep `base` (required by every kit) — a pure
+Node project keeps `base`, `opencode-runtime`, `zeldoc`, `git`, `node`; a
+pure Python project keeps `base`, `opencode-runtime`, `zeldoc`, `git`,
+`python`; a pure Go project keeps `base`, `opencode-runtime`, `zeldoc`,
+`git`, `go`; a pure Rust project keeps `base`, `opencode-runtime`,
 `zeldoc`, `git`, `rust`. The `playwright*` and `sbx` mixins need the `apt`
 mixin. Details: [docs/mixins.md](docs/mixins.md).
 
@@ -120,15 +123,21 @@ Everything below is for developing the template, kit, and mixins.
   toolchain for linking crates, Git (+ git-lfs), `gh`, and the same `o`
   shim. All extend `docker/sandbox-templates:opencode-docker`.
 - **Kits** (`kit-node-dotnet/`, `kit-python/`, `kit-go/`, `kit-rust/`,
-  `kind: sandbox`): point at the local template images, set the entrypoint
-  (banner → auto-start opencode → login shell on exit), drop a permissive
-  OpenCode config, and rebuild the sandbox `AGENTS.md` from the kit's base
-  plus every composed mixin's note.
+  `kind: sandbox`): intentionally thin — the template image plus a
+  one-line entrypoint wrapper. The wrapper execs the shared runtime script
+  from the `base` mixin (banner → auto-start opencode →
+  login shell on exit) and errors clearly when that mixin is missing.
 - **`kit-published-node-dotnet/`, `kit-published-python/`,
   `kit-published-go/`, `kit-published-rust/`**: same kits, `sandbox.image`
   pinned to the public Docker Hub tags. Release-please bumps versions +
   tags; keep them in sync with `kit-node-dotnet/`, `kit-python/`, `kit-go/`,
   and `kit-rust/`.
+- **`mixins/base/`** (`kind: mixin`): the shared baseline every kit sandbox
+  composes — the permissive OpenCode config, the agent guidance files
+  (`~/.sandbox-agents/*.md`), the shared `AGENTS.md` base
+  (`~/.sandbox-agents.md`), the entrypoint runtime
+  (`~/.sandbox-kit/entrypoint.sh`), and the startup hooks (background apt
+  cache update, MCP gateway registration).
 - **Mixins** (`mixins/<area>/`, `kind: mixin`): network rules, env vars,
   credentials, install steps, and an agent memory note
   (`files/home/.sbx-agents.d/<area>.md`) for one area each. Compose

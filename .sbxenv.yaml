@@ -11,6 +11,7 @@ agent: opencode-node-dotnet
 
 kits:
   - ./kit-node-dotnet         # agent definition (dev kit, local image)
+  - ./mixins/base             # shared baseline: entrypoint runtime, opencode config, guidance
   - ./mixins/opencode-runtime # agent runtime
   - ./mixins/zeldoc           # Zeldoc.ai provider
   - ./mixins/git              # git + worktrees
