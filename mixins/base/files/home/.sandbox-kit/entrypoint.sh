@@ -13,8 +13,7 @@
 #   3. Prints the startup banner and reports the env-guard result.
 #   4. Registers the sandbox MCP gateway when the runtime's startup hook
 #      didn't (backstop — see the comment at that block).
-#   5. Best-effort upgrades opencode to the newest release (egress from
-#      the opencode-runtime mixin), then auto-starts it.
+#   5. Auto-starts opencode.
 #   6. When opencode exits, execs an interactive login shell (relaunch
 #      opencode with `o` or `opencode`; quitting the shell ends the
 #      session).
@@ -65,7 +64,6 @@ cat <<'BANNER'
  Sandbox
 ------------------------------------------------------------
  opencode is starting automatically.
- - Updates to the newest release on every start
  - Quit opencode to drop into this shell
  - Relaunch opencode anytime with: o or opencode
 ------------------------------------------------------------
@@ -123,22 +121,8 @@ if [ -n "${MCP_GATEWAY_URL:-}" ] && [ ! -f "$HOME/.config/opencode/opencode.json
 EOF
 fi
 
-# 5. Launch opencode. Always start the newest opencode release:
-# self-upgrade before launch. Best-effort - the egress comes from the
-# opencode-runtime mixin; on failure (mixin missing, offline) the version
-# baked into the image keeps running.
+# 5. Launch opencode (the version baked into the template image).
 if command -v opencode >/dev/null 2>&1; then
-  __upgrade_log="$(mktemp)"
-  if timeout 120 opencode upgrade >"$__upgrade_log" 2>&1; then
-    __upgraded="$(sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' "$__upgrade_log" | grep -am 1 'From ' | sed 's/^.*From /From /')"
-    if [ -n "$__upgraded" ]; then
-      echo "opencode updated: $__upgraded"
-    fi
-  else
-    echo "WARNING: opencode upgrade failed - continuing with the version baked into the image:" >&2
-    sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' "$__upgrade_log" | grep -av '^[[:space:]]*$' | tail -n 1 | sed 's/^/  /' >&2
-  fi
-  rm -f "$__upgrade_log"
   opencode
   echo "opencode exited - back in the sandbox shell (relaunch: o or opencode)"
 else

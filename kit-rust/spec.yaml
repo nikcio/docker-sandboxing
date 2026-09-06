@@ -6,7 +6,7 @@
 #
 # The kit is intentionally thin: template image + entrypoint. Everything
 # shared across the kits lives in ../mixins/base/ — the entrypoint runtime
-# (banner, opencode upgrade + autostart, .env guard, AGENTS.md rebuild),
+# (banner, opencode autostart, .env guard, AGENTS.md rebuild),
 # the permissive OpenCode config, the agent guidance files, and the
 # startup hooks. Every sandbox using this kit must compose that mixin;
 # the entrypoint below execs the shared script and refuses to start (with
@@ -25,8 +25,8 @@ description: >
   the sandbox is the isolation boundary), the agent guidance files, and
   the entrypoint runtime through the shared baseline mixin (../mixins/base,
   required). The entrypoint is a login shell: it prints a startup banner,
-  upgrades opencode to the newest release (best-effort), auto-starts it,
-  and drops into the shell when opencode exits (relaunch with `o`).
+  auto-starts opencode, and drops into the shell when opencode exits
+  (relaunch with `o`).
   Compose the mixins from ../mixins/ to add capabilities (model provider,
   network areas, workflow rules). Enforces a no-.env policy in the
   workspace: refuses to start in direct mode when one exists, removes it
@@ -39,8 +39,8 @@ sandbox:
   image: opencode-rust:v1
   # Wrapper: the real runtime lives in the base mixin
   # (~/.sandbox-kit/entrypoint.sh) — see that script for the behavior
-  # (banner, best-effort opencode upgrade, auto-start opencode, drop into
-  # the shell when opencode exits; quitting the shell ends the session).
+  # (banner, auto-start opencode, drop into the shell when opencode exits;
+  # quitting the shell ends the session).
   entrypoint:
     - bash
     - -c

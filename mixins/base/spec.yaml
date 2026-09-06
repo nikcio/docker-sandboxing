@@ -14,8 +14,8 @@
 # - files/home/.sandbox-agents/*.md — the guidance files the base links to
 #   (persistent shell env, network access, git auth, workspace mode).
 # - files/home/.sandbox-kit/entrypoint.sh — the entrypoint runtime: env
-#   guard, AGENTS.md rebuild, banner, MCP backstop, opencode upgrade +
-#   autostart, login shell on exit.
+#   guard, AGENTS.md rebuild, banner, MCP backstop, opencode autostart,
+#   login shell on exit.
 # - setup.startup — background apt cache update + MCP gateway registration
 #   (the entrypoint script carries an idempotent MCP backstop in case a
 #   runtime skips mixin startup hooks).
@@ -28,9 +28,9 @@ displayName: OpenCode sandbox baseline
 description: >
   The shared baseline every OpenCode kit sandbox composes: permissive
   OpenCode config, agent guidance files, the shared AGENTS.md base, the
-  entrypoint runtime (env guard, banner, opencode upgrade + autostart,
-  login shell on exit), and the startup hooks (background apt cache
-  update, MCP gateway registration). No network rules — capability egress
+  entrypoint runtime (env guard, banner, opencode autostart, login shell
+  on exit), and the startup hooks (background apt cache update, MCP
+  gateway registration). No network rules — capability egress
   comes from the other mixins.
 version: 0.1.0
 

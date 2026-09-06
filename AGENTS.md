@@ -71,8 +71,7 @@ Use based on your task:
 - The kit entrypoint is a shell wrapper, not opencode directly: it execs
   the shared runtime script from the `base` mixin
   (`~/.sandbox-kit/entrypoint.sh`), which prints a startup banner,
-  best-effort upgrades opencode to the newest release (egress from the
-  `opencode-runtime` mixin), auto-runs `opencode`, then `exec`s an
+  auto-runs `opencode`, then `exec`s an
   interactive login shell — quitting the agent must leave a usable shell.
   Keep that shape; the wrapper must error clearly (and still drop into a
   login shell) when the `base` mixin is missing.

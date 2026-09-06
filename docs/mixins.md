@@ -10,7 +10,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 
 | Mixin | Adds |
 | ----- | ---- |
-| `base` | The shared baseline every OpenCode kit sandbox needs: permissive OpenCode config, agent guidance files, the shared `AGENTS.md` base, the entrypoint runtime (banner, opencode upgrade + autostart, `.env` guard), startup hooks. Required by every kit — keep this line |
+| `base` | The shared baseline every OpenCode kit sandbox needs: permissive OpenCode config, agent guidance files, the shared `AGENTS.md` base, the entrypoint runtime (banner, opencode autostart, `.env` guard), startup hooks. Required by every kit — keep this line |
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config, Zeldoc hosts) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |

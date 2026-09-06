@@ -125,7 +125,7 @@ Everything below is for developing the template, kit, and mixins.
 - **Kits** (`kit-node-dotnet/`, `kit-python/`, `kit-go/`, `kit-rust/`,
   `kind: sandbox`): intentionally thin — the template image plus a
   one-line entrypoint wrapper. The wrapper execs the shared runtime script
-  from the `base` mixin (banner → opencode upgrade → auto-start opencode →
+  from the `base` mixin (banner → auto-start opencode →
   login shell on exit) and errors clearly when that mixin is missing.
 - **`kit-published-node-dotnet/`, `kit-published-python/`,
   `kit-published-go/`, `kit-published-rust/`**: same kits, `sandbox.image`
