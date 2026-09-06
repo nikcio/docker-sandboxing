@@ -8,7 +8,7 @@
   `UNIFORM_CLI_API_KEY`. `UNIFORM_PROJECT_ID` is required for API calls and is
   not a secret — set it in `.sbxenv.yaml`'s `env:` block, never in a project
   `.env` (the kit's env guard removes those).
-- Docs for research: https://docs.uniform.app/docs (reachable without a key).
+- Docs for research: https://docs.uniform.app/docs
 - EU-region teams must also set `UNIFORM_CLI_BASE_URL=https://eu.uniform.app`
   and `UNIFORM_CLI_BASE_EDGE_URL=https://eu.uniform.global`.
 - Verify credentials with `npx uniform whoami` (reports masked key, project,

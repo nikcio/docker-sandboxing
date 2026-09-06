@@ -1,7 +1,6 @@
 ## sbx CLI (Docker Sandboxes)
 
-- The `sbx` CLI (docker-sbx package) is installed via Docker's apt repo
-  (download.docker.com — owned by this mixin)
+- The `sbx` CLI (docker-sbx package) is installed
 - What works inside the sandbox: kit authoring — `sbx kit validate`,
   `sbx kit inspect`, `sbx kit pack <dir> -o <file.zip>` on this repo's
   `kit-*/`, `kit-published-*/`, and `mixins/<area>/`
