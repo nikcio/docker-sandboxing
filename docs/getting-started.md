@@ -58,9 +58,7 @@ Two one-time `sbx` settings on your host:
 
 ## First run
 
-- The sandbox starts, prints a banner, updates opencode to the newest
-  release (needs the `opencode-runtime` mixin's network rules), and launches
-  it automatically.
+- The sandbox starts, prints a banner, and launches opencode automatically.
 - Quit opencode and you drop into the sandbox's login shell (git, builds,
   `dotnet`, `pnpm`, …). Relaunch opencode anytime with `o`.
 - Exiting that shell ends the sandbox session.
