@@ -10,11 +10,15 @@
 #   2. Rebuilds the sandbox AGENTS.md from ~/.sandbox-agents.md (this
 #      mixin) plus every composed mixin's note in ~/.sbx-agents.d/,
 #      keeping the runtime's Kits index section.
-#   3. Prints the startup banner and reports the env-guard result.
-#   4. Registers the sandbox MCP gateway when the runtime's startup hook
+#   3. Rebuilds the combined OpenCode provider config: merges every
+#      provider mixin's fragment in ~/.config/opencode/providers.d/
+#      into the file OPENCODE_CONFIG points at (see
+#      merge-opencode-config.sh).
+#   4. Prints the startup banner and reports the env-guard result.
+#   5. Registers the sandbox MCP gateway when the runtime's startup hook
 #      didn't (backstop — see the comment at that block).
-#   5. Auto-starts opencode.
-#   6. When opencode exits, execs an interactive login shell (relaunch
+#   6. Auto-starts opencode.
+#   7. When opencode exits, execs an interactive login shell (relaunch
 #      opencode with `o` or `opencode`; quitting the shell ends the
 #      session).
 
@@ -58,7 +62,24 @@ if [ -n "${WORKSPACE_DIR:-}" ] && [ -f "$__agents" ] && [ -f "$__mine" ]; then
   } > "$__agents"
 fi
 
-# 3. Banner.
+# 3. Rebuild the combined OpenCode provider config: every provider mixin
+#    (zeldoc, copilot, ...) ships a fragment to
+#    ~/.config/opencode/providers.d/ and this merge produces the single
+#    file OPENCODE_CONFIG points at. The base mixin's spec owns
+#    OPENCODE_CONFIG (provider mixins must not set it — that is what
+#    lets any number of them compose); export it defensively here too so
+#    `o`/`opencode` relaunched from the login shell keep working even if
+#    a runtime skipped mixin env injection.
+export OPENCODE_CONFIG="${OPENCODE_CONFIG:-$HOME/.config/opencode/providers.jsonc}"
+if [ -x "$HOME/.sandbox-kit/merge-opencode-config.sh" ]; then
+  if ! "$HOME/.sandbox-kit/merge-opencode-config.sh"; then
+    echo "WARNING [provider-config]: merge failed - opencode may start without the expected model providers" >&2
+  fi
+else
+  echo "WARNING [provider-config]: $HOME/.sandbox-kit/merge-opencode-config.sh is missing (update the base mixin)" >&2
+fi
+
+# 4. Banner.
 cat <<'BANNER'
 ------------------------------------------------------------
  Sandbox
@@ -94,7 +115,7 @@ else
   echo "[env-guard] direct mode - $__clean"
 fi
 
-# 4. MCP gateway registration backstop. The startup hook in this mixin's
+# 5. MCP gateway registration backstop. The startup hook in this mixin's
 # spec normally writes ~/.config/opencode/opencode.json before this
 # script runs. If the hook didn't run (older runtime, startup hooks from
 # mixins unsupported), register the gateway here instead. No-op when MCP
@@ -121,7 +142,7 @@ if [ -n "${MCP_GATEWAY_URL:-}" ] && [ ! -f "$HOME/.config/opencode/opencode.json
 EOF
 fi
 
-# 5. Launch opencode (the version baked into the template image).
+# 6. Launch opencode (the version baked into the template image).
 if command -v opencode >/dev/null 2>&1; then
   opencode
   echo "opencode exited - back in the sandbox shell (relaunch: o or opencode)"
@@ -129,5 +150,5 @@ else
   echo "WARNING: opencode not found in image - dropping to shell" >&2
 fi
 
-# 6. Drop into the login shell.
+# 7. Drop into the login shell.
 exec bash -il

@@ -37,6 +37,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | ----- | ------ |
 | [Getting started](docs/getting-started.md) | prerequisites, the three steps, first run, daily use |
 | [Set your Zeldoc API key](docs/zeldoc-api-key.md) | get, register, and approve the model provider key |
+| [Use GitHub Copilot](docs/copilot-setup.md) | run the agent on your Copilot subscription (or both providers) |
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
 | [Mixins](docs/mixins.md) | what each mixin adds, common sets, changing them |
 | [Project-specific config](docs/project-kit.md) | an in-project kit: project feeds, env vars, files, agent notes |
@@ -53,6 +54,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | `base` | shared baseline every kit requires: OpenCode config, agent guidance, entrypoint runtime, startup hooks |
 | `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) |
+| `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) |
 | `omnium` | Omnium OMS/e-commerce API egress (proxy-managed bearer token) |
 | `git` | git hosting egress, proxy-managed GitHub auth, worktree workflow |
 | `node` | nodejs.org + npm registry egress |
@@ -72,7 +74,9 @@ Node project keeps `base`, `opencode-runtime`, `zeldoc`, `git`, `node`; a
 pure Python project keeps `base`, `opencode-runtime`, `zeldoc`, `git`,
 `python`; a pure Go project keeps `base`, `opencode-runtime`, `zeldoc`,
 `git`, `go`; a pure Rust project keeps `base`, `opencode-runtime`,
-`zeldoc`, `git`, `rust`. The `playwright*` and `sbx` mixins need the `apt`
+`zeldoc`, `git`, `rust`. Swap `zeldoc` for `copilot` (or compose both —
+the default model stays Zeldoc's) to run on your GitHub Copilot
+subscription. The `playwright*` and `sbx` mixins need the `apt`
 mixin. Details: [docs/mixins.md](docs/mixins.md).
 
 ## The sandbox shell
@@ -133,7 +137,9 @@ Everything below is for developing the template, kit, and mixins.
   tags; keep them in sync with `kit-node-dotnet/`, `kit-python/`, `kit-go/`,
   and `kit-rust/`.
 - **`mixins/base/`** (`kind: mixin`): the shared baseline every kit sandbox
-  composes — the permissive OpenCode config, the agent guidance files
+  composes — the permissive OpenCode config, the combined provider config
+  (`OPENCODE_CONFIG` points at it; provider mixins ship fragments that the
+  entrypoint's merge script combines), the agent guidance files
   (`~/.sandbox-agents/*.md`), the shared `AGENTS.md` base
   (`~/.sandbox-agents.md`), the entrypoint runtime
   (`~/.sandbox-kit/entrypoint.sh`), and the startup hooks (background apt

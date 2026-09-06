@@ -29,6 +29,23 @@ without a token.
 the sandbox only sees a placeholder token; the real one is injected by the
 proxy.
 
+## GitHub Copilot sign-in fails
+
+Copilot signs in with the OAuth device flow (`/connect` in the TUI — see
+[copilot-setup.md](copilot-setup.md)). If it fails while a GitHub PAT is
+stored for the sandbox, the PAT injection into `github.com`/`api.github.com`
+requests can override opencode's own Copilot auth headers — remove the
+stored PAT (`sbx secret rm github`), sign in again, and re-store the PAT
+only if git/`gh` auth still works.
+
+## The agent uses the wrong model provider
+
+Model providers are mixins (`zeldoc`, `copilot`); their configs are
+merged fragments — see [mixins.md](mixins.md). With both composed,
+`zeldoc/zdev-2` is the default model; switch with `/models` or set
+`model` in a project-level `opencode.jsonc`. Provider changes only apply
+to new sandboxes: recreate with `sbx rm <name>` + `sbx env run`.
+
 ## The sandbox refuses to start (.env files)
 
 The workspace must not contain `.env` files (secrets stay out of the

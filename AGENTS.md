@@ -50,8 +50,12 @@ Use based on your task:
   only the network rules, env vars, credentials, files, and memory notes
   for its own area. Composition is explicit at launch (`--kit` flags or a
   `.sbxenv.yaml` `kits:` list); the spec's `mixins:` field is not applied
-  by the runtime yet. `mixins/zeldoc/files/` holds the Zeldoc opencode
-  config loaded via `OPENCODE_CONFIG`.
+  by the runtime yet. Model-provider mixins (`zeldoc`, `copilot`) ship
+  pure-JSON config fragments to
+  `files/home/.config/opencode/providers.d/NN-<provider>.json` — the base
+  mixin's entrypoint merges them (filename order, `enabled_providers`
+  unioned, later files win scalar conflicts) into the combined file that
+  `OPENCODE_CONFIG` points at.
 - `scripts/new-sandbox.*` — the sandbox creation wizard: wizard-first
   (no args = guided prompts), flags/env for scripted use (profiles,
   git/local source, ref pinning). Nothing registers it automatically; docs
@@ -94,8 +98,12 @@ Use based on your task:
   sync.
 - Do not touch the sandbox-managed `~/.config/opencode/opencode.json` from
   any kit. The permissive config lives in the base mixin's sibling
-  `opencode.jsonc` (merged by OpenCode); the Zeldoc provider lives in its
-  own file referenced by `OPENCODE_CONFIG`.
+  `opencode.jsonc` (merged by OpenCode); providers layer on via
+  `providers.d/` fragments (merged by the base mixin's
+  `merge-opencode-config.sh` into the generated `providers.jsonc` — that
+  file is rebuilt every start, never hand-edit it).
+- Never set `OPENCODE_CONFIG` in a kit or mixin — the base mixin owns it.
+  That single owner is what lets any number of provider mixins compose.
 - Host-side settings are documented as standard `sbx settings set` commands
   in the user guides (`docs/`), never in the kit.
 - Never commit secrets. The Zeldoc key is registered host-side via

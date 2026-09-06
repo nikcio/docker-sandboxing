@@ -6,16 +6,29 @@
 # Ships:
 # - files/home/.config/opencode/opencode.jsonc — the permissive OpenCode
 #   config (edit/bash/webfetch allowed; the sandbox is the isolation
-#   boundary). Lives in the global config layer as opencode.jsonc; the
-#   sandbox-managed opencode.json (MCP gateway wiring) is a separate file
-#   and both are merged by OpenCode.
+#   boundary; sharing + websearch disabled). Lives in the global config
+#   layer as opencode.jsonc; the sandbox-managed opencode.json (MCP
+#   gateway wiring) is a separate file and both are merged by OpenCode.
+#   Provider mixins layer on top via fragments (see below).
+# - environment.variables.OPENCODE_CONFIG — points at the combined
+#   provider config (~/.config/opencode/providers.jsonc). OWNED HERE:
+#   every provider mixin (zeldoc, copilot, ...) ships a pure-JSON
+#   fragment to ~/.config/opencode/providers.d/NN-<name>.json and the
+#   entrypoint runtime merges them at every start
+#   (~/.sandbox-kit/merge-opencode-config.sh; enabled_providers lists
+#   union, later fragments win scalar conflicts like `model`). Never set
+#   OPENCODE_CONFIG in another mixin or kit — this variable is the single
+#   owner, which is what lets any number of provider mixins compose.
 # - files/home/.sandbox-agents.md — the shared AGENTS.md base (stack facts
 #   come from the stack mixins' .sbx-agents.d/ notes).
 # - files/home/.sandbox-agents/*.md — the guidance files the base links to
 #   (persistent shell env, network access, git auth, workspace mode).
 # - files/home/.sandbox-kit/entrypoint.sh — the entrypoint runtime: env
-#   guard, AGENTS.md rebuild, banner, MCP backstop, opencode autostart,
-#   login shell on exit.
+#   guard, AGENTS.md rebuild, provider config merge, banner, MCP
+#   backstop, opencode autostart, login shell on exit.
+# - files/home/.sandbox-kit/merge-opencode-config.sh — the provider
+#   config fragment merger used by the entrypoint (see OPENCODE_CONFIG
+#   above).
 # - setup.startup — background apt cache update + MCP gateway registration
 #   (the entrypoint script carries an idempotent MCP backstop in case a
 #   runtime skips mixin startup hooks).
@@ -27,12 +40,25 @@ name: base
 displayName: OpenCode sandbox baseline
 description: >
   The shared baseline every OpenCode kit sandbox composes: permissive
-  OpenCode config, agent guidance files, the shared AGENTS.md base, the
-  entrypoint runtime (env guard, banner, opencode autostart, login shell
-  on exit), and the startup hooks (background apt cache update, MCP
-  gateway registration). No network rules — capability egress
-  comes from the other mixins.
-version: 0.1.0
+  OpenCode config, the combined provider config (OPENCODE_CONFIG points
+  here; provider mixins ship fragments that the entrypoint merges),
+  agent guidance files, the shared AGENTS.md base, the entrypoint runtime
+  (env guard, banner, opencode autostart, login shell on exit), and the
+  startup hooks (background apt cache update, MCP gateway registration).
+  No network rules — capability egress comes from the other mixins.
+version: 0.2.0
+
+environment:
+  variables:
+    # The combined OpenCode provider config, rebuilt at every start from
+    # ~/.config/opencode/providers.d/*.json by
+    # ~/.sandbox-kit/merge-opencode-config.sh (called by the entrypoint,
+    # which also re-exports this var defensively). Merges between the
+    # global and project config layers, so sandbox wiring in the managed
+    # opencode.json is preserved and a project opencode.jsonc can still
+    # override the default model. Owned here — provider mixins/kits must
+    # not set OPENCODE_CONFIG.
+    OPENCODE_CONFIG: /home/agent/.config/opencode/providers.jsonc
 
 setup:
   startup:
@@ -72,4 +98,4 @@ setup:
 
 # Files dropped into the sandbox home (see the header for the layout):
 # opencode.jsonc, .sandbox-agents.md, .sandbox-agents/*.md,
-# .sandbox-kit/entrypoint.sh.
+# .sandbox-kit/entrypoint.sh, .sandbox-kit/merge-opencode-config.sh.
