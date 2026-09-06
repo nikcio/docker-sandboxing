@@ -1,4 +1,5 @@
-# Node mixin: Node.js/NVM/PNPM egress and agent notes.
+# Node mixin: Node.js/NVM/PNPM egress, the pnpm package-age policy, and
+# agent notes.
 schemaVersion: "2"
 kind: mixin
 name: node
@@ -6,8 +7,23 @@ displayName: Node.js / NVM / PNPM
 description: >
   Network rules for the Node.js toolchain: the nodejs.org and iojs.org
   distribution servers for nvm installs and the npm registry for
-  pnpm/npm/npx.
+  pnpm/npm/npx. Pins a global pnpm package-maturity policy: installs only
+  resolve versions published at least 24h ago (including transitive
+  dependencies).
 version: 0.1.0
+
+environment:
+  variables:
+    # Supply-chain guard: pnpm holds back any version (direct or
+    # transitive) published less than 1440 minutes (24h) ago — malicious
+    # releases are typically pulled within the hour. Needs pnpm >= 11
+    # (the template bakes a 12.x major; pnpm 10 only reads the npmrc
+    # spelling, and npm itself errors on it, so no fallback var here).
+    # Delivered as a PNPM_CONFIG_* env var instead of the global
+    # ~/.config/pnpm/config.yaml because env outranks a project's
+    # pnpm-workspace.yaml (config.yaml does not), so no repo can weaken
+    # the sandbox policy; an explicit CLI flag still can.
+    PNPM_CONFIG_MINIMUM_RELEASE_AGE: "1440"
 
 permissions:
   network:
