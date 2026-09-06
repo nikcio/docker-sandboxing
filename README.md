@@ -120,9 +120,9 @@ Everything below is for developing the template, kit, and mixins.
   shim. All extend `docker/sandbox-templates:opencode-docker`.
 - **Kits** (`kit-node-dotnet/`, `kit-python/`, `kit-go/`, `kit-rust/`,
   `kind: sandbox`): point at the local template images, set the entrypoint
-  (banner → auto-start opencode → login shell on exit), drop a permissive
-  OpenCode config, and rebuild the sandbox `AGENTS.md` from the kit's base
-  plus every composed mixin's note.
+  (banner → opencode upgrade → auto-start opencode → login shell on exit),
+  drop a permissive OpenCode config, and rebuild the sandbox `AGENTS.md`
+  from the kit's base plus every composed mixin's note.
 - **`kit-published-node-dotnet/`, `kit-published-python/`,
   `kit-published-go/`, `kit-published-rust/`**: same kits, `sandbox.image`
   pinned to the public Docker Hub tags. Release-please bumps versions +

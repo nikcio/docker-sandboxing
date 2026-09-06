@@ -23,8 +23,9 @@ description: >
   stable toolchain) and cargo preinstalled. Ships a permissive OpenCode
   config (edit/bash/webfetch allowed — the sandbox is the isolation
   boundary). The entrypoint is a login shell: it prints a startup banner,
-  auto-starts opencode, and drops into the shell when opencode exits
-  (relaunch with `o`). Compose the mixins from ../mixins/ to add
+  upgrades opencode to the newest release (best-effort), auto-starts it,
+  and drops into the shell when opencode exits (relaunch with `o`).
+  Compose the mixins from ../mixins/ to add
   capabilities (model provider, network areas, workflow rules). Enforces a
   no-.env policy in the workspace: refuses to start in direct mode when one
   exists, removes it in clone mode.
@@ -37,8 +38,9 @@ sandbox:
   # (full docker.io prefix — sbx does not resolve the Docker Hub domain).
   image: docker.io/nikcio/opencode-rust:v0.7.0
 # x-release-please-end-version
-  # Login shell: banner, auto-start opencode, drop into the shell when
-  # opencode exits (relaunch with `o`); quitting the shell ends the session.
+  # Login shell: banner, best-effort opencode upgrade, auto-start opencode,
+  # drop into the shell when opencode exits (relaunch with `o`); quitting
+  # the shell ends the session.
   entrypoint:
     - bash
     - -c
@@ -87,6 +89,7 @@ sandbox:
        Sandbox
       ------------------------------------------------------------
        opencode is starting automatically.
+       - Updates to the newest release on every start
        - Quit opencode to drop into this shell
        - Relaunch opencode anytime with: o or opencode
       ------------------------------------------------------------
@@ -118,6 +121,21 @@ sandbox:
       fi
 
       if command -v opencode >/dev/null 2>&1; then
+        # Always start the newest opencode release: self-upgrade before
+        # launch. Best-effort - the egress comes from the opencode-runtime
+        # mixin; on failure (mixin missing, offline) the version baked into
+        # the image keeps running.
+        __upgrade_log="$(mktemp)"
+        if timeout 120 opencode upgrade >"$__upgrade_log" 2>&1; then
+          __upgraded="$(sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' "$__upgrade_log" | grep -am 1 'From ' | sed 's/^.*From /From /')"
+          if [ -n "$__upgraded" ]; then
+            echo "opencode updated: $__upgraded"
+          fi
+        else
+          echo "WARNING: opencode upgrade failed - continuing with the version baked into the image:" >&2
+          sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' "$__upgrade_log" | grep -av '^[[:space:]]*$' | tail -n 1 | sed 's/^/  /' >&2
+        fi
+        rm -f "$__upgrade_log"
         opencode
         echo "opencode exited - back in the sandbox shell (relaunch: o or opencode)"
       else
