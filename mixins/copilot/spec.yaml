@@ -1,0 +1,44 @@
+# GitHub Copilot mixin: model provider backed by the user's Copilot
+# subscription.
+#
+# Unlike the zeldoc mixin there is no proxy-managed secret: opencode's
+# built-in GitHub Copilot support signs in with the OAuth device flow
+# (run /connect in the TUI, then complete github.com/login/device in your
+# host browser) and stores the token inside the VM at
+# ~/.local/share/opencode/auth.json. This mixin provides the network
+# egress that flow needs plus the provider config fragment — see
+# docs/copilot-setup.md.
+#
+# Config fragments: every provider mixin ships a pure-JSON fragment to
+# ~/.config/opencode/providers.d/ (see mixins/zeldoc). The base mixin's
+# entrypoint merges all fragments into the combined OPENCODE_CONFIG file
+# at every start; enabled_providers lists are unioned, so this mixin
+# composes alongside the zeldoc mixin (and any future provider mixin).
+schemaVersion: "2"
+kind: mixin
+name: copilot
+displayName: GitHub Copilot provider
+description: >
+  GitHub Copilot model provider for OpenCode: network egress for the
+  OAuth device-flow sign-in (github.com), the Copilot session token
+  endpoint (api.github.com), and the Copilot API (api.githubcopilot.com),
+  plus a provider config fragment merged by the base mixin. Sign in with
+  /connect in the opencode TUI. Composes with the zeldoc mixin.
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # OAuth device flow: device code, access token exchange, and token
+      # refresh (github.com/login/oauth/*).
+      - github.com:443
+      # Copilot session token mint (api.github.com/copilot_internal).
+      - api.github.com:443
+      # Copilot API: models list + inference. The wildcard covers the
+      # business/enterprise plan endpoints (api.business./api.enterprise.
+      # githubcopilot.com).
+      - api.githubcopilot.com:443
+      - "*.githubcopilot.com:443"
+
+# Agent memory note: files/home/.sbx-agents.d/copilot.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).
