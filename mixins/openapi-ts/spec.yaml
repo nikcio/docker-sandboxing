@@ -1,0 +1,28 @@
+# openapi-ts mixin: egress for the openapi-ts.dev documentation site —
+# the docs for the openapi-typescript (OpenAPI schema -> TypeScript types
+# codegen) and openapi-fetch (typed fetch client) npm packages.
+#
+# The packages themselves install from the npm registry (node mixin);
+# remote OpenAPI schemas live on project-specific hosts (in-project kit).
+schemaVersion: "2"
+kind: mixin
+name: openapi-ts
+displayName: openapi-typescript / openapi-fetch docs
+description: >
+  Network rule for the openapi-ts.dev documentation site — the docs for
+  the openapi-typescript (OpenAPI schema -> TypeScript types) and
+  openapi-fetch (typed fetch client) npm packages — so the agent can look
+  up usage and configuration docs. The packages install from the npm
+  registry (node mixin).
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # openapi-ts.dev docs; the wildcard covers www and any docs served
+      # from subdomains
+      - openapi-ts.dev:443
+      - "*.openapi-ts.dev:443"
+
+# Agent memory note: files/home/.sbx-agents.d/openapi-ts.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).

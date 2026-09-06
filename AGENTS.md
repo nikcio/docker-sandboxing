@@ -82,8 +82,8 @@ these Docker Sandboxes artifacts:
   `kit-node-dotnet/`; release-please bumps its `version:` + image tag (and
   the `&ref=` pins in `examples/*.sbxenv.yaml`) in the release PR.
 - `mixins/<area>/` — one mixin kit per area (`kind: mixin`): `zeldoc`,
-  `git`, `node`, `dotnet`, `python`, `go`, `rust`, `docker`, `opencode-runtime`,
-  `apt`, `browser`
+  `git`, `node`, `openapi-ts`, `dotnet`, `python`, `go`, `rust`, `docker`,
+  `opencode-runtime`, `apt`, `browser`
   (Chrome, software only), three playwright levels (`playwright`,
   `playwright-chromium`, `playwright-all`), and `sbx` (the Docker
   Sandboxes CLI for in-sandbox kit authoring). Each mixin
