@@ -44,22 +44,6 @@ and exit the shell when you're done with the sandbox.
 Full walkthrough (prerequisites, first run, daily use):
 [docs/getting-started.md](docs/getting-started.md).
 
-## Common setups
-
-The example you copied already composes this set of mixins — yours will look
-the same with your stack's mixin in place of the last line:
-
-```
-base, global-opencode-config, env-guard, banner, opencode-runtime,
-zeldoc (or copilot), git, <your stack>
-```
-
-| Goal | Change |
-| ---- | ------ |
-| Run on your GitHub Copilot subscription | Swap `zeldoc` for `copilot` — or compose both; the project's `opencode.jsonc` sets the default model. See [docs/copilot-setup.md](docs/copilot-setup.md). |
-| Skip the `.env` guard or the banner | Remove `env-guard` / `banner`. |
-| Use Playwright or the `sbx` CLI | Also compose `apt` — the `playwright*` and `sbx` mixins need it. |
-
 ## Guides
 
 | Guide | Covers |
