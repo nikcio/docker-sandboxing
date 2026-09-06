@@ -1,0 +1,30 @@
+# OpenCode kit entrypoint runtime: the script every kit entrypoint wrapper
+# execs. Behavior changes to the kit startup belong here, not in the kit
+# specs' wrappers.
+#
+# Ships:
+# - files/home/.sandbox-kit/entrypoint.sh — the entrypoint runtime: env
+#   guard, mixin hook runner, banner, opencode autostart, login shell on
+#   exit. The hook runner sources every composed mixin's script in
+#   ~/.sandbox-kit/hooks.d/ (e.g. the base mixin's AGENTS.md rebuild and
+#   MCP gateway backstop).
+#
+# The kit wrapper errors clearly (and still drops into a login shell) when
+# this mixin is missing. Pairs with mixins/base (agent guidance + MCP
+# gateway) and mixins/opencode-config (permissive OpenCode config); no
+# network rules — capability egress comes from the other mixins.
+schemaVersion: "2"
+kind: mixin
+name: opencode-entrypoint
+displayName: OpenCode entrypoint runtime
+description: >
+  The shared entrypoint runtime every OpenCode kit sandbox composes: the
+  workspace .env guard, the mixin hook runner (~/.sandbox-kit/hooks.d),
+  the startup banner, opencode autostart, and the interactive login shell
+  on exit. Hooks ship with the composed mixins — e.g. the base mixin's
+  AGENTS.md rebuild and MCP gateway backstop. No network rules —
+  capability egress comes from the other mixins.
+version: 0.1.0
+
+# Files dropped into the sandbox home (see the header for the layout):
+# .sandbox-kit/entrypoint.sh.

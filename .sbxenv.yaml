@@ -10,20 +10,22 @@ name: docker-sandboxing
 agent: opencode-node-dotnet
 
 kits:
-  - ./kit-node-dotnet         # agent definition (dev kit, local image)
-  - ./mixins/base             # shared baseline: entrypoint runtime, opencode config, guidance
-  - ./mixins/opencode-runtime # agent runtime
-  - ./mixins/zeldoc           # Zeldoc.ai provider
-  - ./mixins/git              # git + worktrees
-  - ./mixins/uniform          # uniform.app platform + docs (proxy-managed key)
-  - ./mixins/node             # node/npm
-  - ./mixins/dotnet           # .NET/NuGet
-  - ./mixins/python           # python + uv (PyPI egress)
-  - ./mixins/go               # go (module proxy egress)
-  - ./mixins/rust             # rust (crates.io + rustup egress)
-  - ./mixins/docker           # in-sandbox docker
-  - ./mixins/apt              # apt mirrors
-  - ./mixins/sbx              # sbx CLI (kit authoring inside the sandbox)
+  - ./kit-node-dotnet            # agent definition (dev kit, local image)
+  - ./mixins/base                # agent guidance + AGENTS.md rebuild + MCP gateway
+  - ./mixins/opencode-config     # permissive OpenCode config
+  - ./mixins/opencode-entrypoint # entrypoint runtime: banner, opencode autostart, .env guard
+  - ./mixins/opencode-runtime    # agent runtime
+  - ./mixins/zeldoc              # Zeldoc.ai provider
+  - ./mixins/git                 # git + worktrees
+  - ./mixins/uniform             # uniform.app platform + docs (proxy-managed key)
+  - ./mixins/node                # node/npm
+  - ./mixins/dotnet              # .NET/NuGet
+  - ./mixins/python              # python + uv (PyPI egress)
+  - ./mixins/go                  # go (module proxy egress)
+  - ./mixins/rust                # rust (crates.io + rustup egress)
+  - ./mixins/docker              # in-sandbox docker
+  - ./mixins/apt                 # apt mirrors (+ background cache warm)
+  - ./mixins/sbx                 # sbx CLI (kit authoring inside the sandbox)
 
 workspace:
   path: .

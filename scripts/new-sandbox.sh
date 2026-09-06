@@ -32,14 +32,16 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Canonical mixins ("area|description").
 ALL_MIXINS=(
-    "base|shared baseline (required): entrypoint runtime, opencode config, agent guidance"
+    "base|agent guidance + AGENTS.md rebuild + MCP gateway (required)"
+    "opencode-config|permissive OpenCode config (required)"
+    "opencode-entrypoint|entrypoint runtime: banner, opencode autostart, .env guard (required)"
     "opencode-runtime|OpenCode runtime egress: updates, models.dev, Zen, plugins"
     "zeldoc|Zeldoc.ai (zdev) model provider: proxy-managed key + network"
     "git|git hosting (GitHub/GitLab) + gh auth + worktree workflow"
     "node|Node.js/NVM/PNPM: nodejs.org + npm registry"
     "dotnet|.NET/NuGet + Microsoft hosts, telemetry off"
     "docker|container registries for the in-sandbox Docker engine"
-    "apt|Ubuntu/Microsoft package mirrors for apt"
+    "apt|Ubuntu/Microsoft package mirrors for apt (+ background cache warm)"
     "browser|Google Chrome browser software (no network rules)"
     "playwright|Playwright + Chromium headless shell (lightest)"
     "playwright-chromium|Playwright + full Chromium"
@@ -47,11 +49,11 @@ ALL_MIXINS=(
     "sbx|sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
 )
 
-PROFILES_full="base opencode-runtime zeldoc git node dotnet docker apt browser playwright"
-PROFILES_node="base opencode-runtime zeldoc git node"
-PROFILES_dotnet="base opencode-runtime zeldoc git dotnet"
-PROFILES_node_docker="base opencode-runtime zeldoc git node docker"
-PROFILES_browser="base opencode-runtime zeldoc git node apt browser playwright"
+PROFILES_full="base opencode-config opencode-entrypoint opencode-runtime zeldoc git node dotnet docker apt browser playwright"
+PROFILES_node="base opencode-config opencode-entrypoint opencode-runtime zeldoc git node"
+PROFILES_dotnet="base opencode-config opencode-entrypoint opencode-runtime zeldoc git dotnet"
+PROFILES_node_docker="base opencode-config opencode-entrypoint opencode-runtime zeldoc git node docker"
+PROFILES_browser="base opencode-config opencode-entrypoint opencode-runtime zeldoc git node apt browser playwright"
 PROFILES_none=""
 
 WORKSPACE=""

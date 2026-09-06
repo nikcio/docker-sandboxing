@@ -10,7 +10,9 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 
 | Mixin | Adds |
 | ----- | ---- |
-| `base` | The shared baseline every OpenCode kit sandbox needs: permissive OpenCode config, agent guidance files, the shared `AGENTS.md` base, the entrypoint runtime (banner, opencode autostart, `.env` guard), startup hooks. Required by every kit — keep this line |
+| `base` | The AGENTS.md logic + MCP gateway every kit needs: agent guidance files, the shared `AGENTS.md` base, the AGENTS.md rebuild hook, MCP gateway registration (startup hook + backstop). Required by every kit — keep this line |
+| `opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer. Required by every kit — keep this line |
+| `opencode-entrypoint` | The entrypoint runtime: startup banner, mixin hook runner, opencode autostart, `.env` guard, login shell on exit. Required by every kit — keep this line |
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config, Zeldoc hosts) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
@@ -23,7 +25,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `go` | Go toolchain egress: module proxy + checksum DB (`go get`/`go install`, GOTOOLCHAIN toolchain downloads), dl.google.com (go.dev/dl artifacts), go.dev/golang.org docs |
 | `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs |
 | `docker` | Registry egress for the Docker engine inside the sandbox |
-| `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` |
+| `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` + background package-cache update at start |
 | `browser` | Google Chrome install (no network rules — sites stay gated by the other mixins) |
 | `playwright` | Playwright + Chromium headless shell (smallest download) |
 | `playwright-chromium` | Playwright + full Chromium |
@@ -38,21 +40,22 @@ Network hosts per mixin are listed at the top of each
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `base`, `opencode-runtime`, `zeldoc`, `git`, `node` |
-| .NET only | `base`, `opencode-runtime`, `zeldoc`, `git`, `dotnet` |
-| Python only | `base`, `opencode-runtime`, `zeldoc`, `git`, `python` |
-| Go only | `base`, `opencode-runtime`, `zeldoc`, `git`, `go` |
-| Rust only | `base`, `opencode-runtime`, `zeldoc`, `git`, `rust` |
-| Node + typed API client (openapi-typescript) | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
-| Node frontend with Uniform | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `uniform` |
-| Browser automation | `base`, `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
+| Node only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node` |
+| .NET only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `dotnet` |
+| Python only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `python` |
+| Go only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `go` |
+| Rust only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `rust` |
+| Node + typed API client (openapi-typescript) | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
+| Node frontend with Uniform | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node`, `uniform` |
+| Browser automation | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
 
 Notes:
 
-- The `base` mixin is required by every kit — the entrypoint runtime, the
-  permissive OpenCode config, and the agent guidance files ship with it.
-  Keep it in every set.
+- Three mixins are required by every kit: `base` (agent guidance,
+  AGENTS.md rebuild, MCP gateway), `opencode-config` (permissive OpenCode
+  config), and `opencode-entrypoint` (entrypoint runtime). Keep all three
+  in every set.
 - The `playwright*` mixins and `sbx` run `apt` at creation — compose the
   `apt` mixin with them.
 - Every set should include `zeldoc` (the model provider) and

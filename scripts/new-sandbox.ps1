@@ -52,27 +52,29 @@ param(
 $ErrorActionPreference = "Stop"
 
 $allMixins = [ordered]@{
-    "base"             = "shared baseline (required): entrypoint runtime, opencode config, agent guidance"
-    "opencode-runtime" = "OpenCode runtime egress: updates, models.dev, Zen, plugins"
-    "zeldoc"           = "Zeldoc.ai (zdev) model provider: proxy-managed key + network"
-    "git"              = "git hosting (GitHub/GitLab) + gh auth + worktree workflow"
-    "node"             = "Node.js/NVM/PNPM: nodejs.org + npm registry"
-    "dotnet"           = ".NET/NuGet + Microsoft hosts, telemetry off"
-    "docker"           = "container registries for the in-sandbox Docker engine"
-    "apt"              = "Ubuntu/Microsoft package mirrors for apt"
-    "browser"          = "Google Chrome browser software (no network rules)"
-    "playwright"       = "Playwright + Chromium headless shell (lightest)"
+    "base"                = "agent guidance + AGENTS.md rebuild + MCP gateway (required)"
+    "opencode-config"     = "permissive OpenCode config (required)"
+    "opencode-entrypoint" = "entrypoint runtime: banner, opencode autostart, .env guard (required)"
+    "opencode-runtime"    = "OpenCode runtime egress: updates, models.dev, Zen, plugins"
+    "zeldoc"              = "Zeldoc.ai (zdev) model provider: proxy-managed key + network"
+    "git"                 = "git hosting (GitHub/GitLab) + gh auth + worktree workflow"
+    "node"                = "Node.js/NVM/PNPM: nodejs.org + npm registry"
+    "dotnet"              = ".NET/NuGet + Microsoft hosts, telemetry off"
+    "docker"              = "container registries for the in-sandbox Docker engine"
+    "apt"                 = "Ubuntu/Microsoft package mirrors for apt (+ background cache warm)"
+    "browser"             = "Google Chrome browser software (no network rules)"
+    "playwright"          = "Playwright + Chromium headless shell (lightest)"
     "playwright-chromium" = "Playwright + full Chromium"
-    "playwright-all"   = "Playwright + Chromium, Firefox, WebKit"
-    "sbx"              = "sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
+    "playwright-all"      = "Playwright + Chromium, Firefox, WebKit"
+    "sbx"                 = "sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
 }
 
 $profiles = [ordered]@{
-    full          = @("base", "opencode-runtime", "zeldoc", "git", "node", "dotnet", "docker", "apt", "browser", "playwright")
-    node          = @("base", "opencode-runtime", "zeldoc", "git", "node")
-    dotnet        = @("base", "opencode-runtime", "zeldoc", "git", "dotnet")
-    "node-docker" = @("base", "opencode-runtime", "zeldoc", "git", "node", "docker")
-    browser       = @("base", "opencode-runtime", "zeldoc", "git", "node", "apt", "browser", "playwright")
+    full          = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "node", "dotnet", "docker", "apt", "browser", "playwright")
+    node          = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "node")
+    dotnet        = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "dotnet")
+    "node-docker" = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "node", "docker")
+    browser       = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "node", "apt", "browser", "playwright")
     none          = @()
 }
 

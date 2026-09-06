@@ -1,0 +1,29 @@
+# Permissive OpenCode config, dropped into the global config layer.
+#
+# Ships:
+# - files/home/.config/opencode/opencode.jsonc — the permissive OpenCode
+#   config (edit/bash/webfetch allowed; the sandbox is the isolation
+#   boundary). Lives in the global config layer as opencode.jsonc; the
+#   sandbox-managed opencode.json (MCP gateway wiring) is a separate file
+#   and both are merged by OpenCode. Kit layers loaded through
+#   OPENCODE_CONFIG (e.g. the Zeldoc provider from the zeldoc mixin) merge
+#   above this file.
+#
+# Pairs with mixins/opencode-entrypoint (entrypoint runtime) and
+# mixins/base (agent guidance + MCP gateway). No network rules: capability
+# egress comes from the other mixins.
+schemaVersion: "2"
+kind: mixin
+name: opencode-config
+displayName: Permissive OpenCode config
+description: >
+  The permissive OpenCode config (edit/bash/webfetch allowed — the sandbox
+  is the isolation boundary), dropped into the global config layer as
+  opencode.jsonc. Merged with the sandbox-managed opencode.json (MCP
+  gateway wiring) and any OPENCODE_CONFIG layers (e.g. the Zeldoc provider
+  from the zeldoc mixin). No network rules — capability egress comes from
+  the other mixins.
+version: 0.1.0
+
+# Files dropped into the sandbox home (see the header for the layout):
+# .config/opencode/opencode.jsonc.
