@@ -14,6 +14,7 @@ kits:
   - ./mixins/opencode-runtime # agent runtime
   - ./mixins/zeldoc           # Zeldoc.ai provider
   - ./mixins/git              # git + worktrees
+  - ./mixins/uniform          # uniform.app platform + docs (proxy-managed key)
   - ./mixins/node             # node/npm
   - ./mixins/dotnet           # .NET/NuGet
   - ./mixins/python           # python + uv (PyPI egress)
@@ -42,6 +43,8 @@ ports:
 
 # GitHub token for the sandbox: provision with
 # `sbx secret set github --sandbox docker-sandboxing` (see docs/github-pat.md).
+# Uniform API key for the sandbox: provision with
+# `sbx secret set uniform` (see docs/uniform-api-key.md).
 bindings:
   github:
     apiKey:
@@ -50,3 +53,10 @@ bindings:
         - github.com
         - uploads.github.com
         - raw.githubusercontent.com
+  uniform:
+    apiKey:
+      domains:
+        - uniform.app
+        - eu.uniform.app
+        - uniform.global
+        - eu.uniform.global

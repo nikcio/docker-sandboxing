@@ -1,0 +1,62 @@
+# Uniform mixin: uniform.app platform egress and proxy-managed API auth for
+# frontend integrations (Uniform SDKs + CLI).
+#
+# Provision host-side with `sbx secret set uniform` — see
+# docs/uniform-api-key.md. The docs (docs.uniform.app) work without a key;
+# API calls need one. The sandbox only ever sees a UNIFORM_API_KEY=proxy-
+# managed placeholder; the host proxy swaps in the real key as the x-api-key
+# header (the format both the Uniform SDK and CLI use) on the hosts below.
+schemaVersion: "2"
+kind: mixin
+name: uniform
+displayName: Uniform (uniform.app)
+description: >
+  Uniform DXP egress: the docs site, dashboard + Management API
+  (uniform.app), Edge Delivery API (uniform.global, including the EU region
+  and image CDN hosts), and a proxy-managed API key injected as the
+  x-api-key header so the Uniform SDK/CLI in the sandbox can call the API.
+version: 0.1.0
+
+credentials:
+  # Proxy-managed: the sandbox only ever sees the UNIFORM_API_KEY=proxy-
+  # managed placeholder; the host proxy swaps in the real value on the hosts
+  # below. Optional — without a stored key, docs access still works but API
+  # calls fail with 401. The inject domains must stay inside
+  # permissions.network.allow.
+  - service: uniform
+    description: >
+      Uniform API key (a service account key or personal access token) for
+      the Management API and Edge Delivery API. Create it in Uniform under
+      Security > Service Accounts.
+    required: false
+    apiKey:
+      name: UNIFORM_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: uniform.app          # dashboard + Management API (US)
+          header: x-api-key
+          format: "%s"
+        - domain: eu.uniform.app       # dashboard + Management API (EU)
+          header: x-api-key
+          format: "%s"
+        - domain: uniform.global       # Edge Delivery API (US)
+          header: x-api-key
+          format: "%s"
+        - domain: eu.uniform.global    # Edge Delivery API (EU)
+          header: x-api-key
+          format: "%s"
+
+permissions:
+  network:
+    allow:
+      # Dashboard, Management API, docs (docs.uniform.app), and per-team
+      # app subdomains.
+      - uniform.app:443
+      - "*.uniform.app:443"
+      # Edge Delivery API + image CDN, US and EU
+      # (img.uniform.global / img.eu.uniform.global).
+      - uniform.global:443
+      - "*.uniform.global:443"
+
+# Agent memory note: files/home/.sbx-agents.d/uniform.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).
