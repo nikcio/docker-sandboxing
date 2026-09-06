@@ -6,10 +6,10 @@ name: node
 displayName: Node.js / NVM / PNPM
 description: >
   Network rules for the Node.js toolchain: the nodejs.org and iojs.org
-  distribution servers for nvm installs and the npm registry for
-  pnpm/npm/npx. Pins a global pnpm package-maturity policy: installs only
-  resolve versions published at least 24h ago (including transitive
-  dependencies).
+  distribution servers for nvm installs, the npm registry for
+  pnpm/npm/npx, and pnpm.io for the pnpm docs. Pins a global pnpm
+  package-maturity policy: installs only resolve versions published at
+  least 24h ago (including transitive dependencies).
 version: 0.1.0
 
 environment:
@@ -39,6 +39,10 @@ permissions:
       - "*.npmjs.org:443"
       - npmjs.com:443
       - "*.npmjs.com:443"
+      # pnpm.io: pnpm docs and settings reference for agent lookups —
+      # pnpm's own errors point here (e.g. the minimumReleaseAge gate
+      # above links pnpm.io/settings#minimumreleaseageexclude)
+      - pnpm.io:443
 
 # Agent memory note: files/home/.sbx-agents.d/node.md (appended to the
 # sandbox AGENTS.md by the kit entrypoint).
