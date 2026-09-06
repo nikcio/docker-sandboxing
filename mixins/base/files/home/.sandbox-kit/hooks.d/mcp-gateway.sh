@@ -1,6 +1,6 @@
 # MCP gateway registration backstop — shipped by the base mixin
 # (mixins/base/files/home/.sandbox-kit/hooks.d/mcp-gateway.sh) and sourced
-# by the opencode-entrypoint runtime. The startup hook in this mixin's spec
+# by the base mixin's entrypoint runtime. The startup hook in this mixin's spec
 # normally writes ~/.config/opencode/opencode.json before the entrypoint
 # runs; if it didn't (older runtime, startup hooks from mixins
 # unsupported), register the gateway here instead. No-op when MCP isn't

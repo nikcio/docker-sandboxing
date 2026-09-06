@@ -1,6 +1,7 @@
 # AGENTS.md rebuild hook — shipped by the base mixin
 # (mixins/base/files/home/.sandbox-kit/hooks.d/agents-md.sh) and sourced by
-# the opencode-entrypoint runtime before the banner.
+# the base mixin's entrypoint runtime (in glob order, before the banner
+# and env-guard hooks).
 #
 # The runtime's generated baseline can't be replaced from the kit grammar,
 # so overwrite it before opencode starts with the baseline copy

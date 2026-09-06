@@ -1,10 +1,16 @@
-# OpenCode agent baseline: the AGENTS.md logic and the MCP gateway, as one
-# mixin. Every sandbox built from a kit-<stack>/ spec composes this mixin —
-# the kit entrypoints exec the runtime script shipped by the
-# opencode-entrypoint mixin, which sources this mixin's hooks and would not
-# rebuild AGENTS.md or register the MCP gateway without them.
+# OpenCode agent baseline: the kit entrypoint runtime, the AGENTS.md
+# logic, and the MCP gateway, as one mixin. Every sandbox built from a
+# kit-<stack>/ spec composes this mixin — the kit entrypoints exec the
+# runtime script shipped here and refuse to start without it (a clear
+# error drops you into a login shell).
 #
 # Ships:
+# - files/home/.sandbox-kit/entrypoint.sh — the entrypoint runtime: mixin
+#   hook runner (~/.sandbox-kit/hooks.d/*.sh), opencode autostart, login
+#   shell on exit. The hooks come from the composed mixins: this mixin's
+#   two below, the env-guard mixin's .env guard, the banner mixin's
+#   startup banner, and the global-opencode-config mixin's provider
+#   config merge.
 # - files/home/.sandbox-agents.md — the shared AGENTS.md base (stack facts
 #   come from the stack mixins' .sbx-agents.d/ notes).
 # - files/home/.sandbox-agents/*.md — the guidance files the base links to
@@ -20,20 +26,21 @@
 #   the backstop only covers runtimes that skip mixin startup hooks).
 #
 # The permissive OpenCode config (and the combined provider config)
-# ships with mixins/opencode-config and the entrypoint runtime with
-# mixins/opencode-entrypoint. No network rules: capability egress comes
-# from the other mixins.
+# ships with mixins/global-opencode-config. No network rules: capability
+# egress comes from the other mixins.
 schemaVersion: "2"
 kind: mixin
 name: base
 displayName: OpenCode agent baseline
 description: >
-  The AGENTS.md logic and MCP gateway every OpenCode kit sandbox composes:
-  agent guidance files, the shared AGENTS.md base, the AGENTS.md rebuild
-  hook (sourced by the opencode-entrypoint runtime), and MCP gateway
-  registration (startup hook + idempotent backstop). No network rules —
-  capability egress comes from the other mixins.
-version: 0.2.0
+  The kit entrypoint runtime, AGENTS.md logic, and MCP gateway every
+  OpenCode kit sandbox composes: the entrypoint runtime (mixin hook
+  runner, opencode autostart, login shell on exit), the agent guidance
+  files, the shared AGENTS.md base, the AGENTS.md rebuild hook (sourced
+  by the runtime), and MCP gateway registration (startup hook +
+  idempotent backstop). No network rules — capability egress comes from
+  the other mixins.
+version: 0.3.0
 
 setup:
   startup:
@@ -69,4 +76,5 @@ setup:
       description: Register the sandbox MCP gateway in ~/.config/opencode/opencode.json
 
 # Files dropped into the sandbox home (see the header for the layout):
-# .sandbox-agents.md, .sandbox-agents/*.md, .sandbox-kit/hooks.d/*.sh.
+# .sandbox-kit/entrypoint.sh, .sandbox-kit/hooks.d/*.sh,
+# .sandbox-agents.md, .sandbox-agents/*.md.

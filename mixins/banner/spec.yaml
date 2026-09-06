@@ -1,0 +1,30 @@
+# Startup banner: the "Sandbox / opencode is starting automatically"
+# notice the kits print before opencode starts.
+#
+# Why a hook and not setup.startup: startup commands run with no terminal
+# attached — the banner would never reach the TTY the user attaches to
+# (kit reference: setup.startup).
+#
+# Ships:
+# - files/home/.sandbox-kit/hooks.d/banner.sh — the banner, sourced by
+#   the base mixin's entrypoint runtime before opencode starts (in glob
+#   order, before the env-guard mixin's guard report).
+#
+# Cosmetic — compose it for the standard kit UX (the examples do).
+# Pairs with mixins/base (entrypoint runtime + agent guidance + MCP
+# gateway) and mixins/global-opencode-config (permissive OpenCode config
+# + provider merge). No network rules: capability egress comes from the
+# other mixins.
+schemaVersion: "2"
+kind: mixin
+name: banner
+displayName: Startup banner
+description: >
+  Prints the sandbox startup banner (opencode autostart notice, relaunch
+  hint) as a hook (~/.sandbox-kit/hooks.d/banner.sh) sourced by the base
+  mixin's entrypoint runtime. No network rules — capability egress comes
+  from the other mixins.
+version: 0.1.0
+
+# Files dropped into the sandbox home (see the header for the layout):
+# .sandbox-kit/hooks.d/banner.sh.

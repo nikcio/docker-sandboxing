@@ -1,13 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  // Permissive baseline shipped by the opencode-config mixin
-  // (mixins/opencode-config).
+  // Permissive baseline shipped by the global-opencode-config mixin
+  // (mixins/global-opencode-config).
   //
   // This file sits in the global config layer (~/.config/opencode) as
   // opencode.jsonc; the sandbox-managed opencode.json (MCP gateway wiring)
   // is a separate file and both are merged by OpenCode. Provider mixins
   // (zeldoc, copilot, ...) ship fragments to ~/.config/opencode/providers.d/
-  // which this mixin (opencode-config) merges at every start into the
+  // which this mixin (global-opencode-config) merges at every start into the
   // combined file loaded through OPENCODE_CONFIG — that file merges above
   // this one.
   //

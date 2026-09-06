@@ -52,24 +52,31 @@ param(
 $ErrorActionPreference = "Stop"
 
 $allMixins = [ordered]@{
-    "base"                = "agent guidance + AGENTS.md rebuild + MCP gateway (required)"
-    "opencode-config"     = "permissive OpenCode config (required)"
-    "opencode-entrypoint" = "entrypoint runtime: banner, opencode autostart, .env guard (required)"
-    "opencode-runtime"    = "OpenCode runtime egress: updates, models.dev, Zen, plugins"
-    "zeldoc"              = "Zeldoc.ai (zdev) model provider: proxy-managed key + network"
-    "copilot"             = "GitHub Copilot model provider: device-flow sign-in + network"
-    "git"                 = "git hosting (GitHub/GitLab) + gh auth + worktree workflow"
-    "playwright-chromium" = "Playwright + full Chromium"
-    "playwright-all"      = "Playwright + Chromium, Firefox, WebKit"
-    "sbx"                 = "sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
+    "base"                    = "entrypoint runtime (hooks, opencode autostart, login shell) + agent guidance + MCP gateway (required)"
+    "global-opencode-config"  = "permissive OpenCode config + provider config merge (required)"
+    "env-guard"               = "workspace .env guard: refuses/removes .env files (required)"
+    "banner"                  = "startup banner (cosmetic)"
+    "opencode-runtime"        = "OpenCode runtime egress: updates, models.dev, Zen, plugins"
+    "zeldoc"                  = "Zeldoc.ai (zdev) model provider: proxy-managed key + network"
+    "copilot"                 = "GitHub Copilot model provider: device-flow sign-in + network"
+    "git"                     = "git hosting (GitHub/GitLab) + gh auth + worktree workflow"
+    "node"                    = "Node.js/NVM/PNPM: nodejs.org + npm registry"
+    "dotnet"                  = ".NET/NuGet + Microsoft hosts, telemetry off"
+    "docker"                  = "container registries for the in-sandbox Docker engine"
+    "apt"                     = "Ubuntu/Microsoft package mirrors for apt (+ background cache warm)"
+    "browser"                 = "Google Chrome browser software (no network rules)"
+    "playwright"              = "Playwright + Chromium headless shell (lightest)"
+    "playwright-chromium"     = "Playwright + full Chromium"
+    "playwright-all"          = "Playwright + Chromium, Firefox, WebKit"
+    "sbx"                     = "sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
 }
 
 $profiles = [ordered]@{
-    full          = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "node", "dotnet", "docker", "apt", "browser", "playwright")
-    node          = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "node")
-    dotnet        = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "dotnet")
-    "node-docker" = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "node", "docker")
-    browser       = @("base", "opencode-config", "opencode-entrypoint", "opencode-runtime", "zeldoc", "git", "node", "apt", "browser", "playwright")
+    full          = @("base", "global-opencode-config", "env-guard", "banner", "opencode-runtime", "zeldoc", "git", "node", "dotnet", "docker", "apt", "browser", "playwright")
+    node          = @("base", "global-opencode-config", "env-guard", "banner", "opencode-runtime", "zeldoc", "git", "node")
+    dotnet        = @("base", "global-opencode-config", "env-guard", "banner", "opencode-runtime", "zeldoc", "git", "dotnet")
+    "node-docker" = @("base", "global-opencode-config", "env-guard", "banner", "opencode-runtime", "zeldoc", "git", "node", "docker")
+    browser       = @("base", "global-opencode-config", "env-guard", "banner", "opencode-runtime", "zeldoc", "git", "node", "apt", "browser", "playwright")
     none          = @()
 }
 

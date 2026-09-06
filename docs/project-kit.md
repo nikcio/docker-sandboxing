@@ -17,12 +17,12 @@ it is picked up when opencode starts.
 
 Do not write `~/.config/opencode/opencode.json` from a kit — the
 sandbox owns that file (it is rewritten at startup for MCP wiring). Do
-not set `OPENCODE_CONFIG` either — the `opencode-config` mixin owns it
+not set `OPENCODE_CONFIG` either — the `global-opencode-config` mixin owns it
 (it points at the combined provider config that the mixin rebuilds from
 `~/.config/opencode/providers.d/`). To contribute a provider, ship a
 comment-free JSON fragment at
 `files/home/.config/opencode/providers.d/30-<name>.json` in your kit —
-the opencode-config mixin merges it with the stock provider fragments
+the global-opencode-config mixin merges it with the stock provider fragments
 (see [mixins.md](mixins.md)).
 
 ## Add an in-project kit
@@ -82,17 +82,18 @@ of the stock mixins.
    kits:
       - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node-dotnet&ref=v0.6.0
      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v0.6.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-config&ref=v0.6.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-entrypoint&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/banner&ref=v0.6.0
      # ...the other stock mixins your project keeps...
      - ./sandbox-kit
    ```
 
    Keep the stock agent kit (`kit-published`) and the required mixins
-   (`base`, `opencode-config`, `opencode-entrypoint`) — the kit defines
+   (`base`, `global-opencode-config`, `env-guard`) — the kit defines
    the image and entrypoint wrapper, the mixins ship the entrypoint
-   runtime, OpenCode config, and agent guidance; your kit only adds
-   capabilities.
+   runtime, OpenCode config (+ provider merge), agent guidance, and the
+   .env guard; your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new
    sandboxes):

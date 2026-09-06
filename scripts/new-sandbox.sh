@@ -32,9 +32,10 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Canonical mixins ("area|description").
 ALL_MIXINS=(
-    "base|agent guidance + AGENTS.md rebuild + MCP gateway (required)"
-    "opencode-config|permissive OpenCode config (required)"
-    "opencode-entrypoint|entrypoint runtime: banner, opencode autostart, .env guard (required)"
+    "base|entrypoint runtime (hooks, opencode autostart, login shell) + agent guidance + MCP gateway (required)"
+    "global-opencode-config|permissive OpenCode config + provider config merge (required)"
+    "env-guard|workspace .env guard: refuses/removes .env files (required)"
+    "banner|startup banner (cosmetic)"
     "opencode-runtime|OpenCode runtime egress: updates, models.dev, Zen, plugins"
     "zeldoc|Zeldoc.ai (zdev) model provider: proxy-managed key + network"
     "copilot|GitHub Copilot model provider: device-flow sign-in + network"
@@ -50,11 +51,11 @@ ALL_MIXINS=(
     "sbx|sbx CLI inside the sandbox: kit authoring (validate/inspect/pack)"
 )
 
-PROFILES_full="base opencode-config opencode-entrypoint opencode-runtime zeldoc git node dotnet docker apt browser playwright"
-PROFILES_node="base opencode-config opencode-entrypoint opencode-runtime zeldoc git node"
-PROFILES_dotnet="base opencode-config opencode-entrypoint opencode-runtime zeldoc git dotnet"
-PROFILES_node_docker="base opencode-config opencode-entrypoint opencode-runtime zeldoc git node docker"
-PROFILES_browser="base opencode-config opencode-entrypoint opencode-runtime zeldoc git node apt browser playwright"
+PROFILES_full="base global-opencode-config env-guard banner opencode-runtime zeldoc git node dotnet docker apt browser playwright"
+PROFILES_node="base global-opencode-config env-guard banner opencode-runtime zeldoc git node"
+PROFILES_dotnet="base global-opencode-config env-guard banner opencode-runtime zeldoc git dotnet"
+PROFILES_node_docker="base global-opencode-config env-guard banner opencode-runtime zeldoc git node docker"
+PROFILES_browser="base global-opencode-config env-guard banner opencode-runtime zeldoc git node apt browser playwright"
 PROFILES_none=""
 
 WORKSPACE=""

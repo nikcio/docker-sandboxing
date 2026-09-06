@@ -10,9 +10,10 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 
 | Mixin | Adds |
 | ----- | ---- |
-| `base` | The AGENTS.md logic + MCP gateway every kit needs: agent guidance files, the shared `AGENTS.md` base, the AGENTS.md rebuild hook, MCP gateway registration (startup hook + backstop). Required by every kit — keep this line |
-| `opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer. Required by every kit — keep this line |
-| `opencode-entrypoint` | The entrypoint runtime: startup banner, mixin hook runner, opencode autostart, `.env` guard, login shell on exit. Required by every kit — keep this line |
+| `base` | The entrypoint runtime + AGENTS.md logic + MCP gateway every kit needs: the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance files, the shared `AGENTS.md` base, the AGENTS.md rebuild hook, MCP gateway registration (startup hook + backstop). Required by every kit — keep this line |
+| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required by every kit — keep this line |
+| `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Required by every kit — keep this line |
+| `banner` | The startup banner (cosmetic — the examples compose it) |
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
@@ -41,22 +42,23 @@ Network hosts per mixin are listed at the top of each
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node` |
-| .NET only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `dotnet` |
-| Python only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `python` |
-| Go only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `go` |
-| Rust only | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `rust` |
-| Node + typed API client (openapi-typescript) | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
-| Node frontend with Uniform | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node`, `uniform` |
-| Browser automation | `base`, `opencode-config`, `opencode-entrypoint`, `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
+| Node only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node` |
+| .NET only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `dotnet` |
+| Python only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `python` |
+| Go only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `go` |
+| Rust only | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `rust` |
+| Node + typed API client (openapi-typescript) | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node`, `docker` |
+| Node frontend with Uniform | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node`, `uniform` |
+| Browser automation | `base`, `global-opencode-config`, `env-guard`, `banner`, `opencode-runtime`, `zeldoc`, `git`, `node`, `apt`, `browser`, `playwright*` |
 
 Notes:
 
-- Three mixins are required by every kit: `base` (agent guidance,
-  AGENTS.md rebuild, MCP gateway), `opencode-config` (permissive OpenCode
-  config), and `opencode-entrypoint` (entrypoint runtime). Keep all three
-  in every set.
+- Three mixins are required by every kit: `base` (entrypoint runtime,
+  agent guidance, AGENTS.md rebuild, MCP gateway), `global-opencode-config`
+  (permissive OpenCode config + provider merge), and `env-guard` (the
+  no-.env policy). Keep all three in every set; `banner` (startup banner)
+  is optional but in the examples.
 - The `playwright*` mixins and `sbx` run `apt` at creation — compose the
   `apt` mixin with them.
 - Every set should include at least one model provider (`zeldoc` and/or
@@ -66,7 +68,7 @@ Notes:
 
 Provider mixins don't fight over one config file: each ships a
 pure-JSON fragment to `~/.config/opencode/providers.d/NN-<provider>.json`
-inside the sandbox, and the `opencode-config` mixin merges all
+inside the sandbox, and the `global-opencode-config` mixin merges all
 fragments into the single config OpenCode loads via `OPENCODE_CONFIG`
 at every start:
 

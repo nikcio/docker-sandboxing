@@ -30,38 +30,44 @@ Use based on your task:
   `docker build` + `docker image save` + `sbx template load`).
 - `kit-<stack>/` — thin declarative sandbox kits (`schemaVersion: "2"`,
   `kind: sandbox`, `extends: opencode`): template image + a one-line
-  entrypoint wrapper that execs the shared runtime from
-  `mixins/opencode-entrypoint/`.
+  entrypoint wrapper that execs the shared runtime from `mixins/base/`.
   Validate with `sbx kit validate kit-<stack>/`.
 - `kit-published-<stack>/` — same spec as the dev kit except
   `sandbox.image` points at the public Docker Hub image; release-please
   bumps its `version:` + image tag (and the `&ref=` pins in
   `examples/*.sbxenv.yaml`) in the release PR.
-- `mixins/base/` — the AGENTS.md logic and MCP gateway every OpenCode kit
-  sandbox composes (`kind: mixin`): the agent guidance files
-  (`files/home/.sandbox-agents/*.md`), the shared `AGENTS.md` base
-  (`files/home/.sandbox-agents.md`), the AGENTS.md rebuild hook
-  (`files/home/.sandbox-kit/hooks.d/agents-md.sh`), and MCP gateway
-  registration (startup hook + idempotent backstop hook
+- `mixins/base/` — the entrypoint runtime, AGENTS.md logic, and MCP
+  gateway every OpenCode kit sandbox composes (`kind: mixin`): the
+  entrypoint runtime (`files/home/.sandbox-kit/entrypoint.sh`: mixin hook
+  runner, opencode autostart, login shell on exit) the kit wrappers exec,
+  the agent guidance files (`files/home/.sandbox-agents/*.md`), the
+  shared `AGENTS.md` base (`files/home/.sandbox-agents.md`), the AGENTS.md
+  rebuild hook (`files/home/.sandbox-kit/hooks.d/agents-md.sh`), and MCP
+  gateway registration (startup hook + idempotent backstop hook
   `files/home/.sandbox-kit/hooks.d/mcp-gateway.sh`).
-- `mixins/opencode-config/` — the permissive OpenCode config
+- `mixins/global-opencode-config/` — the permissive OpenCode config
   (`files/home/.config/opencode/opencode.jsonc`, dropped into the global
   config layer; edit/bash/webfetch allowed — the sandbox is the isolation
   boundary; sharing + websearch disabled) plus the combined provider
   config: `environment.variables.OPENCODE_CONFIG` points at
   `~/.config/opencode/providers.jsonc` (owned here — provider mixins must
   not set it), rebuilt at every start by
-  `files/home/.sandbox-kit/merge-opencode-config.sh` from the provider
+  `files/home/.sandbox-kit/merge-global-opencode-config.sh` from the provider
   mixins' `providers.d/NN-<provider>.json` fragments; the merge runs
   through the mixin's `files/home/.sandbox-kit/hooks.d/provider-config.sh`
   hook (sourced by the entrypoint runtime, which also re-exports the var
   defensively).
-- `mixins/opencode-entrypoint/` — the entrypoint runtime
-  (`files/home/.sandbox-kit/entrypoint.sh`: env guard, mixin hook runner,
-  banner, opencode autostart, login shell on exit) the kit wrappers exec;
-  it sources every composed mixin's hook from `~/.sandbox-kit/hooks.d/`.
-  These three mixins are required by every kit: every kit's `kits:` list
-  must include all of them.
+- `mixins/env-guard/` — the workspace `.env` guard (`kind: mixin`): the
+  no-.env policy as a hook (`files/home/.sandbox-kit/hooks.d/env-guard.sh`,
+  sourced by the entrypoint runtime) — clone mode removes `.env` files
+  from the sandbox-local copy, direct mode refuses to start.
+- `mixins/banner/` — the startup banner (`kind: mixin`): a hook
+  (`files/home/.sandbox-kit/hooks.d/banner.sh`, sourced by the entrypoint
+  runtime) printing the "opencode is starting automatically" notice.
+  Cosmetic — the examples compose it.
+- The first three mixins (`base`, `global-opencode-config`, `env-guard`)
+  are required by every kit: every kit's `kits:` list must include all of
+  them.
 - `mixins/<area>/` — one single-purpose mixin kit per area (`kind: mixin`):
   only the network rules, env vars, credentials, files, and memory notes
   for its own area. Composition is explicit at launch (`--kit` flags or a
@@ -69,7 +75,7 @@ Use based on your task:
   by the runtime yet. Model-provider mixins (`zeldoc`, `copilot`) ship
   pure-JSON config fragments to
   `files/home/.config/opencode/providers.d/NN-<provider>.json` — the
-  opencode-config mixin merges them (filename order, `enabled_providers`
+  global-opencode-config mixin merges them (filename order, `enabled_providers`
   unioned, later files win scalar conflicts) into the combined file that
   `OPENCODE_CONFIG` points at.
 - `scripts/new-sandbox.*` — the sandbox creation wizard: wizard-first
@@ -85,18 +91,24 @@ Use based on your task:
   [agent-guidance/worktrees.md](agent-guidance/worktrees.md).
 - Keep all eight kits in sync when touching shared kit content — the only
   intended differences are the image reference and the version. Shared
-  content lives once in `mixins/` (entrypoint runtime in
-  `opencode-entrypoint`, permissive OpenCode config in `opencode-config`,
-  guidance files + AGENTS.md rebuild + MCP gateway in `base`); don't
-  reintroduce copies into the kits.
+  content lives once in `mixins/` (entrypoint runtime + guidance files +
+  AGENTS.md rebuild + MCP gateway in `base`, permissive OpenCode config +
+  provider merge in `global-opencode-config`, the `.env` guard in
+  `env-guard`, the banner in `banner`); don't reintroduce copies into the
+  kits.
 - The kit entrypoint is a shell wrapper, not opencode directly: it execs
-  the shared runtime script from the `opencode-entrypoint` mixin
+  the shared runtime script from the `base` mixin
   (`~/.sandbox-kit/entrypoint.sh`), which runs the composed mixins' hooks
-  from `~/.sandbox-kit/hooks.d/`, prints a startup banner,
-  auto-runs `opencode`, then `exec`s an
-  interactive login shell — quitting the agent must leave a usable shell.
-  Keep that shape; the wrapper must error clearly (and still drop into a
-  login shell) when the `opencode-entrypoint` mixin is missing.
+  from `~/.sandbox-kit/hooks.d/` (the env-guard mixin's guard, the banner
+  mixin's banner, the config mixin's provider merge, the base mixin's
+  AGENTS.md rebuild + MCP backstop), then auto-runs `opencode` and `exec`s
+  an interactive login shell — quitting the agent must leave a usable
+  shell. Keep that shape; the wrapper must error clearly (and still drop
+  into a login shell) when the `base` mixin is missing. Entry-point
+  ordering (guard refusal, AGENTS.md rebuild, provider merge, banner)
+  must stay in these hooks, not `setup.startup` — startup commands run
+  alongside the entrypoint without gating it and without a terminal
+  (kit reference: setup.startup).
 - The sandbox `AGENTS.md` (written next to the workspace) is rebuilt
   before opencode starts: the entrypoint runtime sources the base mixin's
   rebuild hook (`files/home/.sandbox-kit/hooks.d/agents-md.sh`), which
@@ -117,12 +129,12 @@ Use based on your task:
   substitution only captures the answer. Keep the PS and bash variants in
   sync.
 - Do not touch the sandbox-managed `~/.config/opencode/opencode.json` from
-  any kit. The permissive config lives in the `opencode-config` mixin's
+  any kit. The permissive config lives in the `global-opencode-config` mixin's
   sibling `opencode.jsonc` (merged by OpenCode); providers layer on via
-  `providers.d/` fragments (merged by the opencode-config mixin's
-  `merge-opencode-config.sh` into the generated `providers.jsonc` — that
+  `providers.d/` fragments (merged by the global-opencode-config mixin's
+  `merge-global-opencode-config.sh` into the generated `providers.jsonc` — that
   file is rebuilt every start, never hand-edit it).
-- Never set `OPENCODE_CONFIG` in a kit or mixin — the `opencode-config`
+- Never set `OPENCODE_CONFIG` in a kit or mixin — the `global-opencode-config`
   mixin owns it. That single owner is what lets any number of provider
   mixins compose.
 - Host-side settings are documented as standard `sbx settings set` commands

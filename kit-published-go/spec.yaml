@@ -11,13 +11,15 @@
 # The kit is intentionally thin: template image + entrypoint. Everything
 # shared across the kits lives in ../mixins/ as small, pick-and-choose
 # mixins — this kit requires these three:
-# - ../mixins/opencode-entrypoint/ — the entrypoint runtime (banner,
-#   opencode autostart, .env guard, mixin hook runner)
-# - ../mixins/base/ — agent guidance files, the AGENTS.md rebuild hook,
-#   and the MCP gateway registration
-# - ../mixins/opencode-config/ — the permissive OpenCode config
-# The entrypoint below execs the shared runtime script and refuses to
-# start (with a clear error) if the entrypoint mixin is missing. Compose
+# - ../mixins/base/ — the entrypoint runtime (mixin hook runner, opencode
+#   autostart, login shell on exit), agent guidance files, the AGENTS.md
+#   rebuild hook, and the MCP gateway registration
+# - ../mixins/global-opencode-config/ — the permissive OpenCode config
+#   and the combined provider config (OPENCODE_CONFIG merge)
+# - ../mixins/env-guard/ — the workspace .env guard
+# Optional: ../mixins/banner/ — the startup banner (the examples compose
+# it). The entrypoint below execs the shared runtime script and refuses
+# to start (with a clear error) if the base mixin is missing. Compose
 # further capabilities at launch with the mixins from ../mixins/ via
 # --kit flags or a .sbxenv.yaml kits: list (the spec's `mixins:` field is
 # not applied by the runtime yet). See ../docs/.
@@ -28,13 +30,15 @@ kind: sandbox
 name: opencode-go
 displayName: OpenCode (Go)
 description: >
-  OpenCode agent running on a custom template with the Go toolchain preinstalled. Requires the shared mixins (../mixins/opencode-entrypoint,
-  ../mixins/base, ../mixins/opencode-config): the entrypoint is a login
-  shell — it prints a startup banner, auto-starts opencode, and drops
-  into the shell when opencode exits (relaunch with `o`); the base mixin
-  rebuilds the sandbox AGENTS.md and registers the MCP gateway; the
-  config mixin ships the permissive OpenCode config (edit/bash/webfetch
-  allowed — the sandbox is the isolation boundary).
+  OpenCode agent running on a custom template with the Go toolchain preinstalled. Requires the shared mixins (../mixins/base,
+  ../mixins/global-opencode-config, ../mixins/env-guard): the entrypoint
+  runs the composed mixins' hooks and auto-starts opencode (login shell
+  on exit — relaunch with `o`); the base mixin also rebuilds the sandbox
+  AGENTS.md and registers the MCP gateway; the config mixin ships the
+  permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is
+  the isolation boundary) and merges the model providers; the env-guard
+  mixin owns the no-.env policy below. ../mixins/banner adds the startup
+  banner.
   Compose the mixins from ../mixins/ to add capabilities (model provider,
   network areas, workflow rules). Enforces a no-.env policy in the
   workspace: refuses to start in direct mode when one exists, removes it
@@ -48,10 +52,10 @@ sandbox:
   # (full docker.io prefix — sbx does not resolve the Docker Hub domain).
   image: docker.io/nikcio/opencode-go:v0.7.0
 # x-release-please-end-version
-  # Wrapper: the real runtime lives in the opencode-entrypoint mixin
+  # Wrapper: the real runtime lives in the base mixin
   # (~/.sandbox-kit/entrypoint.sh) — see that script for the behavior
-  # (banner, auto-start opencode, drop into the shell when opencode exits;
-  # quitting the shell ends the session).
+  # (mixin hooks, auto-start opencode, drop into the shell when opencode
+  # exits; quitting the shell ends the session).
   entrypoint:
     - bash
     - -c
@@ -61,8 +65,9 @@ sandbox:
       fi
       echo "ERROR [entrypoint]: $HOME/.sandbox-kit/entrypoint.sh is missing." >&2
       echo "This kit requires the shared mixins in the sandbox's kits list:" >&2
-      echo "mixins/opencode-entrypoint (runtime), mixins/base (guidance + MCP gateway)," >&2
-      echo "mixins/opencode-config (permissive OpenCode config)." >&2
+      echo "mixins/base (entrypoint runtime, guidance + MCP gateway)," >&2
+      echo "mixins/global-opencode-config (config + provider merge)," >&2
+      echo "mixins/env-guard (.env guard)." >&2
       echo "Add them and recreate the sandbox." >&2
       exec bash -il
 
