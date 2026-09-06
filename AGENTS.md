@@ -65,11 +65,17 @@ Use based on your task:
   (`files/home/.sandbox-kit/hooks.d/banner.sh`, sourced by the entrypoint
   runtime) printing the "opencode is starting automatically" notice.
   Cosmetic — the examples compose it.
+- `mixins/dotnet-tools/` — the .NET local tools restore (`kind: mixin`):
+  a hook (`files/home/.sandbox-kit/hooks.d/dotnet-tools.sh`, sourced by
+  the entrypoint runtime) running `dotnet tool restore` for every
+  `.config/dotnet-tools.json` manifest in the workspace before opencode
+  starts, plus the NuGet egress the download needs. Optional — compose
+  for .NET projects that pin local tools.
 - The `base` mixin is required by every kit: every sandbox's `kits:` list
   must include it. `global-opencode-config` is required when composing a
   model provider (`zeldoc`, `copilot`) — their fragments only merge
-  through it. `env-guard` and `banner` are optional (the examples compose
-  both).
+  through it. `env-guard`, `banner`, and `dotnet-tools` are optional (the
+  examples compose the first two).
 - `mixins/<area>/` — one single-purpose mixin kit per area (`kind: mixin`):
   only the network rules, env vars, credentials, files, and memory notes
   for its own area. Composition is explicit at launch (`--kit` flags or a

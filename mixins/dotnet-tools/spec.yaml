@@ -1,0 +1,54 @@
+# .NET local tools mixin: restore local tools (dotnet tool restore) at
+# sandbox start so every .config/dotnet-tools.json manifest in the
+# workspace is materialized before opencode starts.
+#
+# Why a hook and not setup.startup: startup commands run with no terminal
+# attached and don't gate the agent entrypoint — the restore's progress
+# output must reach the TTY the user attaches to, and opencode must not
+# start until the tools are on PATH (kit reference: setup.startup).
+#
+# Ships:
+# - files/home/.sandbox-kit/hooks.d/dotnet-tools.sh — the restore, sourced
+#   by the base mixin's entrypoint runtime before opencode starts: finds
+#   every dotnet-tools.json manifest in the workspace and runs
+#   `dotnet tool restore` next to it. No-op when dotnet is missing,
+#   WORKSPACE_DIR is unset, or no manifest exists. Restore failures print
+#   a warning but never block startup.
+# - files/home/.sbx-agents.d/dotnet-tools.md — agent note.
+#
+# Optional — compose it for .NET projects that pin local tools. Pairs
+# with mixins/base (entrypoint runtime + agent guidance + MCP gateway)
+# and mixins/dotnet (full .NET/NuGet egress + telemetry opt-out). The
+# network rules below cover the tool download itself, so the mixin also
+# works standalone.
+schemaVersion: "2"
+kind: mixin
+name: dotnet-tools
+displayName: .NET local tools
+description: >
+  Runs dotnet tool restore at sandbox start for every
+  .config/dotnet-tools.json manifest in the workspace, so pinned local
+  tools are on PATH before opencode starts. Ships as a hook
+  (~/.sandbox-kit/hooks.d/dotnet-tools.sh) sourced by the base mixin's
+  entrypoint runtime. No-ops without a manifest or dotnet; restore
+  failures warn but never block startup. Pairs with the dotnet mixin.
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # NuGet (dotnet tool restore downloads the tool packages)
+      - nuget.org:443
+      - "*.nuget.org:443"
+      # Legacy download CDNs (package content)
+      - "*.azureedge.net:443"
+      # Certificate revocation (OCSP/CRL) endpoints hit by .NET's X509
+      # chain engine during package signature validation. Blocking them
+      # only adds latency (TLS soft-fails).
+      - "*.digicert.com:443"
+      - "*.symcd.com:443"
+      - "*.symcb.com:443"
+      - "*.ws.symantec.com:443"
+
+# Files dropped into the sandbox home (see the header for the layout):
+# .sandbox-kit/hooks.d/dotnet-tools.sh, .sbx-agents.d/dotnet-tools.md.

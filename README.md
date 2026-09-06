@@ -95,6 +95,7 @@ zeldoc (or copilot), git, <your stack>
 | `node` | nodejs.org + npm registry egress | — |
 | `openapi-ts` | openapi-ts.dev docs egress (openapi-typescript / openapi-fetch) | — |
 | `dotnet` | NuGet/Microsoft egress, telemetry opt-out | — |
+| `dotnet-tools` | runs `dotnet tool restore` for every `.config/dotnet-tools.json` in the workspace at startup | — |
 | `python` | PyPI egress for uv/pip | — |
 | `go` | Go module proxy + checksum DB egress (`go get`/`go install`, GOTOOLCHAIN downloads) | — |
 | `rust` | crates.io + rustup egress for cargo | — |

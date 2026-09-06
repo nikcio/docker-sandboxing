@@ -62,6 +62,7 @@ $allMixins = [ordered]@{
     "git"                     = "git hosting (GitHub/GitLab) + gh auth + worktree workflow"
     "node"                    = "Node.js/NVM/PNPM: nodejs.org + npm registry"
     "dotnet"                  = ".NET/NuGet + Microsoft hosts, telemetry off"
+    "dotnet-tools"            = "restore local dotnet tools (.config/dotnet-tools.json) at sandbox start"
     "docker"                  = "container registries for the in-sandbox Docker engine"
     "apt"                     = "Ubuntu/Microsoft package mirrors for apt (+ background cache warm)"
     "browser"                 = "Google Chrome browser software (no network rules)"

@@ -23,6 +23,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry, pnpm.io docs; pnpm installs gated to versions published ≥24h ago |
 | `openapi-ts` | openapi-ts.dev docs egress for the openapi-typescript + openapi-fetch packages |
 | `dotnet` | .NET/NuGet egress + telemetry opt-out |
+| `dotnet-tools` | Runs `dotnet tool restore` for every `.config/dotnet-tools.json` in the workspace at startup (before opencode) + NuGet egress for the tool download. Pairs with `dotnet` |
 | `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer), python.org docs |
 | `go` | Go toolchain egress: module proxy + checksum DB (`go get`/`go install`, GOTOOLCHAIN toolchain downloads), dl.google.com (go.dev/dl artifacts), go.dev/golang.org docs |
 | `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs |
