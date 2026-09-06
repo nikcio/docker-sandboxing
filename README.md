@@ -24,7 +24,7 @@ a proxy — the sandbox only ever sees placeholders.
    your project doesn't need, but keep `base` (every kit requires it) and
    add `global-opencode-config` when using a model provider (`zeldoc`,
    `copilot`); the examples also compose `env-guard` (the no-.env policy)
-   and `banner` (`workspace.path: .` targets the repo itself).
+   and `banner`. `workspace.path: .` targets the repo itself.
 3. **Run it** from your project root.
 
    ```bash
@@ -41,6 +41,8 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | [Set your Zeldoc API key](docs/zeldoc-api-key.md) | get, register, and approve the model provider key |
 | [Use GitHub Copilot](docs/copilot-setup.md) | run the agent on your Copilot subscription (or both providers) |
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
+| [Set your Uniform API key](docs/uniform-api-key.md) | create a Uniform service-account key, register it with `sbx secret set uniform` |
+| [Set your Omnium API token](docs/omnium-api-key.md) | create an Omnium API user, mint and refresh the bearer token |
 | [Mixins](docs/mixins.md) | what each mixin adds, common sets, changing them |
 | [Project-specific config](docs/project-kit.md) | an in-project kit: project feeds, env vars, files, agent notes |
 | [Local overrides](docs/local-overrides.md) | personal settings in a gitignored `local.sbxenv.yaml`, merged over the team's `.sbxenv.yaml` |
@@ -60,6 +62,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) |
 | `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) |
+| `uniform` | Uniform DXP egress: docs, dashboard + Management API, Edge Delivery API (incl. EU + image CDN), proxy-managed `x-api-key` |
 | `omnium` | Omnium OMS/e-commerce API egress (proxy-managed bearer token) |
 | `git` | git hosting egress, proxy-managed GitHub auth, worktree workflow |
 | `node` | nodejs.org + npm registry egress |
@@ -119,7 +122,7 @@ Everything below is for developing the template, kit, and mixins.
 │   └── new-sandbox.ps1 / new-sandbox.sh    # sandbox creation wizard
 ├── examples/*.sbxenv.yaml                  # consumer environment examples (one per stack)
 ├── docs/                                   # user guides (see above)
-├── agent-guidance/                         # versioning + commit conventions
+├── agent-guidance/                         # worktrees, versioning, commit conventions
 └── opencode-builtin-kit.spec.yaml          # reference copy of Docker's built-in opencode kit
 ```
 
@@ -171,8 +174,9 @@ Everything below is for developing the template, kit, and mixins.
   (`files/home/.sbx-agents.d/<area>.md`) for one area each. Compose
   explicitly at launch (`--kit` flags or a `.sbxenv.yaml` `kits:` list).
 - **`opencode-builtin-kit.spec.yaml`**: reference snapshot of Docker's
-  built-in `opencode` kit (providers, MCP wiring) that our kit extends.
-  Nothing in this repo uses it.
+  built-in `opencode` kit (providers, MCP wiring) — the upstream of the
+  template image all four Dockerfiles build on. Nothing in this repo
+  loads it.
 
 ### Working on the repo
 

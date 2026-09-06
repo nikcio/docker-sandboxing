@@ -35,8 +35,8 @@ A single SemVer version for the whole repo, managed by
 - `kit-<stack>/spec.yaml` (dev kits) and `.sbxenv.yaml` (dev env) are never
   bumped.
 - `kit-published-*/` must stay in sync with their dev kits — the only
-  intended difference is the published `sandbox.image` (see the header of
-  `kit-published-node-dotnet/spec.yaml`).
+  intended differences are the published `sandbox.image` and the
+  `version:` (see the header of `kit-published-node-dotnet/spec.yaml`).
 
 ## Adding an image
 

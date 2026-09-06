@@ -95,7 +95,7 @@ of the stock mixins.
 
    ```yaml
    kits:
-      - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node-dotnet&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node-dotnet&ref=v0.6.0
      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v0.6.0
      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0
@@ -104,7 +104,7 @@ of the stock mixins.
      - ./sandbox-kit
    ```
 
-   Keep the stock agent kit (`kit-published`) and `base` (required) —
+   Keep the stock agent kit (`kit-published-<stack>`) and `base` (required) —
    the kit defines the image and entrypoint wrapper, the `base` mixin
    ships the entrypoint runtime, agent guidance, and the MCP gateway.
    Add `global-opencode-config` when composing a model provider; the

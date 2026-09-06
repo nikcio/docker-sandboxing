@@ -45,8 +45,9 @@ name, the first source wins):
 - Skills load per session: after importing, quit opencode and relaunch it
   with `o` to pick up new skills.
 - Project skills need no import: an `.opencode/skills/<name>/SKILL.md`
-  folder in your repo arrives with the workspace, and the kit config already
-  allows the `skill` tool.
+  folder in your repo arrives with the workspace, and the global config
+  layer (from the `global-opencode-config` mixin) already allows the
+  `skill` tool.
 
 Quick check from your project root that the store is mounted:
 

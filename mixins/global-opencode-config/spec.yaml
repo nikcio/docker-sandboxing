@@ -23,7 +23,8 @@
 #   win scalar conflicts; seeds a valid empty config when there are no
 #   fragments).
 # - files/home/.sandbox-kit/hooks.d/provider-config.sh — the hook the
-#   base mixin's entrypoint runtime sources before the banner: exports
+#   base mixin's entrypoint runtime sources after the banner and
+#   env-guard hooks (glob order): exports
 #   OPENCODE_CONFIG defensively and runs the merge, so `o`/`opencode`
 #   relaunched from the login shell keep working even if a runtime
 #   skipped mixin env injection.
