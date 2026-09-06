@@ -95,6 +95,7 @@ zeldoc (or copilot), git, <your stack>
 | `node` | nodejs.org + npm registry egress | — |
 | `openapi-ts` | openapi-ts.dev docs egress (openapi-typescript / openapi-fetch) | — |
 | `dotnet` | NuGet/Microsoft egress, telemetry opt-out | — |
+| `openapi-codegen` | openapi-code-generator .NET tool install (C# codegen from OpenAPI 3.x) + openapi.nikcio.com docs egress | needs `dotnet` |
 | `python` | PyPI egress for uv/pip | — |
 | `go` | Go module proxy + checksum DB egress (`go get`/`go install`, GOTOOLCHAIN downloads) | — |
 | `rust` | crates.io + rustup egress for cargo | — |

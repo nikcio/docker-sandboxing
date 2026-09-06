@@ -1,0 +1,34 @@
+# openapi-codegen mixin: the Nikcio-labs openapi-code-generator .NET tool
+# (Nikcio.OpenApiCodeGen) — a fast, opinionated C# code generator for OpenAPI
+# 3.x specifications (records, enums, type aliases) — plus egress for its
+# docs site (openapi.nikcio.com).
+#
+# The tool installs as a .NET global tool from NuGet, so compose the dotnet
+# mixin (its network rules cover the nuget.org reads this install makes).
+schemaVersion: "2"
+kind: mixin
+name: openapi-codegen
+displayName: OpenAPI Code Generator (C#)
+description: >
+  Installs the openapi-code-generator .NET global tool (Nikcio.OpenApiCodeGen,
+  the `openapi-codegen` CLI that generates records, enums, and type aliases
+  from OpenAPI 3.x specs) and allows egress to its docs site
+  (openapi.nikcio.com). Needs the dotnet mixin — the tool installs from
+  NuGet.
+version: 0.1.0
+
+setup:
+  install:
+    # .NET global tool from NuGet (nuget.org is allowed by the dotnet
+    # mixin). `--global` puts `openapi-codegen` in ~/.dotnet/tools, which
+    # login shells have on PATH.
+    - command: dotnet tool install --global Nikcio.OpenApiCodeGen
+
+permissions:
+  network:
+    allow:
+      # Docs site (openapi.nikcio.com)
+      - openapi.nikcio.com:443
+
+# Agent memory note: files/home/.sbx-agents.d/openapi-codegen.md (appended to the
+# sandbox AGENTS.md by the kit entrypoint).
