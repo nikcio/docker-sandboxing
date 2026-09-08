@@ -29,7 +29,7 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs |
 | `docker` | Registry egress for the Docker engine inside the sandbox |
 | `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` + background package-cache update at start |
-| `browser` | Google Chrome install (no network rules — sites stay gated by the other mixins) |
+| `browser` | Google Chrome install (dl.google.com egress for the .deb; sites stay gated by the other mixins) |
 | `playwright` | Playwright + Chromium headless shell (smallest download) |
 | `playwright-chromium` | Playwright + full Chromium |
 | `playwright-all` | Playwright + Chromium, Firefox, WebKit (~1 GB+ download) |
