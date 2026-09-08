@@ -63,13 +63,14 @@ protection) for `main`:
 - **Require status checks to pass**, then select:
   - `Kits & mixins (sbx kit validate)`
   - `Dockerfile (buildx check) (template-node-dotnet)`
+  - `Dockerfile (buildx check) (template-node)`
   - `Dockerfile (buildx check) (template-python)`
   - `Dockerfile (buildx check) (template-go)`
   - `Dockerfile (buildx check) (template-rust)`
 
 The checks appear after the first PR runs the Validate workflow. Validate
 runs on every PR (no path filtering) and always produces exactly these
-five checks, so the fixed required set is safe.
+six checks, so the fixed required set is safe.
 
 The release PR is an ordinary PR: it runs the same checks and must pass
 before you merge it.
