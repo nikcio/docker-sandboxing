@@ -1,7 +1,7 @@
 # Docker sandboxing
 
 Docker Sandboxes kits and template images for running OpenCode agents
-(.NET + Node, Python + uv, Go, Rust + cargo) in sandboxed VMs.
+(.NET + Node, Node, Python + uv, Go, Rust + cargo) in sandboxed VMs.
 
 ## Documentation
 
@@ -23,11 +23,12 @@ Use based on your task:
 ## Artifacts
 
 - `template-*/Dockerfile` — the sandbox template images
-  (`opencode-node-dotnet:v1`, `opencode-python:v1`, `opencode-go:v1`,
-  `opencode-rust:v1`): the OpenCode base image plus the stack toolchain,
-  Git, and the `o` PATH shim for relaunching opencode. Rebuild and reload
-  after changes (`scripts/bootstrap.ps1` / `scripts/bootstrap.sh`, or
-  `docker build` + `docker image save` + `sbx template load`).
+  (`opencode-node-dotnet:v1`, `opencode-node:v1`, `opencode-python:v1`,
+  `opencode-go:v1`, `opencode-rust:v1`): the OpenCode base image plus the
+  stack toolchain, Git, and the `o` PATH shim for relaunching opencode.
+  Rebuild and reload after changes (`scripts/bootstrap.ps1` /
+  `scripts/bootstrap.sh`, or `docker build` + `docker image save` +
+  `sbx template load`).
 - `kit-<stack>/` — thin declarative sandbox kits (`schemaVersion: "2"`,
   `kind: sandbox`): template image + a one-line
   entrypoint wrapper that execs the shared runtime from `mixins/base/`.
@@ -100,7 +101,7 @@ Use based on your task:
   never in the main checkout: multiple agent sessions share it, it can
   switch branches under you, and its untracked files are not yours. See
   [agent-guidance/worktrees.md](agent-guidance/worktrees.md).
-- Keep all eight kits in sync when touching shared kit content — the only
+- Keep all ten kits in sync when touching shared kit content — the only
   intended differences are the image reference and the version. Shared
   content lives once in `mixins/` (entrypoint runtime + guidance files +
   AGENTS.md rebuild + MCP gateway in `base`, permissive OpenCode config +

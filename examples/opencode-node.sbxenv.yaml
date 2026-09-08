@@ -1,0 +1,54 @@
+# OpenCode sandbox environment (Node).
+#
+# 1. Copy this file into your project's root and rename it .sbxenv.yaml
+#    (commit it so teammates get the same sandbox).
+# 2. Adjust `name:` below and drop the kit lines your project doesn't need
+#    (see ../docs/mixins.md).
+# 3. Run from your project root:  sbx env run
+#
+# Full guide: ../docs/getting-started.md
+# Environment file docs: https://docs.docker.com/ai/sandboxes/configuration/environment-files/
+
+schemaVersion: "1"
+name: my-project
+agent: opencode-node
+
+# The sandbox kit plus the mixins your project needs. Refs are pinned to the
+# latest release; release-please bumps them (do not edit by hand).
+# x-release-please-start-version
+kits:
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node&ref=v1.0.0                             # agent definition (published image)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v1.0.0                                     # entrypoint runtime + agent guidance + MCP gateway (required by the kit)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v1.0.0                   # permissive OpenCode config + provider merge (required with model providers)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v1.0.0                                # workspace .env guard
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/banner&ref=v1.0.0                                   # startup banner
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v1.0.0                         # agent runtime
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v1.0.0                                   # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v1.0.0                                      # git + worktrees
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=v1.0.0                                     # node/npm
+# x-release-please-end-version
+
+workspace:
+  path: . # the repo itself; point elsewhere if the env file sits outside the project
+  clone: false # true = sandbox works on its own copy (safer: the agent cannot touch your local folder)
+
+env:
+  NODE_ENV: development
+
+sandboxOptions:
+  cpus: 4
+  memory: 8g
+
+ports:
+  - sandbox: 3000 # node / vite dev server
+    host: 3000
+
+# Approves GitHub token injection for the sandbox (docs/github-pat.md).
+bindings:
+  github:
+    apiKey:
+      domains:
+        - api.github.com
+        - github.com
+        - uploads.github.com
+        - raw.githubusercontent.com
