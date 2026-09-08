@@ -1,5 +1,7 @@
-# Node mixin: Node.js/NVM/PNPM egress, the pnpm package-age policy, and
-# agent notes.
+# Node mixin: Node.js/NVM/PNPM egress, the pnpm package-age policy, agent
+# notes, and the check-and-install step so the mixin composes on any base
+# template image (installs node via nvm + pnpm only when the template
+# lacks them).
 schemaVersion: "2"
 kind: mixin
 name: node
@@ -9,8 +11,24 @@ description: >
   distribution servers for nvm installs, the npm registry for
   pnpm/npm/npx, and pnpm.io for the pnpm docs. Pins a global pnpm
   package-maturity policy: installs only resolve versions published at
-  least 24h ago (including transitive dependencies).
-version: 0.1.0
+  least 24h ago (including transitive dependencies). Composes on any
+  base template image: a setup.install step installs node via nvm and
+  pnpm via npm (via the base mixin's install library) only when the
+  template doesn't already have them.
+version: 0.2.0
+
+setup:
+  install:
+    # Check-and-install: a no-op on template-node-dotnet (and any image
+    # with node + pnpm); on other base images it installs node via nvm
+    # (agent home, same layout as template-node-dotnet) and pnpm globally
+    # through the base mixin's install library. Needs this mixin's
+    # nodejs.org + npm egress plus the apt mixin for the OS packages on
+    # bare bases; nvm's git clone of the nvm repo rides the git mixin's
+    # GitHub egress (compose git with node on templates without node).
+    - command: >
+        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_node && install_pnpm
+      description: Ensure node + pnpm are available (install when the template image lacks them)
 
 environment:
   variables:
@@ -34,6 +52,12 @@ permissions:
       # nvm's io.js mirror (fetched by every `nvm ls-remote`; needed for
       # io.js listings and installs)
       - iojs.org:443
+      # nvm itself (the check-and-install step clones the nvm repo from
+      # GitHub when the template image lacks node — raw.githubusercontent
+      # covers the install script variant)
+      - github.com:443
+      - "*.github.com:443"
+      - raw.githubusercontent.com:443
       # npm registry (pnpm/npm/npx installs and fetches)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"

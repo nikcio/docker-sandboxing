@@ -13,22 +13,27 @@ displayName: Browser (Google Chrome)
 description: >
   Installs Google Chrome (stable) plus the color emoji font, and drops the
   agent memory note for driving it. Declares no network rules — browsing
-  egress is owned by the composed mixins.
-version: 0.1.0
+  egress is owned by the composed mixins. Composes on any base template
+  image: the install step is skipped when the template already has Chrome.
+version: 0.2.0
 
 setup:
   install:
-    # The .deb is self-contained. The apt repo entry is removed after
-    # install so the sandbox's background `apt-get update` never contacts
-    # dl.google.com (not in any mixin's allowlist).
+    # The .deb is self-contained. Guarded so the mixin composes on any
+    # base template image (skips when Chrome is already there). The apt
+    # repo entry is removed after install so the sandbox's background
+    # `apt-get update` never contacts dl.google.com (not in any mixin's
+    # allowlist).
     - command: >
-        curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        command -v google-chrome >/dev/null 2>&1 && exit 0
+        && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
         -o /tmp/google-chrome.deb
         && apt-get install -y /tmp/google-chrome.deb
         && rm -f /tmp/google-chrome.deb
         && apt-get install -y --no-install-recommends fonts-noto-color-emoji
         && rm -f /etc/apt/sources.list.d/google-chrome.list
         && rm -rf /var/lib/apt/lists/*
+      description: Install Google Chrome (skipped when the template image already has it)
 
 # Agent memory note: files/home/.sbx-agents.d/browser.md (appended to the
 # sandbox AGENTS.md by the kit entrypoint).

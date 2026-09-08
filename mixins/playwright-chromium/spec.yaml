@@ -14,17 +14,28 @@ displayName: Playwright (full Chromium)
 description: >
   Playwright installed globally via npm with the full Chromium build
   preinstalled. Needs the apt mixin for the OS libraries (--with-deps).
+  Composes on any base template image: installs node (via the node
+  mixin's egress + nvm) when the template lacks one and skips the
+  browser download when Playwright is already present.
 version: 0.1.0
 
 setup:
   install:
-    # unset NPM_CONFIG_PREFIX: the template sets it for its own npm-global
-    # dir, and nvm-managed npm refuses to run while it is set.
+    # Guarded so the mixin composes on any base template image (skips when
+    # Playwright with full Chromium is already there). Also ensures node:
+    # on templates without one, install via nvm through the base mixin's
+    # install library (needs the node mixin's egress + the git mixin for
+    # the nvm repo). unset NPM_CONFIG_PREFIX: the template sets it for its
+    # own npm-global dir, and nvm-managed npm refuses to run while it is
+    # set.
     - command: >
-        unset NPM_CONFIG_PREFIX
+        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_node
+        && command -v playwright >/dev/null 2>&1 && npx playwright install --dry-run chromium 2>/dev/null | grep -q "already installed" && exit 0
+        && unset NPM_CONFIG_PREFIX
         && npm install -g playwright
         && PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium
         && chown -R agent:agent /home/agent/.cache/ms-playwright
+      description: Ensure Playwright + full Chromium (skipped when already present)
 
 permissions:
   network:

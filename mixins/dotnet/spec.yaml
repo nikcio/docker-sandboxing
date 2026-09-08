@@ -1,12 +1,31 @@
-# .NET mixin: NuGet/Microsoft egress, telemetry opt-out, agent notes.
+# .NET mixin: NuGet/Microsoft egress, telemetry opt-out, agent notes, and
+# the check-and-install step so the mixin composes on any base template
+# image (installs the .NET SDK only when the template lacks dotnet).
 schemaVersion: "2"
 kind: mixin
 name: dotnet
 displayName: .NET / NuGet
 description: >
   Network rules and settings for .NET work: NuGet restore, SDK and workload
-  downloads, Microsoft package hosts, plus CLI telemetry opt-out.
-version: 0.2.0
+  downloads, Microsoft package hosts, plus CLI telemetry opt-out. Composes
+  on any base template image: a setup.install step installs the .NET SDK
+  (via the base mixin's install library — Ubuntu dotnet apt feed, falling
+  back to the dot.net install script) only when the template doesn't
+  already have dotnet.
+version: 0.3.0
+
+setup:
+  install:
+    # Check-and-install: a no-op on template-node-dotnet (and any image
+    # with dotnet on PATH); on other base images it installs the SDK
+    # through the base mixin's install library (Ubuntu dotnet apt feed,
+    # dotnet-install-script fallback — same DOTNET_ROOT as
+    # template-node-dotnet). Needs this mixin's *.microsoft.com egress
+    # (the packages.microsoft.com apt feed + dot.net script host) plus
+    # the apt mixin for the OS packages on bare bases.
+    - command: >
+        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_dotnet
+      description: Ensure the .NET SDK is available (install when the template image lacks it)
 
 environment:
   variables:

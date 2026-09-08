@@ -1,4 +1,7 @@
-# Rust mixin: crates.io/cargo egress, rustup dist egress, and agent notes.
+# Rust mixin: crates.io/cargo egress, rustup dist egress, agent notes,
+# and the check-and-install step so the mixin composes on any base
+# template image (installs Rust via rustup only when the template lacks
+# cargo).
 schemaVersion: "2"
 kind: mixin
 name: rust
@@ -8,11 +11,26 @@ description: >
   package CDN for cargo downloads, the rustup dist server for toolchain and
   component installs plus `rustup update`, the sh.rustup.rs installer
   (reinstalling rustup in-sandbox gets a newer release than the one baked
-  into the image), and the Rust docs sites so the agent can look up language
-  and crate docs (doc.rust-lang.org, docs.rs).
+  into the image, and the check-and-install step on templates without
+  Rust uses it too), and the Rust docs sites so the agent can look up
+  language and crate docs (doc.rust-lang.org, docs.rs).
   Git dependencies and rustup's script host redirect reuse the git mixin's
-  GitHub egress.
-version: 0.1.0
+  GitHub egress. Composes on any base template image: a setup.install
+  step installs rustup + the default toolchain (via the base mixin's
+  install library) only when the template doesn't already have cargo.
+version: 0.2.0
+
+setup:
+  install:
+    # Check-and-install: a no-op on template-rust (and any image with
+    # cargo on PATH); on other base images it installs rustup + the
+    # default toolchain through the base mixin's install library (same
+    # agent-owned RUSTUP_HOME/CARGO_HOME layout as template-rust). Needs
+    # this mixin's rustup egress plus the apt mixin for the OS packages
+    # on bare bases.
+    - command: >
+        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_rust
+      description: Ensure the Rust toolchain is available (install when the template image lacks it)
 
 permissions:
   network:
@@ -28,9 +46,12 @@ permissions:
       - static.rust-lang.org:443
       # rustup installer (`curl -fsSL https://sh.rustup.rs | sh`) — the
       # short link redirects the installer script to
-      # raw.githubusercontent.com, which is covered by the git mixin;
-      # rustup-init binaries come from static.rust-lang.org above
+      # raw.githubusercontent.com, which is covered by the git mixin
+      # (composed standalone, this mixin allows it itself for the
+      # check-and-install step); rustup-init binaries come from
+      # static.rust-lang.org above
       - sh.rustup.rs:443
+      - raw.githubusercontent.com:443
       # Rust docs and release info for agent lookups (doc.rust-lang.org,
       # www.rust-lang.org, editions and release notes) + crate docs (docs.rs)
       - rust-lang.org:443

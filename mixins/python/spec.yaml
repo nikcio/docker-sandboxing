@@ -1,4 +1,6 @@
-# Python mixin: PyPI egress and agent notes.
+# Python mixin: PyPI egress, agent notes, and the check-and-install step
+# so the mixin composes on any base template image (installs uv + a
+# uv-managed CPython only when the template lacks a working python3).
 schemaVersion: "2"
 kind: mixin
 name: python
@@ -11,8 +13,21 @@ description: >
   is disabled for unmanaged installs), and the python.org docs sites so
   the agent can look up language docs and release/version info.
   Interpreter downloads via `uv python install` reuse the git mixin's
-  GitHub egress.
-version: 0.1.0
+  GitHub egress. Composes on any base template image: a setup.install
+  step installs uv + CPython (via the base mixin's install library) only
+  when the template doesn't already have a working python3.
+version: 0.2.0
+
+setup:
+  install:
+    # Check-and-install: a no-op on template-python (and any image with a
+    # working python3); on other base images it installs uv + a uv-managed
+    # CPython through the base mixin's install library (same paths and
+    # versions as template-python). Needs the python mixin's own egress
+    # (astral.sh) plus the apt mixin for the OS packages on bare bases.
+    - command: >
+        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_python
+      description: Ensure python3 + uv are available (install when the template image lacks them)
 
 permissions:
   network:
@@ -26,7 +41,8 @@ permissions:
       # uv installer (`curl -LsSf https://astral.sh/uv/install.sh | sh`) —
       # astral.sh 301-redirects the installer script to releases.astral.sh,
       # which is also the installer's primary artifact host (binaries fall
-      # back to GitHub releases, covered by the git mixin)
+      # back to GitHub releases, covered by the git mixin). Also used by
+      # the check-and-install step on templates without python.
       - astral.sh:443
       - releases.astral.sh:443
       # Python docs and release info for agent lookups (docs.python.org,

@@ -6,11 +6,37 @@ sandbox network policy is deny-by-default — the union of the composed
 mixins' rules is the only outbound traffic. Drop the mixin lines your
 project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 
+## Any mixin on any template
+
+Stack mixins don't have to match the kit's template image. Every toolchain
+mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins
+(`browser`, `playwright*`, `sbx`, `nikcio-openapi-codegen`) carry a
+check-and-install `setup.install` step: at sandbox creation it verifies
+the tool is present and installs it (through the base mixin's
+`~/.sandbox-kit/lib/install-toolchain.sh`) when the template image lacks
+it. Compose, for example, the `python` mixin onto the Go kit and the
+sandbox gets a working `python3` + `uv`; no rebuild needed.
+
+Rules of thumb:
+
+- Install paths and env match the template images (same `DOTNET_ROOT`,
+  nvm in the agent home, uv-managed CPython, `/usr/local/go`,
+  agent-owned rustup) — a later image rebuild converges to the same
+  layout.
+- Install steps run at **creation only** (kit changes never apply to
+  running sandboxes) and need egress: compose the `apt` mixin (OS
+  package mirrors) and the mixin owning the download host (e.g. `node`
+  for npm installs, `dotnet` for the .NET SDK feed). A blocked download
+  fails the install step — check `sbx policy log`.
+- On the matching template image the check is a cheap no-op (the tool is
+  already there), so keeping the install steps in every composition is
+  safe.
+
 ## Catalog
 
 | Mixin | Adds |
 | ----- | ---- |
-| `base` | The entrypoint runtime + AGENTS.md logic + MCP gateway every kit needs: the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance files, the shared `AGENTS.md` base, the AGENTS.md rebuild hook, MCP gateway registration (startup hook + backstop). Required by every kit — keep this line |
+| `base` | The entrypoint runtime + AGENTS.md logic + MCP gateway every kit needs: the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance files, the shared `AGENTS.md` base, the AGENTS.md rebuild hook, MCP gateway registration (startup hook + backstop), and the toolchain install library (`~/.sandbox-kit/lib/install-toolchain.sh`) other mixins' check-and-install steps source. Required by every kit — keep this line |
 | `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `banner` | The startup banner (cosmetic — the examples compose it) |
@@ -20,20 +46,20 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
 | `uniform` | Uniform DXP egress: docs site, dashboard + Management API (uniform.app), Edge Delivery API (uniform.global, incl. EU + image CDN), proxy-managed `x-api-key` auth (see [uniform-api-key.md](uniform-api-key.md)) |
 | `omnium` | Omnium OMS/e-commerce egress: REST API hosts (production/test/dev, each with Swagger), tech docs, proxy-managed `Authorization: Bearer` auth (see [omnium-api-key.md](omnium-api-key.md)) |
-| `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry, pnpm.io docs; pnpm installs gated to versions published ≥24h ago |
+| `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry, pnpm.io docs; pnpm installs gated to versions published ≥24h ago; check-and-install (nvm node + pnpm) for templates without them |
 | `openapi-ts` | openapi-ts.dev docs egress for the openapi-typescript + openapi-fetch packages |
-| `dotnet` | .NET/NuGet egress + telemetry opt-out |
-| `nikcio-openapi-codegen` | Installs the openapi-code-generator .NET global tool (Nikcio.OpenApiCodeGen — the `openapi-codegen` CLI) + openapi.nikcio.com docs egress; needs `dotnet` |
-| `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer), python.org docs |
-| `go` | Go toolchain egress: module proxy + checksum DB (`go get`/`go install`, GOTOOLCHAIN toolchain downloads), dl.google.com (go.dev/dl artifacts), go.dev/golang.org docs |
-| `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs |
+| `dotnet` | .NET/NuGet egress + telemetry opt-out; check-and-install (SDK via apt feed / dot.net script) for templates without dotnet |
+| `nikcio-openapi-codegen` | Installs the openapi-code-generator .NET global tool (Nikcio.OpenApiCodeGen — the `openapi-codegen` CLI) + openapi.nikcio.com docs egress; needs `dotnet`; ensures the SDK first |
+| `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer), python.org docs; check-and-install (uv + CPython) for templates without python3 |
+| `go` | Go toolchain egress: module proxy + checksum DB (`go get`/`go install`, GOTOOLCHAIN toolchain downloads), dl.google.com (go.dev/dl artifacts), go.dev/golang.org docs; check-and-install (official tarball) for templates without go |
+| `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs; check-and-install (rustup) for templates without cargo |
 | `docker` | Registry egress for the Docker engine inside the sandbox |
 | `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` + background package-cache update at start |
-| `browser` | Google Chrome install (no network rules — sites stay gated by the other mixins) |
-| `playwright` | Playwright + Chromium headless shell (smallest download) |
-| `playwright-chromium` | Playwright + full Chromium |
-| `playwright-all` | Playwright + Chromium, Firefox, WebKit (~1 GB+ download) |
-| `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack) |
+| `browser` | Google Chrome install (skipped when the template has it; no network rules — sites stay gated by the other mixins) |
+| `playwright` | Playwright + Chromium headless shell (smallest download); installs node via nvm when the template lacks one |
+| `playwright-chromium` | Playwright + full Chromium; installs node via nvm when the template lacks one |
+| `playwright-all` | Playwright + Chromium, Firefox, WebKit (~1 GB+ download); installs node via nvm when the template lacks one |
+| `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the template has it |
 
 Network hosts per mixin are listed at the top of each
 `mixins/<area>/spec.yaml`.

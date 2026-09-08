@@ -22,6 +22,10 @@
 # - files/home/.sandbox-kit/hooks.d/mcp-gateway.sh — the idempotent MCP
 #   gateway backstop (sourced by the entrypoint runtime; writes the
 #   gateway config only when the startup hook below didn't run).
+# - files/home/.sandbox-kit/lib/install-toolchain.sh — the check-and-
+#   install helpers other mixins source in their setup.install steps, so
+#   any mixin composes on any base template image (installs the
+#   toolchain only when the template doesn't already have it).
 # - setup.startup — MCP gateway registration (the hook that normally wins;
 #   the backstop only covers runtimes that skip mixin startup hooks).
 #
@@ -37,9 +41,11 @@ description: >
   OpenCode kit sandbox composes: the entrypoint runtime (mixin hook
   runner, opencode autostart, login shell on exit), the agent guidance
   files, the shared AGENTS.md base, the AGENTS.md rebuild hook (sourced
-  by the runtime), and MCP gateway registration (startup hook +
-  idempotent backstop). No network rules — capability egress comes from
-  the other mixins.
+  by the runtime), MCP gateway registration (startup hook +
+  idempotent backstop), and the toolchain install library mixin
+  setup.install steps source (check-and-install helpers so any mixin
+  composes on any base template image). No network rules — capability
+  egress comes from the other mixins.
 version: 0.3.0
 
 setup:
