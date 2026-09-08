@@ -24,7 +24,7 @@ setup:
     # (the packages.microsoft.com apt feed + dot.net script host) plus
     # the apt mixin for the OS packages on bare bases.
     - command: >
-        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_dotnet
+        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_dotnet
       description: Ensure the .NET SDK is available (install when the template image lacks it)
 
 environment:

@@ -32,16 +32,6 @@ setup:
         && rm -f /etc/apt/sources.list.d/google-chrome.list
         && rm -rf /var/lib/apt/lists/*
       description: Install Google Chrome (skipped when the template image already has it)
-    - command: >
-        command -v google-chrome >/dev/null 2>&1 && exit 0
-        && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        -o /tmp/google-chrome.deb
-        && apt-get install -y /tmp/google-chrome.deb
-        && rm -f /tmp/google-chrome.deb
-        && apt-get install -y --no-install-recommends fonts-noto-color-emoji
-        && rm -f /etc/apt/sources.list.d/google-chrome.list
-        && rm -rf /var/lib/apt/lists/*
-      description: Install Google Chrome (skipped when the template image already has it)
 
 permissions:
   network:

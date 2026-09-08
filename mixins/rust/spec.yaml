@@ -29,7 +29,7 @@ setup:
     # this mixin's rustup egress plus the apt mixin for the OS packages
     # on bare bases.
     - command: >
-        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_rust
+        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_rust
       description: Ensure the Rust toolchain is available (install when the template image lacks it)
 
 permissions:

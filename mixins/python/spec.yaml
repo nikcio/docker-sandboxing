@@ -26,7 +26,7 @@ setup:
     # versions as template-python). Needs the python mixin's own egress
     # (astral.sh) plus the apt mixin for the OS packages on bare bases.
     - command: >
-        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_python
+        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_python
       description: Ensure python3 + uv are available (install when the template image lacks them)
 
 permissions:

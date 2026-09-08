@@ -17,7 +17,7 @@ description: >
   template image: installs node (via the node mixin's egress + nvm)
   when the template lacks one and skips the browser download when
   Playwright is already present.
-version: 0.1.0
+version: 0.1.1
 
 setup:
   install:
@@ -29,8 +29,8 @@ setup:
     # it for its own npm-global dir, and nvm-managed npm refuses to run
     # while it is set.
     - command: >
-        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_node
-        && command -v playwright >/dev/null 2>&1 && npx playwright install --dry-run chromium-headless-shell 2>/dev/null | grep -q "already installed" && exit 0
+        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_node
+        && if command -v playwright >/dev/null 2>&1 && npx playwright install --dry-run chromium-headless-shell 2>/dev/null | grep -q "already installed"; then exit 0; fi
         && unset NPM_CONFIG_PREFIX
         && npm install -g playwright
         && PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium-headless-shell

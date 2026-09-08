@@ -17,7 +17,7 @@ description: >
   NuGet. Composes on any base template image: ensures the .NET SDK first
   (the dotnet mixin's check-and-install) and skips when the tool is
   already present.
-version: 0.2.0
+version: 0.2.1
 
 setup:
   install:
@@ -28,9 +28,9 @@ setup:
     # `openapi-codegen` in ~/.dotnet/tools, which login shells have on
     # PATH.
     - command: >
-        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_dotnet
-        && sudo -u agent bash -lc 'command -v openapi-codegen >/dev/null 2>&1' && exit 0
-        || sudo -u agent dotnet tool install --global Nikcio.OpenApiCodeGen
+        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_dotnet
+        && if sudo -u agent bash -lc 'command -v openapi-codegen >/dev/null 2>&1'; then exit 0; fi
+        && sudo -u agent dotnet tool install --global Nikcio.OpenApiCodeGen
       description: Install the openapi-codegen .NET global tool (skipped when already present)
 
 permissions:
