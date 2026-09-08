@@ -1,0 +1,79 @@
+# Sandbox kit: OpenCode agent on the node template.
+#
+# PUBLISHED VARIANT — what remote consumers fetch at a release tag:
+#   git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-node&ref=vX.Y.Z
+#
+# sandbox.image points at the public template image on Docker Hub, built and
+# pushed by .github/workflows/publish-image.yml when a release is published.
+# release-please bumps the version + image tag between the x-release-please
+# markers. Keep in sync with ../kit-node/spec.yaml (the dev kit).
+#
+# The kit is intentionally thin: template image + entrypoint. Everything
+# shared across the kits lives in ../mixins/ as small, pick-and-choose
+# mixins:
+# - ../mixins/base/ — required: the entrypoint runtime (mixin hook
+#   runner, opencode autostart, login shell on exit), agent guidance
+#   files, the AGENTS.md rebuild hook, and the MCP gateway registration
+# - ../mixins/global-opencode-config/ — required with a model provider
+#   (zeldoc, copilot): the permissive OpenCode config and the combined
+#   provider config (OPENCODE_CONFIG merge)
+# - ../mixins/env-guard/ — optional: the workspace .env guard
+# - ../mixins/banner/ — optional: the startup banner (the examples
+#   compose env-guard and banner)
+# The entrypoint below execs the shared runtime script and refuses to
+# start (with a clear error) if the base mixin is missing. Compose
+# further capabilities at launch with the mixins from ../mixins/ via
+# --kit flags or a .sbxenv.yaml kits: list (the spec's `mixins:` field is
+# not applied by the runtime yet). See ../docs/.
+#
+# Validate: sbx kit validate kit-published-node/
+schemaVersion: "2"
+kind: sandbox
+name: opencode-node
+displayName: OpenCode (Node)
+description: >
+  OpenCode agent running on a custom template with Node.js via NVM, PNPM, and Git preinstalled. Requires the shared base mixin (../mixins/base): the entrypoint runs
+  the composed mixins' hooks and auto-starts opencode (login shell on
+  exit — relaunch with `o`), rebuilds the sandbox AGENTS.md, and
+  registers the MCP gateway. Compose ../mixins/global-opencode-config
+  when using a model provider (zeldoc, copilot): it ships the permissive
+  OpenCode config (edit/bash/webfetch allowed — the sandbox is the
+  isolation boundary) and merges the providers. ../mixins/env-guard adds
+  the no-.env policy (refuses to start in direct mode when a .env file
+  exists, removes it in clone mode); ../mixins/banner adds the startup
+  banner. Compose the mixins from ../mixins/ to add capabilities (model
+  provider, network areas, workflow rules).
+# The version and the image tag are bumped together by release-please.
+# x-release-please-start-version
+version: 1.0.0
+
+sandbox:
+  # Public image on Docker Hub, pushed by the publish-image workflow
+  # (full docker.io prefix — sbx does not resolve the Docker Hub domain).
+  image: docker.io/nikcio/opencode-node:v1.0.0
+# x-release-please-end-version
+  # Wrapper: the real runtime lives in the base mixin
+  # (~/.sandbox-kit/entrypoint.sh) — see that script for the behavior
+  # (mixin hooks, auto-start opencode, drop into the shell when opencode
+  # exits; quitting the shell ends the session).
+  entrypoint:
+    - bash
+    - -c
+    - |
+      if [ -f "$HOME/.sandbox-kit/entrypoint.sh" ]; then
+        exec bash "$HOME/.sandbox-kit/entrypoint.sh"
+      fi
+      echo "ERROR [entrypoint]: $HOME/.sandbox-kit/entrypoint.sh is missing." >&2
+      echo "This kit requires mixins/base (entrypoint runtime, agent guidance + MCP gateway) in the sandbox's kits list." >&2
+      echo "Compose mixins/global-opencode-config when using a model provider (zeldoc, copilot);" >&2
+      echo "mixins/env-guard adds the .env guard, mixins/banner the startup banner." >&2
+      echo "Add the missing mixins and recreate the sandbox." >&2
+      exec bash -il
+
+# The runtime's generated AGENTS.md baseline can't be replaced from the kit
+# grammar — the base mixin's rebuild hook rewrites the file instead (the
+# base mixin's ~/.sandbox-agents.md + every mixin note in
+# ~/.sbx-agents.d/); the entrypoint runtime sources it before opencode
+# starts.
+agentInstructions:
+  filename: AGENTS.md
