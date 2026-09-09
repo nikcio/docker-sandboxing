@@ -23,12 +23,13 @@ name: env-guard
 displayName: Workspace .env guard
 description: >
   Enforces the no-.env policy in the workspace: clone mode removes .env
-  files from the sandbox-local copy (warning + short pause), direct mode
+  files (including .env.local-style variants and symlinked .env files)
+  from the sandbox-local copy (warning + short pause), direct mode
   refuses to start when one exists. Ships the guard as a hook
   (~/.sandbox-kit/hooks.d/env-guard.sh) sourced by the base mixin's
   entrypoint runtime. No network rules — capability egress comes from the
   other mixins.
-version: 0.1.0
+version: 0.1.1
 
 # Files dropped into the sandbox home (see the header for the layout):
 # .sandbox-kit/hooks.d/env-guard.sh.
