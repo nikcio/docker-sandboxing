@@ -43,12 +43,15 @@ permissions:
       # npm package install (also covered by the node mixin — rules union)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"
-      # Playwright browser downloads (current CDN + legacy azureedge; both
-      # redirect to the prss.microsoft.com CDN that serves the binaries)
+      # Playwright browser downloads. The CDN serves regular builds, and
+      # 302-redirects Chrome-for-Testing builds (builds/cft/...) to
+      # storage.googleapis.com — the redirect target must be allowed too
+      # (the sandbox proxy blocks cross-host redirects otherwise).
       - cdn.playwright.dev:443
       - "*.cdn.playwright.dev:443"
       - playwright.azureedge.net:443
       - playwright.download.prss.microsoft.com:443
+      - storage.googleapis.com:443
 
 # Agent memory note: files/home/.sbx-agents.d/playwright.md (appended to the
 # sandbox AGENTS.md by the kit entrypoint).
