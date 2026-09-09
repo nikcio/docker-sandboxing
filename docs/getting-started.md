@@ -47,6 +47,7 @@ Copy the example matching your stack into your project's root and rename it
 | Your stack | Copy this example |
 | ---------- | ----------------- |
 | .NET + Node.js | [`examples/opencode-node-dotnet.sbxenv.yaml`](../examples/opencode-node-dotnet.sbxenv.yaml) |
+| Node.js | [`examples/opencode-node.sbxenv.yaml`](../examples/opencode-node.sbxenv.yaml) |
 | Python + uv | [`examples/opencode-python.sbxenv.yaml`](../examples/opencode-python.sbxenv.yaml) |
 | Go | [`examples/opencode-go.sbxenv.yaml`](../examples/opencode-go.sbxenv.yaml) |
 | Rust + cargo | [`examples/opencode-rust.sbxenv.yaml`](../examples/opencode-rust.sbxenv.yaml) |

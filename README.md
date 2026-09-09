@@ -17,6 +17,7 @@ Copy the example matching your stack into your project's root and rename it
 | Your stack | Copy this example |
 | ---------- | ----------------- |
 | .NET + Node.js | [`examples/opencode-node-dotnet.sbxenv.yaml`](examples/opencode-node-dotnet.sbxenv.yaml) |
+| Node.js | [`examples/opencode-node.sbxenv.yaml`](examples/opencode-node.sbxenv.yaml) |
 | Python + uv | [`examples/opencode-python.sbxenv.yaml`](examples/opencode-python.sbxenv.yaml) |
 | Go | [`examples/opencode-go.sbxenv.yaml`](examples/opencode-go.sbxenv.yaml) |
 | Rust + cargo | [`examples/opencode-rust.sbxenv.yaml`](examples/opencode-rust.sbxenv.yaml) |
@@ -99,15 +100,17 @@ Everything below is for developing the template, kit, and mixins.
 
 ```text
 ├── template-node-dotnet/Dockerfile   # → opencode-node-dotnet:v1: .NET SDK, Node LTS via NVM, PNPM
+├── template-node/Dockerfile          # → opencode-node:v1: Node LTS via NVM, PNPM
 ├── template-python/Dockerfile        # → opencode-python:v1: uv-managed CPython, uv
 ├── template-go/Dockerfile            # → opencode-go:v1: official Go toolchain (GO_VERSION build-arg,
 │                                     #   GOTOOLCHAIN=auto for newer toolchains via the module proxy)
 ├── template-rust/Dockerfile          # → opencode-rust:v1: rustup-managed stable toolchain
 │                                     #   (clippy + rustfmt + rust-analyzer), cargo, C build toolchain
 ├── kit-node-dotnet/                  # sandbox kit (kind: sandbox): template image + one-line
-├── kit-python/                       #   entrypoint wrapper that execs the shared runtime from the
-├── kit-go/                           #   base mixin (mixin hooks → auto-start opencode → login shell
-├── kit-rust/                         #   on exit); errors clearly when that mixin is missing
+├── kit-node/                         #   entrypoint wrapper that execs the shared runtime from the
+├── kit-python/                       #   base mixin (mixin hooks → auto-start opencode → login shell
+├── kit-go/                           #   on exit); errors clearly when that mixin is missing
+├── kit-rust/
 ├── kit-published-<stack>/            # same kits, sandbox.image pinned to the public Docker Hub
 │                                     #   tags — release-please bumps versions + tags; keep in
 │                                     #   sync with kit-<stack>/
@@ -136,7 +139,7 @@ Everything below is for developing the template, kit, and mixins.
                                       #   upstream of the template image; nothing loads it
 ```
 
-All four templates extend `docker/sandbox-templates:opencode-docker` and ship
+All five templates extend `docker/sandbox-templates:opencode-docker` and ship
 Git (+ git-lfs), `gh`, and the `o` PATH shim for relaunching opencode.
 
 ### Working on the repo

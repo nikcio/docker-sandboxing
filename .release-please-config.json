@@ -10,6 +10,10 @@
         },
         {
           "type": "generic",
+          "path": "kit-published-node/spec.yaml"
+        },
+        {
+          "type": "generic",
           "path": "kit-published-python/spec.yaml"
         },
         {
@@ -23,6 +27,10 @@
         {
           "type": "generic",
           "path": "examples/opencode-node-dotnet.sbxenv.yaml"
+        },
+        {
+          "type": "generic",
+          "path": "examples/opencode-node.sbxenv.yaml"
         },
         {
           "type": "generic",

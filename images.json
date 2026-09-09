@@ -7,6 +7,11 @@
       "spec": "kit-published-node-dotnet/spec.yaml"
     },
     {
+      "name": "opencode-node",
+      "context": "template-node",
+      "spec": "kit-published-node/spec.yaml"
+    },
+    {
       "name": "opencode-python",
       "context": "template-python",
       "spec": "kit-published-python/spec.yaml"

@@ -5,8 +5,14 @@
 # Lets any mixin compose on top of any base template image: the check-
 # and-install helpers below install the toolchain at sandbox creation
 # only when the template doesn't already have it (source it in a
-# `setup.install` step: `. "$HOME/.sandbox-kit/lib/install-toolchain.sh" &&
+# `setup.install` step: `. /home/agent/.sandbox-kit/lib/install-toolchain.sh &&
 # install_<toolchain>`).
+#
+# Source it by the absolute agent-home path: install steps run as root via
+# sh (dash) with HOME=/root, the base mixin's files land in the agent home,
+# and dash aborts the whole step when `.` cannot open the file — so a
+# `$HOME/...` source path always fails for root. Inside the library use
+# SBX_AGENT_HOME (never $HOME) for agent-home paths.
 #
 # Install paths mirror the template images (template-*/Dockerfile) so the
 # same toolchain, same versions and same PATH entries are produced
@@ -21,11 +27,18 @@
 # owning mixin, or check `sbx policy log`) and recreate the sandbox.
 #
 # Sourced, never executed: every helper is a function; running this file
-# directly does nothing.
+# directly does nothing. POSIX sh throughout (install steps run dash,
+# not bash).
 set -u
 
 # Mark loaded (idempotent sourcing from multiple install steps).
 export SBX_INSTALL_LIB_LOADED=1
+
+# The agent user's home/user — the mixin files' canonical location
+# (kit files/home/ paths are dropped under /home/agent). Used for
+# per-user installs (nvm, rustup) and file ownership.
+SBX_AGENT_HOME="${SBX_AGENT_HOME:-/home/agent}"
+SBX_AGENT_USER="${SBX_AGENT_USER:-agent}"
 
 # Common Ubuntu toolchain packages every install path may need. No-op
 # when the image lacks apt-get (non-Debian bases).
@@ -89,7 +102,7 @@ install_node() {
   echo "[install-toolchain] node missing — installing via nvm (major ${SBX_NODE_VERSION:-22})"
   NVM_VERSION="${SBX_NVM_VERSION:-v0.40.3}"
   NODE_VERSION="${SBX_NODE_VERSION:-22}"
-  NVM_DIR="${NVM_DIR:-/home/agent/.nvm}"
+  NVM_DIR="${NVM_DIR:-$SBX_AGENT_HOME/.nvm}"
   __sbx_apt_prepare
   git clone -q --depth 1 --branch "$NVM_VERSION" https://github.com/nvm-sh/nvm.git "$NVM_DIR"
   # nvm refuses to run while the template's NPM_CONFIG_PREFIX is set.
@@ -139,8 +152,8 @@ install_python() {
     curl -LsSf https://astral.sh/uv/install.sh \
       | env UV_UNMANAGED_INSTALL="/usr/local/bin" sh
   fi
-  UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR:-/home/agent/.local/share/uv/python}"
-  sudo -u agent env \
+  UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR:-$SBX_AGENT_HOME/.local/share/uv/python}"
+  sudo -u "$SBX_AGENT_USER" env \
     UV_PYTHON_INSTALL_DIR="$UV_PYTHON_INSTALL_DIR" \
     UV_LINK_MODE=copy \
     uv python install "$PYTHON_VERSION"
@@ -170,7 +183,7 @@ install_go() {
   ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt
   # Deliberately single-quoted: persisted verbatim, expanded when sourced.
   # shellcheck disable=SC2016
-  __sbx_persist 'export PATH=${PATH}:/home/agent/go/bin'
+  __sbx_persist "export PATH=\${PATH}:$SBX_AGENT_HOME/go/bin"
   go version
 }
 
@@ -183,9 +196,9 @@ install_rust() {
   __sbx_apt_prepare
   # Build essentials cargo links against (libssl for openssl-sys crates).
   apt-get install -y -qq --no-install-recommends build-essential pkg-config libssl-dev
-  RUSTUP_HOME="${RUSTUP_HOME:-/home/agent/.rustup}"
-  CARGO_HOME="${CARGO_HOME:-/home/agent/.cargo}"
-  sudo -u agent env \
+  RUSTUP_HOME="${RUSTUP_HOME:-$SBX_AGENT_HOME/.rustup}"
+  CARGO_HOME="${CARGO_HOME:-$SBX_AGENT_HOME/.cargo}"
+  sudo -u "$SBX_AGENT_USER" env \
     RUSTUP_HOME="$RUSTUP_HOME" CARGO_HOME="$CARGO_HOME" \
     bash -c 'curl -fsSL https://sh.rustup.rs | sh -s -- -y --no-modify-path --profile default --default-toolchain "$1" --component rust-analyzer' \
     _ "$RUST_VERSION"

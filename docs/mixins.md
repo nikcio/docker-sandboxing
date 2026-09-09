@@ -55,7 +55,7 @@ Rules of thumb:
 | `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs; check-and-install (rustup) for templates without cargo |
 | `docker` | Registry egress for the Docker engine inside the sandbox |
 | `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` + background package-cache update at start |
-| `browser` | Google Chrome install (skipped when the template has it; no network rules — sites stay gated by the other mixins) |
+| `browser` | Google Chrome install (dl.google.com egress for the .deb; sites stay gated by the other mixins); skipped when the template has it |
 | `playwright` | Playwright + Chromium headless shell (smallest download); installs node via nvm when the template lacks one |
 | `playwright-chromium` | Playwright + full Chromium; installs node via nvm when the template lacks one |
 | `playwright-all` | Playwright + Chromium, Firefox, WebKit (~1 GB+ download); installs node via nvm when the template lacks one |

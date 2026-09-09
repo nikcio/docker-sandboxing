@@ -27,7 +27,7 @@ setup:
     # template-go). Needs this mixin's go.dev egress plus the apt mixin
     # for the OS packages on bare bases.
     - command: >
-        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_go
+        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_go
       description: Ensure the Go toolchain is available (install when the template image lacks it)
 
 permissions:

@@ -27,7 +27,7 @@ setup:
     # bare bases; nvm's git clone of the nvm repo rides the git mixin's
     # GitHub egress (compose git with node on templates without node).
     - command: >
-        . "$HOME/.sandbox-kit/lib/install-toolchain.sh" && install_node && install_pnpm
+        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_node && install_pnpm
       description: Ensure node + pnpm are available (install when the template image lacks them)
 
 environment:

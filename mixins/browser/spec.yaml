@@ -1,31 +1,29 @@
 # Browser mixin: installs Google Chrome for the agent to drive.
 #
-# Software only — no network rules. The sandbox policy stays
-# deny-by-default; the composed mixins own all egress.
-#
-# The creation-time download needs dl.google.com reachable through the
-# proxy. If sandbox creation fails on it, check `sbx policy log` and compose
-# a kit/mixin that allows the host.
+# The creation-time .deb download needs dl.google.com — allowed below.
+# General browsing egress stays deny-by-default; the composed mixins own
+# all other egress.
 schemaVersion: "2"
 kind: mixin
 name: browser
 displayName: Browser (Google Chrome)
 description: >
   Installs Google Chrome (stable) plus the color emoji font, and drops the
-  agent memory note for driving it. Declares no network rules — browsing
-  egress is owned by the composed mixins. Composes on any base template
-  image: the install step is skipped when the template already has Chrome.
-version: 0.2.0
+  agent memory note for driving it. Owns egress for the Chrome .deb
+  download (dl.google.com); general browsing stays gated by the composed
+  mixins. Composes on any base template image: the install step is
+  skipped when the template already has Chrome.
+version: 0.2.1
 
 setup:
   install:
     # The .deb is self-contained. Guarded so the mixin composes on any
     # base template image (skips when Chrome is already there). The apt
     # repo entry is removed after install so the sandbox's background
-    # `apt-get update` never contacts dl.google.com (not in any mixin's
-    # allowlist).
+    # `apt-get update` never contacts dl.google.com for repo metadata
+    # (the one-time .deb download above is the only intended hit).
     - command: >
-        command -v google-chrome >/dev/null 2>&1 && exit 0
+        if command -v google-chrome >/dev/null 2>&1; then exit 0; fi
         && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
         -o /tmp/google-chrome.deb
         && apt-get install -y /tmp/google-chrome.deb
@@ -34,6 +32,13 @@ setup:
         && rm -f /etc/apt/sources.list.d/google-chrome.list
         && rm -rf /var/lib/apt/lists/*
       description: Install Google Chrome (skipped when the template image already has it)
+
+permissions:
+  network:
+    allow:
+      # The Chrome .deb download at sandbox creation
+      # (https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb)
+      - dl.google.com:443
 
 # Agent memory note: files/home/.sbx-agents.d/browser.md (appended to the
 # sandbox AGENTS.md by the kit entrypoint).
