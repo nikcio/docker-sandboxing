@@ -6,8 +6,9 @@ kind: mixin
 name: apt
 displayName: OS packages (apt)
 description: >
-  Network rules for Ubuntu archives and the Microsoft package repo so the
-  agent can install OS packages inside the sandbox, plus a background
+  Network rules for Ubuntu archives, the Microsoft package repo, PPAs,
+  and Docker's apt repo (the base images ship its sources.list entry), so
+  the agent can install OS packages inside the sandbox, plus a background
   apt-get update at sandbox start (no-op when apt-get is missing or these
   hosts are blocked — failures are swallowed by design).
 version: 0.2.0
@@ -34,3 +35,10 @@ permissions:
       - packages.microsoft.com:443
       # PPAs
       - "*.launchpadcontent.net:443"
+      # Docker's apt repo: the Docker Sandboxes base images ship
+      # /etc/apt/sources.list.d/docker.list (docker-ce + in-sandbox CLI
+      # upgrades), and an unreachable repo makes EVERY `apt-get update`
+      # exit 100 (playwright --with-deps runs `apt-get update && apt-get
+      # install` and aborts on the failure). The sbx mixin allows the
+      # same host for its own docker-sbx install.
+      - download.docker.com:443

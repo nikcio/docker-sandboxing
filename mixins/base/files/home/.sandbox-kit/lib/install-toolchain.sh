@@ -41,12 +41,23 @@ SBX_AGENT_HOME="${SBX_AGENT_HOME:-/home/agent}"
 SBX_AGENT_USER="${SBX_AGENT_USER:-agent}"
 
 # Common Ubuntu toolchain packages every install path may need. No-op
-# when the image lacks apt-get (non-Debian bases).
+# when the image lacks apt-get (non-Debian bases). Runs against a
+# private lists dir: install steps race the apt mixin's background
+# `apt-get update` startup hook for /var/lib/apt/lists/lock (apt-get
+# update has no lock-wait option); a private dir needs only the dpkg +
+# archives locks. The dir survives until the install step ends — later
+# apt-get calls in the same step reuse it (SBX_APT_LISTS); one failed
+# repo in the image's sources (e.g. the base image's docker.list, which
+# the sandbox proxy blocks) fails `update` with exit 100 but leaves the
+# fetched lists intact, so tolerate it and let the install verify.
 __sbx_apt_prepare() {
   command -v apt-get >/dev/null 2>&1 || return 1
   export DEBIAN_FRONTEND=noninteractive
-  apt-get update -qq
-  apt-get install -y -qq --no-install-recommends ca-certificates curl xz-utils
+  SBX_APT_LISTS="/var/lib/apt/sbx-install-lists"
+  install -m 0755 -d "$SBX_APT_LISTS"
+  apt-get -o Dir::State::lists="$SBX_APT_LISTS" update -qq || true
+  apt-get -o Dir::State::lists="$SBX_APT_LISTS" install -y -qq --no-install-recommends \
+    ca-certificates curl xz-utils
 }
 
 # Write persistent shell env (survives restarts, login shells, agent bash
@@ -67,7 +78,7 @@ install_dotnet() {
   if command -v dotnet >/dev/null 2>&1; then return 0; fi
   echo "[install-toolchain] dotnet missing — installing (channel ${SBX_DOTNET_CHANNEL:-10.0})"
   __sbx_apt_prepare
-  if apt-get install -y -qq --no-install-recommends "dotnet-sdk-${SBX_DOTNET_CHANNEL:-10.0}" 2>/dev/null; then
+  if apt-get -o Dir::State::lists="$SBX_APT_LISTS" install -y -qq --no-install-recommends "dotnet-sdk-${SBX_DOTNET_CHANNEL:-10.0}" 2>/dev/null; then
     __sbx_persist 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'
     __sbx_persist 'export DOTNET_NOLOGO=1'
     __sbx_persist 'export DOTNET_GENERATE_ASPNET_CERTIFICATE=false'
@@ -165,7 +176,7 @@ install_python() {
   python3 --version
   # Debian bases need python3-venv for stdlib venv/ensurepip; the
   # uv-managed interpreter already bundles it.
-  apt-get install -y -qq --no-install-recommends python3-venv >/dev/null 2>&1 || true
+  apt-get -o Dir::State::lists="$SBX_APT_LISTS" install -y -qq --no-install-recommends python3-venv >/dev/null 2>&1 || true
 }
 
 # install_go — Go toolchain from the official tarball (template:
@@ -195,7 +206,7 @@ install_rust() {
   RUST_VERSION="${SBX_RUST_VERSION:-stable}"
   __sbx_apt_prepare
   # Build essentials cargo links against (libssl for openssl-sys crates).
-  apt-get install -y -qq --no-install-recommends build-essential pkg-config libssl-dev
+  apt-get -o Dir::State::lists="$SBX_APT_LISTS" install -y -qq --no-install-recommends build-essential pkg-config libssl-dev
   RUSTUP_HOME="${RUSTUP_HOME:-$SBX_AGENT_HOME/.rustup}"
   CARGO_HOME="${CARGO_HOME:-$SBX_AGENT_HOME/.cargo}"
   sudo -u "$SBX_AGENT_USER" env \
@@ -219,9 +230,10 @@ install_gh() {
     -o /usr/share/keyrings/githubcli-archive-keyring.gpg
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
     > /etc/apt/sources.list.d/github-cli.list
-  apt-get update -qq
-  apt-get install -y -qq --no-install-recommends gh
-  rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/github-cli.list \
+  apt-get -o Dir::State::lists="$SBX_APT_LISTS" update -qq || true
+  apt-get -o Dir::State::lists="$SBX_APT_LISTS" install -y -qq --no-install-recommends gh
+  rm -rf "$SBX_APT_LISTS" /etc/apt/sources.list.d/github-cli.list \
     /usr/share/keyrings/githubcli-archive-keyring.gpg
   gh --version
+  SBX_APT_LISTS=""
 }
