@@ -8,21 +8,30 @@
 # sandboxd injects MCP_GATEWAY_URL + MCP_SENTINEL_TOKEN_NAME; the sentinel
 # name is not a credential — the proxy substitutes the real token at
 # request time.
+#
+# The values are interpolated through jq (jq -n --arg), never a heredoc:
+# raw interpolation would let a value containing quotes/backslashes
+# rewrite the config shape (JSON injection — e.g. point the gateway at an
+# attacker URL or add an extra mcp entry). Template images ship jq; with
+# jq missing the backstop refuses to write instead of writing an
+# interpolatable config.
 if [ -n "${MCP_GATEWAY_URL:-}" ] && [ ! -f "$HOME/.config/opencode/opencode.json" ]; then
-  mkdir -p "$HOME/.config/opencode"
-  cat > "$HOME/.config/opencode/opencode.json" <<EOF
-{
-  "\$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "mcp-gateway": {
-      "type": "remote",
-      "url": "$MCP_GATEWAY_URL",
-      "enabled": true,
-      "headers": {
-        "Authorization": "Bearer $MCP_SENTINEL_TOKEN_NAME"
+  if command -v jq >/dev/null 2>&1; then
+    mkdir -p "$HOME/.config/opencode"
+    jq -n --arg url "$MCP_GATEWAY_URL" --arg token "${MCP_SENTINEL_TOKEN_NAME:-}" '{
+      "$schema": "https://opencode.ai/config.json",
+      "mcp": {
+        "mcp-gateway": {
+          "type": "remote",
+          "url": $url,
+          "enabled": true,
+          "headers": {
+            "Authorization": ("Bearer " + $token)
+          }
+        }
       }
-    }
-  }
-}
-EOF
+    }' > "$HOME/.config/opencode/opencode.json"
+  else
+    echo "WARNING [mcp-gateway]: jq not found — skipping MCP gateway registration (would-be-injected config not written)" >&2
+  fi
 fi
