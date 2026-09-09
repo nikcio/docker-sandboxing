@@ -25,11 +25,14 @@ setup:
     # the tool is already there) and ensures the dotnet SDK first (via the
     # dotnet mixin's check-and-install). .NET global tool from NuGet
     # (nuget.org is allowed by the dotnet mixin). `--global` puts
-    # `openapi-codegen` in ~/.dotnet/tools, which login shells have on
-    # PATH.
+    # `openapi-codegen` in ~/.dotnet/tools — NOT the /usr/share/dotnet/
+    # tools dir on the template images' PATH — so the dir is persisted
+    # onto PATH via the base mixin's install library (login shells +
+    # BASH_ENV source /etc/sandbox-persistent.sh).
     - command: >
         . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_dotnet
         && if sudo -u agent bash -lc 'command -v openapi-codegen >/dev/null 2>&1'; then exit 0; fi
+        && __sbx_persist 'export PATH=$PATH:/home/agent/.dotnet/tools'
         && sudo -u agent dotnet tool install --global Nikcio.OpenApiCodeGen
       description: Install the openapi-codegen .NET global tool (skipped when already present)
 
