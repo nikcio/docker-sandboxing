@@ -216,7 +216,10 @@ install_rust() {
   ln -sf "$CARGO_HOME/bin/"* /usr/local/bin/
   __sbx_persist "export RUSTUP_HOME=$RUSTUP_HOME"
   __sbx_persist "export CARGO_HOME=$CARGO_HOME"
-  cargo --version
+  # The /usr/local/bin symlinks are rustup proxies: they resolve the
+  # toolchain through RUSTUP_HOME (agent-owned), which the step's root
+  # shell doesn't have — pass it explicitly for the verification.
+  RUSTUP_HOME="$RUSTUP_HOME" CARGO_HOME="$CARGO_HOME" cargo --version
 }
 
 # install_gh — GitHub CLI from the official apt repo (template images
