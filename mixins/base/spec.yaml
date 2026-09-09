@@ -56,6 +56,11 @@ setup:
     # time. opencode owns ~/.config/opencode/opencode.json, so write it
     # fresh. The base mixin's hooks.d/mcp-gateway.sh backstop re-registers
     # only if this hook didn't run and the file is still missing.
+    #
+    # The values are interpolated through jq (jq -n --arg), never a heredoc:
+    # raw interpolation would let a value containing quotes/backslashes
+    # rewrite the config shape (JSON injection — e.g. point the gateway at
+    # an attacker URL or add an extra mcp entry). Template images ship jq.
     - command:
         - sh
         - -c
@@ -63,21 +68,19 @@ setup:
           set -e
           [ -n "$MCP_GATEWAY_URL" ] || exit 0
           mkdir -p "$HOME/.config/opencode"
-          cat > "$HOME/.config/opencode/opencode.json" <<EOF
-          {
-            "\$schema": "https://opencode.ai/config.json",
+          jq -n --arg url "$MCP_GATEWAY_URL" --arg token "$MCP_SENTINEL_TOKEN_NAME" '{
+            "$schema": "https://opencode.ai/config.json",
             "mcp": {
               "mcp-gateway": {
                 "type": "remote",
-                "url": "$MCP_GATEWAY_URL",
+                "url": $url,
                 "enabled": true,
                 "headers": {
-                  "Authorization": "Bearer $MCP_SENTINEL_TOKEN_NAME"
+                  "Authorization": ("Bearer " + $token)
                 }
               }
             }
-          }
-          EOF
+          }' > "$HOME/.config/opencode/opencode.json"
       user: "agent"
       description: Register the sandbox MCP gateway in ~/.config/opencode/opencode.json
 
