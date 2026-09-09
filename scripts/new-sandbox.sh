@@ -58,6 +58,25 @@ PROFILES_node_docker="base global-opencode-config env-guard banner opencode-runt
 PROFILES_browser="base global-opencode-config env-guard banner opencode-runtime zeldoc git node apt browser playwright"
 PROFILES_none=""
 
+# Profile lookup — a static allowlist, never an eval of a constructed
+# variable name: PROFILE/--profile and SBX_SANDBOX_PROFILE are untrusted
+# input, and "PROFILES_${x}" + eval turned any value containing shell
+# syntax into command injection. Prints the mixin list; returns 1 for an
+# unknown profile.
+profile_mixins() {
+    case "$1" in
+        full) echo "$PROFILES_full" ;;
+        node) echo "$PROFILES_node" ;;
+        dotnet) echo "$PROFILES_dotnet" ;;
+        node-docker) echo "$PROFILES_node_docker" ;;
+        browser) echo "$PROFILES_browser" ;;
+        none) echo "" ;;
+        *) return 1 ;;
+    esac
+}
+
+KNOWN_PROFILES="full node dotnet node-docker browser none"
+
 WORKSPACE=""
 NAME=""
 PROFILE="${SBX_SANDBOX_PROFILE:-}"
@@ -137,9 +156,8 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -n "$LIST_ONLY" ]; then
-    for p in full node dotnet node-docker browser none; do
-        var="PROFILES_${p//-/_}"
-        printf "%-12s %s\n" "$p" "$(eval "echo \${${var}}" | tr ' ' ',')"
+    for p in $KNOWN_PROFILES; do
+        printf "%-12s %s\n" "$p" "$(profile_mixins "$p" | tr ' ' ',')"
     done
     exit 0
 fi
@@ -174,13 +192,12 @@ if [ "$WIZARD" = "1" ]; then
     # 2. Mixin profile
     if [ -z "$MIXINS" ]; then
         default_choice="full"
-        if [ -n "$PROFILE" ] && eval "[ -n \"\${PROFILES_${PROFILE//-/_}+x}\" ]"; then
+        if [ -n "$PROFILE" ] && profile_mixins "$PROFILE" >/dev/null; then
             default_choice="$PROFILE"
         fi
         opts=()
-        for p in full node dotnet node-docker browser none; do
-            var="PROFILES_${p//-/_}"
-            opts+=("${p}|$(eval "echo \${${var}}" | tr ' ' ',')")
+        for p in $KNOWN_PROFILES; do
+            opts+=("${p}|$(profile_mixins "$p" | tr ' ' ',')")
         done
         opts+=("custom|pick mixins yourself")
         choice="$(read_option "Mixin profile" "$default_choice" "${opts[@]}")"
@@ -212,8 +229,7 @@ if [ "$WIZARD" = "1" ]; then
                 if [ "$ok" -eq 1 ]; then MIXINS="$(echo $tokens)"; break; fi
             done
         else
-            var="PROFILES_${choice//-/_}"
-            MIXINS="$(eval "echo \${${var}}")"
+            MIXINS="$(profile_mixins "$choice")"
         fi
         PROFILE="$choice"
     fi
@@ -270,15 +286,14 @@ if [ "$WIZARD" = "1" ]; then
 else
     # Scripted mode: fill unset values from defaults.
     [ -n "$PROFILE" ] || PROFILE="full"
-    var="PROFILES_${PROFILE//-/_}"
-    if ! eval "[ \"\${${var}+x}\" = x ]"; then
-        echo "Unknown profile '$PROFILE'. Known: full, node, dotnet, node-docker, browser, none (or pass --mixins)." >&2
+    if ! profile_mixins "$PROFILE" >/dev/null; then
+        echo "Unknown profile '$PROFILE'. Known: $KNOWN_PROFILES (or pass --mixins)." >&2
         exit 1
     fi
     if [ -z "$WORKSPACE" ]; then WORKSPACE="."; fi
     WORKSPACE="$(cd "$WORKSPACE" && pwd)"
     if [ -z "$MIXINS" ]; then
-        MIXINS="$(eval "echo \${${var}}")"
+        MIXINS="$(profile_mixins "$PROFILE")"
     fi
     if [ -z "$NAME" ]; then
         NAME="opencode-node-dotnet-$(basename "$WORKSPACE")"
