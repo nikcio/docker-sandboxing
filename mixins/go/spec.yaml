@@ -1,4 +1,6 @@
-# Go mixin: Go module proxy + checksum database egress and agent notes.
+# Go mixin: Go module proxy + checksum database egress, agent notes, and
+# the check-and-install step so the mixin composes on any base template
+# image (installs Go from go.dev/dl only when the template lacks it).
 schemaVersion: "2"
 kind: mixin
 name: go
@@ -9,9 +11,24 @@ description: >
   download. The proxy also serves toolchain modules, so GOTOOLCHAIN=auto
   (the default) can fetch a newer Go than the one baked into the image
   without root or a rebuild. dl.google.com covers go.dev/dl artifact
-  downloads (golang.org/dl wrapper installs), and the go.dev/golang.org
-  sites serve the language docs and release info for agent lookups.
-version: 0.1.0
+  downloads (golang.org/dl wrapper installs, and the check-and-install
+  step on templates without Go), and the go.dev/golang.org sites serve
+  the language docs and release info for agent lookups. Composes on any
+  base template image: a setup.install step installs the official Go
+  tarball (via the base mixin's install library) only when the template
+  doesn't already have go.
+version: 0.2.0
+
+setup:
+  install:
+    # Check-and-install: a no-op on template-go (and any image with go on
+    # PATH); on other base images it installs the official tarball through
+    # the base mixin's install library (same /usr/local/go layout as
+    # template-go). Needs this mixin's go.dev egress plus the apt mixin
+    # for the OS packages on bare bases.
+    - command: >
+        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_go
+      description: Ensure the Go toolchain is available (install when the template image lacks it)
 
 permissions:
   network:

@@ -11,23 +11,34 @@ description: >
   Installs Google Chrome (stable) plus the color emoji font, and drops the
   agent memory note for driving it. Owns egress for the Chrome .deb
   download (dl.google.com); general browsing stays gated by the composed
-  mixins.
-version: 0.1.1
+  mixins. Composes on any base template image: the install step is
+  skipped when the template already has Chrome.
+version: 0.2.1
 
 setup:
   install:
-    # The .deb is self-contained. The apt repo entry is removed after
-    # install so the sandbox's background `apt-get update` never contacts
-    # dl.google.com for repo metadata (the one-time .deb download above
-    # is the only intended hit).
+    # The .deb is self-contained. Guarded so the mixin composes on any
+    # base template image (skips when Chrome is already there). The apt
+    # repo entry is removed after install so the sandbox's background
+    # `apt-get update` never contacts dl.google.com for repo metadata
+    # (the one-time .deb download above is the only intended hit).
+    # The update+install run against a private lists dir, like the base
+    # mixin's install library: the template images ship no package lists,
+    # and the apt mixin's background `apt-get update` (into the shared
+    # /var/lib/apt/lists) races this step — installing against the shared
+    # dir hit "fonts-liberation ... not installable" when it ran first.
     - command: >
-        curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        if command -v google-chrome >/dev/null 2>&1; then exit 0; fi
+        && install -m 0755 -d /var/lib/apt/sbx-lists
+        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq || true
+        && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
         -o /tmp/google-chrome.deb
-        && apt-get install -y /tmp/google-chrome.deb
+        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y /tmp/google-chrome.deb
         && rm -f /tmp/google-chrome.deb
-        && apt-get install -y --no-install-recommends fonts-noto-color-emoji
+        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends fonts-noto-color-emoji
+        && rm -rf /var/lib/apt/sbx-lists
         && rm -f /etc/apt/sources.list.d/google-chrome.list
-        && rm -rf /var/lib/apt/lists/*
+      description: Install Google Chrome (skipped when the template image already has it)
 
 permissions:
   network:

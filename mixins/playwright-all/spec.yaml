@@ -14,18 +14,28 @@ displayName: Playwright (Chromium + Firefox + WebKit)
 description: >
   Playwright installed globally via npm with Chromium, Firefox, and WebKit
   preinstalled (~1 GB+ download). Needs the apt mixin for the OS libraries
-  (--with-deps).
-version: 0.1.0
+  (--with-deps). Composes on any base template image: installs node (via
+  the node mixin's egress + nvm) when the template lacks one and skips
+  the browser download when Playwright is already present.
+version: 0.1.1
 
 setup:
   install:
-    # unset NPM_CONFIG_PREFIX: the template sets it for its own npm-global
-    # dir, and nvm-managed npm refuses to run while it is set.
+    # Guarded so the mixin composes on any base template image (skips when
+    # Playwright with all three browsers is already there). Also ensures
+    # node: on templates without one, install via nvm through the base
+    # mixin's install library (needs the node mixin's egress + the git
+    # mixin for the nvm repo). unset NPM_CONFIG_PREFIX: the template sets
+    # it for its own npm-global dir, and nvm-managed npm refuses to run
+    # while it is set.
     - command: >
-        unset NPM_CONFIG_PREFIX
+        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_node
+        && if command -v playwright >/dev/null 2>&1 && npx playwright install --dry-run firefox 2>/dev/null | grep -q "already installed"; then exit 0; fi
+        && unset NPM_CONFIG_PREFIX
         && npm install -g playwright
         && PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium firefox webkit
         && chown -R agent:agent /home/agent/.cache/ms-playwright
+      description: Ensure Playwright + Chromium/Firefox/WebKit (skipped when already present)
 
 permissions:
   network:
@@ -33,12 +43,15 @@ permissions:
       # npm package install (also covered by the node mixin — rules union)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"
-      # Playwright browser downloads (current CDN + legacy azureedge; both
-      # redirect to the prss.microsoft.com CDN that serves the binaries)
+      # Playwright browser downloads. The CDN serves regular builds, and
+      # 302-redirects Chrome-for-Testing builds (builds/cft/...) to
+      # storage.googleapis.com — the redirect target must be allowed too
+      # (the sandbox proxy blocks cross-host redirects otherwise).
       - cdn.playwright.dev:443
       - "*.cdn.playwright.dev:443"
       - playwright.azureedge.net:443
       - playwright.download.prss.microsoft.com:443
+      - storage.googleapis.com:443
 
 # Agent memory note: files/home/.sbx-agents.d/playwright-all.md (appended to
 # the sandbox AGENTS.md by the kit entrypoint).

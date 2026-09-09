@@ -12,25 +12,29 @@ description: >
   Installs the Docker Sandboxes CLI (docker-sbx) from Docker's apt repo so
   the agent can validate/inspect/pack kits and mixins from inside the
   sandbox. Needs the apt mixin for the Ubuntu archive reads at install
-  time.
-version: 0.1.0
+  time. Composes on any base template image: the install step is skipped
+  when the template already has the sbx CLI.
+version: 0.2.1
 
 setup:
   install:
-    # The apt repo entry is kept (download.docker.com is allowed) so the
-    # agent can upgrade docker-sbx later. The update+install run against a
-    # private lists dir: the apt mixin's background `apt-get update`
-    # startup hook may still hold /var/lib/apt/lists/lock (apt-get update
-    # has no lock-wait option), and this install only needs the dpkg +
-    # archives locks.
+    # Guarded so the mixin composes on any base template image (skips when
+    # docker-sbx is already there). The apt repo entry is kept
+    # (download.docker.com is allowed) so the agent can upgrade docker-sbx
+    # later. The update+install run against a private lists dir: the apt
+    # mixin's background `apt-get update` startup hook may still hold
+    # /var/lib/apt/lists/lock (apt-get update has no lock-wait option), and
+    # this install only needs the dpkg + archives locks.
     - command: >
-        install -m 0755 -d /etc/apt/keyrings
+        if command -v sbx >/dev/null 2>&1; then exit 0; fi
+        && install -m 0755 -d /etc/apt/keyrings
         && curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
         && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
         && install -m 0755 -d /var/lib/apt/sbx-lists
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends docker-sbx
         && rm -rf /var/lib/apt/sbx-lists
+      description: Install the sbx CLI (skipped when the template image already has it)
 
 permissions:
   network:
