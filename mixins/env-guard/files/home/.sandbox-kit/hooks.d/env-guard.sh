@@ -8,10 +8,20 @@
 # in place) refuses to start instead of deleting host files. No-op when
 # there is no workspace (WORKSPACE_DIR unset). The fatal branch exits the
 # entrypoint — the sandbox refuses to start.
+#
+# What counts: the literal name .env plus the dotenv variants loaders
+# pick up (.env.local, .env.production, ...). Symlinks count too — a
+# committed .env symlink to a host-side file would otherwise slip past
+# `-type f` and be read by the agent. The clone-mode deletion uses
+# rm -f -- on the found path only (never the symlink's target): deleting
+# a symlink removes the link, not the file it points at.
 __envs=""
 __clean="workspace clean (no .env files)"
 if [ -n "${WORKSPACE_DIR:-}" ]; then
-  __envs="$(find "$WORKSPACE_DIR" -type f -name .env -not -path '*/.git/*' 2>/dev/null)"
+  __envs="$(find "$WORKSPACE_DIR" \( -type f -o -type l \) \
+    \( -name .env -o -name '.env.*' \) \
+    ! -name '.env.example' ! -name '.env.sample' ! -name '.env.template' \
+    -not -path '*/.git/*' 2>/dev/null)"
 else
   __clean="workspace not checked (WORKSPACE_DIR is not set)"
 fi
