@@ -46,7 +46,7 @@ description: >
   setup.install steps source (check-and-install helpers so any mixin
   composes on any base template image). No network rules — capability
   egress comes from the other mixins.
-version: 0.3.1
+version: 0.3.2
 
 setup:
   startup:
