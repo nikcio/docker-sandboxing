@@ -9,22 +9,47 @@ description: >
   Network rules and settings for .NET work: NuGet restore, SDK and workload
   downloads, Microsoft package hosts, plus CLI telemetry opt-out. Composes
   on any base template image: a setup.install step installs the .NET SDK
-  (via the base mixin's install library — Ubuntu dotnet apt feed, falling
-  back to the dot.net install script) only when the template doesn't
-  already have dotnet.
-version: 0.3.0
+  (Ubuntu dotnet apt feed, falling back to the dot.net install script)
+  only when the template doesn't already have dotnet.
+version: 0.4.0
 
 setup:
   install:
     # Check-and-install: a no-op on template-node-dotnet (and any image
-    # with dotnet on PATH); on other base images it installs the SDK
-    # through the base mixin's install library (Ubuntu dotnet apt feed,
-    # dotnet-install-script fallback — same DOTNET_ROOT as
+    # with dotnet on PATH); on other base images it installs the SDK from
+    # the Ubuntu dotnet apt feed, falling back to the dot.net install
+    # script when the feed lacks the codename (same DOTNET_ROOT as
     # template-node-dotnet). Needs this mixin's *.microsoft.com egress
     # (the packages.microsoft.com apt feed + dot.net script host) plus
-    # the apt mixin for the OS packages on bare bases.
+    # the apt mixin for the OS packages on bare bases. The update+install
+    # run against a private lists dir: install steps race the apt mixin's
+    # background `apt-get update` startup hook for /var/lib/apt/lists/
+    # lock (apt-get update has no lock-wait option); a private dir needs
+    # only the dpkg + archives locks, and a failing repo in the image's
+    # sources (e.g. the base image's docker.list) only exits 100 without
+    # losing the fetched lists. /etc/sandbox-persistent.sh is sourced
+    # before every bash command and in login shells.
     - command: >
-        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_dotnet
+        set -e;
+        if command -v dotnet >/dev/null 2>&1; then exit 0; fi;
+        install -m 0755 -d /var/lib/apt/sbx-install-lists;
+        export DEBIAN_FRONTEND=noninteractive;
+        { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+        if apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends dotnet-sdk-10.0 2>/dev/null; then
+          { echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export DOTNET_GENERATE_ASPNET_CERTIFICATE=false'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
+        else
+          DOTNET_ROOT=/usr/share/dotnet sh -c '
+            set -e
+            curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/sbx-dotnet-install.sh
+            chmod +x /tmp/sbx-dotnet-install.sh
+            /tmp/sbx-dotnet-install.sh --channel 10.0 --install-dir "$DOTNET_ROOT"
+            rm -f /tmp/sbx-dotnet-install.sh
+            ln -sf "$DOTNET_ROOT/dotnet" /usr/local/bin/dotnet
+            mkdir -p "$DOTNET_ROOT/tools"';
+          { echo 'export DOTNET_ROOT=/usr/share/dotnet'; echo 'export PATH=$PATH:/usr/share/dotnet/tools'; echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
+        fi;
+        dotnet --version
       description: Ensure the .NET SDK is available (install when the template image lacks it)
 
 environment:

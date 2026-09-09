@@ -22,11 +22,12 @@ setup:
     # repo entry is removed after install so the sandbox's background
     # `apt-get update` never contacts dl.google.com for repo metadata
     # (the one-time .deb download above is the only intended hit).
-    # The update+install run against a private lists dir, like the base
-    # mixin's install library: the template images ship no package lists,
-    # and the apt mixin's background `apt-get update` (into the shared
-    # /var/lib/apt/lists) races this step — installing against the shared
-    # dir hit "fonts-liberation ... not installable" when it ran first.
+    # The update+install run against a private lists dir (the same dodge
+    # the other tool mixins' install steps use): the template images ship
+    # no package lists, and the apt mixin's background `apt-get update`
+    # (into the shared /var/lib/apt/lists) races this step — installing
+    # against the shared dir hit "fonts-liberation ... not installable"
+    # when it ran first.
     - command: >
         if command -v google-chrome >/dev/null 2>&1; then exit 0; fi
         && install -m 0755 -d /var/lib/apt/sbx-lists

@@ -15,19 +15,38 @@ description: >
   step on templates without Go), and the go.dev/golang.org sites serve
   the language docs and release info for agent lookups. Composes on any
   base template image: a setup.install step installs the official Go
-  tarball (via the base mixin's install library) only when the template
-  doesn't already have go.
-version: 0.2.0
+  tarball only when the template doesn't already have go.
+version: 0.3.0
 
 setup:
   install:
     # Check-and-install: a no-op on template-go (and any image with go on
-    # PATH); on other base images it installs the official tarball through
-    # the base mixin's install library (same /usr/local/go layout as
-    # template-go). Needs this mixin's go.dev egress plus the apt mixin
-    # for the OS packages on bare bases.
+    # PATH); on other base images it installs the official tarball (same
+    # /usr/local/go layout as template-go). Needs this mixin's go.dev
+    # egress plus the apt mixin for the OS packages on bare bases. The
+    # update+install run against a private lists dir: install steps race
+    # the apt mixin's background `apt-get update` startup hook for
+    # /var/lib/apt/lists/lock (apt-get update has no lock-wait option); a
+    # private dir needs only the dpkg + archives locks, and a failing
+    # repo in the image's sources (e.g. the base image's docker.list)
+    # only exits 100 without losing the fetched lists.
+    # /etc/sandbox-persistent.sh is sourced before every bash command and
+    # in login shells.
     - command: >
-        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_go
+        set -e;
+        if command -v go >/dev/null 2>&1; then exit 0; fi;
+        install -m 0755 -d /var/lib/apt/sbx-install-lists;
+        export DEBIAN_FRONTEND=noninteractive;
+        { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+        curl -fsSL "https://go.dev/dl/go1.25.5.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
+        rm -rf /usr/local/go;
+        tar -C /usr/local -xzf /tmp/sbx-go.tgz;
+        rm -f /tmp/sbx-go.tgz;
+        ln -sf /usr/local/go/bin/go /usr/local/bin/go;
+        ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt;
+        echo 'export PATH=$PATH:/home/agent/go/bin' >> /etc/sandbox-persistent.sh;
+        go version
       description: Ensure the Go toolchain is available (install when the template image lacks it)
 
 permissions:

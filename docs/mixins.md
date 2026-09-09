@@ -11,10 +11,9 @@ project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
 Stack mixins don't have to match the kit's template image. Every toolchain
 mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins
 (`browser`, `playwright*`, `sbx`, `nikcio-openapi-codegen`) carry a
-check-and-install `setup.install` step: at sandbox creation it verifies
-the tool is present and installs it (through the base mixin's
-`~/.sandbox-kit/lib/install-toolchain.sh`) when the template image lacks
-it. Compose, for example, the `python` mixin onto the Go kit and the
+self-contained check-and-install `setup.install` step: at sandbox creation
+it verifies the tool is present and installs it when the template image
+lacks it. Compose, for example, the `python` mixin onto the Go kit and the
 sandbox gets a working `python3` + `uv`; no rebuild needed.
 
 Rules of thumb:
@@ -36,7 +35,7 @@ Rules of thumb:
 
 | Mixin | Adds |
 | ----- | ---- |
-| `base` | The entrypoint runtime + AGENTS.md logic + MCP gateway every kit needs: the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance files, the shared `AGENTS.md` base, the AGENTS.md rebuild hook, MCP gateway registration (startup hook + backstop), and the toolchain install library (`~/.sandbox-kit/lib/install-toolchain.sh`) other mixins' check-and-install steps source. Required by every kit — keep this line |
+| `base` | The entrypoint runtime + AGENTS.md logic + MCP gateway every kit needs: the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance files, the shared `AGENTS.md` base, the AGENTS.md rebuild hook, and MCP gateway registration (startup hook + backstop). Required by every kit — keep this line |
 | `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `banner` | The startup banner (cosmetic — the examples compose it) |
