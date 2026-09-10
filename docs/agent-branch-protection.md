@@ -15,9 +15,11 @@ Set these once as a repo admin. Two prerequisites keep the net intact:
   ruleset bypass entry silently disables every rule for that account.
 
 Use branch **rulesets** for everything below (Settings → Rules →
-Rulesets → **New branch ruleset**): they apply to admins by default, are
-free on all plans, and also cover tags. Classic branch protection
-(Settings → Branches) is the fallback — there, tick "Do not allow
+Rulesets → **New branch ruleset**): they apply to admins by default and
+cover tags as well as branches. Rulesets require a GitHub **Team or
+Enterprise** plan — on Free or Pro, use classic branch protection
+(Settings → Branches) instead: it is free for public repositories, and
+private repositories need a paid plan. There, tick "Do not allow
 bypassing the above settings" or admins slip past every rule.
 
 ## 1. Require a pull request before merging
