@@ -1,16 +1,13 @@
-# OpenCode runtime mixin: egress the agent itself needs (the opencode.ai
-# hosts and model metadata). npm-registry egress (updates, npm-hosted
-# plugins) lives in the opencode-update mixin.
+# OpenCode runtime mixin: egress the agent itself needs (updates, model
+# metadata, npm-hosted plugins).
 schemaVersion: "2"
 kind: mixin
 name: opencode-runtime
 displayName: OpenCode runtime
 description: >
-  Network rules for the OpenCode agent runtime: the opencode.ai hosts and
-  model lists (models.dev). The npm registry (opencode updates +
-  npm-hosted plugins) is the opencode-update mixin's rule — compose that
-  for updates and plugin installs.
-version: 0.1.2
+  Network rules for the OpenCode agent runtime: updates, model lists
+  (models.dev), and npm-hosted plugins.
+version: 0.1.1
 
 permissions:
   network:
@@ -18,3 +15,6 @@ permissions:
       - opencode.ai:443
       - "*.opencode.ai:443"
       - models.dev:443
+      # npm registry (plugins; also covered by the node mixin — rules union)
+      - registry.npmjs.org:443
+      - "*.npmjs.org:443"

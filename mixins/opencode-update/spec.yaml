@@ -13,11 +13,10 @@
 # setup.install runs once per sandbox lifetime (kit changes never apply
 # to running sandboxes), so no start latency.
 #
-# Egress: registry.npmjs.org (+ *.npmjs.org for the package CDN) — moved
-# here from mixins/opencode-runtime, which keeps models.dev and the
-# opencode.ai hosts. The update needs this mixin composed; model-plugin
-# fetches need it too. For the agent's own manual updates the same rule
-# applies (see the agent note).
+# Egress: registry.npmjs.org (+ *.npmjs.org for the package CDN) — the
+# same hosts opencode-runtime already allows (rules union), restated
+# here so the mixin composes standalone: the update needs this rule
+# whether or not opencode-runtime is in the composition.
 schemaVersion: "2"
 kind: mixin
 name: opencode-update
@@ -25,7 +24,7 @@ displayName: OpenCode update
 description: >
   Rolls opencode to the newest npm-registry release in a setup.install
   step at sandbox creation (the template's baked version only moves on a
-  rebuild) and owns the npm registry egress for it. NOT `opencode
+  rebuild), with the npm-registry egress the update needs. NOT `opencode
   upgrade`: that resolves "latest" via api.github.com, which the
   deny-by-default proxy blocks, and prompts on stdin without a TTY — the
   hang that reverted the startup-time upgrade (#35 → #38).
@@ -62,9 +61,6 @@ permissions:
   network:
     allow:
       # npm registry (this mixin's update; also npm-hosted opencode
-      # plugins — moved here from opencode-runtime, rules union)
+      # plugins — already allowed by opencode-runtime, rules union)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"
-
-# Agent memory note: files/home/.sbx-agents.d/opencode-update.md
-# (appended to the sandbox AGENTS.md by the kit entrypoint).

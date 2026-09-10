@@ -39,8 +39,8 @@ Rules of thumb:
 | `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `banner` | The startup banner (cosmetic — the examples compose it) |
-| `opencode-runtime` | Egress the agent itself needs: the opencode.ai hosts and model lists (models.dev) |
-| `opencode-update` | Rolls opencode to the newest npm release at sandbox creation + owns the npm registry egress (updates, npm-hosted opencode plugins). Not in the stock kits — add the line for fresh opencode on every sandbox; runs once at creation, no start cost |
+| `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
+| `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress, overlapping `opencode-runtime`'s rules union). Not in the stock kits — add the line for fresh opencode on every sandbox; runs once at creation, no start cost |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
@@ -95,8 +95,7 @@ Notes:
   `copilot`) and `opencode-runtime` (the agent's own egress). Add
   `opencode-update` to keep opencode current: the template images bake a
   fixed opencode version, and this mixin rolls it to the newest npm
-  release at creation (and opens the npm registry for opencode plugins
-  and the agent's own manual updates).
+  release at creation.
 
 ## Model providers (zeldoc / copilot)
 
