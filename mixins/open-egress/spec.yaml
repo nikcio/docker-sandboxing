@@ -1,0 +1,30 @@
+# Open egress mixin: allow all outbound domains for a sandbox.
+#
+# The network policy is deny-by-default — the union of the composed
+# mixins' rules is the only egress. This mixin replaces that baseline
+# with a single "**" allow (all traffic not on the denylist): local deny
+# rules (`sbx policy ls`) and org policy still take precedence.
+#
+# Opt-in: compose it only for sandboxes that genuinely need unrestricted
+# egress (e.g. a dev sandbox iterating on this repo's kits — the repo's
+# .sbxenv.yaml composes it). The stock kits and examples never do.
+schemaVersion: "2"
+kind: mixin
+name: open-egress
+displayName: Open egress (all domains)
+description: >
+  Allows all outbound domains (the "**" rule) — replaces the
+  deny-by-default baseline for sandboxes that need unrestricted egress.
+  Local deny rules and org policy still take precedence. Opt-in: the
+  stock kits and examples do not compose it.
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # All traffic not on the denylist (the same rule the base mixin's
+      # network guidance hands to agents for host-side overrides).
+      - "**"
+
+# Agent memory note: files/home/.sbx-agents.d/open-egress.md (appended to
+# the sandbox AGENTS.md by the kit entrypoint).

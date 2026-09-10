@@ -27,6 +27,7 @@ kits:
   - ./mixins/docker                   # in-sandbox docker
   - ./mixins/apt                      # apt mirrors (+ background cache warm)
   - ./mixins/sbx                      # sbx CLI (kit authoring inside the sandbox)
+  - ./mixins/open-egress              # allow all outbound domains (dev convenience)
 
 workspace:
   path: .
