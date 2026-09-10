@@ -26,6 +26,7 @@ kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v1.0.0                                # workspace .env guard
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/banner&ref=v1.0.0                                   # startup banner
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v1.0.0                         # agent runtime
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-update&ref=v1.0.0                          # opencode auto-update (latest npm release at creation)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v1.0.0                                   # Zeldoc.ai provider
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v1.0.0                                      # git + worktrees
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/python&ref=v1.0.0                                   # Python toolchain (PyPI egress)

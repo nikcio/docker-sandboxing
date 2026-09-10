@@ -72,7 +72,8 @@ Full walkthrough (prerequisites, first run, daily use):
 | `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`zeldoc`, `copilot`) |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
 | `banner` | the startup banner | optional |
-| `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) | — |
+| `opencode-runtime` | egress the agent itself needs (opencode.ai hosts, models.dev) | — |
+| `opencode-update` | opencode rolled to the newest npm release at sandbox creation + npm registry egress (updates, plugins) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
 | `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
 | `uniform` | Uniform DXP egress: docs, dashboard + Management API, Edge Delivery API (incl. EU + image CDN), proxy-managed `x-api-key` | — |

@@ -14,7 +14,7 @@ Zeldoc — swap the `zeldoc` line for `copilot`, or keep both:
 
 ```yaml
 kits:
-  # ...kit + base + opencode-runtime + stack mixins...
+  # ...kit + base + opencode-runtime + opencode-update + stack mixins...
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/copilot&ref=<same ref as the other mixins>
 ```
 
