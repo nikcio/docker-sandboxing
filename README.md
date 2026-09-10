@@ -62,6 +62,7 @@ Full walkthrough (prerequisites, first run, daily use):
 | [Agent memory](docs/agents-md.md) | which `AGENTS.md` the agent loads, the sandbox environment file, where to put your rules |
 | [Troubleshooting](docs/troubleshooting.md) | blocked downloads, git auth, the .env guard, stale changes |
 | [GitHub repo setup](docs/repo-setup.md) | maintainer setup: release App, secrets, branch protection, Docker Hub |
+| [Branch policies for AI agents](docs/agent-branch-protection.md) | protect `main` when an autonomous agent works in your repo: PRs, required checks, no force pushes |
 
 ## Mixin reference
 

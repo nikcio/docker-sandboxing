@@ -54,6 +54,9 @@ Publishing pushes every image in `images.json` as public
 
 ## 3. Protect `main`
 
+Recommended policies and why they matter when an autonomous agent works in
+this repo: [Branch policies for AI agents](agent-branch-protection.md).
+
 Settings → Branches → **Add branch ruleset** (or classic branch
 protection) for `main`:
 
