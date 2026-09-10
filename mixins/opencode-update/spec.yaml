@@ -42,7 +42,9 @@ setup:
     # derived from the resolved opencode binary) instead of relying on
     # NPM_CONFIG_PREFIX: sudo's env_reset drops the image's env, and npm
     # would then fall back to its built-in /usr/local prefix (root-owned,
-    # EACCES). The guard skips anything that is not npm-managed (the
+    # EACCES). HOME is pinned the same way — env_reset's HOME handling is
+    # sudoers-dependent, and the npm cache must land in /home/agent/.npm,
+    # never /root/.npm. The guard skips anything that is not npm-managed (the
     # marker is <prefix>/lib/node_modules/opencode-ai — the npm layout
     # every template image uses) and no-ops when npm is missing.
     # Idempotent: npm exits 0 with "up to date" when the baked version is
@@ -53,7 +55,7 @@ setup:
         if ! command -v npm >/dev/null 2>&1; then exit 0; fi;
         OC_PREFIX="$(cd "$(dirname "$(command -v opencode)")/.." && pwd)";
         if [ ! -d "$OC_PREFIX/lib/node_modules/opencode-ai" ]; then echo "[opencode-update] opencode at $OC_PREFIX is not npm-managed — leaving it"; exit 0; fi;
-        sudo -u agent env PATH="$PATH" NPM_CONFIG_LOGLEVEL=error npm install -g --prefix "$OC_PREFIX" opencode-ai@latest;
+        sudo -u agent env PATH="$PATH" HOME=/home/agent NPM_CONFIG_LOGLEVEL=error npm install -g --prefix "$OC_PREFIX" opencode-ai@latest;
         opencode --version
       description: Update opencode to the latest npm release (skipped when npm is unavailable or opencode is not npm-managed)
 
