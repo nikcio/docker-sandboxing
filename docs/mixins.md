@@ -40,12 +40,13 @@ Rules of thumb:
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `banner` | The startup banner (cosmetic — the examples compose it) |
 | `opencode-runtime` | Egress the agent itself needs: updates, model lists (models.dev), npm-hosted plugins |
+| `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress, overlapping `opencode-runtime`'s rules union). Not in the stock kits — add the line for fresh opencode on every sandbox; runs once at creation, no start cost |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `git` | Git hosting egress (HTTPS + SSH), proxy-managed GitHub auth, worktree workflow for the agent |
 | `uniform` | Uniform DXP egress: docs site, dashboard + Management API (uniform.app), Edge Delivery API (uniform.global, incl. EU + image CDN), proxy-managed `x-api-key` auth (see [uniform-api-key.md](uniform-api-key.md)) |
 | `omnium` | Omnium OMS/e-commerce egress: REST API hosts (production/test/dev, each with Swagger), tech docs, proxy-managed `Authorization: Bearer` auth (see [omnium-api-key.md](omnium-api-key.md)) |
-| `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry, pnpm.io docs; pnpm installs gated to versions published ≥24h ago; check-and-install (nvm node + pnpm) for templates without them |
+| `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry (pnpm/npm/npx), pnpm.io docs; pnpm installs gated to versions published ≥24h ago; check-and-install (nvm node + pnpm) for templates without them |
 | `openapi-ts` | openapi-ts.dev docs egress for the openapi-typescript + openapi-fetch packages |
 | `dotnet` | .NET/NuGet egress + telemetry opt-out; check-and-install (SDK via apt feed / dot.net script) for templates without dotnet |
 | `nikcio-openapi-codegen` | Installs the openapi-code-generator .NET global tool (Nikcio.OpenApiCodeGen — the `openapi-codegen` CLI) + openapi.nikcio.com docs egress; needs `dotnet`; ensures the SDK first |
@@ -91,7 +92,10 @@ Notes:
 - The `playwright*` mixins and `sbx` run `apt` at creation — compose the
   `apt` mixin with them.
 - Every set should include at least one model provider (`zeldoc` and/or
-  `copilot`) and `opencode-runtime` (the agent's own egress).
+  `copilot`) and `opencode-runtime` (the agent's own egress). Add
+  `opencode-update` to keep opencode current: the template images bake a
+  fixed opencode version, and this mixin rolls it to the newest npm
+  release at creation.
 
 ## Model providers (zeldoc / copilot)
 

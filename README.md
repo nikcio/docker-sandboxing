@@ -73,6 +73,7 @@ Full walkthrough (prerequisites, first run, daily use):
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
 | `banner` | the startup banner | optional |
 | `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) | — |
+| `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress, overlapping `opencode-runtime`'s rules union) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
 | `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
 | `uniform` | Uniform DXP egress: docs, dashboard + Management API, Edge Delivery API (incl. EU + image CDN), proxy-managed `x-api-key` | — |

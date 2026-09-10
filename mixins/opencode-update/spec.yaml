@@ -1,0 +1,68 @@
+# OpenCode update mixin: rolls opencode to the newest npm release when
+# the sandbox is created. The template images bake opencode (npm-managed,
+# agent-owned npm-global prefix), so its version only moves on an image
+# rebuild — this closes that gap at create time. The step is
+# self-contained (no shared install library).
+#
+# Through the npm registry, NOT `opencode upgrade`, and at creation, not
+# start: that combination was tried in #35 and reverted in #38 because
+# `opencode upgrade` resolves "latest" via api.github.com (403 under the
+# deny-by-default policy — it can never succeed in-sandbox) and its
+# package-manager guard prompts on stdin without a TTY, hanging every
+# start until the timeout fired. npm resolves versions itself, and
+# setup.install runs once per sandbox lifetime (kit changes never apply
+# to running sandboxes), so no start latency.
+#
+# Egress: registry.npmjs.org (+ *.npmjs.org for the package CDN) — the
+# same hosts opencode-runtime already allows (rules union), restated
+# here so the mixin composes standalone: the update needs this rule
+# whether or not opencode-runtime is in the composition.
+schemaVersion: "2"
+kind: mixin
+name: opencode-update
+displayName: OpenCode update
+description: >
+  Rolls opencode to the newest npm-registry release in a setup.install
+  step at sandbox creation (the template's baked version only moves on a
+  rebuild), with the npm-registry egress the update needs. NOT `opencode
+  upgrade`: that resolves "latest" via api.github.com, which the
+  deny-by-default proxy blocks, and prompts on stdin without a TTY — the
+  hang that reverted the startup-time upgrade (#35 → #38).
+version: 0.1.0
+
+setup:
+  install:
+    # Update opencode at sandbox creation. Runs as root via sh (dash);
+    # the folded YAML scalar joins every line, so statements are
+    # `;`-terminated and written dash-safe.
+    #
+    # npm must run as the agent user: the npm-global tree is agent-owned,
+    # and a root npm run would cache into /root/.npm and potentially
+    # chown the prefix. The prefix is passed explicitly (--prefix,
+    # derived from the resolved opencode binary) instead of relying on
+    # NPM_CONFIG_PREFIX: sudo's env_reset drops the image's env, and npm
+    # would then fall back to its built-in /usr/local prefix (root-owned,
+    # EACCES). HOME is pinned the same way — env_reset's HOME handling is
+    # sudoers-dependent, and the npm cache must land in /home/agent/.npm,
+    # never /root/.npm. The guard skips anything that is not npm-managed (the
+    # marker is <prefix>/lib/node_modules/opencode-ai — the npm layout
+    # every template image uses) and no-ops when npm is missing.
+    # Idempotent: npm exits 0 with "up to date" when the baked version is
+    # already latest.
+    - command: >
+        set -e;
+        if ! command -v opencode >/dev/null 2>&1; then exit 0; fi;
+        if ! command -v npm >/dev/null 2>&1; then exit 0; fi;
+        OC_PREFIX="$(cd "$(dirname "$(command -v opencode)")/.." && pwd)";
+        if [ ! -d "$OC_PREFIX/lib/node_modules/opencode-ai" ]; then echo "[opencode-update] opencode at $OC_PREFIX is not npm-managed — leaving it"; exit 0; fi;
+        sudo -u agent env PATH="$PATH" HOME=/home/agent NPM_CONFIG_LOGLEVEL=error npm install -g --prefix "$OC_PREFIX" opencode-ai@latest;
+        opencode --version
+      description: Update opencode to the latest npm release (skipped when npm is unavailable or opencode is not npm-managed)
+
+permissions:
+  network:
+    allow:
+      # npm registry (this mixin's update; also npm-hosted opencode
+      # plugins — already allowed by opencode-runtime, rules union)
+      - registry.npmjs.org:443
+      - "*.npmjs.org:443"

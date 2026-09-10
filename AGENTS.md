@@ -89,7 +89,9 @@ Use based on your task:
   `nikcio-openapi-codegen`) carry self-contained check-and-install
   `setup.install` steps so any mixin composes on any base template image —
   keep that shape in new mixins: guard the install on the tool already
-  being present.
+  being present. `opencode-update` ships one too: the create-time
+  opencode update via the npm registry (NOT `opencode upgrade` — see its
+  spec header).
 - `scripts/new-sandbox.*` — the sandbox creation wizard: wizard-first
   (no args = guided prompts), flags/env for scripted use (profiles,
   git/local source, ref pinning). Nothing registers it automatically; docs
