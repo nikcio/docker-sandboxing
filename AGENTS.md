@@ -15,6 +15,10 @@ Use based on your task:
   release or touching pinned versions.
 - **[Commit Messages](agent-guidance/commit-messages.md)** — Conventional
   Commits style, types, scopes, examples. Read when writing commit messages.
+- **[Branch policies for AI agents](docs/agent-branch-protection.md)** —
+  the branch and tag rulesets that keep agent work reviewable (PRs,
+  required checks, no force pushes, release tags, secrets). Read when a
+  PR is blocked by branch rules or when asked to set them up.
 - **User guides (`docs/`)** — consumer-facing step guides. Keep them simple
   and step-based: `examples/` stays a minimal "copy → adjust →
   `sbx env run`" template, and every "how do I …" that a user needs belongs

@@ -54,8 +54,11 @@ Publishing pushes every image in `images.json` as public
 
 ## 3. Protect `main`
 
-Settings → Branches → **Add branch ruleset** (or classic branch
-protection) for `main`:
+Recommended policies and why they matter when an autonomous agent works in
+this repo: [Branch policies for AI agents](agent-branch-protection.md).
+
+Settings → Rules → Rulesets → **New branch ruleset** (or classic branch
+protection under Settings → Branches) for `main`:
 
 - **Require a pull request before merging** — work happens in worktrees
   and lands via PRs (see
@@ -70,10 +73,16 @@ protection) for `main`:
 
 The checks appear after the first PR runs the Validate workflow. Validate
 runs on every PR (no path filtering) and always produces exactly these
-six checks, so the fixed required set is safe.
+six checks, so the fixed required set is safe. Two caveats keep it that
+way: don't add path filters to `validate.yml` (a filtered-out PR never
+reports the required checks and can never merge), and after adding or
+renaming an image in `images.json`, update this required list to match
+the new check names.
 
 The release PR is an ordinary PR: it runs the same checks and must pass
-before you merge it.
+before you merge it. Don't require checks from workflows that only run
+on pushes to `main` (release-please, publish-image) — they never appear
+on PRs and would deadlock every merge.
 
 ## How a release flows
 
