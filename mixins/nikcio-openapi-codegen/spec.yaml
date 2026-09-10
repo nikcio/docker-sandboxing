@@ -15,25 +15,48 @@ description: >
   from OpenAPI 3.x specs) and allows egress to its docs site
   (openapi.nikcio.com). Needs the dotnet mixin — the tool installs from
   NuGet. Composes on any base template image: ensures the .NET SDK first
-  (the dotnet mixin's check-and-install) and skips when the tool is
-  already present.
-version: 0.2.1
+  (mirrors the dotnet mixin's check-and-install) and skips when the tool
+  is already present.
+version: 0.3.0
 
 setup:
   install:
     # Guarded so the mixin composes on any base template image (skips when
-    # the tool is already there) and ensures the dotnet SDK first (via the
-    # dotnet mixin's check-and-install). .NET global tool from NuGet
-    # (nuget.org is allowed by the dotnet mixin). `--global` puts
-    # `openapi-codegen` in ~/.dotnet/tools — NOT the /usr/share/dotnet/
-    # tools dir on the template images' PATH — so the dir is persisted
-    # onto PATH via the base mixin's install library (login shells +
-    # BASH_ENV source /etc/sandbox-persistent.sh).
+    # the tool is already there) and ensures the dotnet SDK first (the
+    # dotnet mixin's check-and-install, mirrored here; the compose order
+    # is not guaranteed, so this step also covers a bare base). .NET
+    # global tool from NuGet (nuget.org is allowed by the dotnet mixin).
+    # `--global` puts `openapi-codegen` in ~/.dotnet/tools — NOT the
+    # /usr/share/dotnet/ tools dir on the template images' PATH — so the
+    # dir is persisted onto PATH: /etc/sandbox-persistent.sh is sourced
+    # before every bash command and in login shells. The node-ensure
+    # block needs the node mixin's egress + the git mixin for the nvm
+    # repo on templates without node.
     - command: >
-        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_dotnet
-        && if sudo -u agent bash -lc 'command -v openapi-codegen >/dev/null 2>&1'; then exit 0; fi
-        && __sbx_persist 'export PATH=$PATH:/home/agent/.dotnet/tools'
-        && sudo -u agent dotnet tool install --global Nikcio.OpenApiCodeGen
+        set -e;
+        if command -v dotnet >/dev/null 2>&1; then :; else
+          install -m 0755 -d /var/lib/apt/sbx-install-lists;
+          export DEBIAN_FRONTEND=noninteractive;
+          { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+          apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+          if apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends dotnet-sdk-10.0 2>/dev/null; then
+            { echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export DOTNET_GENERATE_ASPNET_CERTIFICATE=false'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
+          else
+            DOTNET_ROOT=/usr/share/dotnet sh -c '
+              set -e
+              curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/sbx-dotnet-install.sh
+              chmod +x /tmp/sbx-dotnet-install.sh
+              /tmp/sbx-dotnet-install.sh --channel 10.0 --install-dir "$DOTNET_ROOT"
+              rm -f /tmp/sbx-dotnet-install.sh
+              ln -sf "$DOTNET_ROOT/dotnet" /usr/local/bin/dotnet
+              mkdir -p "$DOTNET_ROOT/tools"';
+            { echo 'export DOTNET_ROOT=/usr/share/dotnet'; echo 'export PATH=$PATH:/usr/share/dotnet/tools'; echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
+          fi;
+          dotnet --version;
+        fi;
+        if sudo -u agent bash -lc 'command -v openapi-codegen >/dev/null 2>&1'; then exit 0; fi;
+        echo 'export PATH=$PATH:/home/agent/.dotnet/tools' >> /etc/sandbox-persistent.sh;
+        sudo -u agent dotnet tool install --global Nikcio.OpenApiCodeGen
       description: Install the openapi-codegen .NET global tool (skipped when already present)
 
 permissions:

@@ -16,20 +16,40 @@ description: >
   language and crate docs (doc.rust-lang.org, docs.rs).
   Git dependencies and rustup's script host redirect reuse the git mixin's
   GitHub egress. Composes on any base template image: a setup.install
-  step installs rustup + the default toolchain (via the base mixin's
-  install library) only when the template doesn't already have cargo.
-version: 0.2.0
+  step installs rustup + the default toolchain only when the template
+  doesn't already have cargo.
+version: 0.3.0
 
 setup:
   install:
     # Check-and-install: a no-op on template-rust (and any image with
     # cargo on PATH); on other base images it installs rustup + the
-    # default toolchain through the base mixin's install library (same
-    # agent-owned RUSTUP_HOME/CARGO_HOME layout as template-rust). Needs
-    # this mixin's rustup egress plus the apt mixin for the OS packages
-    # on bare bases.
+    # default toolchain (same agent-owned RUSTUP_HOME/CARGO_HOME layout
+    # as template-rust). Needs this mixin's rustup egress plus the apt
+    # mixin for the OS packages on bare bases. The update+install run
+    # against a private lists dir: install steps race the apt mixin's
+    # background `apt-get update` startup hook for /var/lib/apt/lists/
+    # lock (apt-get update has no lock-wait option); a private dir needs
+    # only the dpkg + archives locks, and a failing repo in the image's
+    # sources (e.g. the base image's docker.list) only exits 100 without
+    # losing the fetched lists. build-essential + pkg-config + libssl-dev
+    # are what cargo links against (libssl for openssl-sys crates).
+    # /etc/sandbox-persistent.sh is sourced before every bash command and
+    # in login shells. The /usr/local/bin symlinks are rustup proxies:
+    # they resolve the toolchain through RUSTUP_HOME (agent-owned, not in
+    # the root step env), so the cargo verification passes it explicitly.
     - command: >
-        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_rust
+        set -e;
+        if command -v cargo >/dev/null 2>&1; then exit 0; fi;
+        install -m 0755 -d /var/lib/apt/sbx-install-lists;
+        export DEBIAN_FRONTEND=noninteractive;
+        { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils build-essential pkg-config libssl-dev;
+        sudo -u agent env RUSTUP_HOME=/home/agent/.rustup CARGO_HOME=/home/agent/.cargo bash -c 'curl -fsSL https://sh.rustup.rs | sh -s -- -y --no-modify-path --profile default --default-toolchain stable --component rust-analyzer';
+        ls /home/agent/.cargo/bin/cargo >/dev/null;
+        ln -sf /home/agent/.cargo/bin/* /usr/local/bin/;
+        { echo 'export RUSTUP_HOME=/home/agent/.rustup'; echo 'export CARGO_HOME=/home/agent/.cargo'; } >> /etc/sandbox-persistent.sh;
+        RUSTUP_HOME=/home/agent/.rustup CARGO_HOME=/home/agent/.cargo cargo --version
       description: Ensure the Rust toolchain is available (install when the template image lacks it)
 
 permissions:

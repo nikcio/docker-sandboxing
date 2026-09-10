@@ -47,13 +47,9 @@ Use based on your task:
   runner, opencode autostart, login shell on exit) the kit wrappers exec,
   the agent guidance files (`files/home/.sandbox-agents/*.md`), the
   shared `AGENTS.md` base (`files/home/.sandbox-agents.md`), the AGENTS.md
-  rebuild hook (`files/home/.sandbox-kit/hooks.d/agents-md.sh`), MCP
+  rebuild hook (`files/home/.sandbox-kit/hooks.d/agents-md.sh`), and MCP
   gateway registration (startup hook + idempotent backstop hook
-  `files/home/.sandbox-kit/hooks.d/mcp-gateway.sh`), and the toolchain
-  install library (`files/home/.sandbox-kit/lib/install-toolchain.sh`)
-  other mixins' check-and-install steps source (any mixin composes on any
-  base template image — installs the tool only when the template lacks
-  it).
+  `files/home/.sandbox-kit/hooks.d/mcp-gateway.sh`).
 - `mixins/global-opencode-config/` — the permissive OpenCode config
   (`files/home/.config/opencode/opencode.jsonc`, dropped into the global
   config layer; edit/bash/webfetch allowed — the sandbox is the isolation
@@ -90,10 +86,10 @@ Use based on your task:
   unioned, later files win scalar conflicts) into the combined file that
   `OPENCODE_CONFIG` points at. Toolchain/tool mixins (`node`, `dotnet`,
   `python`, `go`, `rust`, `browser`, `playwright*`, `sbx`,
-  `nikcio-openapi-codegen`) carry check-and-install `setup.install` steps
-  (sourcing the base mixin's install library) so any mixin composes on any
-  base template image — keep that shape in new mixins: guard the install
-  on the tool already being present.
+  `nikcio-openapi-codegen`) carry self-contained check-and-install
+  `setup.install` steps so any mixin composes on any base template image —
+  keep that shape in new mixins: guard the install on the tool already
+  being present.
 - `scripts/new-sandbox.*` — the sandbox creation wizard: wizard-first
   (no args = guided prompts), flags/env for scripted use (profiles,
   git/local source, ref pinning). Nothing registers it automatically; docs

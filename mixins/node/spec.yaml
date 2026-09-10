@@ -13,22 +13,51 @@ description: >
   package-maturity policy: installs only resolve versions published at
   least 24h ago (including transitive dependencies). Composes on any
   base template image: a setup.install step installs node via nvm and
-  pnpm via npm (via the base mixin's install library) only when the
-  template doesn't already have them.
-version: 0.2.0
+  pnpm via npm only when the template doesn't already have them.
+version: 0.3.0
 
 setup:
   install:
     # Check-and-install: a no-op on template-node-dotnet (and any image
     # with node + pnpm); on other base images it installs node via nvm
-    # (agent home, same layout as template-node-dotnet) and pnpm globally
-    # through the base mixin's install library. Needs this mixin's
-    # nodejs.org + npm egress plus the apt mixin for the OS packages on
-    # bare bases; nvm's git clone of the nvm repo rides the git mixin's
-    # GitHub egress (compose git with node on templates without node).
+    # (agent home, same layout as template-node-dotnet) and pnpm globally.
+    # Needs this mixin's nodejs.org + npm egress plus the apt mixin for
+    # the OS packages on bare bases; nvm's git clone of the nvm repo
+    # rides the git mixin's GitHub egress (compose git with node on
+    # templates without node). The update+install run against a private
+    # lists dir: install steps race the apt mixin's background
+    # `apt-get update` startup hook for /var/lib/apt/lists/lock (apt-get
+    # update has no lock-wait option); a private dir needs only the dpkg
+    # + archives locks, and a failing repo in the image's sources (e.g.
+    # the base image's docker.list) only exits 100 without losing the
+    # fetched lists. unset NPM_CONFIG_PREFIX: the template sets it for
+    # its own npm-global dir, and nvm-managed npm refuses to run while
+    # it is set. /etc/sandbox-persistent.sh is sourced before every bash
+    # command and in login shells — persist NVM_DIR there.
     - command: >
-        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_node && install_pnpm
-      description: Ensure node + pnpm are available (install when the template image lacks them)
+        set -e;
+        if command -v node >/dev/null 2>&1 && command -v pnpm >/dev/null 2>&1; then exit 0; fi;
+        install -m 0755 -d /var/lib/apt/sbx-install-lists;
+        export DEBIAN_FRONTEND=noninteractive;
+        { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+        export NVM_DIR=/home/agent/.nvm;
+        git clone -q --depth 1 --branch v0.40.3 https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+        unset NPM_CONFIG_PREFIX;
+        . "$NVM_DIR/nvm.sh";
+        nvm install 22;
+        nvm alias default 22;
+        nvm use default;
+        NODE_BIN="$(find "$NVM_DIR"/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)";
+        for b in node npm npx corepack; do if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/usr/local/bin/$b"; fi; done;
+        { echo 'export NVM_DIR=/home/agent/.nvm'; echo 'unset NPM_CONFIG_PREFIX'; echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'; } >> /etc/sandbox-persistent.sh;
+        unset NPM_CONFIG_PREFIX;
+        npm install -g pnpm@12;
+        PNPM_BIN="$(command -v pnpm)";
+        if [ "$(dirname "$PNPM_BIN")" != "/usr/local/bin" ]; then ln -sf "$PNPM_BIN" /usr/local/bin/pnpm; fi;
+        node --version;
+        pnpm --version
+      description: Ensure node (nvm) + pnpm are available (install when the template image lacks them)
 
 environment:
   variables:

@@ -14,19 +14,46 @@ description: >
   the agent can look up language docs and release/version info.
   Interpreter downloads via `uv python install` reuse the git mixin's
   GitHub egress. Composes on any base template image: a setup.install
-  step installs uv + CPython (via the base mixin's install library) only
-  when the template doesn't already have a working python3.
-version: 0.2.0
+  step installs uv + CPython only when the template doesn't already have
+  a working python3.
+version: 0.3.0
 
 setup:
   install:
     # Check-and-install: a no-op on template-python (and any image with a
     # working python3); on other base images it installs uv + a uv-managed
-    # CPython through the base mixin's install library (same paths and
-    # versions as template-python). Needs the python mixin's own egress
-    # (astral.sh) plus the apt mixin for the OS packages on bare bases.
+    # CPython (same paths and versions as template-python). Needs the
+    # python mixin's own egress (astral.sh) plus the apt mixin for the OS
+    # packages on bare bases. The update+install run against a private
+    # lists dir: install steps race the apt mixin's background
+    # `apt-get update` startup hook for /var/lib/apt/lists/lock (apt-get
+    # update has no lock-wait option); a private dir needs only the dpkg
+    # + archives locks, and a failing repo in the image's sources (e.g.
+    # the base image's docker.list) only exits 100 without losing the
+    # fetched lists. The uv-managed interpreter goes in the agent's home
+    # and is symlinked onto /usr/local so root and agent both resolve it.
+    # /etc/sandbox-persistent.sh is sourced before every bash command and
+    # in login shells. Debian bases need python3-venv for stdlib
+    # venv/ensurepip; the uv-managed interpreter already bundles it, and
+    # the apt install only fills the gap for interpreter-less bases that
+    # fall back to a distro python3.
     - command: >
-        . /home/agent/.sandbox-kit/lib/install-toolchain.sh && install_python
+        set -e;
+        if command -v python3 >/dev/null 2>&1 && python3 -m ensurepip --version >/dev/null 2>&1; then exit 0; fi;
+        install -m 0755 -d /var/lib/apt/sbx-install-lists;
+        export DEBIAN_FRONTEND=noninteractive;
+        { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+        if [ ! -x /usr/local/bin/uv ]; then
+          curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/usr/local/bin" sh;
+        fi;
+        sudo -u agent env UV_PYTHON_INSTALL_DIR=/home/agent/.local/share/uv/python UV_LINK_MODE=copy uv python install 3.12;
+        PY_BIN="$(find /home/agent/.local/share/uv/python -mindepth 2 -maxdepth 2 -name bin -type d -path '*cpython-*' | sort -V | tail -n 1)";
+        ln -sf "$PY_BIN/python3" /usr/local/bin/python3;
+        ln -sf "$PY_BIN/python3" /usr/local/bin/python;
+        { echo 'export UV_PYTHON_INSTALL_DIR=/home/agent/.local/share/uv/python'; echo 'export UV_LINK_MODE=copy'; } >> /etc/sandbox-persistent.sh;
+        python3 --version;
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends python3-venv >/dev/null 2>&1 || true
       description: Ensure python3 + uv are available (install when the template image lacks them)
 
 permissions:
