@@ -7,10 +7,11 @@ to pass through a PR that CI validates before it can land.
 
 Set these once as a repo admin. Two prerequisites keep the net intact:
 
-- **Give the agent a least-privilege token** — the fine-grained PAT from
-  [Create a GitHub PAT](github-pat.md) (no Administration, workflows
-  unset). A classic `repo`-scoped token or any Administration token can
-  edit or delete the rules themselves.
+- **Give the agent a least-privilege token** — a fine-grained PAT scoped
+  to only what the agent should touch (no Administration, workflows
+  unset; [Create a GitHub PAT](github-pat.md) shows the full pattern).
+  A classic `repo`-scoped token or any Administration token can edit or
+  delete the rules themselves.
 - **Never bypass-list the account the agent's token belongs to.** A
   ruleset bypass entry silently disables every rule for that account.
 
@@ -33,9 +34,9 @@ approvals at 0** (classic: don't tick "Require approvals"):
 - Direct pushes are where agent work becomes unreviewable: the agent
   pushes to `main` mid-session and nobody sees the diff until something
   breaks. With "require a PR" on, the agent's push to `main` is rejected
-  and it must open a PR instead — exactly the flow
-  [worktrees](../agent-guidance/worktrees.md) prescribes: branch from
-  `origin/main`, commit there, open a PR.
+  and it must open a PR instead — the flow the agent-guidance docs of
+  this repo ([worktrees](../agent-guidance/worktrees.md)) prescribe:
+  branch from `origin/main`, commit there, open a PR.
 - If you do want a human gate, set 1 approval and also enable **Dismiss
   stale pull request approvals when new commits are pushed** and
   **Require conversation resolution**.
@@ -81,13 +82,14 @@ agent-created branches are append-only too.
 
 Tags and releases sit outside branch protection, and a Contents:write
 token can create both: mint a `v9.9.9` tag on any commit, publish the
-release, and every workflow that runs on releases — this repo pushes
-its Docker images that way — fires with no human in the loop.
+release, and every workflow that runs on releases — deploy pipelines,
+image publishing, package uploads — fires with no human in the loop.
 
 Add a **tag ruleset** for `v*`: restrict deletions and updates, and
-restrict creations with your release bot in the bypass list —
-release-please (or whatever tags your releases) must still be able to
-create tags at merge time, or the release flow deadlocks.
+restrict creations with your release bot in the bypass list — whatever
+tags your releases (release-please, semantic-release, a CI job) must
+still be able to create tags at merge time, or the release flow
+deadlocks.
 
 ## 5. Block leaked secrets at push time
 
@@ -115,16 +117,18 @@ Two GitHub behaviors decide whether that works:
 
 - A PR created with the repo's own `GITHUB_TOKEN` has its workflow runs
   held behind a manual "Approve workflows to run" click — it can't
-  collect required checks on its own. The release App from
-  [GitHub repository setup](repo-setup.md) avoids that gate; keep it.
+  collect required checks on its own. Create such PRs with a GitHub App
+  token (or have a human approve the workflow runs once), or every bot
+  PR deadlocks.
 - Docs-only commits after a release PR opens leave it stale ("not up to
-  date"), and the App only rebases it when the release content changes —
+  date"), and the bot only rebases it when the release content changes —
   click **Update branch** when you merge.
 
 ## Leave off
 
-- **Require signed commits** — sandboxed agent commits (and the release
-  bot's) aren't signed; enabling it makes every PR unmergeable.
+- **Require signed commits** — agent commits made in a sandbox or CI
+  environment (and most bots') aren't signed; enabling it makes every
+  such PR unmergeable.
 - **Lock branch / restrict branch creation** — read-only machinery for
   frozen release branches, not an active default.
 
@@ -141,6 +145,7 @@ Two GitHub behaviors decide whether that works:
 | Code-owner review | a human signs off exactly where damage would be repo-wide |
 | Approvals = 0 elsewhere | checks gate the merge, not you — you review when you want to |
 
-Combined with the [worktree workflow](../agent-guidance/worktrees.md)
-(every change in its own branch off `origin/main`), this means a runaway
-agent session costs you at most a branch to delete.
+Combined with a worktree-style workflow (every change in its own branch
+off `origin/main`; this repo's agent guidance describes it in
+[worktrees](../agent-guidance/worktrees.md)), this means a runaway agent
+session costs you at most a branch to delete.
