@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0](https://github.com/nikcio/docker-sandboxing/compare/v1.0.0...v1.1.0) (2026-09-10)
+
+
+### Features
+
+* **mixins:** add open-egress mixin (allow all outbound domains) ([#65](https://github.com/nikcio/docker-sandboxing/issues/65)) ([ece0f6c](https://github.com/nikcio/docker-sandboxing/commit/ece0f6c239e9b5162a10664460e1875b865e6138))
+* **mixins:** add openapi-codegen mixin (Nikcio.OpenApiCodeGen tool + docs egress) ([#48](https://github.com/nikcio/docker-sandboxing/issues/48)) ([5361bc5](https://github.com/nikcio/docker-sandboxing/commit/5361bc5081630f246962fcc7fc634b6be30d4e9b))
+* **mixins:** check-and-install toolchains so any mixin composes on any template ([#57](https://github.com/nikcio/docker-sandboxing/issues/57)) ([36d1a3e](https://github.com/nikcio/docker-sandboxing/commit/36d1a3e99780f9a0889bd17a737ff44d81d859bf))
+* **mixins:** update opencode to the latest npm release at sandbox creation ([#67](https://github.com/nikcio/docker-sandboxing/issues/67)) ([b805925](https://github.com/nikcio/docker-sandboxing/commit/b80592564dc5c2a779b4431db358753a13433ba7))
+* **templates:** add node-only template, kits, and example ([#56](https://github.com/nikcio/docker-sandboxing/issues/56)) ([d89e83c](https://github.com/nikcio/docker-sandboxing/commit/d89e83c1b47bff666ba845ff3df3fcbe74231848))
+
+
+### Bug Fixes
+
+* **mixins:** allow the hosts the browser and playwright installs download from ([#54](https://github.com/nikcio/docker-sandboxing/issues/54)) ([7615f6c](https://github.com/nikcio/docker-sandboxing/commit/7615f6c11b6ba2307d045a760e0e9d90e4080e10))
+* **mixins:** close the env-guard's symlink and .env.* blind spots ([#63](https://github.com/nikcio/docker-sandboxing/issues/63)) ([c1eab2b](https://github.com/nikcio/docker-sandboxing/commit/c1eab2b3334882db0c040134ea4164d548d12820))
+* **mixins:** harden the AGENTS.md rebuild against kits-section injection ([#60](https://github.com/nikcio/docker-sandboxing/issues/60)) ([9747568](https://github.com/nikcio/docker-sandboxing/commit/9747568c685f28b71f17b3da7d70845d6111c99c))
+* **mixins:** interpolate MCP gateway config through jq, not a heredoc ([#61](https://github.com/nikcio/docker-sandboxing/issues/61)) ([b165a63](https://github.com/nikcio/docker-sandboxing/commit/b165a63887c44741a3e74a86f1f9e2fed1e73add))
+* **mixins:** require --no-sandbox for Chrome headless in the agent note ([#68](https://github.com/nikcio/docker-sandboxing/issues/68)) ([1ea7459](https://github.com/nikcio/docker-sandboxing/commit/1ea745915e72a8ea3b8e12532416a68047907b7e))
+* **scripts:** stop eval-ing constructed variable names in new-sandbox.sh ([#62](https://github.com/nikcio/docker-sandboxing/issues/62)) ([08e959d](https://github.com/nikcio/docker-sandboxing/commit/08e959dfca003757d44d0c144bf0c95fafc1616e))
+
 ## [1.0.0](https://github.com/nikcio/docker-sandboxing/compare/v0.6.0...v1.0.0) (2026-09-06)
 
 

@@ -45,12 +45,12 @@ description: >
   provider, network areas, workflow rules).
 # The version and the image tag are bumped together by release-please.
 # x-release-please-start-version
-version: 1.0.0
+version: 1.1.0
 
 sandbox:
   # Public image on Docker Hub, pushed by the publish-image workflow
   # (full docker.io prefix — sbx does not resolve the Docker Hub domain).
-  image: docker.io/nikcio/opencode-python:v1.0.0
+  image: docker.io/nikcio/opencode-python:v1.1.0
 # x-release-please-end-version
   # Wrapper: the real runtime lives in the base mixin
   # (~/.sandbox-kit/entrypoint.sh) — see that script for the behavior
