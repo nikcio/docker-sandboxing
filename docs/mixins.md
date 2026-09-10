@@ -59,6 +59,7 @@ Rules of thumb:
 | `playwright-chromium` | Playwright + full Chromium; installs node via nvm when the template lacks one |
 | `playwright-all` | Playwright + Chromium, Firefox, WebKit (~1 GB+ download); installs node via nvm when the template lacks one |
 | `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the template has it |
+| `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the stock kits and examples do not compose it |
 
 Network hosts per mixin are listed at the top of each
 `mixins/<area>/spec.yaml`.
