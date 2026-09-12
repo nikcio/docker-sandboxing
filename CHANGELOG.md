@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/nikcio/docker-sandboxing/compare/v1.1.0...v1.1.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* **mixins:** allow CA certificate revocation endpoints in the base mixin ([#69](https://github.com/nikcio/docker-sandboxing/issues/69)) ([5eda5c2](https://github.com/nikcio/docker-sandboxing/commit/5eda5c249f31253c4aab1adbf1e0c7c5d9579167))
+
 ## [1.1.0](https://github.com/nikcio/docker-sandboxing/compare/v1.0.0...v1.1.0) (2026-09-10)
 
 
