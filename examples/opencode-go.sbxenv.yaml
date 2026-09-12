@@ -21,20 +21,20 @@ agent: opencode-go
 # latest release; release-please bumps them (do not edit by hand).
 # x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-go&ref=v1.1.0                                  # agent definition (published image)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v1.1.0                                       # entrypoint runtime + agent guidance + MCP gateway (required by the kit)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v1.1.0                     # permissive OpenCode config + provider merge (required with model providers)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v1.1.0                                  # workspace .env guard
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/banner&ref=v1.1.0                                     # startup banner
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v1.1.0                           # agent runtime
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-update&ref=v1.1.0                            # opencode auto-update (latest npm release at creation)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v1.1.0                                     # Zeldoc.ai provider
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v1.1.0                                        # git + worktrees
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/go&ref=v1.1.0                                         # Go toolchain (module proxy egress)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker&ref=v1.1.0                                     # in-sandbox docker
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/apt&ref=v1.1.0                                        # apt mirrors
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/browser&ref=v1.1.0                                    # Google Chrome
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v1.1.0                                 # Playwright + Chromium headless shell
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-published-go&ref=v1.1.1                                  # agent definition (published image)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/base&ref=v1.1.1                                       # entrypoint runtime + agent guidance + MCP gateway (required by the kit)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v1.1.1                     # permissive OpenCode config + provider merge (required with model providers)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v1.1.1                                  # workspace .env guard
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/banner&ref=v1.1.1                                     # startup banner
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-runtime&ref=v1.1.1                           # agent runtime
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-update&ref=v1.1.1                            # opencode auto-update (latest npm release at creation)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v1.1.1                                     # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/git&ref=v1.1.1                                        # git + worktrees
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/go&ref=v1.1.1                                         # Go toolchain (module proxy egress)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker&ref=v1.1.1                                     # in-sandbox docker
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/apt&ref=v1.1.1                                        # apt mirrors
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/browser&ref=v1.1.1                                    # Google Chrome
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v1.1.1                                 # Playwright + Chromium headless shell
 # x-release-please-end-version
 
 workspace:
