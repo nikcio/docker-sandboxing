@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/nikcio/docker-sandboxing/compare/v1.1.1...v1.1.2) (2026-09-12)
+
+
+### Bug Fixes
+
+* **mixins:** allow CA revocation endpoints on port 80 too ([#71](https://github.com/nikcio/docker-sandboxing/issues/71)) ([52d6853](https://github.com/nikcio/docker-sandboxing/commit/52d685305c2f8b0ead34970b28e48102b13e1981))
+
 ## [1.1.1](https://github.com/nikcio/docker-sandboxing/compare/v1.1.0...v1.1.1) (2026-09-12)
 
 
