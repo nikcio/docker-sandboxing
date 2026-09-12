@@ -26,8 +26,10 @@
 #   the backstop only covers runtimes that skip mixin startup hooks).
 #
 # The permissive OpenCode config (and the combined provider config)
-# ships with mixins/global-opencode-config. No network rules: capability
-# egress comes from the other mixins.
+# ships with mixins/global-opencode-config. Network rules: the common
+# CAs' certificate revocation (OCSP/CRL) + timestamp endpoints — hit by
+# any HTTPS client doing revocation checks. Capability egress comes from
+# the other mixins.
 schemaVersion: "2"
 kind: mixin
 name: base
@@ -38,9 +40,25 @@ description: >
   runner, opencode autostart, login shell on exit), the agent guidance
   files, the shared AGENTS.md base, the AGENTS.md rebuild hook (sourced
   by the runtime), and MCP gateway registration (startup hook +
-  idempotent backstop). No network rules — capability egress comes from
-  the other mixins.
-version: 0.4.0
+  idempotent backstop). Network rules: the common public CAs'
+  certificate revocation (OCSP/CRL) + timestamp endpoints. Capability
+  egress comes from the other mixins.
+version: 0.5.0
+
+permissions:
+  network:
+    allow:
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
+      # common public CAs. Hit by any HTTPS client (git, curl, node,
+      # dotnet) doing revocation checks; blocking only adds latency
+      # (TLS soft-fails).
+      - "*.digicert.com:443"
+      - "*.symcd.com:443"
+      - "*.symcb.com:443"
+      - "*.ws.symantec.com:443"
+      - "*.sectigo.com:443"
+      - "*.usertrust.com:443"
+      - "*.globalsign.com:443"
 
 setup:
   startup:

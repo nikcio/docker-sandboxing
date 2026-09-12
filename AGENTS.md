@@ -47,9 +47,10 @@ Use based on your task:
   runner, opencode autostart, login shell on exit) the kit wrappers exec,
   the agent guidance files (`files/home/.sandbox-agents/*.md`), the
   shared `AGENTS.md` base (`files/home/.sandbox-agents.md`), the AGENTS.md
-  rebuild hook (`files/home/.sandbox-kit/hooks.d/agents-md.sh`), and MCP
+  rebuild hook (`files/home/.sandbox-kit/hooks.d/agents-md.sh`), MCP
   gateway registration (startup hook + idempotent backstop hook
-  `files/home/.sandbox-kit/hooks.d/mcp-gateway.sh`).
+  `files/home/.sandbox-kit/hooks.d/mcp-gateway.sh`), and the common
+  public CAs' certificate revocation (OCSP/CRL) network rules.
 - `mixins/global-opencode-config/` — the permissive OpenCode config
   (`files/home/.config/opencode/opencode.jsonc`, dropped into the global
   config layer; edit/bash/webfetch allowed — the sandbox is the isolation
@@ -77,7 +78,9 @@ Use based on your task:
   both).
 - `mixins/<area>/` — one single-purpose mixin kit per area (`kind: mixin`):
   only the network rules, env vars, credentials, files, and memory notes
-  for its own area. Composition is explicit at launch (`--kit` flags or a
+  for its own area (the base mixin's CA revocation rules are the one
+  cross-cutting exception — see `mixins/base/` above). Composition is
+  explicit at launch (`--kit` flags or a
   `.sbxenv.yaml` `kits:` list); the spec's `mixins:` field is not applied
   by the runtime yet. Model-provider mixins (`zeldoc`, `copilot`) ship
   pure-JSON config fragments to
