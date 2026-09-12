@@ -43,7 +43,7 @@ description: >
   idempotent backstop). Network rules: the common public CAs'
   certificate revocation (OCSP/CRL) + timestamp endpoints. Capability
   egress comes from the other mixins.
-version: 0.5.0
+version: 0.5.1
 
 permissions:
   network:
@@ -51,7 +51,9 @@ permissions:
       # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
       # common public CAs. Hit by any HTTPS client (git, curl, node,
       # dotnet) doing revocation checks; blocking only adds latency
-      # (TLS soft-fails).
+      # (TLS soft-fails). Both ports: the CRL/OCSP URLs baked into
+      # certificates are http:// (CRLs especially), so :443 alone
+      # doesn't cover the actual fetches.
       - "*.digicert.com:443"
       - "*.symcd.com:443"
       - "*.symcb.com:443"
@@ -59,6 +61,13 @@ permissions:
       - "*.sectigo.com:443"
       - "*.usertrust.com:443"
       - "*.globalsign.com:443"
+      - "*.digicert.com:80"
+      - "*.symcd.com:80"
+      - "*.symcb.com:80"
+      - "*.ws.symantec.com:80"
+      - "*.sectigo.com:80"
+      - "*.usertrust.com:80"
+      - "*.globalsign.com:80"
 
 setup:
   startup:
