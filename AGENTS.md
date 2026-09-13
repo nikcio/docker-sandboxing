@@ -15,6 +15,7 @@ Use based on your task:
 - template-*/Dockerfile - sandbox template images.
 - kit-* - Base templates for a sandbox (kind: sandbox)
 - mixins/* - Reusable config fragments for sandboxes (kind: mixin). Must work in isolation and composition. List all required domains and software for usage on a base kit.
+  - Each mixin should have a `spec.yaml` and a `README.md` describing its purpose, usage, and any special instructions. Keep it simple.
 
 ## Development
 
