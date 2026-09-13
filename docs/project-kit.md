@@ -7,7 +7,7 @@ one that fits:
    root. No kit needed (see below) — this is also where the default
    model lives.
 2. **Network egress, env vars, files, agent notes** → add a small
-   *in-project kit* to your repo and list it in `.sbxenv.yaml`.
+   *in-project kit* to your repo and list it in `sbxenv.yaml`.
 
 ## Project-level OpenCode config (no kit)
 
@@ -43,7 +43,7 @@ the global-opencode-config mixin merges it with the stock provider fragments
 ## Add an in-project kit
 
 An in-project kit is a mixin (`kind: mixin`) that lives in your repo,
-next to `.sbxenv.yaml`. It adds exactly what your project needs on top
+next to `sbxenv.yaml`. It adds exactly what your project needs on top
 of the stock mixins.
 
 1. Create `sandbox-kit/spec.yaml` in your project root (any directory
@@ -90,7 +90,7 @@ of the stock mixins.
    docker-sandboxing repo for an example). How `AGENTS.md` files are
    loaded: [agents-md.md](agents-md.md).
 
-3. List it in your `.sbxenv.yaml` after the stock kits (local paths are
+3. List it in your `sbxenv.yaml` after the stock kits (local paths are
    relative to the env file):
 
    ```yaml

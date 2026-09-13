@@ -1,0 +1,38 @@
+schemaVersion: "2"
+kind: mixin
+name: github-cli
+displayName: GitHub CLI
+description: >
+  Installs Github CLI
+version: 0.2.0
+
+credentials:
+  - service: github
+    description: >
+      GitHub personal access token for the gh CLI and git over HTTPS.
+      Use a fine-grained PAT scoped to only the repositories and
+      permissions the agent needs.
+    required: false
+    apiKey:
+      name: GH_TOKEN
+      proxyManaged: true
+      inject:
+        - domain: api.github.com
+          header: Authorization
+          format: Bearer %s
+        - domain: github.com
+          header: Authorization
+          format: Bearer %s
+        - domain: uploads.github.com
+          header: Authorization
+          format: Bearer %s
+        - domain: raw.githubusercontent.com
+          header: Authorization
+          format: Bearer %s
+
+permissions:
+  network:
+    allow:
+      - github.com
+      - "*.github.com"
+      - "*.githubusercontent.com"

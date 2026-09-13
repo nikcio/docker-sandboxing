@@ -35,11 +35,11 @@ sbx secret set github --sandbox <sandbox-name>
 
 sbx prompts for the token ("Enter secret:") and stores it in its secret
 store (the OS keychain) at that sandbox's scope. `<sandbox-name>` is the
-environment's `name:` from your `.sbxenv.yaml`.
+environment's `name:` from your `sbxenv.yaml`.
 
 ## 3. Approve the credential binding
 
-For environments created from a `.sbxenv.yaml`, the example file already
+For environments created from a `sbxenv.yaml`, the example file already
 declares the `bindings.github` block that approves injection for the GitHub
 hosts. Keep it in your copy (and in sync with `mixins/git/spec.yaml`). If
 you change `bindings:`, recreate the environment.

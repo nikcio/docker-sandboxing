@@ -19,7 +19,7 @@
 # The entrypoint below execs the shared runtime script and refuses to
 # start (with a clear error) if the base mixin is missing. Compose
 # further capabilities at launch with the mixins from ../mixins/ via
-# --kit flags or a .sbxenv.yaml kits: list (the spec's `mixins:` field is
+# --kit flags or a sbxenv.yaml kits: list (the spec's `mixins:` field is
 # not applied by the runtime yet). See ../docs/.
 #
 # Validate: sbx kit validate kit-node/

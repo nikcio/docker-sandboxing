@@ -1,39 +1,13 @@
-# Node mixin: Node.js/NVM/PNPM egress, the pnpm package-age policy, agent
-# notes, and the check-and-install step so the mixin composes on any base
-# template image (installs node via nvm + pnpm only when the template
-# lacks them).
 schemaVersion: "2"
 kind: mixin
 name: node
 displayName: Node.js / NVM / PNPM
 description: >
-  Network rules for the Node.js toolchain: the nodejs.org and iojs.org
-  distribution servers for nvm installs, the npm registry for
-  pnpm/npm/npx, and pnpm.io for the pnpm docs. Pins a global pnpm
-  package-maturity policy: installs only resolve versions published at
-  least 24h ago (including transitive dependencies). Composes on any
-  base template image: a setup.install step installs node via nvm and
-  pnpm via npm only when the template doesn't already have them.
+  Adds Node.js with nvm and PNPM.
 version: 0.3.0
 
 setup:
   install:
-    # Check-and-install: a no-op on template-node-dotnet (and any image
-    # with node + pnpm); on other base images it installs node via nvm
-    # (agent home, same layout as template-node-dotnet) and pnpm globally.
-    # Needs this mixin's nodejs.org + npm egress plus the apt mixin for
-    # the OS packages on bare bases; nvm's git clone of the nvm repo
-    # rides the git mixin's GitHub egress (compose git with node on
-    # templates without node). The update+install run against a private
-    # lists dir: install steps race the apt mixin's background
-    # `apt-get update` startup hook for /var/lib/apt/lists/lock (apt-get
-    # update has no lock-wait option); a private dir needs only the dpkg
-    # + archives locks, and a failing repo in the image's sources (e.g.
-    # the base image's docker.list) only exits 100 without losing the
-    # fetched lists. unset NPM_CONFIG_PREFIX: the template sets it for
-    # its own npm-global dir, and nvm-managed npm refuses to run while
-    # it is set. /etc/sandbox-persistent.sh is sourced before every bash
-    # command and in login shells — persist NVM_DIR there.
     - command: >
         set -e;
         if command -v node >/dev/null 2>&1 && command -v pnpm >/dev/null 2>&1; then exit 0; fi;
@@ -61,15 +35,6 @@ setup:
 
 environment:
   variables:
-    # Supply-chain guard: pnpm holds back any version (direct or
-    # transitive) published less than 1440 minutes (24h) ago — malicious
-    # releases are typically pulled within the hour. Needs pnpm >= 11
-    # (the template bakes a 12.x major; pnpm 10 only reads the npmrc
-    # spelling, and npm itself errors on it, so no fallback var here).
-    # Delivered as a PNPM_CONFIG_* env var instead of the global
-    # ~/.config/pnpm/config.yaml because env outranks a project's
-    # pnpm-workspace.yaml (config.yaml does not), so no repo can weaken
-    # the sandbox policy; an explicit CLI flag still can.
     PNPM_CONFIG_MINIMUM_RELEASE_AGE: "1440"
 
 permissions:
@@ -78,24 +43,25 @@ permissions:
       # nvm install / nodejs.org distribution
       - nodejs.org:443
       - "*.nodejs.org:443"
+      
       # nvm's io.js mirror (fetched by every `nvm ls-remote`; needed for
       # io.js listings and installs)
       - iojs.org:443
+      
       # nvm itself (the check-and-install step clones the nvm repo from
       # GitHub when the template image lacks node — raw.githubusercontent
       # covers the install script variant)
       - github.com:443
       - "*.github.com:443"
       - raw.githubusercontent.com:443
+      
       # npm registry (pnpm/npm/npx installs and fetches)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"
       - npmjs.com:443
       - "*.npmjs.com:443"
+      
       # pnpm.io: pnpm docs and settings reference for agent lookups —
       # pnpm's own errors point here (e.g. the minimumReleaseAge gate
       # above links pnpm.io/settings#minimumreleaseageexclude)
       - pnpm.io:443
-
-# Agent memory note: files/home/.sbx-agents.d/node.md (appended to the
-# sandbox AGENTS.md by the kit entrypoint).

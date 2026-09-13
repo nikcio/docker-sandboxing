@@ -4,7 +4,7 @@ A mixin adds exactly one capability area to the sandbox: network egress
 rules, environment settings, install steps, and a note for the agent. The
 sandbox network policy is deny-by-default — the union of the composed
 mixins' rules is the only outbound traffic. Drop the mixin lines your
-project doesn't need from the `kits:` list in your `.sbxenv.yaml`.
+project doesn't need from the `kits:` list in your `sbxenv.yaml`.
 
 ## Any mixin on any template
 

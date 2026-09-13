@@ -12,7 +12,7 @@ API keys are injected by a proxy — the sandbox only ever sees placeholders.
 ### 1. Copy the example for your stack
 
 Copy the example matching your stack into your project's root and rename it
-`.sbxenv.yaml`. Commit it so teammates get the same sandbox.
+`sbxenv.yaml`. Commit it so teammates get the same sandbox.
 
 | Your stack | Copy this example |
 | ---------- | ----------------- |
@@ -57,7 +57,7 @@ Full walkthrough (prerequisites, first run, daily use):
 | [Set your Omnium API token](docs/omnium-api-key.md) | create an Omnium API user, mint and refresh the bearer token |
 | [Mixins](docs/mixins.md) | what each mixin adds, common sets, changing them |
 | [Project-specific config](docs/project-kit.md) | an in-project kit: project feeds, env vars, files, agent notes |
-| [Local overrides](docs/local-overrides.md) | personal settings in a gitignored `local.sbxenv.yaml`, merged over the team's `.sbxenv.yaml` |
+| [Local overrides](docs/local-overrides.md) | personal settings in a gitignored `local.sbxenv.yaml`, merged over the team's `sbxenv.yaml` |
 | [Agent skills](docs/agent-skills.md) | share your host's global agent skills with the sandboxed agent (`sbx skills import`) |
 | [Agent memory](docs/agents-md.md) | which `AGENTS.md` the agent loads, the sandbox environment file, where to put your rules |
 | [Troubleshooting](docs/troubleshooting.md) | blocked downloads, git auth, the .env guard, stale changes |

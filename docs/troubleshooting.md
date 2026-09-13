@@ -69,7 +69,7 @@ sandbox):
 
 ## The agent's dev server is not reachable from my host
 
-Publish the port in your `.sbxenv.yaml`:
+Publish the port in your `sbxenv.yaml`:
 
 ```yaml
 ports:

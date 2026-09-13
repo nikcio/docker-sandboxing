@@ -143,7 +143,7 @@ Invoke-Step "Validating kit and mixins" {
 
 Write-Host ""
 Write-Host "Done. Develop the kits/mixins in a sandbox:" -ForegroundColor Green
-Write-Host "  sbx env run                    # from this repo root (uses .\.sbxenv.yaml, local kits)"
+Write-Host "  sbx env run                    # from this repo root (uses .\sbxenv.yaml, local kits)"
 Write-Host "  .\scripts\new-sandbox.ps1      # wizard launcher for any workspace"
 Write-Host ""
 Write-Host "Tip: kit changes only apply to NEW sandboxes. Recreate with:"

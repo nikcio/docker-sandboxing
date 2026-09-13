@@ -8,7 +8,7 @@ GitHub's OAuth device flow, and the token stays inside the sandbox VM
 
 ## 1. Add the mixin
 
-Add the `copilot` mixin to the `kits:` list in your `.sbxenv.yaml` (pin
+Add the `copilot` mixin to the `kits:` list in your `sbxenv.yaml` (pin
 the same `&ref=` as the other mixin lines). The default examples use
 Zeldoc — swap the `zeldoc` line for `copilot`, or keep both:
 

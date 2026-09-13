@@ -6,6 +6,3 @@
   `cargo fmt`, `cargo test`, `cargo doc`
 - Toolchain updates in-sandbox: `rustup update`; a different series:
   `rustup toolchain install <version>`
-- Reinstalling/updating rustup itself: rerun the installer —
-  `curl -fsSL https://sh.rustup.rs | sh -s -- -y --no-modify-path`
-  (installs user-level, shadowing the baked rustup)

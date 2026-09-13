@@ -32,7 +32,7 @@ A single SemVer version for the whole repo, managed by
 
 - Never bump pinned versions by hand — the release PR owns every
   `x-release-please` block.
-- `kit-<stack>/spec.yaml` (dev kits) and `.sbxenv.yaml` (dev env) are never
+- `kit-<stack>/spec.yaml` (dev kits) and `sbxenv.yaml` (dev env) are never
   bumped.
 - `kit-published-*/` must stay in sync with their dev kits — the only
   intended differences are the published `sandbox.image` and the

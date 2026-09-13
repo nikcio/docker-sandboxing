@@ -1,37 +1,13 @@
-# nikcio-openapi-codegen mixin: the Nikcio-labs openapi-code-generator .NET tool
-# (Nikcio.OpenApiCodeGen) — a fast, opinionated C# code generator for OpenAPI
-# 3.x specifications (records, enums, type aliases) — plus egress for its
-# docs site (openapi.nikcio.com).
-#
-# The tool installs as a .NET global tool from NuGet, so compose the dotnet
-# mixin (its network rules cover the nuget.org reads this install makes).
 schemaVersion: "2"
 kind: mixin
 name: nikcio-openapi-codegen
 displayName: OpenAPI Code Generator (C#)
 description: >
-  Installs the openapi-code-generator .NET global tool (Nikcio.OpenApiCodeGen,
-  the `openapi-codegen` CLI that generates records, enums, and type aliases
-  from OpenAPI 3.x specs) and allows egress to its docs site
-  (openapi.nikcio.com). Needs the dotnet mixin — the tool installs from
-  NuGet. Composes on any base template image: ensures the .NET SDK first
-  (mirrors the dotnet mixin's check-and-install) and skips when the tool
-  is already present.
+  Installs the openapi-code-generator .NET global tool Nikcio.OpenApiCodeGen.
 version: 0.3.0
 
 setup:
   install:
-    # Guarded so the mixin composes on any base template image (skips when
-    # the tool is already there) and ensures the dotnet SDK first (the
-    # dotnet mixin's check-and-install, mirrored here; the compose order
-    # is not guaranteed, so this step also covers a bare base). .NET
-    # global tool from NuGet (nuget.org is allowed by the dotnet mixin).
-    # `--global` puts `openapi-codegen` in ~/.dotnet/tools — NOT the
-    # /usr/share/dotnet/ tools dir on the template images' PATH — so the
-    # dir is persisted onto PATH: /etc/sandbox-persistent.sh is sourced
-    # before every bash command and in login shells. The node-ensure
-    # block needs the node mixin's egress + the git mixin for the nvm
-    # repo on templates without node.
     - command: >
         set -e;
         if command -v dotnet >/dev/null 2>&1; then :; else
@@ -64,6 +40,3 @@ permissions:
     allow:
       # Docs site (openapi.nikcio.com)
       - openapi.nikcio.com:443
-
-# Agent memory note: files/home/.sbx-agents.d/nikcio-openapi-codegen.md (appended to the
-# sandbox AGENTS.md by the kit entrypoint).

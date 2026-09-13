@@ -1,67 +1,100 @@
-# Global OpenCode config: the permissive global-layer config plus the
-# combined provider config mechanism.
-#
-# Ships:
-# - files/home/.config/opencode/opencode.jsonc — the permissive OpenCode
-#   config (edit/bash/webfetch allowed; the sandbox is the isolation
-#   boundary; sharing + websearch disabled). Lives in the global config
-#   layer as opencode.jsonc; the sandbox-managed opencode.json (MCP
-#   gateway wiring) is a separate file and both are merged by OpenCode.
-#   Provider mixins layer on top via fragments (see below).
-# - environment.variables.OPENCODE_CONFIG — points at the combined
-#   provider config (~/.config/opencode/providers.jsonc). OWNED HERE:
-#   every provider mixin (zeldoc, copilot, ...) ships a pure-JSON
-#   fragment to ~/.config/opencode/providers.d/NN-<name>.json and the
-#   merge below rebuilds that file at every start
-#   (enabled_providers lists union; fragments never set the default
-#   model — the project-level opencode config owns it). Never set
-#   OPENCODE_CONFIG in another mixin or kit — this variable is the
-#   single owner, which is what lets any number of provider mixins
-#   compose.
-# - files/home/.sandbox-kit/merge-global-opencode-config.sh — the provider
-#   config fragment merger (jq; enabled_providers union, later fragments
-#   win scalar conflicts; seeds a valid empty config when there are no
-#   fragments).
-# - files/home/.sandbox-kit/hooks.d/provider-config.sh — the hook the
-#   base mixin's entrypoint runtime sources after the banner and
-#   env-guard hooks (glob order): exports
-#   OPENCODE_CONFIG defensively and runs the merge, so `o`/`opencode`
-#   relaunched from the login shell keep working even if a runtime
-#   skipped mixin env injection.
-#
-# Required when composing a model provider (zeldoc, copilot): their
-# fragments only merge through this mixin. Pairs with mixins/base
-# (entrypoint runtime + agent guidance + MCP gateway); mixins/env-guard
-# adds the .env guard and mixins/banner the startup banner. No network
-# rules: capability egress comes from the other mixins.
 schemaVersion: "2"
 kind: mixin
 name: global-opencode-config
 displayName: Global OpenCode config
 description: >
-  The permissive OpenCode config (edit/bash/webfetch allowed — the sandbox
-  is the isolation boundary; sharing + websearch disabled), dropped into
-  the global config layer as opencode.jsonc, plus the combined provider
-  config: OPENCODE_CONFIG points at ~/.config/opencode/providers.jsonc,
-  rebuilt at every start from the provider mixins' fragments in
-  providers.d/ by merge-global-opencode-config.sh (sourced via the entrypoint's
-  hook runner). Merged with the sandbox-managed opencode.json (MCP gateway
-  wiring) and any project config layer. No network rules — capability
-  egress comes from the other mixins.
-version: 0.3.0
+  Adds permissive opencode config and the ability to merge configs from other mixins using fragments.
+version: 0.4.0
 
 environment:
   variables:
-    # The combined OpenCode provider config, rebuilt at every start from
-    # ~/.config/opencode/providers.d/*.json by
-    # ~/.sandbox-kit/merge-global-opencode-config.sh (called by this mixin's
-    # provider-config hook, which also re-exports this var defensively).
-    # Merges between the global and project config layers, so sandbox
-    # wiring in the managed opencode.json is preserved and the project
-    # opencode.jsonc owns the default model. Owned here —
-    # provider mixins/kits must not set OPENCODE_CONFIG.
-    OPENCODE_CONFIG: /home/agent/.config/opencode/providers.jsonc
+    # The generated config from this mixin
+    OPENCODE_CONFIG: /home/agent/.config/opencode/sandbox-mixins.jsonc
 
-# Files dropped into the sandbox home (see the header for the layout):
-# .config/opencode/opencode.jsonc, .sandbox-kit/merge-global-opencode-config.sh,
-# .sandbox-kit/hooks.d/provider-config.sh.
+setup:
+  startup:
+    - command:
+        - bash
+        - -c
+        - |
+          set -euo pipefail
+
+          FRAG_DIR="${OPENCODE_MIXINS_DIR:-$HOME/.config/opencode/mixins.d}"
+          OUT="${1:-$HOME/.config/opencode/sandbox-mixins.jsonc}"
+
+          mkdir -p "$(dirname "$OUT")"
+
+          seed() {
+              # Nothing to merge: write the minimal valid config so OPENCODE_CONFIG
+              # always points at a loadable file.
+              printf '{\n  "$schema": "https://opencode.ai/config.json"\n}\n'
+          }
+
+          fail() {
+              echo "ERROR [mixins-config]: $*" >&2
+              exit 1
+          }
+
+          if [ ! -d "$FRAG_DIR" ]; then
+              seed > "$OUT"
+              echo "[mixins-config] no mixins fragments ($FRAG_DIR missing) — wrote the empty combined config"
+              exit 0
+          fi
+
+          shopt -s nullglob
+          fragments=("$FRAG_DIR"/*.json)
+          jsonc=("$FRAG_DIR"/*.jsonc)
+          shopt -u nullglob
+
+          if [ "${#jsonc[@]}" -gt 0 ]; then
+              fail "comment-bearing fragments are not supported: ${jsonc[*]} — mixins fragments in $FRAG_DIR must be comment-free .json (jq does the merging)"
+          fi
+
+          if [ "${#fragments[@]}" -eq 0 ]; then
+              seed > "$OUT"
+              echo "[mixins-config] no mixins fragments in $FRAG_DIR — wrote the empty combined config"
+              exit 0
+          fi
+
+          tmp="$(mktemp "$(dirname "$OUT")/.sandbox-mixins.jsonc.XXXXXX")"
+          tmp_wrapped="${tmp}.wrapped"
+          trap 'rm -f "$tmp" "$tmp_wrapped"' EXIT
+
+          if command -v jq > /dev/null 2>&1; then
+              for f in "${fragments[@]}"; do
+                  if ! jq -e 'type == "object"' "$f" > /dev/null 2>&1; then
+                      fail "$f is not a valid JSON object — fix or remove it (the previous combined config was left in place)"
+                  fi
+              done
+              # Object values merge recursively; later fragments win scalar
+              # conflicts (jq's `*`), while the mixins allow/deny lists union.
+              jq -s '
+                reduce .[] as $f (
+                  {};
+                  (. * $f)
+                  + (if ($f | has("enabled_mixins")) then
+                      {enabled_mixins: (((.enabled_mixins // []) + $f.enabled_mixins) | unique)}
+                    else {} end)
+                  + (if ($f | has("disabled_mixins")) then
+                      {disabled_mixins: (((.disabled_mixins // []) + $f.disabled_mixins) | unique)}
+                    else {} end)
+                )
+              ' "${fragments[@]}" > "$tmp"
+          elif [ "${#fragments[@]}" -eq 1 ]; then
+              # jq-less fallback: a single fragment needs no merging.
+              cp -- "${fragments[0]}" "$tmp"
+          else
+              fail "jq is not available and there are ${#fragments[@]} fragments to merge — install jq (the template images ship it)"
+          fi
+
+          {
+              printf '// GENERATED by the global-opencode-config mixin startup command — do not edit.\n'
+              printf '// Fragments: %s\n' "$(basename -a "${fragments[@]}" | paste -sd' ' -)"
+              printf '// Edit the owning mixin in docker-sandboxing (or a mixins.d/ fragment) and restart the sandbox.\n'
+              cat "$tmp"
+          } > "${tmp}.wrapped"
+          mv -f "${tmp}.wrapped" "$OUT"
+
+          echo "[mixins-config] merged ${#fragments[@]} mixins fragment(s) ($(basename -a "${fragments[@]}" | paste -sd' ' -)) -> $OUT"
+      user: "agent"
+      description: Merge mixins fragments into the combined OPENCODE_CONFIG

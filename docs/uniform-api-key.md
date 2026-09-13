@@ -28,7 +28,7 @@ sbx secret set uniform
 
 sbx prompts for the key and stores it in its secret store (the OS keychain).
 
-## 3. Add the project ID to your .sbxenv.yaml
+## 3. Add the project ID to your sbxenv.yaml
 
 The project ID is not a secret. Pass it to the sandbox in the `env:` block —
 never as a project `.env` file, which the kit's env guard removes:
@@ -58,7 +58,7 @@ for research; API calls fail with 401 until you register a key.
 
 ## EU region teams
 
-Also set these in your `.sbxenv.yaml` `env:` block:
+Also set these in your `sbxenv.yaml` `env:` block:
 
 ```yaml
 env:

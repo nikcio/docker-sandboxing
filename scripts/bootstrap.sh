@@ -107,7 +107,7 @@ done
 cat <<EOF
 
 Done. Develop the kits/mixins in a sandbox:
-  sbx env run                    # from this repo root (uses ./.sbxenv.yaml, local kits)
+  sbx env run                    # from this repo root (uses ./sbxenv.yaml, local kits)
   ./scripts/new-sandbox.sh       # wizard launcher for any workspace
 
 Tip: kit changes only apply to NEW sandboxes. Recreate with:

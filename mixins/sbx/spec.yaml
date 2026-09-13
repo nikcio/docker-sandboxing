@@ -1,30 +1,13 @@
-# sbx mixin: the Docker Sandboxes CLI (`sbx`) inside the sandbox, for kit
-# authoring (validate/inspect/pack) from within a sandbox.
-#
-# Sandbox lifecycle commands (`sbx run/create`, template load) fail inside
-# the sandbox VM — they need KVM and a signed-in Docker account. Needs the
-# apt mixin for the Ubuntu archive reads at install time.
 schemaVersion: "2"
 kind: mixin
 name: sbx
 displayName: sbx CLI (Docker Sandboxes)
 description: >
-  Installs the Docker Sandboxes CLI (docker-sbx) from Docker's apt repo so
-  the agent can validate/inspect/pack kits and mixins from inside the
-  sandbox. Needs the apt mixin for the Ubuntu archive reads at install
-  time. Composes on any base template image: the install step is skipped
-  when the template already has the sbx CLI.
+  Installs the Docker Sandboxes CLI (docker-sbx).
 version: 0.2.1
 
 setup:
   install:
-    # Guarded so the mixin composes on any base template image (skips when
-    # docker-sbx is already there). The apt repo entry is kept
-    # (download.docker.com is allowed) so the agent can upgrade docker-sbx
-    # later. The update+install run against a private lists dir: the apt
-    # mixin's background `apt-get update` startup hook may still hold
-    # /var/lib/apt/lists/lock (apt-get update has no lock-wait option), and
-    # this install only needs the dpkg + archives locks.
     - command: >
         if command -v sbx >/dev/null 2>&1; then exit 0; fi
         && install -m 0755 -d /etc/apt/keyrings
@@ -41,6 +24,3 @@ permissions:
     allow:
       # Docker apt repo (docker-sbx package + keyring; kept for upgrades)
       - download.docker.com:443
-
-# Agent memory note: files/home/.sbx-agents.d/sbx.md (appended to the
-# sandbox AGENTS.md by the kit entrypoint).

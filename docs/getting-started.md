@@ -42,7 +42,7 @@ The command opens a browser for Docker OAuth.
 ## 3. Copy the example for your stack
 
 Copy the example matching your stack into your project's root and rename it
-`.sbxenv.yaml`. Commit it so teammates get the same sandbox.
+`sbxenv.yaml`. Commit it so teammates get the same sandbox.
 
 | Your stack | Copy this example |
 | ---------- | ----------------- |
@@ -54,7 +54,7 @@ Copy the example matching your stack into your project's root and rename it
 
 ## 4. Adjust the config to your project
 
-In `.sbxenv.yaml`:
+In `sbxenv.yaml`:
 
 | Setting | What to do |
 | ------- | ---------- |
