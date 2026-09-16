@@ -14,7 +14,7 @@ Zeldoc — swap the `zeldoc` line for `copilot`, or keep both:
 
 ```yaml
 kits:
-  # ...kit + base + opencode-runtime + opencode-update + stack mixins...
+  # ...kit + agents-md + opencode-update + stack mixins...
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/copilot&ref=<same ref as the other mixins>
 ```
 
@@ -67,7 +67,7 @@ Details: [mixins.md](mixins.md).
   auth headers to `github.com`/`api.github.com` and can clobber
   opencode's own Copilot auth headers. Remove the stored PAT
   (`sbx secret rm github`), sign in again, and store the PAT afterwards
-  only if git/`gh` auth still works.
+  only if git push still works.
 - **A model reports an error** — plan limitation or model rename; pick
   another with `/models`.
 - **Blocked hosts** — check `sbx policy log` and see

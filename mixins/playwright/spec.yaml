@@ -16,11 +16,11 @@ setup:
           { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
           apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
           export NVM_DIR=/home/agent/.nvm;
-          git clone -q --depth 1 --branch v0.40.3 https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+          git clone -q --depth 1 --branch v0.40.7 https://github.com/nvm-sh/nvm.git "$NVM_DIR";
           unset NPM_CONFIG_PREFIX;
           . "$NVM_DIR/nvm.sh";
-          nvm install 22;
-          nvm alias default 22;
+          nvm install 24;
+          nvm alias default 24;
           nvm use default;
           NODE_BIN="$(find "$NVM_DIR"/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)";
           for b in node npm npx corepack; do if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/usr/local/bin/$b"; fi; done;

@@ -10,7 +10,7 @@ own rules.
 | File | Lives | Written by |
 | ---- | ----- | ---------- |
 | Project rules | `AGENTS.md` in your repo root | You — commit it with the repo |
-| Sandbox environment file | Next to the workspace folder, outside your repo | Generated at sandbox start: shared base + one note per mixin |
+| Sandbox environment file | Next to the workspace folder, outside your repo | Generated at sandbox start: sandbox baseline + one note per mixin |
 | Global rules | `~/.config/opencode/AGENTS.md` on your host | You — personal, not committed |
 
 ## Which one the agent loads
@@ -33,14 +33,13 @@ If `AGENTS.md` and `CLAUDE.md` sit at the same level, only the
 
 ## What the sandbox environment file contains
 
-The entrypoint runtime (shipped by the `base` mixin,
-`mixins/base/` in the docker-sandboxing repo, and exec'd by every OpenCode
-kit's entrypoint) sources the base mixin's rebuild hook before opencode
-starts, rebuilding the file from:
+The `agents-md` mixin (`mixins/agents-md/` in the docker-sandboxing
+repo, composed by every kit's `kits:` list) rebuilds the file in a
+startup command before opencode starts, from:
 
-- the shared base (`mixins/base/files/home/.sandbox-agents.md`) —
-  environment facts plus an index of guidance files (network blocks, git
-  auth, workspace mode, persistent shell);
+- the sandbox baseline (`mixins/agents-md/files/home/.sandbox-agents.md`)
+  — environment facts plus an index of guidance files (network blocks,
+  git auth, workspace mode, persistent shell);
 - one note per composed mixin (`mixins/<area>/files/home/.sbx-agents.d/<area>.md`
   in the docker-sandboxing repo);
 - the runtime's Kits index section, preserved across rebuilds.

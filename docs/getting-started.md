@@ -59,7 +59,7 @@ In `sbxenv.yaml`:
 | Setting | What to do |
 | ------- | ---------- |
 | `name:` | A unique name for this sandbox (used to scope its secrets). |
-| `kits:` | Drop the mixin lines your project doesn't need, but keep `base` (every kit requires it) and add `global-opencode-config` when using a model provider (`zeldoc`, `copilot` — their config fragments only merge through it). See [mixins.md](mixins.md). Need project-specific settings (private feeds, env vars, agent notes)? See [project-kit.md](project-kit.md). |
+| `kits:` | Drop the mixin lines your project doesn't need, but keep `agents-md` (every kit requires it) and add `global-opencode-config` when using a model provider (`zeldoc`, `copilot` — their config fragments only merge through it). See [mixins.md](mixins.md). Need project-specific settings (private feeds, env vars, agent notes)? See [project-kit.md](project-kit.md). |
 | `workspace.path:` | Leave as is — it targets your repo. Point it elsewhere only if the env file sits outside the project. |
 
 ## 5. Run it
@@ -70,10 +70,9 @@ From your project root:
 sbx env run
 ```
 
-The sandbox starts, prints a banner, and launches OpenCode automatically.
+The sandbox starts and launches OpenCode automatically.
 Quitting OpenCode drops you into the sandbox's login shell (git, builds,
-`dotnet`/`pnpm`, …) — relaunch OpenCode anytime with `o`, and exit the shell
-when you're done with the sandbox.
+`dotnet`/`pnpm`, …) — exit the shell when you're done with the sandbox.
 
 ## Before the first run: pick a model provider
 
