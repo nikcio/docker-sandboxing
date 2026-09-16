@@ -16,7 +16,7 @@ Copy the example matching your stack into your project's root and rename it
 
 | Your stack | Copy this example |
 | ---------- | ----------------- |
-| .NET + Node.js | [`examples/opencode-node-dotnet.sbxenv.yaml`](examples/opencode-node-dotnet.sbxenv.yaml) |
+| .NET | [`examples/opencode-dotnet.sbxenv.yaml`](examples/opencode-dotnet.sbxenv.yaml) |
 | Node.js | [`examples/opencode-node.sbxenv.yaml`](examples/opencode-node.sbxenv.yaml) |
 | Python + uv | [`examples/opencode-python.sbxenv.yaml`](examples/opencode-python.sbxenv.yaml) |
 | Go | [`examples/opencode-go.sbxenv.yaml`](examples/opencode-go.sbxenv.yaml) |
@@ -99,7 +99,7 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 Everything below is for developing the template, kit, and mixins.
 
 ```text
-├── template-node-dotnet/Dockerfile   # → opencode-node-dotnet:v1: .NET SDK, Node via NVM, PNPM, Playwright
+├── template-dotnet/Dockerfile   # → opencode-dotnet:v1: .NET SDK, Node via NVM, PNPM, Playwright
 ├── template-node/Dockerfile          # → opencode-node:v1: Node via NVM, PNPM, Playwright
 ├── template-python/Dockerfile        # → opencode-python:v1: uv-managed CPython, uv, Node via NVM, PNPM, Playwright
 ├── template-go/Dockerfile            # → opencode-go:v1: official Go toolchain (GO_VERSION build-arg,
@@ -110,7 +110,7 @@ Everything below is for developing the template, kit, and mixins.
 │                                     #   Node via NVM, PNPM, Playwright
 ├── kit-<stack>/                      # sandbox kits (kind: sandbox): one per stack template —
 ├── kit-node/                         #   same shape as kit/ (image + opencode entrypoint),
-├── kit-node-dotnet/                  #   with the stack image from Docker Hub
+├── kit-dotnet/                  #   with the stack image from Docker Hub
 ├── kit-python/
 ├── kit-go/
 ├── kit-rust/

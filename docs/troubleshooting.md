@@ -57,7 +57,7 @@ sandbox):
 
 - **Kit/mixin spec changes** apply only to new sandboxes — recreate with
   `sbx rm <name>` + `sbx env run`. While iterating on a clone, point the
-  `kits:` lines at local directories (e.g. `./kit-node-dotnet`)
+  `kits:` lines at local directories (e.g. `./kit-dotnet`)
   instead of git refs.
 - **Template (Dockerfile) changes** need a rebuild and reload, then a
   sandbox recreation — build the template with `docker build` and load it

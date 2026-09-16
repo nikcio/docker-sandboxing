@@ -1,4 +1,4 @@
-# OpenCode sandbox environment (.NET + Node).
+# OpenCode sandbox environment (.NET).
 #
 # 1. Copy this file into your project's root and rename it sbxenv.yaml
 #    (commit it so teammates get the same sandbox).
@@ -11,13 +11,13 @@
 
 schemaVersion: "1"
 name: my-project
-agent: opencode-node-dotnet
+agent: opencode-dotnet
 
 # The sandbox kit plus the mixins your project needs. Refs are pinned to the
 # latest release; release-please bumps them (do not edit by hand).
 # x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-node-dotnet&ref=v1.1.2     # agent definition (published image)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-dotnet&ref=v1.1.2     # agent definition (published image)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/agents-md&ref=v1.1.2              # sandbox AGENTS.md baseline (required by the kit)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v1.1.2 # permissive OpenCode config + provider merge (required with model providers)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v1.1.2              # workspace .env guard

@@ -6,7 +6,7 @@
       "extra-files": [
         {
           "type": "generic",
-          "path": "kit-node-dotnet/spec.yaml"
+          "path": "kit-dotnet/spec.yaml"
         },
         {
           "type": "generic",
@@ -26,7 +26,7 @@
         },
         {
           "type": "generic",
-          "path": "examples/opencode-node-dotnet.sbxenv.yaml"
+          "path": "examples/opencode-dotnet.sbxenv.yaml"
         },
         {
           "type": "generic",

@@ -95,7 +95,7 @@ of the stock mixins.
 
    ```yaml
    kits:
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-node-dotnet&ref=v0.6.0
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-dotnet&ref=v0.6.0
      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/agents-md&ref=v0.6.0
      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0

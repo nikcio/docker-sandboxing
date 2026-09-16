@@ -1,9 +1,9 @@
 schemaVersion: "2"
 kind: sandbox
-name: opencode-node-dotnet
-displayName: OpenCode (.NET + Node)
+name: opencode-dotnet
+displayName: OpenCode (.NET)
 
-# Sandbox kit: OpenCode agent on the node-dotnet template.
+# Sandbox kit: OpenCode agent on the dotnet template.
 #
 # Same shape as ../kit/ (the base kit) — the only differences are the
 # stack template image and the name/displayName. The stack tooling is
@@ -18,7 +18,7 @@ version: 1.1.2
 sandbox:
   # Public image on Docker Hub, pushed by the publish-image workflow
   # (full docker.io prefix — sbx does not resolve the Docker Hub domain).
-  image: docker.io/nikcio/opencode-node-dotnet:v1.1.2
+  image: docker.io/nikcio/opencode-dotnet:v1.1.2
 # x-release-please-end-version
   entrypoint: [opencode]
 
