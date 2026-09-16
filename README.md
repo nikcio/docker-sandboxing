@@ -108,12 +108,12 @@ Everything below is for developing the template, kit, and mixins.
 ├── template-rust/Dockerfile          # → opencode-rust:v1: rustup-managed stable toolchain
 │                                     #   (clippy + rustfmt + rust-analyzer), cargo, C build toolchain,
 │                                     #   Node via NVM, PNPM, Playwright
-├── kit-published-<stack>/            # sandbox kits (kind: sandbox): template image + one-line
-├── kit-published-node/               #   entrypoint wrapper that execs the shared runtime from the
-├── kit-published-node-dotnet/        #   agents-md mixin (mixin hooks → auto-start opencode → login shell
-├── kit-published-python/             #   on exit); errors clearly when that mixin is missing
-├── kit-published-go/
-├── kit-published-rust/
+├── kit-<stack>/                      # sandbox kits (kind: sandbox): one per stack template —
+├── kit-node/                         #   same shape as kit/ (image + opencode entrypoint),
+├── kit-node-dotnet/                  #   with the stack image from Docker Hub
+├── kit-python/
+├── kit-go/
+├── kit-rust/
 ├── mixins/
 │   ├── agents-md/                    # the sandbox AGENTS.md baseline: guidance files
 │   │                                 #   (~/.sandbox-agents.md + ~/.sandbox-agents/*.md) and the
@@ -127,7 +127,8 @@ Everything below is for developing the template, kit, and mixins.
 │                                     #   rules, env vars, credentials, install steps, agent
 │   │                                 #   memory note (.sbx-agents.d/<area>.md) — composed
 │                                     #   explicitly at launch (--kit flags or kits: list)
-├── kit/spec.yaml                     # the dev kit used by this repo's own sbxenv.yaml
+├── kit/                              # the base kit (docker/sandbox-templates image), used by
+│                                     #   this repo's own sbxenv.yaml
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack)
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
@@ -146,7 +147,7 @@ Work in a git worktree branched from `main`
 sessions share this checkout concurrently.
 
 ```bash
-sbx kit validate kit-published-node/   # validate a kit or mixin after edits
+sbx kit validate kit-node/             # validate a kit or mixin after edits
 sbx env run                   # dev sandbox: kit/ + mixins/ loaded from the working copy
 ```
 

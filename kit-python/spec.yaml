@@ -1,0 +1,26 @@
+schemaVersion: "2"
+kind: sandbox
+name: opencode-python
+displayName: OpenCode (Python)
+
+# Sandbox kit: OpenCode agent on the python template.
+#
+# Same shape as ../kit/ (the base kit) — the only differences are the
+# stack template image and the name/displayName. The stack tooling is
+# baked into the image, so no extra mixins are required; compose the
+# mixins from ../mixins/ to add capabilities (model provider, network
+# areas, workflow rules). See ../docs/.
+#
+# The version and the image tag are bumped together by release-please.
+# x-release-please-start-version
+version: 1.1.2
+
+sandbox:
+  # Public image on Docker Hub, pushed by the publish-image workflow
+  # (full docker.io prefix — sbx does not resolve the Docker Hub domain).
+  image: docker.io/nikcio/opencode-python:v1.1.2
+# x-release-please-end-version
+  entrypoint: [opencode]
+
+agentInstructions:
+  filename: AGENTS.md

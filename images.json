@@ -4,27 +4,27 @@
     {
       "name": "opencode-node-dotnet",
       "context": "template-node-dotnet",
-      "spec": "kit-published-node-dotnet/spec.yaml"
+      "spec": "kit-node-dotnet/spec.yaml"
     },
     {
       "name": "opencode-node",
       "context": "template-node",
-      "spec": "kit-published-node/spec.yaml"
+      "spec": "kit-node/spec.yaml"
     },
     {
       "name": "opencode-python",
       "context": "template-python",
-      "spec": "kit-published-python/spec.yaml"
+      "spec": "kit-python/spec.yaml"
     },
     {
       "name": "opencode-go",
       "context": "template-go",
-      "spec": "kit-published-go/spec.yaml"
+      "spec": "kit-go/spec.yaml"
     },
     {
       "name": "opencode-rust",
       "context": "template-rust",
-      "spec": "kit-published-rust/spec.yaml"
+      "spec": "kit-rust/spec.yaml"
     }
   ]
 }
