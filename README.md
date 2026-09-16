@@ -38,9 +38,8 @@ From your project root:
 sbx env run
 ```
 
-OpenCode starts automatically. Quitting it drops you into the sandbox's login
-shell (git, builds, `dotnet`/`pnpm`, …) — exit the shell when you're done with
-the sandbox.
+OpenCode starts automatically. When you quit it, the sandbox exits — rerun
+`sbx env run` whenever you want it back.
 
 Full walkthrough (prerequisites, first run, daily use):
 [docs/getting-started.md](docs/getting-started.md).

@@ -10,11 +10,9 @@
 # rm -f -- on the found path only (never the symlink's target): deleting
 # a symlink removes the link, not the file it points at.
 #
-# Optional — compose it to enforce the no-.env policy. Pairs with
-# mixins/base (entrypoint runtime + MCP gateway) and
+# Optional — compose it to enforce the no-.env policy. Pairs with the
 # mixins/global-opencode-config (permissive OpenCode config + provider
-# merge); mixins/banner adds the startup banner. No network rules:
-# capability egress comes from the other mixins.
+# merge). No network rules: capability egress comes from the other mixins.
 schemaVersion: "2"
 kind: mixin
 name: env-guard

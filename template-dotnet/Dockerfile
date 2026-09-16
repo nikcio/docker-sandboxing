@@ -29,7 +29,6 @@ RUN apt-get update \
     && apt-get purge -y gh \
     && rm -rf /var/lib/apt/lists/*
 
-USER root
 RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \
     && chmod +x /tmp/dotnet-install.sh \
     && /tmp/dotnet-install.sh --channel "${DOTNET_CHANNEL}" --install-dir "${DOTNET_ROOT}" \

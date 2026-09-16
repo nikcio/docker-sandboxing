@@ -70,9 +70,8 @@ From your project root:
 sbx env run
 ```
 
-The sandbox starts and launches OpenCode automatically.
-Quitting OpenCode drops you into the sandbox's login shell (git, builds,
-`dotnet`/`pnpm`, …) — exit the shell when you're done with the sandbox.
+The sandbox starts and launches OpenCode automatically. When you quit
+OpenCode, the sandbox exits — rerun `sbx env run` whenever you want it back.
 
 ## Before the first run: pick a model provider
 

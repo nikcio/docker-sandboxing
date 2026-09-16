@@ -3,7 +3,8 @@ kind: mixin
 name: opencode-update
 displayName: OpenCode update
 description: >
-  Updates opencode to the latest version on startup.
+  Rolls opencode to the newest npm release at sandbox creation (the
+  template images bake a fixed opencode version).
 version: 0.1.0
 
 setup:
