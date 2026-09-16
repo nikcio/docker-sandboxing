@@ -5,7 +5,7 @@ agent: opencode-custom
 kits:
   - ./kit
   - ./mixins/global-opencode-config
-  - ./mixins/update-opencode
+  - ./mixins/opencode-update
   - ./mixins/zeldoc
   - ./mixins/github-cli
   - ./mixins/docker-hub
