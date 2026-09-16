@@ -30,7 +30,9 @@ start; no network rules.
   `~/.config/opencode/mixins.d/*.{json,jsonc}` fragment into the combined
   config with `jq`:
   - Objects merge recursively; later fragments win scalar conflicts.
-  - `enabled_mixins` / `disabled_mixins` lists are unioned.
+  - Array-valued keys whose name starts with `enabled_` or `disabled_`
+    (e.g. `enabled_mixins`, `enabled_providers`) are unioned — that is
+    what lets mixins compose (`zeldoc` + `copilot` both stay enabled).
   - Comment-bearing `.jsonc` fragments are rejected — fragments must be
     comment-free `.json`.
   - No fragments (or a missing directory) yields the minimal valid config,

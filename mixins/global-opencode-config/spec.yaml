@@ -3,8 +3,8 @@ kind: mixin
 name: global-opencode-config
 displayName: Global OpenCode config
 description: >
-  Adds permissive opencode config and the ability to merge configs from other mixins using fragments.
-version: 0.4.0
+  Adds permissive opencode config and the ability to merge configs from other mixins using fragments (enabled_*/disabled_* lists union).
+version: 0.4.1
 
 environment:
   variables:
@@ -67,17 +67,18 @@ setup:
                   fi
               done
               # Object values merge recursively; later fragments win scalar
-              # conflicts (jq's `*`), while the mixins allow/deny lists union.
+              # conflicts (jq's `*`). Array-valued keys whose name starts
+              # with "enabled_" or "disabled_" (e.g. enabled_mixins,
+              # enabled_providers) are unioned instead — that is what lets
+              # mixins compose (zeldoc + copilot both stay enabled).
               jq -s '
+                def unionkey:
+                  [keys[] | select(test("^enabled_|^disabled_"))] | .[];
                 reduce .[] as $f (
                   {};
                   (. * $f)
-                  + (if ($f | has("enabled_mixins")) then
-                      {enabled_mixins: (((.enabled_mixins // []) + $f.enabled_mixins) | unique)}
-                    else {} end)
-                  + (if ($f | has("disabled_mixins")) then
-                      {disabled_mixins: (((.disabled_mixins // []) + $f.disabled_mixins) | unique)}
-                    else {} end)
+                  + (reduce ($f | unionkey) as $k ({};
+                      .[$k] = (((.[$k] // []) + ($f[$k] // [])) | unique))))
                 )
               ' "${fragments[@]}" > "$tmp"
           elif [ "${#fragments[@]}" -eq 1 ]; then
