@@ -1,43 +1,13 @@
-# Rust mixin: crates.io/cargo egress, rustup dist egress, agent notes,
-# and the check-and-install step so the mixin composes on any base
-# template image (installs Rust via rustup only when the template lacks
-# cargo).
 schemaVersion: "2"
 kind: mixin
 name: rust
 displayName: Rust / cargo
 description: >
-  Network rules for the Rust toolchain: the crates.io index/API and its
-  package CDN for cargo downloads, the rustup dist server for toolchain and
-  component installs plus `rustup update`, the sh.rustup.rs installer
-  (reinstalling rustup in-sandbox gets a newer release than the one baked
-  into the image, and the check-and-install step on templates without
-  Rust uses it too), and the Rust docs sites so the agent can look up
-  language and crate docs (doc.rust-lang.org, docs.rs).
-  Git dependencies and rustup's script host redirect reuse the git mixin's
-  GitHub egress. Composes on any base template image: a setup.install
-  step installs rustup + the default toolchain only when the template
-  doesn't already have cargo.
+  Adds a Rust toolchain to the sandbox, with cargo for building and managing Rust packages.
 version: 0.3.0
 
 setup:
   install:
-    # Check-and-install: a no-op on template-rust (and any image with
-    # cargo on PATH); on other base images it installs rustup + the
-    # default toolchain (same agent-owned RUSTUP_HOME/CARGO_HOME layout
-    # as template-rust). Needs this mixin's rustup egress plus the apt
-    # mixin for the OS packages on bare bases. The update+install run
-    # against a private lists dir: install steps race the apt mixin's
-    # background `apt-get update` startup hook for /var/lib/apt/lists/
-    # lock (apt-get update has no lock-wait option); a private dir needs
-    # only the dpkg + archives locks, and a failing repo in the image's
-    # sources (e.g. the base image's docker.list) only exits 100 without
-    # losing the fetched lists. build-essential + pkg-config + libssl-dev
-    # are what cargo links against (libssl for openssl-sys crates).
-    # /etc/sandbox-persistent.sh is sourced before every bash command and
-    # in login shells. The /usr/local/bin symlinks are rustup proxies:
-    # they resolve the toolchain through RUSTUP_HOME (agent-owned, not in
-    # the root step env), so the cargo verification passes it explicitly.
     - command: >
         set -e;
         if command -v cargo >/dev/null 2>&1; then exit 0; fi;
@@ -59,11 +29,14 @@ permissions:
       # wildcard also covers index.crates.io (the sparse index cargo uses)
       - crates.io:443
       - "*.crates.io:443"
+      
       # Package files served from the crates.io CDN
       - static.crates.io:443
+      
       # rustup: toolchain + component downloads, `rustup update` and
       # `rustup toolchain install`
       - static.rust-lang.org:443
+      
       # rustup installer (`curl -fsSL https://sh.rustup.rs | sh`) — the
       # short link redirects the installer script to
       # raw.githubusercontent.com, which is covered by the git mixin
@@ -72,11 +45,9 @@ permissions:
       # static.rust-lang.org above
       - sh.rustup.rs:443
       - raw.githubusercontent.com:443
+      
       # Rust docs and release info for agent lookups (doc.rust-lang.org,
       # www.rust-lang.org, editions and release notes) + crate docs (docs.rs)
       - rust-lang.org:443
       - "*.rust-lang.org:443"
       - docs.rs:443
-
-# Agent memory note: files/home/.sbx-agents.d/rust.md (appended to the
-# sandbox AGENTS.md by the kit entrypoint).

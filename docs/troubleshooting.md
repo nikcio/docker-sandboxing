@@ -18,16 +18,12 @@ sbx rm <sandbox-name>
 sbx env run
 ```
 
-## Git push / `gh` fails with auth errors
+## Git push fails with auth errors
 
 GitHub auth is not configured for this sandbox — store a fine-grained PAT
 on your host (see [github-pat.md](github-pat.md)); it takes effect
 immediately, no restart needed. Cloning public repos (read-only) and git
 over SSH keep working without a token — pushing over HTTPS never does.
-
-`gh auth status` showing "not logged in" inside the sandbox is expected —
-the sandbox only sees a placeholder token; the real one is injected by the
-proxy.
 
 ## GitHub Copilot sign-in fails
 
@@ -36,7 +32,7 @@ Copilot signs in with the OAuth device flow (`/connect` in the TUI — see
 stored for the sandbox, the PAT injection into `github.com`/`api.github.com`
 requests can override opencode's own Copilot auth headers — remove the
 stored PAT (`sbx secret rm github`), sign in again, and re-store the PAT
-only if git/`gh` auth still works.
+only if git push still works.
 
 ## The agent uses the wrong model
 
@@ -61,15 +57,15 @@ sandbox):
 
 - **Kit/mixin spec changes** apply only to new sandboxes — recreate with
   `sbx rm <name>` + `sbx env run`. While iterating on a clone, point the
-  `kits:` lines at local directories (e.g. `./kit-node-dotnet`) instead of
-  git refs.
+  `kits:` lines at local directories (e.g. `./kit-dotnet`)
+  instead of git refs.
 - **Template (Dockerfile) changes** need a rebuild and reload, then a
-  sandbox recreation. From a clone of this repo:
-  `./scripts/bootstrap.sh` (or `bootstrap.ps1`).
+  sandbox recreation — build the template with `docker build` and load it
+  with `sbx template load`.
 
 ## The agent's dev server is not reachable from my host
 
-Publish the port in your `.sbxenv.yaml`:
+Publish the port in your `sbxenv.yaml`:
 
 ```yaml
 ports:

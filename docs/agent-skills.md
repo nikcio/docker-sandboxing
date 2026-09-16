@@ -42,8 +42,8 @@ name, the first source wins):
 - OpenCode loads global skills from `~/.config/opencode/skills/`,
   `~/.claude/skills/`, and `~/.agents/skills/` — skills imported from the
   Claude-compatible and agent-compatible sources are the ones it picks up.
-- Skills load per session: after importing, quit opencode and relaunch it
-  with `o` to pick up new skills.
+- Skills load per session: after importing, quit opencode and start it again
+  to pick up new skills.
 - Project skills need no import: an `.opencode/skills/<name>/SKILL.md`
   folder in your repo arrives with the workspace, and the global config
   layer (from the `global-opencode-config` mixin) already allows the

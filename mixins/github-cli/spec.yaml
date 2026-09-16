@@ -1,0 +1,55 @@
+schemaVersion: "2"
+kind: mixin
+name: github-cli
+displayName: GitHub CLI
+description: >
+  Installs Github CLI
+version: 0.3.0
+
+setup:
+  install:
+    - command: >
+        if command -v gh >/dev/null 2>&1; then exit 0; fi
+        && install -m 0755 -d /etc/apt/keyrings
+        && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /etc/apt/keyrings/githubcli-archive-keyring.gpg
+        && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+        && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
+        && install -m 0755 -d /var/lib/apt/sbx-lists
+        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq
+        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends gh
+        && rm -rf /var/lib/apt/sbx-lists
+      description: Install the gh CLI (skipped when the template image already has it)
+
+credentials:
+  - service: github
+    description: >
+      GitHub personal access token for the gh CLI and git over HTTPS.
+      Use a fine-grained PAT scoped to only the repositories and
+      permissions the agent needs.
+    required: false
+    apiKey:
+      name: GH_TOKEN
+      proxyManaged: true
+      inject:
+        - domain: api.github.com
+          header: Authorization
+          format: Bearer %s
+        - domain: github.com
+          header: Authorization
+          format: Bearer %s
+        - domain: uploads.github.com
+          header: Authorization
+          format: Bearer %s
+        - domain: raw.githubusercontent.com
+          header: Authorization
+          format: Bearer %s
+
+permissions:
+  network:
+    allow:
+      # gh CLI apt repo (package + keyring; kept for upgrades)
+      - cli.github.com:443
+
+      - github.com
+      - "*.github.com"
+      - "*.githubusercontent.com"

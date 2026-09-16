@@ -1,42 +1,14 @@
-# Python mixin: PyPI egress, agent notes, and the check-and-install step
-# so the mixin composes on any base template image (installs uv + a
-# uv-managed CPython only when the template lacks a working python3).
 schemaVersion: "2"
 kind: mixin
 name: python
 displayName: Python / uv
 description: >
-  Network rules for the Python toolchain: the PyPI index and package files
-  for uv/pip installs and fetches, astral.sh and its releases.astral.sh
-  redirect/artifact host for the uv installer (reinstalling uv in-sandbox
-  gets a newer release than the one baked into the image; `uv self update`
-  is disabled for unmanaged installs), and the python.org docs sites so
-  the agent can look up language docs and release/version info.
-  Interpreter downloads via `uv python install` reuse the git mixin's
-  GitHub egress. Composes on any base template image: a setup.install
-  step installs uv + CPython only when the template doesn't already have
-  a working python3.
+  Adds a uv-managed Python interpreter to the sandbox, with the uv tool for
+  package and venv management.
 version: 0.3.0
 
 setup:
   install:
-    # Check-and-install: a no-op on template-python (and any image with a
-    # working python3); on other base images it installs uv + a uv-managed
-    # CPython (same paths and versions as template-python). Needs the
-    # python mixin's own egress (astral.sh) plus the apt mixin for the OS
-    # packages on bare bases. The update+install run against a private
-    # lists dir: install steps race the apt mixin's background
-    # `apt-get update` startup hook for /var/lib/apt/lists/lock (apt-get
-    # update has no lock-wait option); a private dir needs only the dpkg
-    # + archives locks, and a failing repo in the image's sources (e.g.
-    # the base image's docker.list) only exits 100 without losing the
-    # fetched lists. The uv-managed interpreter goes in the agent's home
-    # and is symlinked onto /usr/local so root and agent both resolve it.
-    # /etc/sandbox-persistent.sh is sourced before every bash command and
-    # in login shells. Debian bases need python3-venv for stdlib
-    # venv/ensurepip; the uv-managed interpreter already bundles it, and
-    # the apt install only fills the gap for interpreter-less bases that
-    # fall back to a distro python3.
     - command: >
         set -e;
         if command -v python3 >/dev/null 2>&1 && python3 -m ensurepip --version >/dev/null 2>&1; then exit 0; fi;
@@ -62,9 +34,11 @@ permissions:
       # PyPI (uv/pip installs, index queries)
       - pypi.org:443
       - "*.pypi.org:443"
+      
       # Package files served from the PyPI CDN
       - files.pythonhosted.org:443
       - "*.pythonhosted.org:443"
+      
       # uv installer (`curl -LsSf https://astral.sh/uv/install.sh | sh`) —
       # astral.sh 301-redirects the installer script to releases.astral.sh,
       # which is also the installer's primary artifact host (binaries fall
@@ -72,10 +46,8 @@ permissions:
       # the check-and-install step on templates without python.
       - astral.sh:443
       - releases.astral.sh:443
+      
       # Python docs and release info for agent lookups (docs.python.org,
       # www.python.org/ftp, devguide.python.org lifecycles, peps.python.org)
       - python.org:443
       - "*.python.org:443"
-
-# Agent memory note: files/home/.sbx-agents.d/python.md (appended to the
-# sandbox AGENTS.md by the kit entrypoint).

@@ -12,11 +12,11 @@ API keys are injected by a proxy — the sandbox only ever sees placeholders.
 ### 1. Copy the example for your stack
 
 Copy the example matching your stack into your project's root and rename it
-`.sbxenv.yaml`. Commit it so teammates get the same sandbox.
+`sbxenv.yaml`. Commit it so teammates get the same sandbox.
 
 | Your stack | Copy this example |
 | ---------- | ----------------- |
-| .NET + Node.js | [`examples/opencode-node-dotnet.sbxenv.yaml`](examples/opencode-node-dotnet.sbxenv.yaml) |
+| .NET | [`examples/opencode-dotnet.sbxenv.yaml`](examples/opencode-dotnet.sbxenv.yaml) |
 | Node.js | [`examples/opencode-node.sbxenv.yaml`](examples/opencode-node.sbxenv.yaml) |
 | Python + uv | [`examples/opencode-python.sbxenv.yaml`](examples/opencode-python.sbxenv.yaml) |
 | Go | [`examples/opencode-go.sbxenv.yaml`](examples/opencode-go.sbxenv.yaml) |
@@ -38,9 +38,8 @@ From your project root:
 sbx env run
 ```
 
-OpenCode starts automatically. Quitting it drops you into the sandbox's login
-shell (git, builds, `dotnet`/`pnpm`, …) — relaunch opencode anytime with `o`,
-and exit the shell when you're done with the sandbox.
+OpenCode starts automatically. When you quit it, the sandbox exits — rerun
+`sbx env run` whenever you want it back.
 
 Full walkthrough (prerequisites, first run, daily use):
 [docs/getting-started.md](docs/getting-started.md).
@@ -57,7 +56,7 @@ Full walkthrough (prerequisites, first run, daily use):
 | [Set your Omnium API token](docs/omnium-api-key.md) | create an Omnium API user, mint and refresh the bearer token |
 | [Mixins](docs/mixins.md) | what each mixin adds, common sets, changing them |
 | [Project-specific config](docs/project-kit.md) | an in-project kit: project feeds, env vars, files, agent notes |
-| [Local overrides](docs/local-overrides.md) | personal settings in a gitignored `local.sbxenv.yaml`, merged over the team's `.sbxenv.yaml` |
+| [Local overrides](docs/local-overrides.md) | personal settings in a gitignored `local.sbxenv.yaml`, merged over the team's `sbxenv.yaml` |
 | [Agent skills](docs/agent-skills.md) | share your host's global agent skills with the sandboxed agent (`sbx skills import`) |
 | [Agent memory](docs/agents-md.md) | which `AGENTS.md` the agent loads, the sandbox environment file, where to put your rules |
 | [Troubleshooting](docs/troubleshooting.md) | blocked downloads, git auth, the .env guard, stale changes |
@@ -68,17 +67,15 @@ Full walkthrough (prerequisites, first run, daily use):
 
 | Mixin | Adds | Required |
 | ----- | ---- | -------- |
-| `base` | the entrypoint runtime (mixin hook runner, opencode autostart, login shell on exit), agent guidance (shared `AGENTS.md` base + guidance files), the AGENTS.md rebuild hook, MCP gateway registration | every kit |
+| `agents-md` | sandbox `AGENTS.md` baseline (guidance files + per-mixin notes) | every kit |
 | `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`zeldoc`, `copilot`) |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
-| `banner` | the startup banner | optional |
-| `opencode-runtime` | egress the agent itself needs (updates, models.dev, plugins) | — |
-| `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress, overlapping `opencode-runtime`'s rules union) — add the kit line for fresh opencode on every sandbox | opt-in |
+| `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
 | `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
+| `github-cli` | GitHub CLI (`gh`) + proxy-managed GitHub auth | — |
 | `uniform` | Uniform DXP egress: docs, dashboard + Management API, Edge Delivery API (incl. EU + image CDN), proxy-managed `x-api-key` | — |
 | `omnium` | Omnium OMS/e-commerce API egress (proxy-managed bearer token) | — |
-| `git` | git hosting egress, proxy-managed GitHub auth, worktree workflow | — |
 | `node` | nodejs.org + npm registry egress | — |
 | `openapi-ts` | openapi-ts.dev docs egress (openapi-typescript / openapi-fetch) | — |
 | `dotnet` | NuGet/Microsoft egress, telemetry opt-out | — |
@@ -86,11 +83,11 @@ Full walkthrough (prerequisites, first run, daily use):
 | `python` | PyPI egress for uv/pip | — |
 | `go` | Go module proxy + checksum DB egress (`go get`/`go install`, GOTOOLCHAIN downloads) | — |
 | `rust` | crates.io + rustup egress for cargo | — |
-| `docker` | registry egress for the in-sandbox Docker engine | — |
-| `apt` | Ubuntu/Microsoft package mirrors for `sudo apt-get` + background package-cache update at start | — |
+| `docker-hub` / `gcr` / `ghcr` / `mcr` | registry egress for the in-sandbox Docker engine, per registry | — |
 | `browser` | Google Chrome install (software only) | — |
-| `playwright` / `playwright-chromium` / `playwright-all` | Playwright + the listed browsers | needs `apt` |
-| `sbx` | the `sbx` CLI inside the sandbox (kit authoring) | needs `apt` |
+| `playwright` | Playwright + the Chromium headless shell | — |
+| `sbx` | the `sbx` CLI inside the sandbox (kit authoring) | — |
+| `open-egress` | allows all outbound domains (replaces the deny-by-default baseline) | opt-in |
 
 Full mixin details: [docs/mixins.md](docs/mixins.md).
 
@@ -101,39 +98,36 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 Everything below is for developing the template, kit, and mixins.
 
 ```text
-├── template-node-dotnet/Dockerfile   # → opencode-node-dotnet:v1: .NET SDK, Node LTS via NVM, PNPM
-├── template-node/Dockerfile          # → opencode-node:v1: Node LTS via NVM, PNPM
-├── template-python/Dockerfile        # → opencode-python:v1: uv-managed CPython, uv
+├── template-dotnet/Dockerfile   # → opencode-dotnet:v1: .NET SDK, Node via NVM, PNPM, Playwright
+├── template-node/Dockerfile          # → opencode-node:v1: Node via NVM, PNPM, Playwright
+├── template-python/Dockerfile        # → opencode-python:v1: uv-managed CPython, uv, Node via NVM, PNPM, Playwright
 ├── template-go/Dockerfile            # → opencode-go:v1: official Go toolchain (GO_VERSION build-arg,
-│                                     #   GOTOOLCHAIN=auto for newer toolchains via the module proxy)
+│                                     #   GOTOOLCHAIN=auto for newer toolchains via the module proxy),
+│                                     #   Node via NVM, PNPM, Playwright
 ├── template-rust/Dockerfile          # → opencode-rust:v1: rustup-managed stable toolchain
-│                                     #   (clippy + rustfmt + rust-analyzer), cargo, C build toolchain
-├── kit-node-dotnet/                  # sandbox kit (kind: sandbox): template image + one-line
-├── kit-node/                         #   entrypoint wrapper that execs the shared runtime from the
-├── kit-python/                       #   base mixin (mixin hooks → auto-start opencode → login shell
-├── kit-go/                           #   on exit); errors clearly when that mixin is missing
+│                                     #   (clippy + rustfmt + rust-analyzer), cargo, C build toolchain,
+│                                     #   Node via NVM, PNPM, Playwright
+├── kit-<stack>/                      # sandbox kits (kind: sandbox): one per stack template —
+├── kit-node/                         #   same shape as kit/ (image + opencode entrypoint),
+├── kit-dotnet/                  #   with the stack image from Docker Hub
+├── kit-python/
+├── kit-go/
 ├── kit-rust/
-├── kit-published-<stack>/            # same kits, sandbox.image pinned to the public Docker Hub
-│                                     #   tags — release-please bumps versions + tags; keep in
-│                                     #   sync with kit-<stack>/
 ├── mixins/
-│   ├── base/                         # the shared runtime the kit wrappers exec: the entrypoint
-│   │                                 #   (~/.sandbox-kit/entrypoint.sh), agent guidance
-│   │                                 #   (~/.sandbox-agents/*.md), hooks (agents-md.sh,
-│   │                                 #   mcp-gateway.sh) — what it adds: mixin reference above
+│   ├── agents-md/                    # the sandbox AGENTS.md baseline: guidance files
+│   │                                 #   (~/.sandbox-agents.md + ~/.sandbox-agents/*.md) and the
+│   │                                 #   startup rebuild of the workspace AGENTS.md from it plus
+│   │                                 #   every composed mixin's note (~/.sbx-agents.d/)
 │   ├── global-opencode-config/       # owns OPENCODE_CONFIG: permissive OpenCode config
 │   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
-│   │                                 #   merge (merge-global-opencode-config.sh) fed by
-│   │                                 #   provider mixins' providers.d/ fragments
-│   ├── env-guard/                    # the .env guard hook (hooks.d/env-guard.sh)
-│   ├── banner/                       # the banner hook (hooks.d/banner.sh)
+│   │                                 #   merge fed by provider mixins' mixins.d/ fragments
+│   ├── env-guard/                    # the workspace .env guard (startup command)
 │   └── <area>/                       # one single-purpose mixin per area (kind: mixin): network
 │                                     #   rules, env vars, credentials, install steps, agent
 │   │                                 #   memory note (.sbx-agents.d/<area>.md) — composed
 │                                     #   explicitly at launch (--kit flags or kits: list)
-├── scripts/
-│   ├── bootstrap.ps1 / bootstrap.sh  # local dev setup (build, load, secrets, validate)
-│   └── new-sandbox.ps1 / new-sandbox.sh  # sandbox creation wizard
+├── kit/                              # the base kit (docker/sandbox-templates image), used by
+│                                     #   this repo's own sbxenv.yaml
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack)
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
@@ -142,7 +136,8 @@ Everything below is for developing the template, kit, and mixins.
 ```
 
 All five templates extend `docker/sandbox-templates:opencode-docker` and ship
-Git (+ git-lfs), `gh`, and the `o` PATH shim for relaunching opencode.
+Git (+ git-lfs), Node.js via NVM + PNPM, and Playwright with the Chromium
+headless shell.
 
 ### Working on the repo
 
@@ -151,11 +146,8 @@ Work in a git worktree branched from `main`
 sessions share this checkout concurrently.
 
 ```bash
-./scripts/bootstrap.sh     # or bootstrap.ps1: build + load the template,
-                           # register the Zeldoc key, validate kit + mixins
-sbx kit validate kit-node-dotnet/   # validate a kit or mixin after edits
-./scripts/new-sandbox.sh   # wizard launcher for a dev sandbox
-                           # (--source local picks up uncommitted edits)
+sbx kit validate kit-node/             # validate a kit or mixin after edits
+sbx env run                   # dev sandbox: kit/ + mixins/ loaded from the working copy
 ```
 
 Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`

@@ -1,12 +1,12 @@
 # Create a GitHub PAT and store it for a sandbox
 
-With a GitHub token the sandboxed agent can use `gh` and push over HTTPS.
+With a GitHub token the sandboxed agent can push over HTTPS.
 The token lives only in sbx's secret store (the OS keychain), scoped to one
 sandbox — it never enters the sandbox VM. A proxy injects it into requests
 to GitHub hosts.
 
 Use a **fine-grained PAT scoped to just the repositories the agent should
-touch**, not your host `gh` login (that one carries broad scopes like
+touch** (broad-scope classic tokens carry scopes like
 `repo`, `workflow`, `read:org`).
 
 ## 1. Create the token
@@ -35,14 +35,15 @@ sbx secret set github --sandbox <sandbox-name>
 
 sbx prompts for the token ("Enter secret:") and stores it in its secret
 store (the OS keychain) at that sandbox's scope. `<sandbox-name>` is the
-environment's `name:` from your `.sbxenv.yaml`.
+environment's `name:` from your `sbxenv.yaml`.
 
 ## 3. Approve the credential binding
 
-For environments created from a `.sbxenv.yaml`, the example file already
+For environments created from a `sbxenv.yaml`, the example file already
 declares the `bindings.github` block that approves injection for the GitHub
-hosts. Keep it in your copy (and in sync with `mixins/git/spec.yaml`). If
-you change `bindings:`, recreate the environment.
+hosts. Keep it in your copy (and in sync with
+`mixins/github-cli/spec.yaml`). If you change `bindings:`, recreate the
+environment.
 
 ## Rotate / remove
 

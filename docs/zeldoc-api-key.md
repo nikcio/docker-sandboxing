@@ -32,7 +32,7 @@ provider enabled. No default model is picked for you — set `"model":
 
 If ZDev ever reports "encountered an error", the model's context limit
 likely changed — update `"limit".context` in
-`mixins/zeldoc/files/home/.config/opencode/providers.d/20-zeldoc.json`
+`mixins/zeldoc/files/home/.config/opencode/mixins.d/20-zeldoc.json`
 per the [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode)
 (currently `1000000`).
 

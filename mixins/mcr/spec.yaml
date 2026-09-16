@@ -1,0 +1,16 @@
+schemaVersion: "2"
+kind: mixin
+name: mcr
+displayName: Microsoft Container Registry
+description: >
+  Network rules so the in-sandbox Docker engine can pull base images and
+  build containers.
+version: 0.1.0
+
+permissions:
+  network:
+    allow:
+      # Microsoft Container Registry
+      - mcr.microsoft.com
+      - "*.mcr.microsoft.com"
+      - "*.data.mcr.microsoft.com"

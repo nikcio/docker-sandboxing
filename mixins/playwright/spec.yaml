@@ -1,39 +1,13 @@
-# Playwright mixin (level 1 of 3): Playwright + Chromium headless shell.
-#
-# Lightest browser-automation setup (headless-only usage). For full Chromium
-# use ../playwright-chromium/, for Firefox + WebKit too use ../playwright-all/.
-# Needs the apt mixin for the OS libraries (--with-deps).
-#
-# Browser binaries land in /home/agent/.cache/ms-playwright (the agent
-# user's default lookup path; installed as root, then chowned).
 schemaVersion: "2"
 kind: mixin
 name: playwright
-displayName: Playwright (Chromium headless shell)
+displayName: Playwright
 description: >
-  Playwright installed globally via npm with the Chromium headless shell
-  preinstalled — headless-only automation, the smallest download. Needs
-  the apt mixin for the OS libraries (--with-deps). Composes on any base
-  template image: installs node (via nvm) when the template lacks one
-  and skips the browser download when Playwright is already present.
+  Installs Playwright and the Chromium headless shell for browser automation and testing.
 version: 0.1.1
 
 setup:
   install:
-    # Guarded so the mixin composes on any base template image (skips when
-    # Playwright with the headless shell is already there). Also ensures
-    # node: on templates without one, install via nvm (same layout as
-    # template-node-dotnet; needs the node mixin's egress + the git mixin
-    # for the nvm repo). The update+install run against a private lists
-    # dir: install steps race the apt mixin's background `apt-get update`
-    # startup hook for /var/lib/apt/lists/lock (apt-get update has no
-    # lock-wait option); a private dir needs only the dpkg + archives
-    # locks, and a failing repo in the image's sources (e.g. the base
-    # image's docker.list) only exits 100 without losing the fetched
-    # lists. unset NPM_CONFIG_PREFIX: the template sets it for its own
-    # npm-global dir, and nvm-managed npm refuses to run while it is set.
-    # /etc/sandbox-persistent.sh is sourced before every bash command and
-    # in login shells.
     - command: >
         set -e;
         if command -v node >/dev/null 2>&1; then :; else
@@ -42,11 +16,11 @@ setup:
           { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
           apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
           export NVM_DIR=/home/agent/.nvm;
-          git clone -q --depth 1 --branch v0.40.3 https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+          git clone -q --depth 1 --branch v0.40.7 https://github.com/nvm-sh/nvm.git "$NVM_DIR";
           unset NPM_CONFIG_PREFIX;
           . "$NVM_DIR/nvm.sh";
-          nvm install 22;
-          nvm alias default 22;
+          nvm install 24;
+          nvm alias default 24;
           nvm use default;
           NODE_BIN="$(find "$NVM_DIR"/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)";
           for b in node npm npx corepack; do if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/usr/local/bin/$b"; fi; done;
@@ -65,6 +39,7 @@ permissions:
       # npm package install (also covered by the node mixin — rules union)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"
+      
       # Playwright browser downloads. The CDN serves regular builds, and
       # 302-redirects Chrome-for-Testing builds (builds/cft/...) to
       # storage.googleapis.com — the redirect target must be allowed too
@@ -74,6 +49,3 @@ permissions:
       - playwright.azureedge.net:443
       - playwright.download.prss.microsoft.com:443
       - storage.googleapis.com:443
-
-# Agent memory note: files/home/.sbx-agents.d/playwright.md (appended to the
-# sandbox AGENTS.md by the kit entrypoint).

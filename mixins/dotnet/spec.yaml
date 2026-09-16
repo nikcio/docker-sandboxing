@@ -1,34 +1,13 @@
-# .NET mixin: NuGet/Microsoft egress, telemetry opt-out, agent notes, and
-# the check-and-install step so the mixin composes on any base template
-# image (installs the .NET SDK only when the template lacks dotnet).
 schemaVersion: "2"
 kind: mixin
 name: dotnet
 displayName: .NET / NuGet
 description: >
-  Network rules and settings for .NET work: NuGet restore, SDK and workload
-  downloads, Microsoft package hosts, plus CLI telemetry opt-out. Composes
-  on any base template image: a setup.install step installs the .NET SDK
-  (Ubuntu dotnet apt feed, falling back to the dot.net install script)
-  only when the template doesn't already have dotnet.
+  Install .NET and allow network access to needed domains.
 version: 0.4.0
 
 setup:
   install:
-    # Check-and-install: a no-op on template-node-dotnet (and any image
-    # with dotnet on PATH); on other base images it installs the SDK from
-    # the Ubuntu dotnet apt feed, falling back to the dot.net install
-    # script when the feed lacks the codename (same DOTNET_ROOT as
-    # template-node-dotnet). Needs this mixin's *.microsoft.com egress
-    # (the packages.microsoft.com apt feed + dot.net script host) plus
-    # the apt mixin for the OS packages on bare bases. The update+install
-    # run against a private lists dir: install steps race the apt mixin's
-    # background `apt-get update` startup hook for /var/lib/apt/lists/
-    # lock (apt-get update has no lock-wait option); a private dir needs
-    # only the dpkg + archives locks, and a failing repo in the image's
-    # sources (e.g. the base image's docker.list) only exits 100 without
-    # losing the fetched lists. /etc/sandbox-persistent.sh is sourced
-    # before every bash command and in login shells.
     - command: >
         set -e;
         if command -v dotnet >/dev/null 2>&1; then exit 0; fi;
@@ -63,29 +42,24 @@ permissions:
       # NuGet (restore, push, search)
       - nuget.org:443
       - "*.nuget.org:443"
+
       # SDK/workload downloads, MS Build hosts, packages.microsoft.com
       - "*.microsoft.com:443"
+
       # SDK download CDN — dot.net's install script redirects SDK/workload
       # downloads here (builds.dotnet.microsoft.com; the single-label rule
       # above doesn't match the sub-subdomain)
       - "*.dotnet.microsoft.com:443"
+
       # dotnet-install script + feeds
       - dot.net:443
       - "*.dot.net:443"
+
       # Microsoft's short-link redirect service — dotnet-install.sh resolves
       # its primary SDK/workload download URL by following aka.ms/dotnet/...
       # short links (it silently falls back to the CDNs above when blocked)
       - aka.ms:443
+
       # Legacy download CDNs
       - "*.azureedge.net:443"
-      # Certificate revocation (OCSP/CRL) + timestamp endpoints hit by
-      # .NET's X509 chain engine during NuGet restore/package signature
-      # validation. Blocking them only adds latency (TLS soft-fails).
-      - "*.digicert.com:443"
-      - "*.symcd.com:443"
-      - "*.symcb.com:443"
-      - "*.ws.symantec.com:443"
-    deny:
-      # .NET / Application Insights telemetry. Deny rules win over allow,
-      # so this also blocks hosts matching *.microsoft.com above.
-      - "*.applicationinsights.azure.com:443"
+

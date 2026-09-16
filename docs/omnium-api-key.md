@@ -55,7 +55,7 @@ secret store (the OS keychain).
 
 The first time you create a sandbox, sbx asks you to approve that the
 `omnium` token may be injected for the Omnium API hosts — approve the
-prompt. To pre-approve it in your `.sbxenv.yaml` instead:
+prompt. To pre-approve it in your `sbxenv.yaml` instead:
 
 ```yaml
 bindings:

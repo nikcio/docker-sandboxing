@@ -65,7 +65,7 @@ protection under Settings → Branches) for `main`:
   [agent-guidance/worktrees.md](../agent-guidance/worktrees.md)).
 - **Require status checks to pass**, then select:
   - `Kits & mixins (sbx kit validate)`
-  - `Dockerfile (buildx check) (template-node-dotnet)`
+  - `Dockerfile (buildx check) (template-dotnet)`
   - `Dockerfile (buildx check) (template-node)`
   - `Dockerfile (buildx check) (template-python)`
   - `Dockerfile (buildx check) (template-go)`

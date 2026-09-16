@@ -1,33 +1,13 @@
-# Browser mixin: installs Google Chrome for the agent to drive.
-#
-# The creation-time .deb download needs dl.google.com — allowed below.
-# General browsing egress stays deny-by-default; the composed mixins own
-# all other egress.
 schemaVersion: "2"
 kind: mixin
 name: browser
 displayName: Browser (Google Chrome)
 description: >
-  Installs Google Chrome (stable) plus the color emoji font, and drops the
-  agent memory note for driving it. Owns egress for the Chrome .deb
-  download (dl.google.com); general browsing stays gated by the composed
-  mixins. Composes on any base template image: the install step is
-  skipped when the template already has Chrome.
+  Installs Google Chrome (stable) plus the color emoji font
 version: 0.2.1
 
 setup:
   install:
-    # The .deb is self-contained. Guarded so the mixin composes on any
-    # base template image (skips when Chrome is already there). The apt
-    # repo entry is removed after install so the sandbox's background
-    # `apt-get update` never contacts dl.google.com for repo metadata
-    # (the one-time .deb download above is the only intended hit).
-    # The update+install run against a private lists dir (the same dodge
-    # the other tool mixins' install steps use): the template images ship
-    # no package lists, and the apt mixin's background `apt-get update`
-    # (into the shared /var/lib/apt/lists) races this step — installing
-    # against the shared dir hit "fonts-liberation ... not installable"
-    # when it ran first.
     - command: >
         if command -v google-chrome >/dev/null 2>&1; then exit 0; fi
         && install -m 0755 -d /var/lib/apt/sbx-lists
@@ -44,9 +24,4 @@ setup:
 permissions:
   network:
     allow:
-      # The Chrome .deb download at sandbox creation
-      # (https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb)
       - dl.google.com:443
-
-# Agent memory note: files/home/.sbx-agents.d/browser.md (appended to the
-# sandbox AGENTS.md by the kit entrypoint).
