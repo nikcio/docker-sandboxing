@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/nikcio/docker-sandboxing/compare/v1.1.2...v2.0.0) (2026-09-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* consolidate kits, clean up mixins and docs ([#73](https://github.com/nikcio/docker-sandboxing/issues/73))
+
+### Code Refactoring
+
+* consolidate kits, clean up mixins and docs ([#73](https://github.com/nikcio/docker-sandboxing/issues/73)) ([bd66f50](https://github.com/nikcio/docker-sandboxing/commit/bd66f5058a8e353937b42dc6ab0b002415d723d7))
+
 ## [1.1.2](https://github.com/nikcio/docker-sandboxing/compare/v1.1.1...v1.1.2) (2026-09-12)
 
 
