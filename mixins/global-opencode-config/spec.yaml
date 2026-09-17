@@ -72,14 +72,15 @@ setup:
               # enabled_providers) are unioned instead — that is what lets
               # mixins compose (zeldoc + copilot both stay enabled).
               jq -s '
-                def unionkey:
+              def unionkey:
                   [keys[] | select(test("^enabled_|^disabled_"))] | .[];
-                reduce .[] as $f (
+              reduce .[] as $f (
                   {};
-                  (. * $f)
+                  . as $acc
+                  | (. * $f)
                   + (reduce ($f | unionkey) as $k ({};
-                      .[$k] = (((.[$k] // []) + ($f[$k] // [])) | unique))))
-                )
+                      .[$k] = ((($acc[$k] // []) + ($f[$k] // [])) | unique)))
+              )
               ' "${fragments[@]}" > "$tmp"
           elif [ "${#fragments[@]}" -eq 1 ]; then
               # jq-less fallback: a single fragment needs no merging.
