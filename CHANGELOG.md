@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/nikcio/docker-sandboxing/compare/v2.0.0...v2.0.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* **mixins:** keep unioned array keys across merge accumulation ([#75](https://github.com/nikcio/docker-sandboxing/issues/75)) ([e4b8a54](https://github.com/nikcio/docker-sandboxing/commit/e4b8a5452dcbafd305262abdeeea13365808ac90))
+
 ## [2.0.0](https://github.com/nikcio/docker-sandboxing/compare/v1.1.2...v2.0.0) (2026-09-16)
 
 
