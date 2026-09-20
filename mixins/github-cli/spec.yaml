@@ -38,10 +38,14 @@ setup:
             exit 0
           }
           name="$(gh api user --jq '.name // .login')"
-          email="$(gh api user --jq '.email // ""')"
-          if [ -z "$email" ]; then
-            echo "ERROR: GitHub account has no public email set; cannot configure git committer identity" >&2
-            exit 1
+          email="$(gh api user --jq '.email // "\(.id)+\(.login)@users.noreply.github.com"')"
+          git_path="$(command -v git || true)"
+          if [ -z "$git_path" ]; then
+            echo "git not available; skipping git identity setup" >&2
+            exit 0
+          fi
+          if [ "$git_path" = "/usr/local/bin/git" ]; then
+            git_path=/usr/bin/git
           fi
           export HOME="$agent_home"
           git config --global user.name "$name"
@@ -79,7 +83,7 @@ setup:
             echo '      ;;'
             echo '  esac'
             echo 'fi'
-            echo 'exec /usr/bin/git "$@"'
+            echo "exec $git_path \"\$@\""
           } > /usr/local/bin/git
           chmod 755 /usr/local/bin/git
           {
