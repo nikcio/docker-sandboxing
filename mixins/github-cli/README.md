@@ -35,6 +35,15 @@ fail until the GitHub hosts are allowed.
 - `gh` itself is on `PATH` after creation. If the template image does not
   ship `gh`, the mixin installs it from the official `cli.github.com` apt
   repository (skipped when `gh` is already available).
+- **Git identity**: a startup command resolves the GitHub login, name,
+  and public email from `GH_TOKEN` (via `gh api user`) and writes them
+  into the sandbox's git config. The committer identity is then locked
+  down: a `/usr/local/bin/git` wrapper forces the identity from
+  `/etc/git-identity` and refuses `git config` overrides of
+  `user.name`/`user.email`, and both `/etc/gitconfig` and the agent's
+  `~/.gitconfig` are made read-only (`chattr +i`) so the identity cannot
+  be changed from inside the sandbox. The GitHub account must have a
+  public email set — startup fails otherwise.
 
 ## Network domains
 
