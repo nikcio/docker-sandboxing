@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/nikcio/docker-sandboxing/compare/v2.0.1...v2.1.0) (2026-09-20)
+
+
+### Features
+
+* **mixins:** force git committer identity from GH_TOKEN in github-cli mixin ([#79](https://github.com/nikcio/docker-sandboxing/issues/79)) ([e20b13a](https://github.com/nikcio/docker-sandboxing/commit/e20b13ae12754e0743d960fa5088712963c02b95))
+
 ## [2.0.1](https://github.com/nikcio/docker-sandboxing/compare/v2.0.0...v2.0.1) (2026-09-17)
 
 
