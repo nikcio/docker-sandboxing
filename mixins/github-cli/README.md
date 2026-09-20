@@ -43,8 +43,10 @@ fail until the GitHub hosts are allowed.
   down: a `/usr/local/bin/git` wrapper forces the identity from
   `/etc/git-identity` and refuses `git config` overrides of
   `user.name`/`user.email`, and both `/etc/gitconfig` and the agent's
-  `~/.gitconfig` are made read-only (`chattr +i`) so the identity cannot
-  be changed from inside the sandbox.
+  `~/.gitconfig` are made read-only (`chattr +i`). The committer on
+  every commit is therefore always the token owner; note this is not
+  bulletproof — the agent can still set the *author* on individual
+  commits (`git commit --author=...`) or call a git binary directly.
 
 ## Network domains
 

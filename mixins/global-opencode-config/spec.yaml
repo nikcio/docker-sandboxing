@@ -4,7 +4,7 @@ name: global-opencode-config
 displayName: Global OpenCode config
 description: >
   Adds permissive opencode config and the ability to merge configs from other mixins using fragments (enabled_*/disabled_* lists union).
-version: 0.4.1
+version: 0.4.2
 
 environment:
   variables:
