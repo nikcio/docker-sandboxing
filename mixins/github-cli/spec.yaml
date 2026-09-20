@@ -4,7 +4,7 @@ name: github-cli
 displayName: GitHub CLI
 description: >
   Installs Github CLI
-version: 0.3.0
+version: 0.4.0
 
 setup:
   install:
@@ -19,6 +19,93 @@ setup:
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends gh
         && rm -rf /var/lib/apt/sbx-lists
       description: Install the gh CLI (skipped when the template image already has it)
+
+  startup:
+    # Force git committer identity from GH_TOKEN and prevent the agent from overriding it
+    # Note: This isn't perfect as the agent can still override the identity by calling the git binary directly.
+    - command:
+        - bash
+        - -c
+        - |
+          set -e
+          agent_home=/home/agent
+          if ! command -v gh >/dev/null 2>&1; then
+            echo "gh not available; skipping git identity setup" >&2
+            exit 0
+          fi
+          gh_user="$(gh api user --jq '{login: .login, name: (.name // .login), email: (.email // "\(.id)+\(.login)@users.noreply.github.com")}')" || {
+            echo "Could not resolve GitHub user from GH_TOKEN; skipping git identity setup" >&2
+            exit 0
+          }
+          name="$(echo "$gh_user" | jq -r .name)"
+          email="$(echo "$gh_user" | jq -r .email)"
+          git_path="$(command -v git || true)"
+          if [ -z "$git_path" ]; then
+            echo "git not available; skipping git identity setup" >&2
+            exit 0
+          fi
+          if [ "$git_path" = "/usr/local/bin/git" ]; then
+            git_path=/usr/bin/git
+          fi
+          export HOME="$agent_home"
+          # A previous start may have left the configs immutable; clear the
+          # flag first so re-runs can rewrite them instead of failing.
+          chattr -i /etc/gitconfig 2>/dev/null || true
+          chattr -i "$agent_home/.gitconfig" 2>/dev/null || true
+          "$git_path" config --global user.name "$name"
+          "$git_path" config --global user.email "$email"
+          "$git_path" config --global --replace-all safe.directory '*'
+          {
+            printf 'GIT_AUTHOR_NAME=%q\n' "$name"
+            printf 'GIT_AUTHOR_EMAIL=%q\n' "$email"
+            printf 'GIT_COMMITTER_NAME=%q\n' "$name"
+            printf 'GIT_COMMITTER_EMAIL=%q\n' "$email"
+          } > /etc/git-identity
+          chmod 644 /etc/git-identity
+          {
+            echo '#!/bin/bash'
+            echo 'if [ -r /etc/git-identity ]; then'
+            echo '  set -a'
+            echo '  . /etc/git-identity'
+            echo '  set +a'
+            echo 'fi'
+            echo 'if [ "$1" = "config" ]; then'
+            echo '  nargs=0'
+            echo '  for arg in "$@"; do'
+            echo '    case "$arg" in'
+            echo '      --*) ;;'
+            echo '      config) ;;'
+            echo '      *) nargs=$((nargs + 1)) ;;'
+            echo '    esac'
+            echo '  done'
+            echo '  case "$*" in'
+            echo '    user.config|*user.name*|*user.email*)'
+            echo '      if [ "$nargs" -ge 2 ]; then'
+            echo '        echo "ERROR: git identity is managed by the sandbox and cannot be overridden" >&2'
+            echo '        exit 1'
+            echo '      fi'
+            echo '      if [ "$nargs" -eq 1 ]; then'
+            echo '        echo "git identity is managed by the sandbox; $1 <name|email> is ignored" >&2'
+            echo '      fi'
+            echo '      ;;'
+            echo '  esac'
+            echo 'fi'
+            echo "exec $git_path \"\$@\""
+          } > /usr/local/bin/git
+          chmod 755 /usr/local/bin/git
+          {
+            echo '[user]'
+            echo "	name = $name"
+            echo "	email = $email"
+          } > /etc/gitconfig
+          chown root:root /etc/gitconfig
+          chmod 644 /etc/gitconfig
+          chattr +i /etc/gitconfig 2>/dev/null || true
+          chown root:root "$agent_home/.gitconfig" 2>/dev/null || true
+          chmod 644 "$agent_home/.gitconfig" 2>/dev/null || true
+          chattr +i "$agent_home/.gitconfig" 2>/dev/null || true
+      user: "root"
+      description: Force git committer identity from GH_TOKEN and prevent the agent from overriding it
 
 credentials:
   - service: github
