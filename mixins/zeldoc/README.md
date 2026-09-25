@@ -33,8 +33,7 @@ lists are unioned, so both providers stay selectable).
   the `zeldoc` provider, installs the
   [`opencode-zeldoc` plugin](https://github.com/martinmose/opencode-zeldoc)
   (the model picker lists exactly the models your key can use, with real
-  limits and prices), and disables the built-in `opencode` provider so
-  requests can't accidentally go anywhere else. No manual `provider` block
+  limits and prices). No manual `provider` block
   with a models list — the plugin is the source of truth, per the
   [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode).
 
