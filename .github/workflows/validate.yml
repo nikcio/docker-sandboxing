@@ -15,58 +15,56 @@ concurrency:
 
 jobs:
   # Image contexts from images.json (same source of truth as
-  # publish-image.yml) — feeds the dockerfiles job's matrix.
+  # publish-image.yml) — feeds both jobs' matrices.
   images:
     runs-on: ubuntu-latest
     outputs:
-      contexts: ${{ steps.contexts.outputs.contexts }}
+      images: ${{ steps.images.outputs.images }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Read image contexts
-        id: contexts
-        run: echo "contexts=$(jq -c '[.images[] | {context}]' images.json)" >> "$GITHUB_OUTPUT"
+      - name: Read image list
+        id: images
+        run: echo "images=$(jq -c '.images' images.json)" >> "$GITHUB_OUTPUT"
 
-  # Validate every kit and mixin with the sandbox CLI's own validator —
-  # the same check scripts/bootstrap.sh runs locally. sbx (docker-sbx)
-  # comes from Docker's apt repo (see mixins/sbx/spec.yaml); validation
-  # is local and needs no Docker login.
+  # Every kit and mixin builds with the v3 sandbox-kit frontend (the
+  # descriptor's # syntax= line dispatches it). The build validates the
+  # descriptor strictly — sbx kit validate has no v3 source-kit path, and
+  # buildx --check cannot run foreign frontends, so a real build is the
+  # only local validation. No Docker login needed: layers stay local.
+  # Pushing happens in publish-image.yml at release time.
   kits-mixins:
-    name: Kits & mixins (sbx kit validate)
+    name: Kit or mixin (v3 frontend build)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.images.outputs.images) }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install sbx (docker-sbx)
-        run: |
-          sudo install -m 0755 -d /etc/apt/keyrings
-          sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends docker-sbx
-          sbx version
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
-      - name: Validate mixins
+      - name: Build ${{ matrix.context }} (descriptor)
+        if: ${{ !startsWith(matrix.context, 'template-') }}
         run: |
-          for mixin in mixins/*/; do
-            echo "::group::sbx kit validate ${mixin}"
-            sbx kit validate "${mixin}"
-            echo "::endgroup::"
-          done
+          docker buildx build "${{ matrix.context }}" \
+            --file "${{ matrix.context }}/${{ matrix.name }}.yaml" \
+            --platform linux/amd64
 
-      - name: Validate kits
+      - name: Build ${{ matrix.context }} (Dockerfile)
+        if: ${{ startsWith(matrix.context, 'template-') }}
         run: |
-          for kit in kit*/; do
-            echo "::group::sbx kit validate ${kit}"
-            sbx kit validate "${kit}"
-            echo "::endgroup::"
-          done
+          docker buildx build "${{ matrix.context }}" \
+            --platform linux/amd64
 
-  # Static build checks for every publishable template Dockerfile. The
-  # --check mode runs the BuildKit frontend checks without executing the
-  # build steps; full builds stay in publish-image.yml at release time.
+  # Static build checks for every publishable template Dockerfile.
+  # The --check mode runs the BuildKit frontend checks without executing
+  # the build steps; full builds stay in publish-image.yml at release
+  # time. (Kit/mixin validation is the kits-mixins job above.)
   dockerfiles:
     name: Dockerfile (buildx check)
     runs-on: ubuntu-latest
@@ -74,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.images.outputs.contexts) }}
+        include: ${{ fromJson(needs.images.outputs.images) }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -83,4 +81,5 @@ jobs:
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
       - name: Check ${{ matrix.context }}/Dockerfile
+        if: ${{ startsWith(matrix.context, 'template-') }}
         run: docker buildx build --check "${{ matrix.context }}"

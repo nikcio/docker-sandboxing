@@ -37,12 +37,12 @@ jobs:
       - name: Set VERSION variable from tag
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
-      - name: Verify published kit references this image
-        if: ${{ matrix.spec != '' }}
+      - name: Verify published workload kit references this image
+        if: ${{ startsWith(matrix.context, 'template-') }}
         run: |
           image="${IMAGE_PREFIX}/${{ matrix.name }}:v${VERSION}"
-          grep -qF "$image" "${{ matrix.spec }}" || {
-            echo "::error::${{ matrix.spec }} does not reference $image"
+          grep -qF "$image" "kit-${{ matrix.context }}.kit-${{ matrix.context }}.yaml" || {
+            echo "::error::kit-${{ matrix.context }}.kit-${{ matrix.context }}.yaml does not reference $image"
             exit 1
           }
 
@@ -55,7 +55,22 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      # v3 kit and mixin images build from the descriptor with the
+      # sandbox-kit frontend; template images build the plain Dockerfile.
+      # Both are ordinary OCI images, tagged with the release version.
+      - name: Build and push (v3 kit descriptor)
+        if: ${{ !startsWith(matrix.context, 'template-') }}
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.name }}.yaml
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:v${{ env.VERSION }}
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:latest
+
+      - name: Build and push (template image)
+        if: ${{ startsWith(matrix.context, 'template-') }}
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: ${{ matrix.context }}
