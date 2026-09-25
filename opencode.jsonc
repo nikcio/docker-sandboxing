@@ -2,5 +2,5 @@
   "$schema": "https://opencode.ai/config.json",
   // Default model for sandboxes attached to this repo (the provider
   // mixins no longer pick one — the project config owns it).
-  "model": "zeldoc/zdev-2"
+  "model": "zeldoc/zdev"
 }

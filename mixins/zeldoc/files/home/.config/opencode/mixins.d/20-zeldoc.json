@@ -39,37 +39,6 @@
               "reasoningEffort": "max"
             }
           }
-        },
-        "zdev-2": {
-          "name": "ZDev 2",
-          "attachment": true,
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "limit": {
-            "context": 1000000,
-            "output": 131072
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "low": {
-              "reasoningEffort": "low"
-            },
-            "high": {
-              "reasoningEffort": "high"
-            },
-            "max": {
-              "reasoningEffort": "max"
-            }
-          }
         }
       }
     }
