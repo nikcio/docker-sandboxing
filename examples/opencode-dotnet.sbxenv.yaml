@@ -11,23 +11,23 @@
 
 schemaVersion: "1"
 name: my-project
-agent: docker.io/nikcio/sbx-kit-opencode-dotnet:v3.0.0
 
-# The workload kit is selected by `agent:` above; these are the mixins.
-# Refs are pinned to the latest release; release-please bumps them (do
-# not edit by hand).
+# The workload kit (agent:) and the mixin refs are pinned to the latest
+# release; release-please bumps them (do not edit by hand).
 # x-release-please-start-version
+agent: docker.io/nikcio/sbx-kit-opencode-dotnet:v2.2.0
+
 kits:
-  - docker.io/nikcio/sbx-mixin-agents-md:v3.0.0              # sandbox AGENTS.md baseline (required by the kit)
-  - docker.io/nikcio/sbx-mixin-global-opencode-config:v3.0.0 # permissive OpenCode config + provider merge (required with model providers)
-  - docker.io/nikcio/sbx-mixin-env-guard:v3.0.0              # workspace .env guard
-  - docker.io/nikcio/sbx-mixin-opencode-update:v3.0.0        # opencode auto-update (latest npm release at creation)
-  - docker.io/nikcio/sbx-mixin-zeldoc:v3.0.0                 # Zeldoc.ai provider
-  - docker.io/nikcio/sbx-mixin-github-cli:v3.0.0             # git push auth (proxy-managed GitHub token)
-  - docker.io/nikcio/sbx-mixin-node:v3.0.0                   # node/npm
-  - docker.io/nikcio/sbx-mixin-dotnet:v3.0.0                 # .NET/NuGet
-  - docker.io/nikcio/sbx-mixin-docker-hub:v3.0.0             # in-sandbox docker (Docker Hub registry egress)
-  - docker.io/nikcio/sbx-mixin-browser:v3.0.0                # Google Chrome
+  - docker.io/nikcio/sbx-mixin-agents-md:v2.2.0              # sandbox AGENTS.md baseline (required by the kit)
+  - docker.io/nikcio/sbx-mixin-global-opencode-config:v2.2.0 # permissive OpenCode config + provider merge (required with model providers)
+  - docker.io/nikcio/sbx-mixin-env-guard:v2.2.0              # workspace .env guard
+  - docker.io/nikcio/sbx-mixin-opencode-update:v2.2.0        # opencode auto-update (latest npm release at creation)
+  - docker.io/nikcio/sbx-mixin-zeldoc:v2.2.0                 # Zeldoc.ai provider
+  - docker.io/nikcio/sbx-mixin-github-cli:v2.2.0             # git push auth (proxy-managed GitHub token)
+  - docker.io/nikcio/sbx-mixin-node:v2.2.0                   # node/npm
+  - docker.io/nikcio/sbx-mixin-dotnet:v2.2.0                 # .NET/NuGet
+  - docker.io/nikcio/sbx-mixin-docker-hub:v2.2.0             # in-sandbox docker (Docker Hub registry egress)
+  - docker.io/nikcio/sbx-mixin-browser:v2.2.0                # Google Chrome
 # x-release-please-end-version
 
 workspace:

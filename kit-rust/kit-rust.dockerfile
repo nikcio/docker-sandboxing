@@ -10,7 +10,7 @@
 # instead. It execs the original launch command at the end, so workloads
 # without the mixin scripts behave exactly like the base image.
 # x-release-please-start-version
-FROM docker.io/nikcio/opencode-rust:v3.0.0
+FROM docker.io/nikcio/opencode-rust:v2.2.0
 # x-release-please-end-version
 USER root
 COPY dockerrun/*.sh /opt/sandbox/bin/

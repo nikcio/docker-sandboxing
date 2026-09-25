@@ -14,37 +14,34 @@ jobs:
   matrix:
     runs-on: ubuntu-latest
     outputs:
-      images: ${{ steps.images.outputs.images }}
+      templates: ${{ steps.images.outputs.templates }}
+      kits: ${{ steps.images.outputs.kits }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Read image list
         id: images
-        run: echo "images=$(jq -c '.images' images.json)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "templates=$(jq -c '[.images[] | select(.descriptor == null)]' images.json)" >> "$GITHUB_OUTPUT"
+          echo "kits=$(jq -c '[.images[] | select(.descriptor != null)]' images.json)" >> "$GITHUB_OUTPUT"
 
-  build:
-    needs: matrix
+  # Template images first: the workload kit descriptors pin them
+  # (docker.io/nikcio/opencode-<stack>:v<VERSION>), so the kit images
+  # below only build once the bases exist on Docker Hub.
+  template:
+    name: Template image (${{ matrix.name }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.matrix.outputs.images) }}
+        include: ${{ fromJson(needs.matrix.outputs.templates) }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set VERSION variable from tag
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
-
-      - name: Verify published workload kit references this image
-        if: ${{ startsWith(matrix.context, 'template-') }}
-        run: |
-          image="${IMAGE_PREFIX}/${{ matrix.name }}:v${VERSION}"
-          grep -qF "$image" "kit-${{ matrix.context }}.kit-${{ matrix.context }}.yaml" || {
-            echo "::error::kit-${{ matrix.context }}.kit-${{ matrix.context }}.yaml does not reference $image"
-            exit 1
-          }
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
@@ -55,25 +52,59 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # v3 kit and mixin images build from the descriptor with the
-      # sandbox-kit frontend; template images build the plain Dockerfile.
-      # Both are ordinary OCI images, tagged with the release version.
-      - name: Build and push (v3 kit descriptor)
-        if: ${{ !startsWith(matrix.context, 'template-') }}
+      - name: Build and push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: ${{ matrix.context }}
-          file: ${{ matrix.context }}/${{ matrix.name }}.yaml
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:v${{ env.VERSION }}
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:latest
 
-      - name: Build and push (template image)
-        if: ${{ startsWith(matrix.context, 'template-') }}
+  # v3 kit and mixin images build from their descriptor with the
+  # sandbox-kit frontend — plain OCI images whose manifest annotation
+  # carries the validated descriptor. Every entry must reference the
+  # release version (workload kits pin the template image, examples pin
+  # the kit), which release-please rewrote in the release PR.
+  kit:
+    name: Kit or mixin (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    needs: template
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.matrix.outputs.kits) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set VERSION variable from tag
+        run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
+
+      - name: Verify released version is referenced
+        run: |
+          version="v${VERSION}"
+          if [ -n "${{ matrix.verify }}" ]; then
+            grep -qF ":${version}" "${{ matrix.verify }}" || {
+              echo "::error::${{ matrix.verify }} does not reference ${version}"
+              exit 1
+            }
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.descriptor }}
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:v${{ env.VERSION }}
