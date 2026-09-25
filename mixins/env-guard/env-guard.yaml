@@ -5,15 +5,23 @@ displayName: Workspace .env guard
 description: >
   Enforces the no-.env policy in the workspace: clone mode removes .env
   files (including .env.local-style variants and symlinked .env files)
-  from the sandbox-local copy (warning + short pause), direct mode refuses
-  to start when one exists. No network rules — capability egress comes
-  from the other mixins.
-version: "0.3.0"
+  from the sandbox-local copy (warning + short pause), direct mode fails
+  sandbox creation when one exists. No network rules — capability egress
+  comes from the other mixins.
+version: "0.4.0"
 
-# The guard script ships in the workload images
-# (/opt/sandbox/bin/env-guard.sh) and runs from the workload entrypoint
-# shim BEFORE the agent starts — v3 lifecycle startup hooks run alongside
-# the agent, and this check must gate it (direct mode exits nonzero and
-# the shim refuses to launch the agent). Nothing to declare beyond this
-# note: the files are baked into the workload image, and the shim picks
-# the guard up whenever this mixin is composed.
+capabilities:
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        # Runs once, at create, after the workspace is mounted and before
+        # the agent starts — the gating this check needs, with no
+        # entrypoint shim: the script ships in this mixin's image at
+        # /opt/sandbox/env-guard/env-guard.sh and exits nonzero in direct
+        # mode, which fails sandbox creation.
+        - command: |
+            set -e
+            [ -x /opt/sandbox/env-guard/env-guard.sh ] || exit 0
+            /opt/sandbox/env-guard/env-guard.sh
+          env: [WORKSPACE_DIR]
+          description: Enforce the no-.env policy (clone mode removes offenders; direct mode fails creation)

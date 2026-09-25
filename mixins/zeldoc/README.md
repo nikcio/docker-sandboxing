@@ -16,7 +16,7 @@ kits:
 For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/zeldoc <agent> .`
 
-Requires the `global-opencode-config` mixin — the provider config fragment
+Requires the `opencode` mixin — the provider config fragment
 only merges through it (compose `copilot` alongside; `enabled_providers`
 lists are unioned, so both providers stay selectable).
 
@@ -29,7 +29,8 @@ lists are unioned, so both providers stay selectable).
   `sbx secret set zeldoc` (see [docs/zeldoc-api-key.md](../../docs/zeldoc-api-key.md)).
 - **Config fragment**: ships a pure-JSON fragment to
   `~/.config/opencode/mixins.d/20-zeldoc.json`, merged into the combined
-  `OPENCODE_CONFIG` by `global-opencode-config` at every start. It enables
+  `OPENCODE_CONFIG` by the `opencode` mixin's install hook, before the
+  agent starts. It enables
   the `zeldoc` provider, installs the
   [`opencode-zeldoc` plugin](https://github.com/martinmose/opencode-zeldoc)
   (the model picker lists exactly the models your key can use, with real

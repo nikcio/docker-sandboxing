@@ -2,36 +2,21 @@
   "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each entry and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). Workload images build the template-*/Dockerfile context; kit and mixin images build the v3 descriptor named by `descriptor` (docker buildx build -f <dir>/<descriptor> <dir>) and carry their validated descriptor in a manifest annotation. The release-please extra-files blocks keep every versioned reference (workload FROM tag, example refs) at the release version.",
   "images": [
     {
-      "name": "opencode-dotnet",
-      "context": "template-dotnet"
-    },
-    {
-      "name": "opencode-node",
-      "context": "template-node"
-    },
-    {
-      "name": "opencode-python",
-      "context": "template-python"
-    },
-    {
-      "name": "opencode-go",
-      "context": "template-go"
-    },
-    {
-      "name": "opencode-rust",
-      "context": "template-rust"
-    },
-    {
       "name": "sbx-kit-opencode",
       "context": "kit",
-      "descriptor": "kit.yaml",
-      "verify": "kit/kit.dockerfile"
+      "descriptor": "kit.yaml"
     },
     {
       "name": "sbx-kit-opencode-dotnet",
       "context": "kit-dotnet",
       "descriptor": "kit-dotnet.yaml",
       "verify": "kit-dotnet/kit-dotnet.dockerfile"
+    },
+    {
+      "name": "sbx-kit-opencode-go",
+      "context": "kit-go",
+      "descriptor": "kit-go.yaml",
+      "verify": "kit-go/kit-go.dockerfile"
     },
     {
       "name": "sbx-kit-opencode-node",
@@ -46,21 +31,10 @@
       "verify": "kit-python/kit-python.dockerfile"
     },
     {
-      "name": "sbx-kit-opencode-go",
-      "context": "kit-go",
-      "descriptor": "kit-go.yaml",
-      "verify": "kit-go/kit-go.dockerfile"
-    },
-    {
       "name": "sbx-kit-opencode-rust",
       "context": "kit-rust",
       "descriptor": "kit-rust.yaml",
       "verify": "kit-rust/kit-rust.dockerfile"
-    },
-    {
-      "name": "sbx-mixin-agents-md",
-      "context": "mixins/agents-md",
-      "descriptor": "agents-md.yaml"
     },
     {
       "name": "sbx-mixin-browser",
@@ -103,11 +77,6 @@
       "descriptor": "github-cli.yaml"
     },
     {
-      "name": "sbx-mixin-global-opencode-config",
-      "context": "mixins/global-opencode-config",
-      "descriptor": "global-opencode-config.yaml"
-    },
-    {
       "name": "sbx-mixin-go",
       "context": "mixins/go",
       "descriptor": "go.yaml"
@@ -143,9 +112,9 @@
       "descriptor": "openapi-ts.yaml"
     },
     {
-      "name": "sbx-mixin-opencode-update",
-      "context": "mixins/opencode-update",
-      "descriptor": "opencode-update.yaml"
+      "name": "sbx-mixin-opencode",
+      "context": "mixins/opencode",
+      "descriptor": "opencode.yaml"
     },
     {
       "name": "sbx-mixin-playwright",

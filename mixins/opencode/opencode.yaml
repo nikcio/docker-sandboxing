@@ -1,0 +1,64 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: OpenCode
+description: >
+  Installs the OpenCode agent (and rolls it to the newest npm release at
+  every sandbox creation), ships the permissive OpenCode config, and
+  merges provider mixins' config fragments (enabled_*/disabled_* lists
+  union) into the combined OPENCODE_CONFIG before the agent starts.
+version: "0.1.0"
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      install:
+        allow:
+          # npm registry (fresh opencode install at creation; skipped when
+          # the workload image already carries the pinned version)
+          - registry.npmjs.org:443
+
+      runtime:
+        allow:
+          # Plugin install: provider mixins' plugins (e.g. opencode-zeldoc)
+          # are fetched from npm when OpenCode starts.
+          - registry.npmjs.org:443
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        # Roll opencode to the newest npm release at creation (the shell
+        # image ships no agent; node images bake a fixed version). Safe to
+        # compose on a workload that already has opencode — this refreshes
+        # it instead of skipping.
+        - command: >
+            set -e;
+            if ! command -v npm >/dev/null 2>&1; then echo "[opencode] npm is not available — install node or compose the node mixin" >&2; exit 0; fi;
+            OC_PREFIX=/usr/local/share/npm-global;
+            npm install -g --prefix "$OC_PREFIX" opencode-ai@latest;
+            opencode --version
+          description: Install/upgrade opencode to the latest npm release
+
+        # Seed the permissive base config (ships in this image at
+        # /usr/share/sandbox/opencode/opencode.jsonc — edit/bash/webfetch
+        # allowed; the sandbox is the isolation boundary) unless the
+        # agent already has one, then merge provider mixins' fragments
+        # into the combined OPENCODE_CONFIG. OpenCode reads
+        # OPENCODE_CONFIG at startup, so this must finish before the
+        # agent starts — an install hook is the only phase with that
+        # ordering guarantee. The merge script ships at
+        # /opt/sandbox/opencode/merge-mixins.sh; re-run it by hand after
+        # dropping a new fragment into a running sandbox.
+        - command: |
+            set -e
+            mkdir -p /home/agent/.config/opencode
+            if [ ! -f /home/agent/.config/opencode/opencode.jsonc ]; then
+              cp /usr/share/sandbox/opencode/opencode.jsonc /home/agent/.config/opencode/opencode.jsonc
+            fi
+            chown -R agent:agent /home/agent/.config/opencode
+            sudo -u agent env HOME=/home/agent /opt/sandbox/opencode/merge-mixins.sh
+          description: Seed the base config and merge provider fragments into OPENCODE_CONFIG
+
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      contentFile: ./sandbox-baseline.md

@@ -32,13 +32,13 @@ different one any time with `/models` in the TUI.
 
 Do not write `~/.config/opencode/opencode.json` from a kit — the
 sandbox owns that file (it is rewritten at startup for MCP wiring). Do
-not set `OPENCODE_CONFIG` either — the `global-opencode-config` mixin owns it
-(it points at the combined provider config that the mixin rebuilds from
+not set `OPENCODE_CONFIG` either — the `opencode` mixin owns it
+(it points at the combined provider config that the mixin builds from
 `~/.config/opencode/mixins.d/`). To contribute a provider, ship a
 comment-free JSON fragment in your kit's image — a file at
 `files/home/.config/opencode/mixins.d/30-<name>.json`, copied by your
-`<kit>.dockerfile` — and the global-opencode-config mixin merges it with
-the stock provider fragments (see [mixins.md](mixins.md)).
+`<kit>.dockerfile` — and the opencode mixin merges it with the stock
+provider fragments (see [mixins.md](mixins.md)).
 
 ## Add an in-project kit
 
@@ -116,17 +116,17 @@ of the stock mixins.
 
    ```yaml
    kits:
-     - docker.io/nikcio/sbx-mixin-agents-md:v3.0.0
-     - docker.io/nikcio/sbx-mixin-global-opencode-config:v3.0.0
+     - docker.io/nikcio/sbx-mixin-opencode:v3.0.0
      - docker.io/nikcio/sbx-mixin-env-guard:v3.0.0
      # ...the other stock mixins your project keeps...
      - ./sandbox-kit
    ```
 
-   Keep `agents-md` (required) — it ships the sandbox `AGENTS.md`
-   baseline. Add `global-opencode-config` when composing a model
-   provider; the list above also includes the optional `env-guard` (the
-   no-.env policy). Your kit only adds capabilities.
+   Keep `opencode` (required in every OpenCode sandbox — the agent,
+   config, and provider merge; also required with model providers, whose
+   fragments only merge through it). The list above also includes the
+   optional `env-guard` (the no-.env policy). Your kit only adds
+   capabilities.
 
 4. Build and recreate the sandbox (kit changes only apply to new
    sandboxes):

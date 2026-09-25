@@ -14,7 +14,7 @@ a v3 workload requires v3 mixins, and sbx v0.45+.
 
 ## Any mixin on any workload
 
-Stack mixins don't have to match the workload's template image. Every
+Stack mixins don't have to match the workload's baked toolchain. Every
 toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool
 mixins (`browser`, `playwright`, `sbx`, `nikcio-openapi-codegen`) carry a
 self-contained check-and-install lifecycle `install` hook: at sandbox
@@ -25,7 +25,7 @@ rebuild needed.
 
 Rules of thumb:
 
-- Install paths and env match the template images (same `DOTNET_ROOT`,
+- Install paths and env match the workload images (same `DOTNET_ROOT`,
   nvm in the agent home, uv-managed CPython, `/usr/local/go`,
   agent-owned rustup) — a later image rebuild converges to the same
   layout.
@@ -34,35 +34,15 @@ Rules of thumb:
   `install` phase of its network policy (the runtime closes install
   grants before the agent starts). A blocked download fails the install
   hook — check `sbx policy log`.
-- On the matching template image the check is a cheap no-op (the tool is
-  already there), so keeping the install hooks in every composition is
-  safe.
-
-## Ordering: the entrypoint shim
-
-v3 lifecycle startup hooks run **alongside** the agent — there is no
-before-agent ordering guarantee. Two mixins need to finish first, so the
-workload images ship a small entrypoint shim
-(`kit/dockerrun/sandbox-entrypoint.sh`) that runs before `exec opencode`:
-
-- `env-guard` — the workspace `.env` check must gate the agent (direct
-  mode exits nonzero and the shim refuses to launch).
-- `global-opencode-config` — the provider config merge runs before
-  OpenCode loads its config, so providers work from the first prompt.
-
-Both scripts are baked into every workload image at
-`/opt/sandbox/bin/`; the shim picks each up when the mixin is composed.
-Everything else (the AGENTS.md profile, agent notes) composes through v3
-itself (`agent-context`) or tolerates running alongside the agent.
+- On a workload that already has the tool the check is a cheap no-op, so
+  keeping the install hooks in every composition is safe.
 
 ## Catalog
 
 | Mixin | Adds |
 | ----- | ---- |
-| `agents-md` | Sandbox `AGENTS.md` baseline: an index page (contributed to the agent-context profile) plus guidance files (`~/.sandbox-agents/*.md`) |
-| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) plus the combined provider config (`OPENCODE_CONFIG` merge via the entrypoint shim). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
-| `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode), via the workload entrypoint shim. Optional — the examples compose it |
-| `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress). Not in the stock kits — add the line for fresh opencode on every sandbox; runs once at creation, no start cost |
+| `opencode` | The OpenCode agent: newest npm release at creation, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), and the combined provider config (`OPENCODE_CONFIG` merge). Required in every OpenCode sandbox, and required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
+| `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or fails sandbox creation (direct mode). Self-contained — the script ships in the mixin's own image and runs as a lifecycle install hook. Optional — the examples compose it |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `github-cli` | GitHub CLI (`gh`) install + proxy-managed GitHub auth (see [github-pat.md](github-pat.md)) |
@@ -93,42 +73,40 @@ Network hosts per mixin are listed in the mixin's descriptor
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node` |
-| .NET only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `dotnet` |
-| .NET + OpenAPI codegen (C# models) | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
-| Python only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `python` |
-| Go only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `go` |
-| Rust only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `rust` |
-| Node + typed API client (openapi-typescript) | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `docker-hub` |
-| Node frontend with Uniform | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `uniform` |
-| Browser automation | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
+| Node only | `opencode`, `env-guard`, `zeldoc`, `github-cli` |
+| .NET only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `dotnet` |
+| .NET + OpenAPI codegen (C# models) | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
+| Python only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `python` |
+| Go only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `go` |
+| Rust only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `rust` |
+| Node + typed API client (openapi-typescript) | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `node`, `docker-hub` |
+| Node frontend with Uniform | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `node`, `uniform` |
+| Browser automation | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
 
 Notes:
 
-- `agents-md` (sandbox `AGENTS.md` baseline) is required by every kit.
-  `global-opencode-config` is required when composing a model provider
-  (`zeldoc`, `copilot`) — their config fragments only merge through it.
-  `env-guard` (the no-.env policy) is optional.
-- The `playwright` mixin and `sbx` run `apt` at creation — their install
-  hooks declare the Ubuntu apt mirrors in their install-phase policy.
-  Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`) per
-  registry the in-sandbox Docker engine pulls from.
-- Every set should include at least one model provider (`zeldoc` and/or
-  `copilot`). Add `opencode-update` to keep opencode current: the
-  template images bake a fixed opencode version, and this mixin rolls it
-  to the newest npm release at creation.
+- `opencode` (the agent + config + provider merge) is required in every
+  OpenCode sandbox and with every model provider (`zeldoc`, `copilot`) —
+  their config fragments only merge through it. `env-guard` (the
+  no-.env policy) is optional.
+- The `playwright` and `sbx` mixins run `apt` at creation — their
+  install hooks declare the Ubuntu apt mirrors in their install-phase
+  policy. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`)
+  per registry the in-sandbox Docker engine pulls from.
+- `zeldoc` and/or `copilot` give the agent a model provider. The
+  `opencode` mixin already rolls opencode to the newest npm release at
+  every creation, so there is no separate update mixin.
 
 ## Model providers (zeldoc / copilot)
 
 Provider mixins don't fight over one config file: each ships a
 pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json`
-inside the sandbox (via its image layer), and the
-`global-opencode-config` mixin merges all fragments into the single
-config OpenCode loads via `OPENCODE_CONFIG` — before the agent starts
-(entrypoint shim), and refreshed on every boot (startup hook). Compose
-`global-opencode-config` with any provider mixin — it is required with
-them (their fragments only merge through it):
+inside the sandbox (via its image layer), and the `opencode` mixin
+merges all fragments into the single config OpenCode loads via
+`OPENCODE_CONFIG` — an install hook, before the agent starts. Compose
+`opencode` with any provider mixin — it is required with them (their
+fragments only merge through it):
 
 - `enabled_providers` lists are **unioned** — compose `zeldoc` and
   `copilot` together and both stay selectable with `/models`.

@@ -18,13 +18,10 @@ name: my-project
 agent: docker.io/nikcio/sbx-kit-opencode-node:v2.2.0
 
 kits:
-  - docker.io/nikcio/sbx-mixin-agents-md:v2.2.0              # sandbox AGENTS.md baseline (required by the kit)
-  - docker.io/nikcio/sbx-mixin-global-opencode-config:v2.2.0 # permissive OpenCode config + provider merge (required with model providers)
+  - docker.io/nikcio/sbx-mixin-opencode:v2.2.0               # opencode agent + config + provider merge (required)
   - docker.io/nikcio/sbx-mixin-env-guard:v2.2.0              # workspace .env guard
-  - docker.io/nikcio/sbx-mixin-opencode-update:v2.2.0        # opencode auto-update (latest npm release at creation)
   - docker.io/nikcio/sbx-mixin-zeldoc:v2.2.0                 # Zeldoc.ai provider
   - docker.io/nikcio/sbx-mixin-github-cli:v2.2.0             # git push auth (proxy-managed GitHub token)
-  - docker.io/nikcio/sbx-mixin-node:v2.2.0                   # node/npm
 # x-release-please-end-version
 
 workspace:

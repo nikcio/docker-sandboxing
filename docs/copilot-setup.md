@@ -14,8 +14,8 @@ Zeldoc — swap the `zeldoc` line for `copilot`, or keep both:
 
 ```yaml
 kits:
-  # ...kit + agents-md + opencode-update + stack mixins...
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/copilot&ref=<same ref as the other mixins>
+  # ...opencode + env-guard + stack mixins...
+  - docker.io/nikcio/sbx-mixin-copilot:<same version as the other mixins>
 ```
 
 ## 2. Create the sandbox and sign in

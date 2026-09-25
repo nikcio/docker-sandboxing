@@ -9,11 +9,9 @@
 # deleting a symlink removes the link, not the file it points at.
 #
 # Clone mode removes offenders from the sandbox-local copy (warning +
-# short pause); direct mode refuses to start when one exists. No-op when
+# short pause); direct mode fails (nonzero exit — the runtime surfaces
+# the failed install hook and refuses to start the agent). No-op when
 # there is no workspace (WORKSPACE_DIR unset).
-#
-# Runs from the workload entrypoint shim before the agent starts — a
-# lifecycle startup hook would race the agent, and this check must gate it.
 __envs=""
 __clean="workspace clean (no .env files)"
 if [ -n "${WORKSPACE_DIR:-}" ]; then
@@ -32,7 +30,7 @@ if [ -d /run/sandbox/source ]; then
     echo "workspace (clone mode - sandbox-local copy):"
     printf '%s\n' "$__envs" | sed 's/^/  - /'
     echo "============================================================"
-    echo "[env-guard] opencode opens in 5 seconds..."
+    echo "[env-guard] continuing in 5 seconds..."
     sleep 5
   fi
 elif [ -n "$__envs" ]; then

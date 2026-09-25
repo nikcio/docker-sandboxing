@@ -1,18 +1,32 @@
 # syntax=docker/dockerfile:1
 
-# The stock template image (ENTRYPOINT tini -- / CMD opencode) plus the
-# sandbox entrypoint shim.
+# Shell workload on the shell base image: the platform floor plus the
+# launch contract (interactive bash under tini, with the persistent-shell
+# environment the base wires up). Kit authoring and debugging happen
+# here; compose the mixins your task needs.
 #
-# The shim (kit/dockerrun/sandbox-entrypoint.sh) runs the composed mixins'
-# gating checks before the agent starts — v3 lifecycle startup hooks race
-# the agent, so the .env guard has to sit in the launch path instead. It
-# execs the original launch command at the end, so workloads without the
-# mixin scripts behave exactly like the base image.
-FROM docker/sandbox-templates:opencode-docker
+# x-release-please-start-version
+# (the shell base is unversioned; the block anchors the release bump)
+# x-release-please-end-version
+FROM docker/sandbox-templates:shell
+
 USER root
-COPY dockerrun/*.sh /opt/sandbox/bin/
-RUN chmod 755 /opt/sandbox/bin/*.sh \
-    && chown root:root /opt/sandbox/bin/*.sh
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        git-lfs \
+        jq \
+        unzip \
+        zip \
+    && rm -rf /var/lib/apt/lists/* \
+    && git lfs install --system
+
 USER agent
-ENTRYPOINT ["/opt/sandbox/bin/sandbox-entrypoint.sh", "tini", "--", "opencode"]
+RUN git config --global --add safe.directory "*" \
+    && git config --global init.defaultBranch main
+
+# The launch contract: the shell base launches bash under tini — kept as
+# this workload's launch command.
+USER agent
+ENTRYPOINT ["tini", "--", "bash"]
 CMD []

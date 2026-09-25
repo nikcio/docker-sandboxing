@@ -2,7 +2,9 @@
 schemaVersion: "3"
 kind: workload
 displayName: OpenCode (Custom)
-description: OpenCode agent on the stock opencode-docker template image
+description: Shell workload (the shell base image + the sandbox's git
+  setup) — compose the opencode mixin for the agent, plus the mixins your
+  task needs.
 
 capabilities:
   - type: com.docker.sandbox/sbx@1

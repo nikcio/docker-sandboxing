@@ -3,8 +3,7 @@ name: docker-sandboxing
 agent: ./kit
 
 kits:
-  - ./mixins/global-opencode-config
-  - ./mixins/opencode-update
+  - ./mixins/opencode
   - ./mixins/zeldoc
   - ./mixins/github-cli
   - ./mixins/docker-hub
