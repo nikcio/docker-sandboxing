@@ -72,7 +72,6 @@ protection under Settings → Branches) for `main`:
   - `Kit or mixin (v3 frontend build) (kit-python)`
   - `Kit or mixin (v3 frontend build) (kit-rust)`
   - `Kit or mixin (v3 frontend build) (mixins/browser)`
-  - `Kit or mixin (v3 frontend build) (mixins/copilot)`
   - `Kit or mixin (v3 frontend build) (mixins/docker-hub)`
   - `Kit or mixin (v3 frontend build) (mixins/dotnet)`
   - `Kit or mixin (v3 frontend build) (mixins/env-guard)`
@@ -92,7 +91,8 @@ protection under Settings → Branches) for `main`:
   - `Kit or mixin (v3 frontend build) (mixins/rust)`
   - `Kit or mixin (v3 frontend build) (mixins/sbx)`
   - `Kit or mixin (v3 frontend build) (mixins/uniform)`
-  - `Kit or mixin (v3 frontend build) (mixins/zeldoc)`
+  - `Kit or mixin (v3 frontend build) (mixins/opencode-copilot)`
+  - `Kit or mixin (v3 frontend build) (mixins/opencode-zeldoc)`
 
 The checks appear after the first PR runs the Validate workflow. Validate
 runs on every PR (no path filtering) and always produces exactly these

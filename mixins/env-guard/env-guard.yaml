@@ -8,20 +8,58 @@ description: >
   from the sandbox-local copy (warning + short pause), direct mode fails
   sandbox creation when one exists. No network rules — capability egress
   comes from the other mixins.
-version: "0.4.0"
+version: "0.5.0"
 
 capabilities:
   - type: com.docker.sandbox/lifecycle@1
     config:
       install:
         # Runs once, at create, after the workspace is mounted and before
-        # the agent starts — the gating this check needs, with no
-        # entrypoint shim: the script ships in this mixin's image at
-        # /opt/sandbox/env-guard/env-guard.sh and exits nonzero in direct
-        # mode, which fails sandbox creation.
+        # the agent starts — the gating this check needs, with no helper
+        # scripts anywhere: the whole guard lives in this command.
+        #
+        # What counts: the literal name .env plus the dotenv variants
+        # loaders pick up (.env.local, .env.production, ...); symlinks
+        # count too (deleting one removes the link, never its target);
+        # .env.example/.env.sample/.env.template are allowed.
+        #
+        # Clone mode removes offenders from the sandbox-local copy
+        # (warning + short pause); direct mode exits nonzero, which
+        # fails sandbox creation. No-op when there is no workspace.
         - command: |
             set -e
-            [ -x /opt/sandbox/env-guard/env-guard.sh ] || exit 0
-            /opt/sandbox/env-guard/env-guard.sh
+            __envs=""
+            __clean="workspace clean (no .env files)"
+            if [ -n "${WORKSPACE_DIR:-}" ]; then
+              __envs="$(find "$WORKSPACE_DIR" \( -type f -o -type l \) \
+                \( -name .env -o -name '.env.*' \) \
+                ! -name '.env.example' ! -name '.env.sample' ! -name '.env.template' \
+                -not -path '*/.git/*' 2>/dev/null)"
+            else
+              __clean="workspace not checked (WORKSPACE_DIR is not set)"
+            fi
+            if [ -d /run/sandbox/source ]; then
+              if [ -n "$__envs" ]; then
+                printf '%s\n' "$__envs" | while IFS= read -r __f; do rm -f -- "$__f"; done
+                echo "============================================================"
+                echo "WARNING [env-guard]: .env file(s) were removed from the"
+                echo "workspace (clone mode - sandbox-local copy):"
+                printf '%s\n' "$__envs" | sed 's/^/  - /'
+                echo "============================================================"
+                echo "[env-guard] continuing in 5 seconds..."
+                sleep 5
+              fi
+            elif [ -n "$__envs" ]; then
+              echo "============================================================"
+              echo "ERROR [env-guard]: .env file(s) found in the workspace (direct mode):"
+              printf '%s\n' "$__envs" | sed 's/^/  - /'
+              echo "This sandbox refuses to start with .env files in the workspace."
+              echo "Delete them on the host (they are mounted into the sandbox), then recreate the sandbox."
+              echo "============================================================"
+              exit 1
+            else
+              echo "[env-guard] direct mode - $__clean"
+            fi
+            unset __envs __clean __f
           env: [WORKSPACE_DIR]
           description: Enforce the no-.env policy (clone mode removes offenders; direct mode fails creation)

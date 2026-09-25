@@ -8,15 +8,15 @@ egress.
 ## Usage
 
 Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+(pin the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/nikcio-openapi-codegen   # openapi-codegen (C#)
+  - docker.io/nikcio/sbx-mixin-nikcio-openapi-codegen:vX.Y.Z   # openapi-codegen (C#)
 ```
 
 For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/nikcio-openapi-codegen <agent> .`
+`sbx run --kit ./mixins/nikcio-openapi-codegen <workload> .`
 
 Needs the `dotnet` mixin — the install ensures the SDK first when it is
 missing, then installs the tool as the `agent` user. It runs at

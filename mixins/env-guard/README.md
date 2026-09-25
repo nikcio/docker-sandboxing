@@ -17,15 +17,15 @@ For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/env-guard <workload> .`
 
 Optional but composed by the [examples](../../examples). No network rules
-— capability egress comes from the other mixins.
+— capability egress comes from the other mixins. Declaration-only: the
+guard is a single lifecycle `install` command in the descriptor — no
+shipped scripts, no image layers.
 
 ## How it works
 
-The guard script ships in this mixin's image
-(`/opt/sandbox/env-guard/env-guard.sh`) and runs as a lifecycle install
-hook — once, at sandbox creation, after the workspace is mounted and
-before the agent starts. That is the whole gating story: no entrypoint
-shim, no race with the agent.
+The guard runs as a lifecycle install hook — once, at sandbox creation,
+after the workspace is mounted and before the agent starts. That is the
+whole gating story: no entrypoint shim, no race with the agent.
 
 - **Clone mode** (`workspace.clone: true`): `.env` files — including
   `.env.local`-style variants and symlinked `.env` files — are removed

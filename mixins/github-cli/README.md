@@ -7,15 +7,15 @@ the sandbox.
 ## Usage
 
 Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+(pin the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/github-cli   # GitHub CLI + auth
+  - docker.io/nikcio/sbx-mixin-github-cli:vX.Y.Z   # GitHub CLI + auth
 ```
 
 For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/github-cli <agent> .`
+`sbx run --kit ./mixins/github-cli <workload> .`
 
 The sandbox network policy is deny-by-default, so `gh` and git-over-HTTPS
 fail until the GitHub hosts are allowed.

@@ -4,7 +4,7 @@ agent: ./kit
 
 kits:
   - ./mixins/opencode
-  - ./mixins/zeldoc
+  - ./mixins/opencode-zeldoc
   - ./mixins/github-cli
   - ./mixins/docker-hub
   - ./mixins/sbx

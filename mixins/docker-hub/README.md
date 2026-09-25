@@ -6,15 +6,15 @@ build containers against Docker Hub.
 ## Usage
 
 Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+(pin the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker-hub   # Docker Hub registry egress
+  - docker.io/nikcio/sbx-mixin-docker-hub:vX.Y.Z   # Docker Hub registry egress
 ```
 
 For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/docker-hub <agent> .`
+`sbx run --kit ./mixins/docker-hub <workload> .`
 
 The sandbox network policy is deny-by-default, so `docker pull`/`build`
 fails until the registry hosts are allowed.

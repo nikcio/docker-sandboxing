@@ -78,3 +78,7 @@ capabilities:
             PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium-headless-shell;
             chown -R agent:agent /home/agent/.cache/ms-playwright
           description: Ensure Playwright + Chromium headless shell (skipped when already present)
+
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      contentFile: ./note.md

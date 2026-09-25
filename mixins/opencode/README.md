@@ -19,7 +19,7 @@ kits:
 For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/opencode <workload> .`
 
-**Required when composing a model provider** (`zeldoc`, `copilot`) —
+**Required when composing a model provider** (`opencode-zeldoc`, `opencode-copilot`) —
 their config fragments only merge through it.
 
 ## How it works
@@ -35,10 +35,10 @@ their config fragments only merge through it.
   sandbox is the isolation boundary) with `overwrite: false`, so a config
   from an earlier boot is kept.
 - **Fragment merge**: an install hook (the only phase guaranteed to
-  finish before the agent starts) runs
-  `/opt/sandbox/opencode/merge-mixins.sh`, merging every
+  finish before the agent starts) merges every
   `~/.config/opencode/mixins.d/*.json` fragment into the combined config
-  with `jq`:
+  with `jq` — the merge is one declarative command in the descriptor, no
+  shipped scripts:
   - Objects merge recursively; later fragments win scalar conflicts.
   - Array-valued keys whose name starts with `enabled_` or `disabled_`
     (e.g. `enabled_mixins`, `enabled_providers`) are unioned — that is
@@ -47,8 +47,9 @@ their config fragments only merge through it.
     comment-free `.json`.
   - No fragments (or a missing directory) yields the minimal valid
     config, so `OPENCODE_CONFIG` always points at a loadable file.
-  - To re-merge after dropping a new fragment into a running sandbox:
-    `/opt/sandbox/opencode/merge-mixins.sh`.
+  - To re-merge after dropping a new fragment into a running sandbox,
+    re-run the merge command by hand (copy it from the descriptor) or
+    recreate the sandbox.
 - **Environment**: `OPENCODE_CONFIG` points at the combined file
   (mixin image `ENV`, composed additively at assembly).
 

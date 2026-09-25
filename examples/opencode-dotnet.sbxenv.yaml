@@ -20,7 +20,7 @@ agent: docker.io/nikcio/sbx-kit-opencode-dotnet:v2.2.0
 kits:
   - docker.io/nikcio/sbx-mixin-opencode:v2.2.0               # opencode agent + config + provider merge (required)
   - docker.io/nikcio/sbx-mixin-env-guard:v2.2.0              # workspace .env guard
-  - docker.io/nikcio/sbx-mixin-zeldoc:v2.2.0                 # Zeldoc.ai provider
+  - docker.io/nikcio/sbx-mixin-opencode-zeldoc:v2.2.0                 # Zeldoc.ai provider
   - docker.io/nikcio/sbx-mixin-github-cli:v2.2.0             # git push auth (proxy-managed GitHub token)
   - docker.io/nikcio/sbx-mixin-dotnet:v2.2.0                 # .NET/NuGet
 # x-release-please-end-version

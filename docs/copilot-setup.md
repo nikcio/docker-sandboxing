@@ -1,6 +1,6 @@
 # Use GitHub Copilot in the sandbox
 
-The `copilot` mixin makes the sandboxed agent use your GitHub Copilot
+The `opencode-copilot` mixin makes the sandboxed agent use your GitHub Copilot
 subscription as its model provider — instead of (or alongside) Zeldoc.ai.
 Unlike Zeldoc there is **no host-side key**: opencode signs in with
 GitHub's OAuth device flow, and the token stays inside the sandbox VM
@@ -8,14 +8,14 @@ GitHub's OAuth device flow, and the token stays inside the sandbox VM
 
 ## 1. Add the mixin
 
-Add the `copilot` mixin to the `kits:` list in your `sbxenv.yaml` (pin
+Add the `opencode-copilot` mixin to the `kits:` list in your `sbxenv.yaml` (pin
 the same `&ref=` as the other mixin lines). The default examples use
-Zeldoc — swap the `zeldoc` line for `copilot`, or keep both:
+Zeldoc — swap the `opencode-zeldoc` line for `opencode-copilot`, or keep both:
 
 ```yaml
 kits:
   # ...opencode + env-guard + stack mixins...
-  - docker.io/nikcio/sbx-mixin-copilot:<same version as the other mixins>
+  - docker.io/nikcio/sbx-mixin-opencode-copilot:<same version as the other mixins>
 ```
 
 ## 2. Create the sandbox and sign in

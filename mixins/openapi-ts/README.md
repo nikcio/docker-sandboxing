@@ -7,15 +7,15 @@ usage and reference material while generating typed API clients.
 ## Usage
 
 Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+(pin the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/openapi-ts   # openapi-ts docs
+  - docker.io/nikcio/sbx-mixin-openapi-ts:vX.Y.Z   # openapi-ts docs
 ```
 
 For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/openapi-ts <agent> .`
+`sbx run --kit ./mixins/openapi-ts <workload> .`
 
 Pair it with the `node` mixin — package installs themselves flow through
 the npm registry rules that mixin owns.

@@ -7,15 +7,15 @@ management, PyPI access, and docs hosts.
 ## Usage
 
 Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+(pin the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/python   # python + uv
+  - docker.io/nikcio/sbx-mixin-python:vX.Y.Z   # python + uv
 ```
 
 For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/python <agent> .`
+`sbx run --kit ./mixins/python <workload> .`
 
 The install runs at **sandbox creation only** and needs egress — the
 domains in the table below plus the Ubuntu apt mirrors

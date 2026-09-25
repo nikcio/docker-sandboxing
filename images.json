@@ -42,11 +42,6 @@
       "descriptor": "browser.yaml"
     },
     {
-      "name": "sbx-mixin-copilot",
-      "context": "mixins/copilot",
-      "descriptor": "copilot.yaml"
-    },
-    {
       "name": "sbx-mixin-docker-hub",
       "context": "mixins/docker-hub",
       "descriptor": "docker-hub.yaml"
@@ -117,6 +112,16 @@
       "descriptor": "opencode.yaml"
     },
     {
+      "name": "sbx-mixin-opencode-copilot",
+      "context": "mixins/opencode-copilot",
+      "descriptor": "opencode-copilot.yaml"
+    },
+    {
+      "name": "sbx-mixin-opencode-zeldoc",
+      "context": "mixins/opencode-zeldoc",
+      "descriptor": "opencode-zeldoc.yaml"
+    },
+    {
       "name": "sbx-mixin-playwright",
       "context": "mixins/playwright",
       "descriptor": "playwright.yaml"
@@ -140,11 +145,6 @@
       "name": "sbx-mixin-uniform",
       "context": "mixins/uniform",
       "descriptor": "uniform.yaml"
-    },
-    {
-      "name": "sbx-mixin-zeldoc",
-      "context": "mixins/zeldoc",
-      "descriptor": "zeldoc.yaml"
     }
   ]
 }

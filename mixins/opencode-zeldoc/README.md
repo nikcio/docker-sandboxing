@@ -1,23 +1,23 @@
-# zeldoc
+# opencode-zeldoc
 
 Zeldoc.ai model provider for OpenCode: proxy-managed API key,
 `opencode-zeldoc` plugin config, and network rules for the Zeldoc hosts.
 
 ## Usage
 
-Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+Add the mixin to the `kits:` list in your project's `sbxenv.yaml` (pin
+the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc   # Zeldoc.ai provider
+  - docker.io/nikcio/sbx-mixin-opencode-zeldoc:vX.Y.Z # Zeldoc.ai provider
 ```
 
 For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/zeldoc <agent> .`
+`sbx run --kit ./mixins/opencode-zeldoc <workload> .`
 
 Requires the `opencode` mixin — the provider config fragment
-only merges through it (compose `copilot` alongside; `enabled_providers`
+only merges through it (compose `opencode-copilot` alongside; `enabled_providers`
 lists are unioned, so both providers stay selectable).
 
 ## How it works

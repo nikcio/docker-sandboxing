@@ -7,15 +7,15 @@ template image lacks it), module proxy + checksum database for
 ## Usage
 
 Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+(pin the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/go   # Go toolchain
+  - docker.io/nikcio/sbx-mixin-go:vX.Y.Z   # Go toolchain
 ```
 
 For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/go <agent> .`
+`sbx run --kit ./mixins/go <workload> .`
 
 The install runs at **sandbox creation only** and needs egress — the
 domains in the table below plus the Ubuntu apt mirrors

@@ -41,10 +41,10 @@ Rules of thumb:
 
 | Mixin | Adds |
 | ----- | ---- |
-| `opencode` | The OpenCode agent (newest npm release by default; pin it with the mixin's `version` arg), permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), and the combined provider config (`OPENCODE_CONFIG` merge). Required in every OpenCode sandbox, and required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
+| `opencode` | The OpenCode agent (newest npm release by default; pin it with the mixin's `version` arg), permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), and the combined provider config (`OPENCODE_CONFIG` merge). Required in every OpenCode sandbox, and required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or fails sandbox creation (direct mode). Self-contained — the script ships in the mixin's own image and runs as a lifecycle install hook. Optional — the examples compose it |
-| `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
-| `copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
+| `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
+| `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `github-cli` | GitHub CLI (`gh`) install + proxy-managed GitHub auth (see [github-pat.md](github-pat.md)) |
 | `uniform` | Uniform DXP egress: docs site, dashboard + Management API (uniform.app), Edge Delivery API (uniform.global, incl. EU + image CDN), proxy-managed `x-api-key` auth (see [uniform-api-key.md](uniform-api-key.md)) |
 | `omnium` | Omnium OMS/e-commerce egress: REST API hosts (production/test/dev, each with Swagger), tech docs, proxy-managed `Authorization: Bearer` auth (see [omnium-api-key.md](omnium-api-key.md)) |
@@ -73,7 +73,7 @@ Network hosts per mixin are listed in the mixin's descriptor
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `opencode`, `env-guard`, `zeldoc`, `github-cli` |
+| Node only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli` |
 | .NET only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `dotnet` |
 | .NET + OpenAPI codegen (C# models) | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
 | Python only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `python` |
@@ -87,14 +87,14 @@ Network hosts per mixin are listed in the mixin's descriptor
 Notes:
 
 - `opencode` (the agent + config + provider merge) is required in every
-  OpenCode sandbox and with every model provider (`zeldoc`, `copilot`) —
+  OpenCode sandbox and with every model provider (`opencode-zeldoc`, `opencode-copilot`) —
   their config fragments only merge through it. `env-guard` (the
   no-.env policy) is optional.
 - The `playwright` and `sbx` mixins run `apt` at creation — their
   install hooks declare the Ubuntu apt mirrors in their install-phase
   policy. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`)
   per registry the in-sandbox Docker engine pulls from.
-- `zeldoc` and/or `copilot` give the agent a model provider. The
+- `opencode-zeldoc` and/or `opencode-copilot` give the agent a model provider. The
   `opencode` mixin installs the newest opencode at every creation by
   default (arg `version: latest`); pin it with a `version` value to
   freeze the agent release.
@@ -125,7 +125,7 @@ kits:
 Each arg carries a `default` (the documented behavior) and a `pattern`
 validating overrides; a failing value is rejected at sandbox creation.
 
-## Model providers (zeldoc / copilot)
+## Model providers (opencode-zeldoc / opencode-copilot)
 
 Provider mixins don't fight over one config file: each ships a
 pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json`
@@ -135,8 +135,8 @@ merges all fragments into the single config OpenCode loads via
 `opencode` with any provider mixin — it is required with them (their
 fragments only merge through it):
 
-- `enabled_providers` lists are **unioned** — compose `zeldoc` and
-  `copilot` together and both stay selectable with `/models`.
+- `enabled_providers` lists are **unioned** — compose `opencode-zeldoc` and
+  `opencode-copilot` together and both stay selectable with `/models`.
 - Fragments merge in filename order and later fragments win conflicts,
   but **no fragment sets the default model** — the project-level
   `opencode.jsonc` owns it. Commit one in the repo root (see

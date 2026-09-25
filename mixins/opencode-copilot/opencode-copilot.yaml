@@ -1,7 +1,7 @@
 # syntax=docker/sandbox-kit:3
 schemaVersion: "3"
 kind: mixin
-displayName: GitHub Copilot provider
+displayName: OpenCode GitHub Copilot provider
 description: >
   GitHub Copilot model provider for OpenCode. Sign-in happens in OpenCode
   (OAuth device flow) — this mixin keeps the device-flow hosts and the

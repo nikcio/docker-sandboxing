@@ -69,4 +69,4 @@ capabilities:
 
   - type: com.docker.sandbox/agent-context@1
     config:
-      contentFile: ./files/home/.sbx-agents.d/rust.md
+      contentFile: ./note.md

@@ -70,8 +70,8 @@ Full walkthrough (prerequisites, first run, daily use):
 | ----- | ---- | -------- |
 | `opencode` | the OpenCode agent (newest npm release at creation), permissive OpenCode config, and the provider-config merge (`OPENCODE_CONFIG`) | every OpenCode sandbox |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or fails creation (direct mode) | optional |
-| `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
-| `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
+| `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
+| `opencode-copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
 | `github-cli` | GitHub CLI (`gh`) + proxy-managed GitHub auth | — |
 | `uniform` | Uniform DXP egress: docs, dashboard + Management API, Edge Delivery API (incl. EU + image CDN), proxy-managed `x-api-key` | — |
 | `omnium` | Omnium OMS/e-commerce API egress (proxy-managed bearer token) | — |

@@ -37,7 +37,7 @@ only if git push still works.
 
 ## The agent uses the wrong model
 
-Model providers are mixins (`zeldoc`, `copilot`); their configs are
+Model providers are mixins (`opencode-zeldoc`, `opencode-copilot`); their configs are
 merged fragments — see [mixins.md](mixins.md). The default model comes
 from your project-level `opencode.jsonc` (`"model": "<provider>/<model>"`)
 — set it there, or switch per session with `/models`. Provider changes

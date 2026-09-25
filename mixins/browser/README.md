@@ -7,15 +7,15 @@ browser automation alongside Playwright or an agent script.
 ## Usage
 
 Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+(pin the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/browser   # Google Chrome
+  - docker.io/nikcio/sbx-mixin-browser:vX.Y.Z   # Google Chrome
 ```
 
 For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/browser <agent> .`
+`sbx run --kit ./mixins/browser <workload> .`
 
 The install runs at **sandbox creation only**. On
 template images that already ship Chrome the install is a no-op.

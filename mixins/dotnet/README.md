@@ -7,15 +7,15 @@ the SDK need.
 ## Usage
 
 Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+(pin the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet   # .NET / NuGet
+  - docker.io/nikcio/sbx-mixin-dotnet:vX.Y.Z   # .NET / NuGet
 ```
 
 For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/dotnet <agent> .`
+`sbx run --kit ./mixins/dotnet <workload> .`
 
 The install runs at **sandbox creation only** and needs egress — the
 domains in the table below plus the Ubuntu apt mirrors
