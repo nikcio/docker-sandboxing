@@ -3,44 +3,10 @@
   "enabled_providers": [
     "zeldoc"
   ],
-  "provider": {
-    "zeldoc": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Zeldoc.ai",
-      "options": {
-        "baseURL": "https://api.zeldoc.ai/v1",
-        "apiKey": "{env:ZELDOC_API_KEY}"
-      },
-      "models": {
-        "zdev": {
-          "name": "ZDev",
-          "attachment": true,
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "limit": {
-            "context": 1000000,
-            "output": 131072
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "high": {
-              "reasoningEffort": "high"
-            },
-            "max": {
-              "reasoningEffort": "max"
-            }
-          }
-        }
-      }
-    }
-  }
+  "plugin": [
+    "opencode-zeldoc"
+  ],
+  "disabled_providers": [
+    "opencode"
+  ]
 }
