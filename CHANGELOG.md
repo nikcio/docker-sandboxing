@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/nikcio/docker-sandboxing/compare/v2.1.0...v2.2.0) (2026-09-25)
+
+
+### Features
+
+* **mixins:** follow the updated Zeldoc connect guide in the zeldoc mixin ([#82](https://github.com/nikcio/docker-sandboxing/issues/82)) ([bc152d4](https://github.com/nikcio/docker-sandboxing/commit/bc152d462ba9fd076c765707b77892713d9325fb))
+
 ## [2.1.0](https://github.com/nikcio/docker-sandboxing/compare/v2.0.1...v2.1.0) (2026-09-20)
 
 
