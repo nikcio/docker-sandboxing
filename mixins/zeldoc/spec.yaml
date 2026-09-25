@@ -3,9 +3,9 @@ kind: mixin
 name: zeldoc
 displayName: Zeldoc.ai provider
 description: >
-  Zeldoc.ai (zdev) model provider for OpenCode: proxy-managed API key,
-  provider config fragment, and network rules for the Zeldoc hosts.
-version: 0.3.0
+  Zeldoc.ai model provider for OpenCode: proxy-managed API key,
+  opencode-zeldoc plugin config, and network rules for the Zeldoc hosts.
+version: 0.4.0
 
 credentials:
   - service: zeldoc
@@ -26,3 +26,5 @@ permissions:
       - api.zeldoc.ai:443
       - zeldoc.ai:443
       - docs.zeldoc.ai:443
+      # Plugin install: opencode fetches opencode-zeldoc from npm at start.
+      - registry.npmjs.org:443

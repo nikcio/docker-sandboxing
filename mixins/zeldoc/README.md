@@ -1,7 +1,7 @@
 # zeldoc
 
-Zeldoc.ai model provider for OpenCode: proxy-managed API key, provider
-config fragment, and network rules for the Zeldoc hosts.
+Zeldoc.ai model provider for OpenCode: proxy-managed API key,
+`opencode-zeldoc` plugin config, and network rules for the Zeldoc hosts.
 
 ## Usage
 
@@ -29,12 +29,19 @@ lists are unioned, so both providers stay selectable).
   `sbx secret set zeldoc` (see [docs/zeldoc-api-key.md](../../docs/zeldoc-api-key.md)).
 - **Config fragment**: ships a pure-JSON fragment to
   `~/.config/opencode/mixins.d/20-zeldoc.json`, merged into the combined
-  `OPENCODE_CONFIG` by `global-opencode-config` at every start.
+  `OPENCODE_CONFIG` by `global-opencode-config` at every start. It enables
+  the `zeldoc` provider, installs the
+  [`opencode-zeldoc` plugin](https://github.com/martinmose/opencode-zeldoc)
+  (the model picker lists exactly the models your key can use, with real
+  limits and prices). No manual `provider` block
+  with a models list — the plugin is the source of truth, per the
+  [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode).
 
 ## Network domains
 
 | Domain | Why |
 | ------ | --- |
-| `api.zeldoc.ai:443` | Model API (auth injected by the proxy) |
+| `api.zeldoc.ai:443` | Model API + plugin model discovery (auth injected by the proxy) |
 | `zeldoc.ai:443` | Product site |
 | `docs.zeldoc.ai:443` | Docs (webfetch) |
+| `registry.npmjs.org:443` | Plugin install (`opencode-zeldoc` at start) |

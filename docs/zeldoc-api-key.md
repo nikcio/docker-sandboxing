@@ -27,14 +27,15 @@ you're done.
 
 Start the sandbox (`sbx env run`); opencode starts with the Zeldoc
 provider enabled. No default model is picked for you — set `"model":
-"zeldoc/zdev-2"` in a project-level `opencode.jsonc` (see
+"zeldoc/zdev"` in a project-level `opencode.jsonc` (see
 [project-kit.md](project-kit.md)) or pick it with `/models`.
 
-If ZDev ever reports "encountered an error", the model's context limit
-likely changed — update `"limit".context` in
-`mixins/zeldoc/files/home/.config/opencode/mixins.d/20-zeldoc.json`
-per the [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode)
-(currently `1000000`).
+The model picker lists exactly the models your key can use: the
+[`opencode-zeldoc` plugin](https://github.com/martinmose/opencode-zeldoc)
+asks the API which models your key has at every start (limits, prices,
+and capabilities come from Zeldoc.ai, so nothing needs manual updating).
+If Zeldoc.ai can't be reached at start, opencode falls back to its
+built-in catalog until the next successful start.
 
 Prefer your GitHub Copilot subscription instead? See
 [copilot-setup.md](copilot-setup.md) — the two mixins compose (both
