@@ -1,9 +1,8 @@
 schemaVersion: "1"
 name: docker-sandboxing
-agent: opencode-custom
+agent: ./kit
 
 kits:
-  - ./kit
   - ./mixins/global-opencode-config
   - ./mixins/opencode-update
   - ./mixins/zeldoc

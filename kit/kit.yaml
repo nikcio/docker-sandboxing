@@ -1,0 +1,11 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: workload
+displayName: OpenCode (Custom)
+description: OpenCode agent on the stock opencode-docker template image
+
+capabilities:
+  - type: com.docker.sandbox/sbx@1
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      filename: AGENTS.md

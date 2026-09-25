@@ -1,0 +1,55 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Uniform (uniform.app)
+description: >
+  Adds Uniform API key injection and network rules for the Uniform
+  dashboard, Management API, and Edge Delivery API.
+version: "0.2.0"
+
+capabilities:
+  - type: com.docker.sandbox/credential@1
+    optional: true
+    description: >
+      Uniform API key (a service account key or personal access token) for
+      the Management API and Edge Delivery API. Create it in Uniform under
+      Security > Service Accounts.
+    config:
+      service: uniform
+      phase: runtime
+      apiKey:
+        name: UNIFORM_API_KEY
+        proxyManaged: true
+        inject:
+          - domain: uniform.app        # dashboard + Management API (US)
+            header: x-api-key
+            format: "%s"
+          - domain: eu.uniform.app     # dashboard + Management API (EU)
+            header: x-api-key
+            format: "%s"
+          - domain: uniform.global     # Edge Delivery API (US)
+            header: x-api-key
+            format: "%s"
+          - domain: eu.uniform.global  # Edge Delivery API (EU)
+            header: x-api-key
+            format: "%s"
+
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Dashboard, Management API, docs (docs.uniform.app), and per-team
+          # app subdomains. The credential inject hosts (uniform.app,
+          # eu.uniform.app) are named literally — the cross-entry check
+          # requires exact coverage.
+          - uniform.app:443
+          - eu.uniform.app:443
+          - "*.uniform.app:443"
+
+          # Edge Delivery API + image CDN, US and EU
+          # (img.uniform.global / img.eu.uniform.global). uniform.global +
+          # eu.uniform.global are the credential inject hosts, named
+          # literally.
+          - uniform.global:443
+          - eu.uniform.global:443
+          - "*.uniform.global:443"

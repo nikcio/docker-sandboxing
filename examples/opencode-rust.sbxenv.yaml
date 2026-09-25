@@ -6,31 +6,25 @@
 #    (see ../docs/mixins.md).
 # 3. Run from your project root:  sbx env run
 #
-# The rust mixin owns crates.io + rust-lang egress for cargo/rustup; git
-# dependencies ride the git mixin's GitHub egress (mixins/rust).
-#
 # Full guide: ../docs/getting-started.md
 # Environment file docs: https://docs.docker.com/ai/sandboxes/configuration/environment-files/
 
 schemaVersion: "1"
 name: my-project
-agent: opencode-rust
+agent: docker.io/nikcio/sbx-kit-opencode-rust:v3.0.0
 
-# The sandbox kit plus the mixins your project needs. Refs are pinned to the
-# latest release; release-please bumps them (do not edit by hand).
+# The workload kit is selected by `agent:` above; these are the mixins.
+# Refs are pinned to the latest release; release-please bumps them (do
+# not edit by hand).
 # x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-rust&ref=v2.2.0            # agent definition (published image)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/agents-md&ref=v2.2.0              # sandbox AGENTS.md baseline (required by the kit)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v2.2.0 # permissive OpenCode config + provider merge (required with model providers)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v2.2.0              # workspace .env guard
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-update&ref=v2.2.0        # opencode auto-update (latest npm release at creation)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v2.2.0                 # Zeldoc.ai provider
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/github-cli&ref=v2.2.0             # git push auth (proxy-managed GitHub token)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/rust&ref=v2.2.0                   # Rust toolchain (crates.io egress)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker-hub&ref=v2.2.0             # in-sandbox docker (Docker Hub registry egress)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/browser&ref=v2.2.0                # Google Chrome
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v2.2.0             # Playwright + Chromium headless shell
+  - docker.io/nikcio/sbx-mixin-agents-md:v3.0.0              # sandbox AGENTS.md baseline (required by the kit)
+  - docker.io/nikcio/sbx-mixin-global-opencode-config:v3.0.0 # permissive OpenCode config + provider merge (required with model providers)
+  - docker.io/nikcio/sbx-mixin-env-guard:v3.0.0              # workspace .env guard
+  - docker.io/nikcio/sbx-mixin-opencode-update:v3.0.0        # opencode auto-update (latest npm release at creation)
+  - docker.io/nikcio/sbx-mixin-zeldoc:v3.0.0                 # Zeldoc.ai provider
+  - docker.io/nikcio/sbx-mixin-github-cli:v3.0.0             # git push auth (proxy-managed GitHub token)
+  - docker.io/nikcio/sbx-mixin-rust:v3.0.0                   # Rust toolchain (crates.io egress)
 # x-release-please-end-version
 
 workspace:
@@ -47,7 +41,6 @@ ports:
   - sandbox: 3000 # web UI / API port
     host: 3000
 
-# Approves GitHub token injection for the sandbox (docs/github-pat.md).
 bindings:
   github:
     apiKey:

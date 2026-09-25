@@ -27,6 +27,7 @@ Copy the example matching your stack into your project's root and rename it
 | Setting | What to do |
 | ------- | ---------- |
 | `name:` | Set it to your project's name. |
+| `agent:` | Keep the workload image (or point it at your own). |
 | `kits:` | Drop the lines your project doesn't need — the mixin reference below marks which mixins are required. |
 | `workspace.path: .` | Leave as is — it targets your repo. |
 
@@ -67,9 +68,9 @@ Full walkthrough (prerequisites, first run, daily use):
 
 | Mixin | Adds | Required |
 | ----- | ---- | -------- |
-| `agents-md` | sandbox `AGENTS.md` baseline (guidance files + per-mixin notes) | every kit |
-| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`zeldoc`, `copilot`) |
-| `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
+| `agents-md` | sandbox `AGENTS.md` baseline (index page + guidance files, composed via agent-context) | every kit |
+| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), plus the combined provider config (`OPENCODE_CONFIG` merge, run by the workload entrypoint shim) | with a model provider (`zeldoc`, `copilot`) |
+| `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode), via the workload entrypoint shim | optional |
 | `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
 | `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
@@ -98,46 +99,53 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 Everything below is for developing the template, kit, and mixins.
 
 ```text
-├── template-dotnet/Dockerfile   # → opencode-dotnet:v1: .NET SDK, Node via NVM, PNPM, Playwright
-├── template-node/Dockerfile          # → opencode-node:v1: Node via NVM, PNPM, Playwright
-├── template-python/Dockerfile        # → opencode-python:v1: uv-managed CPython, uv, Node via NVM, PNPM, Playwright
-├── template-go/Dockerfile            # → opencode-go:v1: official Go toolchain (GO_VERSION build-arg,
+├── template-dotnet/Dockerfile   # → opencode-dotnet:vX: .NET SDK, Node via NVM, PNPM, Playwright
+├── template-node/Dockerfile          # → opencode-node:vX: Node via NVM, PNPM, Playwright
+├── template-python/Dockerfile        # → opencode-python:vX: uv-managed CPython, uv, Node via NVM, PNPM, Playwright
+├── template-go/Dockerfile            # → opencode-go:vX: official Go toolchain (GO_VERSION build-arg,
 │                                     #   GOTOOLCHAIN=auto for newer toolchains via the module proxy),
 │                                     #   Node via NVM, PNPM, Playwright
-├── template-rust/Dockerfile          # → opencode-rust:v1: rustup-managed stable toolchain
+├── template-rust/Dockerfile          # → opencode-rust:vX: rustup-managed stable toolchain
 │                                     #   (clippy + rustfmt + rust-analyzer), cargo, C build toolchain,
 │                                     #   Node via NVM, PNPM, Playwright
-├── kit-<stack>/                      # sandbox kits (kind: sandbox): one per stack template —
-├── kit-node/                         #   same shape as kit/ (image + opencode entrypoint),
-├── kit-dotnet/                  #   with the stack image from Docker Hub
-├── kit-python/
+├── kit-<stack>/                      # workload kits (kind: workload, v3): one per stack template —
+├── kit-node/                         #   <kit>.yaml descriptor + <kit>.dockerfile (template image FROM,
+├── kit-dotnet/                       #   entrypoint shim, published as sbx-kit-opencode-<stack>), plus
+├── kit-python/                       #   the shared shim scripts (kit/dockerrun/)
 ├── kit-go/
 ├── kit-rust/
+├── kit/dockerrun/                    # sandbox entrypoint shim + the gating scripts it runs
+│                                     #   (env-guard, opencode config merge) — copied into every
+│                                     #   workload image; see docs/mixins.md → Ordering
 ├── mixins/
-│   ├── agents-md/                    # the sandbox AGENTS.md baseline: guidance files
-│   │                                 #   (~/.sandbox-agents.md + ~/.sandbox-agents/*.md) and the
-│   │                                 #   startup rebuild of the workspace AGENTS.md from it plus
-│   │                                 #   every composed mixin's note (~/.sbx-agents.d/)
+│   ├── agents-md/                    # the sandbox AGENTS.md baseline: index page (agent-context)
+│   │                                 #   + guidance files (~/.sandbox-agents/*.md) as image files
 │   ├── global-opencode-config/       # owns OPENCODE_CONFIG: permissive OpenCode config
 │   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
 │   │                                 #   merge fed by provider mixins' mixins.d/ fragments
-│   ├── env-guard/                    # the workspace .env guard (startup command)
-│   └── <area>/                       # one single-purpose mixin per area (kind: mixin): network
-│                                     #   rules, env vars, credentials, install steps, agent
-│   │                                 #   memory note (.sbx-agents.d/<area>.md) — composed
-│                                     #   explicitly at launch (--kit flags or kits: list)
-├── kit/                              # the base kit (docker/sandbox-templates image), used by
+│   ├── env-guard/                    # the workspace .env guard (runs from the entrypoint shim)
+│   └── <area>/                       # one single-purpose mixin per area (kind: mixin, v3):
+│                                     #   <area>.yaml descriptor (capabilities: network policy,
+│                                     #   credentials, lifecycle, agent-context) + optional
+│                                     #   <area>.dockerfile for shipped files — composed explicitly
+│                                     #   at launch (--kit flags or kits: list)
+├── kit/                              # the base workload kit (docker/sandbox-templates image), used by
 │                                     #   this repo's own sbxenv.yaml
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack)
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
-└── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in opencode kit —
+└── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in v2 opencode kit —
                                       #   upstream of the template image; nothing loads it
 ```
 
 All five templates extend `docker/sandbox-templates:opencode-docker` and ship
 Git (+ git-lfs), Node.js via NVM + PNPM, and Playwright with the Chromium
 headless shell.
+
+Kits are [v3 kit descriptors](https://github.com/docker/sandbox-kit-spec)
+(`# syntax=docker/sandbox-kit:3`), requiring sbx v0.45+. The workload
+defines the image and launch; mixins declare network/credential/lifecycle
+capabilities and ship files through their own image layers.
 
 ### Working on the repo
 
@@ -146,7 +154,8 @@ Work in a git worktree branched from `main`
 sessions share this checkout concurrently.
 
 ```bash
-sbx kit validate kit-node/             # validate a kit or mixin after edits
+docker buildx build kit-node/ --file kit-node/kit-node.yaml   # build = validate (strict descriptor decode)
+docker buildx build mixins/node/ --file mixins/node/node.yaml # (declaration-only mixins have no Dockerfile)
 sbx env run                   # dev sandbox: kit/ + mixins/ loaded from the working copy
 ```
 

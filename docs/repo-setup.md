@@ -12,8 +12,10 @@ once as a repo admin (Settings are admin-only).
 | Release Please (`release-please.yml`) | pushes to `main` | a GitHub App (steps 1–2) |
 | Publish images (`publish-image.yml`) | a release is published | Docker Hub secrets (step 2) |
 
-Validate runs `sbx kit validate` on every kit and mixin plus a static
-BuildKit check on every template Dockerfile. No secrets involved.
+Validate builds every kit and mixin with the v3 sandbox-kit frontend
+(`docker buildx build -f <dir>/<name>.yaml <dir>` — the strict descriptor
+decode is the validation; no secrets involved) plus a static BuildKit
+check on every template Dockerfile.
 
 ## 1. Create the release-please GitHub App
 
@@ -64,7 +66,36 @@ protection under Settings → Branches) for `main`:
   and lands via PRs (see
   [agent-guidance/worktrees.md](../agent-guidance/worktrees.md)).
 - **Require status checks to pass**, then select:
-  - `Kits & mixins (sbx kit validate)`
+  - `Kit or mixin (v3 frontend build) (kit)`
+  - `Kit or mixin (v3 frontend build) (kit-dotnet)`
+  - `Kit or mixin (v3 frontend build) (kit-go)`
+  - `Kit or mixin (v3 frontend build) (kit-node)`
+  - `Kit or mixin (v3 frontend build) (kit-python)`
+  - `Kit or mixin (v3 frontend build) (kit-rust)`
+  - `Kit or mixin (v3 frontend build) (mixins/agents-md)`
+  - `Kit or mixin (v3 frontend build) (mixins/browser)`
+  - `Kit or mixin (v3 frontend build) (mixins/copilot)`
+  - `Kit or mixin (v3 frontend build) (mixins/docker-hub)`
+  - `Kit or mixin (v3 frontend build) (mixins/dotnet)`
+  - `Kit or mixin (v3 frontend build) (mixins/env-guard)`
+  - `Kit or mixin (v3 frontend build) (mixins/gcr)`
+  - `Kit or mixin (v3 frontend build) (mixins/ghcr)`
+  - `Kit or mixin (v3 frontend build) (mixins/github-cli)`
+  - `Kit or mixin (v3 frontend build) (mixins/global-opencode-config)`
+  - `Kit or mixin (v3 frontend build) (mixins/go)`
+  - `Kit or mixin (v3 frontend build) (mixins/mcr)`
+  - `Kit or mixin (v3 frontend build) (mixins/nikcio-openapi-codegen)`
+  - `Kit or mixin (v3 frontend build) (mixins/node)`
+  - `Kit or mixin (v3 frontend build) (mixins/omnium)`
+  - `Kit or mixin (v3 frontend build) (mixins/open-egress)`
+  - `Kit or mixin (v3 frontend build) (mixins/openapi-ts)`
+  - `Kit or mixin (v3 frontend build) (mixins/opencode-update)`
+  - `Kit or mixin (v3 frontend build) (mixins/playwright)`
+  - `Kit or mixin (v3 frontend build) (mixins/python)`
+  - `Kit or mixin (v3 frontend build) (mixins/rust)`
+  - `Kit or mixin (v3 frontend build) (mixins/sbx)`
+  - `Kit or mixin (v3 frontend build) (mixins/uniform)`
+  - `Kit or mixin (v3 frontend build) (mixins/zeldoc)`
   - `Dockerfile (buildx check) (template-dotnet)`
   - `Dockerfile (buildx check) (template-node)`
   - `Dockerfile (buildx check) (template-python)`
@@ -73,7 +104,8 @@ protection under Settings → Branches) for `main`:
 
 The checks appear after the first PR runs the Validate workflow. Validate
 runs on every PR (no path filtering) and always produces exactly these
-six checks, so the fixed required set is safe. Two caveats keep it that
+checks (one per image in `images.json`), so the fixed required set is
+safe. Two caveats keep it that
 way: don't add path filters to `validate.yml` (a filtered-out PR never
 reports the required checks and can never merge), and after adding or
 renaming an image in `images.json`, update this required list to match

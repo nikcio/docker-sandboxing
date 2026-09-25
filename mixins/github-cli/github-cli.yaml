@@ -1,0 +1,157 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: GitHub CLI
+description: >
+  Installs the gh CLI, keeps GitHub hosts reachable, and requests the
+  proxy-managed GitHub token. Startup derives the git committer identity
+  from the token and locks it in — the agent cannot override it.
+version: "0.5.0"
+
+capabilities:
+  - type: com.docker.sandbox/credential@1
+    optional: true
+    description: >
+      GitHub personal access token for the gh CLI and git over HTTPS.
+      Use a fine-grained PAT scoped to only the repositories and
+      permissions the agent needs.
+    config:
+      service: github
+      phase: runtime
+      apiKey:
+        name: GH_TOKEN
+        proxyManaged: true
+        inject:
+          - domain: api.github.com
+            header: Authorization
+            format: Bearer %s
+          - domain: github.com
+            header: Authorization
+            format: Bearer %s
+          - domain: uploads.github.com
+            header: Authorization
+            format: Bearer %s
+          - domain: raw.githubusercontent.com
+            header: Authorization
+            format: Bearer %s
+
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # gh CLI apt repo (package + keyring; kept for upgrades)
+          - cli.github.com:443
+
+          # The credential inject hosts (api/github/uploads/raw) are named
+          # literally — the cross-entry check requires exact coverage.
+          - github.com
+          - api.github.com
+          - uploads.github.com
+          - raw.githubusercontent.com
+          - "*.github.com"
+          - "*.githubusercontent.com"
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        - command: >
+            if command -v gh >/dev/null 2>&1; then exit 0; fi
+            && install -m 0755 -d /etc/apt/keyrings
+            && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /etc/apt/keyrings/githubcli-archive-keyring.gpg
+            && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+            && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
+            && install -m 0755 -d /var/lib/apt/sbx-lists
+            && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq
+            && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends gh
+            && rm -rf /var/lib/apt/sbx-lists
+          description: Install the gh CLI (skipped when the workload image already has it)
+
+      startup:
+        # Force git committer identity from GH_TOKEN and prevent the agent
+        # from overriding it. Runs as root on every boot; idempotent.
+        #
+        # Note: This isn't perfect as the agent can still override the
+        # identity by calling the git binary directly.
+        - command:
+            - bash
+            - -c
+            - |
+              set -e
+              agent_home=/home/agent
+              if ! command -v gh >/dev/null 2>&1; then
+                echo "gh not available; skipping git identity setup" >&2
+                exit 0
+              fi
+              gh_user="$(gh api user --jq '{login: .login, name: (.name // .login), email: (.email // "\(.id)+\(.login)@users.noreply.github.com")}')" || {
+                echo "Could not resolve GitHub user from GH_TOKEN; skipping git identity setup" >&2
+                exit 0
+              }
+              name="$(echo "$gh_user" | jq -r .name)"
+              email="$(echo "$gh_user" | jq -r .email)"
+              git_path="$(command -v git || true)"
+              if [ -z "$git_path" ]; then
+                echo "git not available; skipping git identity setup" >&2
+                exit 0
+              fi
+              if [ "$git_path" = "/usr/local/bin/git" ]; then
+                git_path=/usr/bin/git
+              fi
+              export HOME="$agent_home"
+              # A previous start may have left the configs immutable; clear the
+              # flag first so re-runs can rewrite them instead of failing.
+              chattr -i /etc/gitconfig 2>/dev/null || true
+              chattr -i "$agent_home/.gitconfig" 2>/dev/null || true
+              "$git_path" config --global user.name "$name"
+              "$git_path" config --global user.email "$email"
+              "$git_path" config --global --replace-all safe.directory '*'
+              {
+                printf 'GIT_AUTHOR_NAME=%q\n' "$name"
+                printf 'GIT_AUTHOR_EMAIL=%q\n' "$email"
+                printf 'GIT_COMMITTER_NAME=%q\n' "$name"
+                printf 'GIT_COMMITTER_EMAIL=%q\n' "$email"
+              } > /etc/git-identity
+              chmod 644 /etc/git-identity
+              {
+                echo '#!/bin/bash'
+                echo 'if [ -r /etc/git-identity ]; then'
+                echo '  set -a'
+                echo '  . /etc/git-identity'
+                echo '  set +a'
+                echo 'fi'
+                echo 'if [ "$1" = "config" ]; then'
+                echo '  nargs=0'
+                echo '  for arg in "$@"; do'
+                echo '    case "$arg" in'
+                echo '      --*) ;;'
+                echo '      config) ;;'
+                echo '      *) nargs=$((nargs + 1)) ;;'
+                echo '    esac'
+                echo '  done'
+                echo '  case "$*" in'
+                echo '    user.config|*user.name*|*user.email*)'
+                echo '      if [ "$nargs" -ge 2 ]; then'
+                echo '        echo "ERROR: git identity is managed by the sandbox and cannot be overridden" >&2'
+                echo '        exit 1'
+                echo '      fi'
+                echo '      if [ "$nargs" -eq 1 ]; then'
+                echo '        echo "git identity is managed by the sandbox; $1 <name|email> is ignored" >&2'
+                echo '      fi'
+                echo '      ;;'
+                echo '  esac'
+                echo 'fi'
+                echo "exec $git_path \"\$@\""
+              } > /usr/local/bin/git
+              chmod 755 /usr/local/bin/git
+              {
+                echo '[user]'
+                echo "	name = $name"
+                echo "	email = $email"
+              } > /etc/gitconfig
+              chown root:root /etc/gitconfig
+              chmod 644 /etc/gitconfig
+              chattr +i /etc/gitconfig 2>/dev/null || true
+              chown root:root "$agent_home/.gitconfig" 2>/dev/null || true
+              chmod 644 "$agent_home/.gitconfig" 2>/dev/null || true
+              chattr +i "$agent_home/.gitconfig" 2>/dev/null || true
+          user: "root"
+          description: Force git committer identity from GH_TOKEN and prevent the agent from overriding it

@@ -1,0 +1,17 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Open egress (all domains)
+description: >
+  Adds an allow-all network policy, replacing the deny-by-default baseline.
+  Compose it when capability egress would otherwise block the work the
+  sandbox has to do.
+version: "0.1.0"
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Everything, any protocol (unbounded entry).
+          - "**"

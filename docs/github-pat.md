@@ -42,7 +42,7 @@ environment's `name:` from your `sbxenv.yaml`.
 For environments created from a `sbxenv.yaml`, the example file already
 declares the `bindings.github` block that approves injection for the GitHub
 hosts. Keep it in your copy (and in sync with
-`mixins/github-cli/spec.yaml`). If you change `bindings:`, recreate the
+`mixins/github-cli/github-cli.yaml`). If you change `bindings:`, recreate the
 environment.
 
 ## Rotate / remove

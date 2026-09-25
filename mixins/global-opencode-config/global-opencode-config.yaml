@@ -1,0 +1,30 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Global OpenCode config
+description: >
+  Owns the permissive OpenCode config (edit/bash/webfetch allowed — the
+  sandbox is the isolation boundary) and merges provider mixins' config
+  fragments (enabled_*/disabled_* lists union) into the combined
+  OPENCODE_CONFIG. The merge script ships in the workload images
+  (/opt/sandbox/bin/merge-opencode-config.sh) and runs from the workload
+  entrypoint shim before the agent starts, so providers are wired from
+  the first prompt.
+version: "0.5.0"
+
+capabilities:
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      startup:
+        # Keep the combined config fresh on every boot (the entrypoint
+        # shim already produced the first one before the agent started;
+        # this re-runs idempotently for stop/start cycles).
+        - command:
+            - bash
+            - -c
+            - |
+              if [ -x /opt/sandbox/bin/merge-opencode-config.sh ]; then
+                exec /opt/sandbox/bin/merge-opencode-config.sh
+              fi
+          user: "agent"
+          description: Re-merge mixin config fragments into OPENCODE_CONFIG

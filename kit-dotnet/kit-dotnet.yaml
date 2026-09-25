@@ -1,0 +1,15 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: workload
+displayName: OpenCode (.NET)
+
+# The version and the image tag are bumped together by release-please.
+# x-release-please-start-version
+version: "3.0.0"
+# x-release-please-end-version
+
+capabilities:
+  - type: com.docker.sandbox/sbx@1
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      filename: AGENTS.md

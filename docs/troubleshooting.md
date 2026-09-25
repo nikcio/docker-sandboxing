@@ -9,8 +9,9 @@ Check what was blocked, then allow it in the owning mixin:
 sbx policy log          # on your host — shows blocked hosts
 ```
 
-Add the host to the mixin's `permissions.network.allow` in
-`mixins/<area>/spec.yaml`, then recreate the sandbox (kit changes never
+Add the host to the mixin's network policy in `mixins/<area>/<area>.yaml`
+(the `runtime.allow` list for agent-phase traffic, `install.allow` for
+creation-time downloads), then recreate the sandbox (kit changes never
 apply to running sandboxes):
 
 ```bash
@@ -55,7 +56,7 @@ sandbox):
 
 ## My changes to a kit/mixin/template are not picked up
 
-- **Kit/mixin spec changes** apply only to new sandboxes — recreate with
+- **Kit/mixin descriptor changes** apply only to new sandboxes — recreate with
   `sbx rm <name>` + `sbx env run`. While iterating on a clone, point the
   `kits:` lines at local directories (e.g. `./kit-dotnet`)
   instead of git refs.

@@ -1,30 +1,145 @@
 {
-  "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each context and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). Pair every image with a published kit spec that pins docker.io/nikcio/<name>:vX.Y.Z and register that spec in .release-please-config.json (extra-files) so releases bump it.",
+  "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each entry and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). Workload images build the template-*/Dockerfile context; kit and mixin images build the v3 descriptor (docker buildx build -f <dir>/<name>.yaml <dir>) and carry their validated descriptor in a manifest annotation. The release-please extra-files blocks keep every versioned reference (workload FROM tag, example refs) at the release version.",
   "images": [
     {
       "name": "opencode-dotnet",
-      "context": "template-dotnet",
-      "spec": "kit-dotnet/spec.yaml"
+      "context": "template-dotnet"
     },
     {
       "name": "opencode-node",
-      "context": "template-node",
-      "spec": "kit-node/spec.yaml"
+      "context": "template-node"
     },
     {
       "name": "opencode-python",
-      "context": "template-python",
-      "spec": "kit-python/spec.yaml"
+      "context": "template-python"
     },
     {
       "name": "opencode-go",
-      "context": "template-go",
-      "spec": "kit-go/spec.yaml"
+      "context": "template-go"
     },
     {
       "name": "opencode-rust",
-      "context": "template-rust",
-      "spec": "kit-rust/spec.yaml"
+      "context": "template-rust"
+    },
+    {
+      "name": "sbx-kit-opencode",
+      "context": "kit"
+    },
+    {
+      "name": "sbx-kit-opencode-dotnet",
+      "context": "kit-dotnet"
+    },
+    {
+      "name": "sbx-kit-opencode-node",
+      "context": "kit-node"
+    },
+    {
+      "name": "sbx-kit-opencode-python",
+      "context": "kit-python"
+    },
+    {
+      "name": "sbx-kit-opencode-go",
+      "context": "kit-go"
+    },
+    {
+      "name": "sbx-kit-opencode-rust",
+      "context": "kit-rust"
+    },
+    {
+      "name": "sbx-mixin-agents-md",
+      "context": "mixins/agents-md"
+    },
+    {
+      "name": "sbx-mixin-browser",
+      "context": "mixins/browser"
+    },
+    {
+      "name": "sbx-mixin-copilot",
+      "context": "mixins/copilot"
+    },
+    {
+      "name": "sbx-mixin-docker-hub",
+      "context": "mixins/docker-hub"
+    },
+    {
+      "name": "sbx-mixin-dotnet",
+      "context": "mixins/dotnet"
+    },
+    {
+      "name": "sbx-mixin-env-guard",
+      "context": "mixins/env-guard"
+    },
+    {
+      "name": "sbx-mixin-gcr",
+      "context": "mixins/gcr"
+    },
+    {
+      "name": "sbx-mixin-ghcr",
+      "context": "mixins/ghcr"
+    },
+    {
+      "name": "sbx-mixin-github-cli",
+      "context": "mixins/github-cli"
+    },
+    {
+      "name": "sbx-mixin-global-opencode-config",
+      "context": "mixins/global-opencode-config"
+    },
+    {
+      "name": "sbx-mixin-go",
+      "context": "mixins/go"
+    },
+    {
+      "name": "sbx-mixin-mcr",
+      "context": "mixins/mcr"
+    },
+    {
+      "name": "sbx-mixin-nikcio-openapi-codegen",
+      "context": "mixins/nikcio-openapi-codegen"
+    },
+    {
+      "name": "sbx-mixin-node",
+      "context": "mixins/node"
+    },
+    {
+      "name": "sbx-mixin-omnium",
+      "context": "mixins/omnium"
+    },
+    {
+      "name": "sbx-mixin-open-egress",
+      "context": "mixins/open-egress"
+    },
+    {
+      "name": "sbx-mixin-openapi-ts",
+      "context": "mixins/openapi-ts"
+    },
+    {
+      "name": "sbx-mixin-opencode-update",
+      "context": "mixins/opencode-update"
+    },
+    {
+      "name": "sbx-mixin-playwright",
+      "context": "mixins/playwright"
+    },
+    {
+      "name": "sbx-mixin-python",
+      "context": "mixins/python"
+    },
+    {
+      "name": "sbx-mixin-rust",
+      "context": "mixins/rust"
+    },
+    {
+      "name": "sbx-mixin-sbx",
+      "context": "mixins/sbx"
+    },
+    {
+      "name": "sbx-mixin-uniform",
+      "context": "mixins/uniform"
+    },
+    {
+      "name": "sbx-mixin-zeldoc",
+      "context": "mixins/zeldoc"
     }
   ]
 }

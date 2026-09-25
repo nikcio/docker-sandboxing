@@ -1,0 +1,19 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Workspace .env guard
+description: >
+  Enforces the no-.env policy in the workspace: clone mode removes .env
+  files (including .env.local-style variants and symlinked .env files)
+  from the sandbox-local copy (warning + short pause), direct mode refuses
+  to start when one exists. No network rules — capability egress comes
+  from the other mixins.
+version: "0.3.0"
+
+# The guard script ships in the workload images
+# (/opt/sandbox/bin/env-guard.sh) and runs from the workload entrypoint
+# shim BEFORE the agent starts — v3 lifecycle startup hooks run alongside
+# the agent, and this check must gate it (direct mode exits nonzero and
+# the shim refuses to launch the agent). Nothing to declare beyond this
+# note: the files are baked into the workload image, and the shim picks
+# the guard up whenever this mixin is composed.
