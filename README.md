@@ -128,8 +128,9 @@ Every workload builds on `docker/sandbox-templates:shell` (agent user,
 workspace, persistent-shell env, tini) and adds its stack in its own
 `kit-*/kit-*.dockerfile`: Git (+ git-lfs), Node.js via NVM + PNPM, and
 Playwright with the Chromium headless shell. The OpenCode agent is
-installed by the `opencode` mixin (newest npm release at creation), so
-the same kit image serves any agent version without a rebuild.
+installed by the `opencode` mixin (newest npm release at creation by
+default — pin it with its `version` arg), so the same kit image serves
+any agent version without a rebuild.
 
 Kits are [v3 kit descriptors](https://github.com/docker/sandbox-kit-spec)
 (`# syntax=docker/sandbox-kit:3`), requiring sbx v0.45+. The workload

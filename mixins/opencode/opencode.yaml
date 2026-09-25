@@ -3,19 +3,27 @@ schemaVersion: "3"
 kind: mixin
 displayName: OpenCode
 description: >
-  Installs the OpenCode agent (and rolls it to the newest npm release at
-  every sandbox creation), ships the permissive OpenCode config, and
-  merges provider mixins' config fragments (enabled_*/disabled_* lists
-  union) into the combined OPENCODE_CONFIG before the agent starts.
-version: "0.1.0"
+  Installs the OpenCode agent (by default the newest npm release at every
+  sandbox creation), ships the permissive OpenCode config, and merges
+  provider mixins' config fragments (enabled_*/disabled_* lists union)
+  into the combined OPENCODE_CONFIG before the agent starts.
+version: "0.2.0"
+
+args:
+  version:
+    default: "latest"
+    pattern: '^(latest|[0-9]+\.[0-9]+\.[0-9]+)$'
+    description: >
+      OpenCode release to install (npm version of opencode-ai); "latest"
+      rolls to the newest release at every sandbox creation.
 
 capabilities:
   - type: com.docker.sandbox/network-policy@1
     config:
       install:
         allow:
-          # npm registry (fresh opencode install at creation; skipped when
-          # the workload image already carries the pinned version)
+          # npm registry (opencode install at creation; skipped when the
+          # requested version is already present)
           - registry.npmjs.org:443
 
       runtime:
@@ -27,17 +35,22 @@ capabilities:
   - type: com.docker.sandbox/lifecycle@1
     config:
       install:
-        # Roll opencode to the newest npm release at creation (the shell
-        # image ships no agent; node images bake a fixed version). Safe to
-        # compose on a workload that already has opencode — this refreshes
-        # it instead of skipping.
+        # Install the requested opencode release (the shell image ships
+        # no agent; node images bake a fixed version). "latest" (the
+        # default) refreshes on every creation; a pinned version skips
+        # when already present. Safe to compose on a workload that
+        # already has opencode either way.
         - command: >
             set -e;
             if ! command -v npm >/dev/null 2>&1; then echo "[opencode] npm is not available — install node or compose the node mixin" >&2; exit 0; fi;
             OC_PREFIX=/usr/local/share/npm-global;
-            npm install -g --prefix "$OC_PREFIX" opencode-ai@latest;
+            if [ "${{ kit.args.version }}" != "latest" ] && command -v opencode >/dev/null 2>&1 && opencode --version 2>/dev/null | grep -qF "${{ kit.args.version }}"; then
+              echo "[opencode] ${{ kit.args.version }} already installed — skipping";
+              exit 0;
+            fi;
+            npm install -g --prefix "$OC_PREFIX" "opencode-ai@${{ kit.args.version }}";
             opencode --version
-          description: Install/upgrade opencode to the latest npm release
+          description: Install opencode (version from the version kit arg; "latest" upgrades at every creation)
 
         # Seed the permissive base config (ships in this image at
         # /usr/share/sandbox/opencode/opencode.jsonc — edit/bash/webfetch

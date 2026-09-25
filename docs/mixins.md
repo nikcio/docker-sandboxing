@@ -41,7 +41,7 @@ Rules of thumb:
 
 | Mixin | Adds |
 | ----- | ---- |
-| `opencode` | The OpenCode agent: newest npm release at creation, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), and the combined provider config (`OPENCODE_CONFIG` merge). Required in every OpenCode sandbox, and required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
+| `opencode` | The OpenCode agent (newest npm release by default; pin it with the mixin's `version` arg), permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), and the combined provider config (`OPENCODE_CONFIG` merge). Required in every OpenCode sandbox, and required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or fails sandbox creation (direct mode). Self-contained — the script ships in the mixin's own image and runs as a lifecycle install hook. Optional — the examples compose it |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
@@ -95,8 +95,35 @@ Notes:
   policy. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`)
   per registry the in-sandbox Docker engine pulls from.
 - `zeldoc` and/or `copilot` give the agent a model provider. The
-  `opencode` mixin already rolls opencode to the newest npm release at
-  every creation, so there is no separate update mixin.
+  `opencode` mixin installs the newest opencode at every creation by
+  default (arg `version: latest`); pin it with a `version` value to
+  freeze the agent release.
+
+## Version overrides
+
+Every installed tool's version is a kit argument, overridable per
+environment (`--kit-arg` in `sbxenv.yaml`'s `kits:` entries or at
+`sbx run`) or per build (`--build-arg` for workload kit images):
+
+- **Workload images** (stack toolchains baked at build): the `kit-*/`
+descriptors declare args like `node_version`, `go_version`,
+`python_version`, `rust_version`, `dotnet_channel`, `playwright_version`
+— build the kit with `--build-arg <arg>=<value>` to change them.
+- **Creation-time installs** (mixin install hooks): `opencode`'s
+`version` (default `latest`), `node`'s `nvm_version`/`node_version`/
+`pnpm_version`, `python`'s `python_version`, `rust`'s `rust_version`,
+`dotnet`'s `channel`, `browser`'s `channel`, `nikcio-openapi-codegen`'s
+`tool_version` — override with `--kit-arg`:
+
+```yaml
+kits:
+  - source: docker.io/nikcio/sbx-mixin-opencode:vX.Y.Z
+    args:
+      version: "1.18.32"
+```
+
+Each arg carries a `default` (the documented behavior) and a `pattern`
+validating overrides; a failing value is rejected at sandbox creation.
 
 ## Model providers (zeldoc / copilot)
 

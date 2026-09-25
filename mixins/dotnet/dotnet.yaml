@@ -5,8 +5,18 @@ displayName: .NET / NuGet
 description: >
   Ensures the .NET SDK is available when the workload image lacks it, and
   keeps NuGet and the Microsoft download hosts reachable.
-version: "0.5.0"
+version: "0.6.0"
 
+args:
+  channel:
+    default: "10.0"
+    pattern: '^[0-9]+\.[0-9]+$'
+    description: .NET release channel for the SDK install (apt feed or dot.net script)
+
+# Literal provide: the version must resolve at publish (the channel arg
+# is create-phase and stays a reference in the published descriptor).
+# Bump alongside the default channel; a channel override does not change
+# what this mixin vouches for.
 provides:
   - dotnet@10.0
 
@@ -63,14 +73,14 @@ capabilities:
             export DEBIAN_FRONTEND=noninteractive;
             { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
             apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
-            if apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends dotnet-sdk-10.0 2>/dev/null; then
+            if apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends dotnet-sdk-${{ kit.args.channel }} 2>/dev/null; then
               { echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export DOTNET_GENERATE_ASPNET_CERTIFICATE=false'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
             else
               DOTNET_ROOT=/usr/share/dotnet sh -c '
                 set -e
                 curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/sbx-dotnet-install.sh
                 chmod +x /tmp/sbx-dotnet-install.sh
-                /tmp/sbx-dotnet-install.sh --channel 10.0 --install-dir "$DOTNET_ROOT"
+                /tmp/sbx-dotnet-install.sh --channel "${{ kit.args.channel }}" --install-dir "$DOTNET_ROOT"
                 rm -f /tmp/sbx-dotnet-install.sh
                 ln -sf "$DOTNET_ROOT/dotnet" /usr/local/bin/dotnet
                 mkdir -p "$DOTNET_ROOT/tools"';

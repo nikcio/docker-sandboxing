@@ -24,10 +24,12 @@ their config fragments only merge through it.
 
 ## How it works
 
-- **Agent install**: an install hook rolls opencode to the newest npm
-  release at sandbox creation (`opencode-ai@latest` into the agent's npm
-  prefix). The shell workload image ships no agent; on a node-based
-  workload this refreshes the baked version instead of skipping.
+- **Agent install**: an install hook installs the opencode release from
+  the mixin's `version` arg into the agent's npm prefix — `latest` (the
+  default) rolls to the newest npm release at every sandbox creation; a
+  pinned version (e.g. `1.18.32`) is installed once and skipped on
+  later creations when already present. The shell workload image ships
+  no agent; on a node-based workload this refreshes the baked version.
 - **Base config**: writes the permissive
   `~/.config/opencode/opencode.jsonc` (edit/bash/webfetch allowed — the
   sandbox is the isolation boundary) with `overwrite: false`, so a config

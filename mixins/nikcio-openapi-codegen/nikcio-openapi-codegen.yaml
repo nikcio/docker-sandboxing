@@ -4,7 +4,17 @@ kind: mixin
 displayName: OpenAPI Code Generator (C#)
 description: >
   Installs the openapi-code-generator .NET global tool Nikcio.OpenApiCodeGen.
-version: "0.4.0"
+version: "0.5.0"
+
+args:
+  dotnet_channel:
+    default: "10.0"
+    pattern: '^[0-9]+\.[0-9]+$'
+    description: .NET release channel for the fallback SDK install (when no dotnet mixin ran first)
+  tool_version:
+    default: "latest"
+    pattern: '^(latest|[0-9]+\.[0-9]+\.[0-9]+)$'
+    description: Nikcio.OpenApiCodeGen version to install
 
 requires:
   - dotnet >= 10
@@ -45,14 +55,14 @@ capabilities:
               export DEBIAN_FRONTEND=noninteractive;
               { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
               apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
-              if apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends dotnet-sdk-10.0 2>/dev/null; then
+              if apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends dotnet-sdk-${{ kit.args.dotnet_channel }} 2>/dev/null; then
                 { echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export DOTNET_GENERATE_ASPNET_CERTIFICATE=false'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
               else
                 DOTNET_ROOT=/usr/share/dotnet sh -c '
                   set -e
                   curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/sbx-dotnet-install.sh
                   chmod +x /tmp/sbx-dotnet-install.sh
-                  /tmp/sbx-dotnet-install.sh --channel 10.0 --install-dir "$DOTNET_ROOT"
+                  /tmp/sbx-dotnet-install.sh --channel "${{ kit.args.dotnet_channel }}" --install-dir "$DOTNET_ROOT"
                   rm -f /tmp/sbx-dotnet-install.sh
                   ln -sf "$DOTNET_ROOT/dotnet" /usr/local/bin/dotnet
                   mkdir -p "$DOTNET_ROOT/tools"';
@@ -62,7 +72,7 @@ capabilities:
             fi;
             if sudo -u agent bash -lc 'command -v openapi-codegen >/dev/null 2>&1'; then exit 0; fi;
             echo 'export PATH=$PATH:/home/agent/.dotnet/tools' >> /etc/sandbox-persistent.sh;
-            sudo -u agent dotnet tool install --global Nikcio.OpenApiCodeGen
+            sudo -u agent dotnet tool install --global "Nikcio.OpenApiCodeGen@${{ kit.args.tool_version }}"
           description: Install the openapi-codegen .NET global tool (skipped when already present)
 
   - type: com.docker.sandbox/agent-context@1

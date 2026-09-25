@@ -5,7 +5,13 @@ displayName: Python / uv
 description: >
   Adds a uv-managed Python interpreter to the sandbox, with the uv tool for
   package and venv management, when the workload image lacks them.
-version: "0.4.0"
+version: "0.5.0"
+
+args:
+  python_version:
+    default: "3.12"
+    pattern: '^[0-9]+\.[0-9]+$'
+    description: CPython version for uv to install (skipped when python3 + pip are already present)
 
 capabilities:
   - type: com.docker.sandbox/network-policy@1
@@ -54,7 +60,7 @@ capabilities:
             if [ ! -x /usr/local/bin/uv ]; then
               curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/usr/local/bin" sh;
             fi;
-            sudo -u agent env UV_PYTHON_INSTALL_DIR=/home/agent/.local/share/uv/python UV_LINK_MODE=copy uv python install 3.12;
+            sudo -u agent env UV_PYTHON_INSTALL_DIR=/home/agent/.local/share/uv/python UV_LINK_MODE=copy uv python install "${{ kit.args.python_version }}";
             PY_BIN="$(find /home/agent/.local/share/uv/python -mindepth 2 -maxdepth 2 -name bin -type d -path '*cpython-*' | sort -V | tail -n 1)";
             ln -sf "$PY_BIN/python3" /usr/local/bin/python3;
             ln -sf "$PY_BIN/python3" /usr/local/bin/python;

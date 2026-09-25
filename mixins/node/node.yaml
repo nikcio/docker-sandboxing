@@ -5,7 +5,21 @@ displayName: Node.js / NVM / PNPM
 description: >
   Adds Node.js with nvm and PNPM when the workload image lacks them, and
   keeps the npm/nodejs hosts reachable for installs at runtime.
-version: "0.4.0"
+version: "0.5.0"
+
+args:
+  nvm_version:
+    default: "v0.40.7"
+    pattern: '^v[0-9]+\.[0-9]+\.[0-9]+$'
+    description: nvm release to install (skipped when node + pnpm are already present)
+  node_version:
+    default: "24"
+    pattern: '^[0-9]+$'
+    description: Node.js major version for nvm to install
+  pnpm_version:
+    default: "12"
+    pattern: '^[0-9]+$'
+    description: PNPM major version to install
 
 capabilities:
   - type: com.docker.sandbox/network-policy@1
@@ -54,17 +68,17 @@ capabilities:
             { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
             apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
             export NVM_DIR=/home/agent/.nvm;
-            git clone -q --depth 1 --branch v0.40.7 https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+            git clone -q --depth 1 --branch "${{ kit.args.nvm_version }}" https://github.com/nvm-sh/nvm.git "$NVM_DIR";
             unset NPM_CONFIG_PREFIX;
             . "$NVM_DIR/nvm.sh";
-            nvm install 24;
-            nvm alias default 24;
+            nvm install "${{ kit.args.node_version }}";
+            nvm alias default "${{ kit.args.node_version }}";
             nvm use default;
             NODE_BIN="$(find "$NVM_DIR"/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)";
             for b in node npm npx pnpm pnpx corepack; do if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/usr/local/bin/$b"; fi; done;
             { echo 'export NVM_DIR=/home/agent/.nvm'; echo 'unset NPM_CONFIG_PREFIX'; echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'; } >> /etc/sandbox-persistent.sh;
             unset NPM_CONFIG_PREFIX;
-            npm install -g pnpm@12;
+            npm install -g "pnpm@${{ kit.args.pnpm_version }}";
             PNPM_BIN="$(command -v pnpm)";
             if [ "$(dirname "$PNPM_BIN")" != "/usr/local/bin" ]; then ln -sf "$PNPM_BIN" /usr/local/bin/pnpm; fi;
             node --version;
