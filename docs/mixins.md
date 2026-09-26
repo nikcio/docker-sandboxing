@@ -45,7 +45,7 @@ Rules of thumb:
 
 | Mixin | Adds |
 | ----- | ---- |
-| `opencode` | The OpenCode agent (newest npm release by default; pin it with the mixin's `version` arg), permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), and the combined provider config (`OPENCODE_CONFIG` merge). Required in every OpenCode sandbox, and required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
+| `opencode` | The OpenCode agent (newest npm release by default; pin it with the mixin's `version` arg), permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), and the combined provider config (`OPENCODE_CONFIG` merge). Pairs with `launch-opencode` to run OpenCode on a shell workload |
 | `launch-opencode` | Launches OpenCode at sandbox startup (the workloads' bash entrypoint execs the mixin's agent shim). Compose it with `opencode`; without it the workload launches a plain shell |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or fails sandbox creation (direct mode). Declaration-only — the guard is one lifecycle install command in the descriptor. Optional — the examples compose it |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
@@ -91,11 +91,12 @@ Network hosts per mixin are listed in the mixin's descriptor
 
 Notes:
 
-- `opencode` (the agent + config + provider merge) is what turns a
-  shell workload into an OpenCode sandbox; any agent can be installed
-  by a mixin instead. It is required with the model providers
-  (`opencode-zeldoc`, `opencode-copilot`) — their config fragments only
-  merge through it. `env-guard` (the no-.env policy) is optional.
+- `opencode` installs the OpenCode agent; compose it together with
+  `launch-opencode` to start OpenCode at sandbox startup. Any agent can
+  be installed by a mixin instead. The model-provider mixins
+  (`opencode-zeldoc`, `opencode-copilot`) merge their config fragments
+  through `opencode` — compose them together. `env-guard` (the
+  no-.env policy) is optional.
 - The `playwright` and `sbx` mixins run `apt` at creation — their
   install hooks declare the Ubuntu apt mirrors in their install-phase
   policy. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`)
@@ -139,8 +140,8 @@ pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json`
 inside the sandbox (via its image layer), and the `opencode` mixin
 merges all fragments into the single config OpenCode loads via
 `OPENCODE_CONFIG` — an install hook, before the agent starts. Compose
-`opencode` with any provider mixin — it is required with them (their
-fragments only merge through it):
+`opencode` with any provider mixin — their config fragments only merge
+through it:
 
 - `enabled_providers` lists are **unioned** — compose `opencode-zeldoc` and
   `opencode-copilot` together and both stay selectable with `/models`.

@@ -18,7 +18,7 @@ name: my-project
 agent: docker.io/nikcio/sbx-kit-python:v2.2.0
 
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=v2.2.0        # opencode agent + config + provider merge (required)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=v2.2.0        # opencode agent + config + provider merge
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/launch-opencode&ref=v2.2.0        # launch opencode at startup
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v2.2.0        # workspace .env guard
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-zeldoc&ref=v2.2.0        # Zeldoc.ai provider

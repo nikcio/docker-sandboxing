@@ -29,7 +29,7 @@ Copy the example matching your stack into your project's root and rename it
 | ------- | ---------- |
 | `name:` | Set it to your project's name. |
 | `agent:` | Keep the workload image (or point it at your own). |
-| `kits:` | Drop the lines your project doesn't need — the mixin reference below marks which mixins are required. |
+| `kits:` | Drop the lines your project doesn't need — the mixin reference below describes what each adds. |
 | `workspace.path: .` | Leave as is — it targets your repo. |
 
 ### 3. Run it
@@ -67,9 +67,9 @@ Full walkthrough (prerequisites, first run, daily use):
 
 ## Mixin reference
 
-| Mixin | Adds | Required |
-| ----- | ---- | -------- |
-| `opencode` | the OpenCode agent (newest npm release at creation), permissive OpenCode config, and the provider-config merge (`OPENCODE_CONFIG`) | every OpenCode sandbox |
+| Mixin | Adds | Notes |
+| ----- | ---- | ------ |
+| `opencode` | the OpenCode agent (newest npm release at creation), permissive OpenCode config, and the provider-config merge (`OPENCODE_CONFIG`) | pairs with `launch-opencode` |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or fails creation (direct mode), via one install-hook command in its descriptor | optional |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
 | `opencode-copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |

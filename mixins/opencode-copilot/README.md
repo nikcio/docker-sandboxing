@@ -15,8 +15,8 @@ kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-copilot&ref=vX.Y.Z # GitHub Copilot provider
 ```
 
-Requires the `opencode` mixin — the provider config fragment
-only merges through it.
+Compose the `opencode` mixin — the provider config fragment
+merges through it.
 
 Full sign-in walkthrough: [docs/copilot-setup.md](../../docs/copilot-setup.md).
 

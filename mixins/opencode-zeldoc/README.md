@@ -16,8 +16,8 @@ kits:
 For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/opencode-zeldoc <workload> .`
 
-Requires the `opencode` mixin — the provider config fragment
-only merges through it (compose `opencode-copilot` alongside;
+Compose the `opencode` mixin — the provider config fragment
+merges through it (compose `opencode-copilot` alongside;
 `enabled_providers` lists are unioned, so both providers stay selectable).
 
 ## How it works

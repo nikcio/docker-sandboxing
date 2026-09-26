@@ -122,11 +122,11 @@ of the stock mixins.
      - ./sandbox-kit
    ```
 
-   Keep `opencode` (the agent + config + provider merge — required
-   with the model providers, whose fragments only merge through it; any
-   agent can be installed by a mixin instead). The list above also
-   includes the optional `env-guard` (the no-.env policy). Your kit
-   only adds capabilities.
+   Keep `opencode` (the agent + config + provider merge; pair it with
+   `launch-opencode` to start OpenCode at startup — or compose any
+   other agent's mixin instead). The list above also includes the
+   optional `env-guard` (the no-.env policy). Your kit only adds
+   capabilities.
 
 4. Build and recreate the sandbox (kit changes only apply to new
    sandboxes):
