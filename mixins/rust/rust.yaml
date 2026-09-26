@@ -1,0 +1,73 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Rust / cargo
+description: >
+  Adds a Rust toolchain to the sandbox, with cargo for building and
+  managing Rust packages, when the workload image lacks it.
+version: "0.5.0"
+
+args:
+  rust_version:
+    default: "stable"
+    pattern: '^(stable|beta|nightly|[0-9]+\.[0-9]+(\.[0-9]+)?)$'
+    description: Rust toolchain for rustup to install (skipped when cargo is already present)
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      install:
+        allow:
+          # rustup installer (`curl -fsSL https://sh.rustup.rs | sh`) — the
+          # short link redirects the installer script to
+          # raw.githubusercontent.com, and rustup-init binaries come from
+          # static.rust-lang.org
+          - sh.rustup.rs:443
+          - raw.githubusercontent.com:443
+          - static.rust-lang.org:443
+
+          # apt packages the installer needs
+          - archive.ubuntu.com:80
+          - security.ubuntu.com:80
+          - ports.ubuntu.com:80
+
+      runtime:
+        allow:
+          # crates.io (index/API queries, `cargo search`/`cargo info`) — the
+          # wildcard also covers index.crates.io (the sparse index cargo uses)
+          - crates.io:443
+          - "*.crates.io:443"
+
+          # Package files served from the crates.io CDN
+          - static.crates.io:443
+
+          # rustup: toolchain + component downloads, `rustup update` and
+          # `rustup toolchain install`
+          - static.rust-lang.org:443
+
+          # Rust docs and release info for agent lookups (doc.rust-lang.org,
+          # www.rust-lang.org, editions and release notes) + crate docs (docs.rs)
+          - rust-lang.org:443
+          - "*.rust-lang.org:443"
+          - docs.rs:443
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        - command: >
+            set -e;
+            if command -v cargo >/dev/null 2>&1; then exit 0; fi;
+            install -m 0755 -d /var/lib/apt/sbx-install-lists;
+            export DEBIAN_FRONTEND=noninteractive;
+            { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+            apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils build-essential pkg-config libssl-dev;
+            sudo -u agent env RUSTUP_HOME=/home/agent/.rustup CARGO_HOME=/home/agent/.cargo bash -c 'curl -fsSL https://sh.rustup.rs | sh -s -- -y --no-modify-path --profile default --default-toolchain "${{ kit.args.rust_version }}" --component rust-analyzer';
+            ls /home/agent/.cargo/bin/cargo >/dev/null;
+            ln -sf /home/agent/.cargo/bin/* /usr/local/bin/;
+            { echo 'export RUSTUP_HOME=/home/agent/.rustup'; echo 'export CARGO_HOME=/home/agent/.cargo'; } >> /etc/sandbox-persistent.sh;
+            RUSTUP_HOME=/home/agent/.rustup CARGO_HOME=/home/agent/.cargo cargo --version
+          description: Ensure the Rust toolchain is available (install when the workload image lacks it)
+
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      contentFile: ./note.md

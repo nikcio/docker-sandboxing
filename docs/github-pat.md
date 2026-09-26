@@ -1,22 +1,14 @@
 # Create a GitHub PAT and store it for a sandbox
 
-With a GitHub token the sandboxed agent can push over HTTPS.
-The token lives only in sbx's secret store (the OS keychain), scoped to one
-sandbox — it never enters the sandbox VM. A proxy injects it into requests
-to GitHub hosts.
+With a GitHub token the sandboxed agent can push over HTTPS. The token lives only in sbx's secret store (the OS keychain), scoped to one sandbox — it never enters the sandbox VM. A proxy injects it into requests to GitHub hosts.
 
-Use a **fine-grained PAT scoped to just the repositories the agent should
-touch** (broad-scope classic tokens carry scopes like
-`repo`, `workflow`, `read:org`).
+Use a **fine-grained PAT scoped to just the repositories the agent should touch** (broad-scope classic tokens carry scopes like `repo`, `workflow`, `read:org`).
 
 ## 1. Create the token
 
-1. On GitHub: **Settings → Developer settings → Personal access tokens →
-   Fine-grained tokens → Generate new token**.
-2. Resource owner: you (or the org that owns the repos). Expiration per your
-   policy (e.g. 90 days).
-3. **Repository access → Only select repositories** — pick the repositories
-   the agent works on. Everything not listed is invisible to the agent.
+1. On GitHub: **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
+2. Resource owner: you (or the org that owns the repos). Expiration per your policy (e.g. 90 days).
+3. **Repository access → Only select repositories** — pick the repositories the agent works on. Everything not listed is invisible to the agent.
 4. Repository permissions — this minimum:
    - **Metadata: Read** (mandatory, set automatically)
    - **Contents: Read and write** — clone, commit, push, tags
@@ -33,30 +25,21 @@ touch** (broad-scope classic tokens carry scopes like
 sbx secret set github --sandbox <sandbox-name>
 ```
 
-sbx prompts for the token ("Enter secret:") and stores it in its secret
-store (the OS keychain) at that sandbox's scope. `<sandbox-name>` is the
-environment's `name:` from your `sbxenv.yaml`.
+sbx prompts for the token ("Enter secret:") and stores it in its secret store (the OS keychain) at that sandbox's scope. `<sandbox-name>` is the environment's `name:` from your `sbxenv.yaml`.
 
 ## 3. Approve the credential binding
 
-For environments created from a `sbxenv.yaml`, the example file already
-declares the `bindings.github` block that approves injection for the GitHub
-hosts. Keep it in your copy (and in sync with
-`mixins/github-cli/spec.yaml`). If you change `bindings:`, recreate the
-environment.
+For environments created from a `sbxenv.yaml`, the example file already declares the `bindings.github` block that approves injection for the GitHub hosts. Keep it in your copy (and in sync with `mixins/github-cli/github-cli.yaml`). If you change `bindings:`, recreate the environment.
 
 ## Rotate / remove
 
 - Rotation is the same command as storing: `sbx secret set github --sandbox <name>`.
-- `sbx env rm` removes the environment's scoped secret; for `--sandbox`-scoped
-  secrets use `sbx secret rm github`.
+- `sbx env rm` removes the environment's scoped secret; for `--sandbox`-scoped secrets use `sbx secret rm github`.
 - Revoke the token from GitHub anytime.
 
 ## Without a token
 
-The sandbox can still **clone and fetch public repositories** and use **git
-over SSH** (your host SSH agent is forwarded; private keys stay on the host).
-Pushing over HTTPS always needs a token — even for public repositories.
+The sandbox can still **clone and fetch public repositories** and use **git over SSH** (your host SSH agent is forwarded; private keys stay on the host). Pushing over HTTPS always needs a token — even for public repositories.
 
 ## Vault alternative
 

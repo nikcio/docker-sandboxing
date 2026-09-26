@@ -1,6 +1,6 @@
 # Docker sandboxing
 
-Docker Sandboxes kits and template images for running OpenCode agents in sandboxed VMs.
+Docker Sandboxes workload kits and mixins for running coding agents in sandboxed VMs.
 
 ## Documentation
 
@@ -12,12 +12,12 @@ Use based on your task:
 
 ## Artifacts
 
-- template-*/Dockerfile - sandbox template images.
-- kit-* - Base templates for a sandbox (kind: sandbox)
+- kit-* - Workload kits (kind: workload, v3 descriptor + Dockerfile) building the stack toolchain on the shell base image
 - mixins/* - Reusable config fragments for sandboxes (kind: mixin). Must work in isolation and composition. List all required domains and software for usage on a base kit.
-  - Each mixin should have a `spec.yaml` and a `README.md` describing its purpose, usage, and any special instructions. Keep it simple.
+  - Each mixin is a v3 descriptor (`mixins/<area>/<area>.yaml`, optional `<area>.dockerfile`) with a `README.md` describing its purpose, usage, and any special instructions. Keep it simple.
 
 ## Development
 
 - Keep documentation simple and up to date. The docs are the main entry point for consumers of this project. The main audience is developers who has no knowledge of sbx.
+- Do not manually wrap markdown, let the viewer wrap the text if needed.
 - Keep mixins single-purpose and composable. They are the building blocks for sandboxes.

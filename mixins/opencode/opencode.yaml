@@ -1,0 +1,130 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: OpenCode
+description: >
+  Installs the OpenCode agent (by default the newest npm release at every
+  sandbox creation), ships the permissive OpenCode config, and merges
+  provider mixins' config fragments (enabled_*/disabled_* lists union)
+  into the combined OPENCODE_CONFIG before the agent starts.
+version: "0.3.0"
+
+args:
+  version:
+    default: "latest"
+    pattern: '^(latest|[0-9]+\.[0-9]+\.[0-9]+)$'
+    description: >
+      OpenCode release to install (npm version of opencode-ai); "latest"
+      rolls to the newest release at every sandbox creation.
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      install:
+        allow:
+          # npm registry (opencode install at creation; skipped when the
+          # requested version is already present)
+          - registry.npmjs.org:443
+
+      runtime:
+        allow:
+          # Plugin install: provider mixins' plugins (e.g. opencode-zeldoc)
+          # are fetched from npm when OpenCode starts.
+          - registry.npmjs.org:443
+
+          # OpenCode's own hosted-model / auth endpoints (used when the
+          # agent is configured with opencode's hosted models)
+          - models.opencode.ai:443
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        # Install the requested opencode release (the shell image ships
+        # no agent; node images bake a fixed version). "latest" (the
+        # default) refreshes on every creation; a pinned version skips
+        # when already present. Safe to compose on a workload that
+        # already has opencode either way.
+        - command: >
+            set -e;
+            if ! command -v npm >/dev/null 2>&1; then echo "[opencode] npm is not available — install node or compose the node mixin" >&2; exit 0; fi;
+            OC_PREFIX=/usr/local/share/npm-global;
+            if [ "${{ kit.args.version }}" != "latest" ] && command -v opencode >/dev/null 2>&1 && opencode --version 2>/dev/null | grep -qxE "${{ kit.args.version }}"; then
+              echo "[opencode] ${{ kit.args.version }} already installed — skipping";
+              exit 0;
+            fi;
+            sudo -u agent env HOME=/home/agent npm install -g --prefix "$OC_PREFIX" "opencode-ai@${{ kit.args.version }}";
+            opencode --version
+          description: Install opencode (version from the version kit arg; "latest" upgrades at every creation; runs as the agent user)
+
+        # Seed the permissive base config (ships in this image at
+        # /usr/share/sandbox/opencode/opencode.jsonc — edit/bash/webfetch
+        # allowed; the sandbox is the isolation boundary) unless the
+        # agent already has one, then merge provider mixins' fragments
+        # into the combined OPENCODE_CONFIG. OpenCode reads
+        # OPENCODE_CONFIG at startup, so this must finish before the
+        # agent starts — an install hook is the only phase with that
+        # ordering guarantee.
+        #
+        # The merge itself: pure-JSON fragments from
+        # ~/.config/opencode/mixins.d/*.json, merged with jq. Objects
+        # merge recursively (later fragments win scalar conflicts, jq's
+        # `*`); array-valued keys whose name starts with enabled_ or
+        # disabled_ (e.g. enabled_providers) are unioned — that is what
+        # lets provider mixins compose (both stay enabled). Comment-
+        # bearing .jsonc fragments are rejected. No fragments (or a
+        # missing directory) yields the minimal valid config, so
+        # OPENCODE_CONFIG always points at a loadable file. Re-merge by
+        # hand after dropping a new fragment into a running sandbox.
+        - command: |
+            set -e
+            __home=/home/agent
+            __frag_dir="$__home/.config/opencode/mixins.d"
+            __out="$__home/.config/opencode/sandbox-mixins.jsonc"
+            __seed="$(jq -n '{"$schema": "https://opencode.ai/config.json"}')"
+            mkdir -p /home/agent/.config/opencode
+            if [ ! -f /home/agent/.config/opencode/opencode.jsonc ]; then
+              cp /usr/share/sandbox/opencode/opencode.jsonc /home/agent/.config/opencode/opencode.jsonc
+            fi
+            chown -R agent:agent /home/agent/.config/opencode
+            if find "$__frag_dir" -maxdepth 1 -name '*.jsonc' | grep -q .; then
+              echo "ERROR [mixins-config]: comment-bearing fragments are not supported — fragments in $__frag_dir must be comment-free .json (jq does the merging)" >&2
+              exit 1
+            fi
+            if [ ! -d "$__frag_dir" ] || ! find "$__frag_dir" -maxdepth 1 -name '*.json' | grep -q .; then
+              printf '%s\n' "$__seed" > "$__out"
+              chown agent:agent "$__out"
+              echo "[mixins-config] no mixins fragments in $__frag_dir — wrote the empty combined config"
+              exit 0
+            fi
+            for __f in "$__frag_dir"/*.json; do
+              jq -e 'type == "object"' "$__f" > /dev/null || {
+                echo "ERROR [mixins-config]: $__f is not a valid JSON object — fix or remove it (the previous combined config was left in place)" >&2
+                exit 1
+              }
+            done
+            __tmp="$(mktemp "$__home/.config/opencode/.sandbox-mixins.jsonc.XXXXXX")"
+            jq -s '
+            def unionkey:
+                [keys[] | select(test("^enabled_|^disabled_|^plugin$"))] | .[];
+            reduce .[] as $f (
+                {};
+                . as $acc
+                | (. * $f)
+                + (reduce ($f | unionkey) as $k ({};
+                    .[$k] = ((($acc[$k] // []) + ($f[$k] // [])) | unique)))
+            )
+            ' "$__frag_dir"/*.json > "$__tmp"
+            {
+              printf '// GENERATED by the opencode mixin — do not edit.\n'
+              printf '// Fragments: %s\n' "$(basename -a "$__frag_dir"/*.json | paste -sd' ' -)"
+              printf '// Edit the owning mixin (or a mixins.d/ fragment) and restart the sandbox.\n'
+              cat "$__tmp"
+            } > "$__out"
+            rm -f "$__tmp"
+            chown agent:agent "$__out"
+            echo "[mixins-config] merged $(find "$__frag_dir" -maxdepth 1 -name '*.json' | wc -l) mixins fragment(s) -> $__out"
+          description: Seed the base config and merge provider fragments into OPENCODE_CONFIG
+
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      contentFile: ./sandbox-baseline.md

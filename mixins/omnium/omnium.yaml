@@ -1,0 +1,50 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Omnium (omnium.no)
+description: >
+  Adds support for calling the Omnium API: proxy-managed bearer token and
+  network rules for the production, test, and dev API hosts plus the
+  public docs and status pages.
+version: "0.2.0"
+
+capabilities:
+  - type: com.docker.sandbox/credential@1
+    optional: true
+    description: >
+      Omnium API access token (JWT) for the environment you target — mint
+      it host-side by POSTing the API user's ClientId + ClientSecret to
+      /api/token on that environment's API host. Create API users in the
+      Omnium GUI under Configuration > Authorization > API Users.
+    config:
+      service: omnium
+      phase: runtime
+      apiKey:
+        name: OMNIUM_API_KEY
+        proxyManaged: true
+        inject:
+          - domain: api.omnium.no       # production API
+            header: Authorization
+            format: Bearer %s
+          - domain: apitest.omnium.no   # test API
+            header: Authorization
+            format: Bearer %s
+          - domain: apidev.omnium.no    # dev API (shares data with test)
+            header: Authorization
+            format: Bearer %s
+
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # REST API: production, test, and dev. The Swagger UI is served on
+          # each host under /documentation.
+          - api.omnium.no:443
+          - apitest.omnium.no:443
+          - apidev.omnium.no:443
+
+          # Tech docs (docs.omnium.no), user docs, and system status — all
+          # reachable without a token, for research.
+          - docs.omnium.no:443
+          - help.omnium.no:443
+          - status.omnium.no:443

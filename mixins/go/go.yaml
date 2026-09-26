@@ -1,0 +1,70 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Go / Go modules
+description: >
+  Adds the Go toolchain when the workload image lacks it, and keeps the
+  module proxy and checksum DB reachable for go get / go install.
+version: "0.5.0"
+
+args:
+  go_version:
+    default: "1.27.1"
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+    description: Go toolchain version to install (skipped when go is already present)
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      install:
+        allow:
+          # go.dev/dl download redirects (toolchain tarball)
+          - go.dev:443
+          - "*.go.dev:443"
+          - dl.google.com:443
+
+          # apt packages the installer needs
+          - archive.ubuntu.com:80
+          - security.ubuntu.com:80
+          - ports.ubuntu.com:80
+
+      runtime:
+        allow:
+          # Module proxy (`go get`, `go mod download`, `go install`) — also
+          # serves GOTOOLCHAIN=auto toolchain downloads (golang.org/toolchain
+          # modules)
+          - proxy.golang.org:443
+          # Checksum database (default GOSUMDB) — verifies every module and
+          # toolchain download
+          - sum.golang.org:443
+          # go.dev: docs lookups, /dl/ download redirects, release info
+          - go.dev:443
+          - "*.go.dev:443"
+          # golang.org (redirects to go.dev; x/ module paths resolve via the
+          # proxy)
+          - golang.org:443
+          - "*.golang.org:443"
+          # dl.google.com: go.dev/dl download targets (e.g. golang.org/dl
+          # wrapper SDK downloads: `go install golang.org/dl/go1.x@latest`
+          # then `go1.x download`)
+          - dl.google.com:443
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        - command: >
+            set -e;
+            if command -v go >/dev/null 2>&1; then exit 0; fi;
+            install -m 0755 -d /var/lib/apt/sbx-install-lists;
+            export DEBIAN_FRONTEND=noninteractive;
+            { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+            apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+            curl -fsSL "https://go.dev/dl/go${{ kit.args.go_version }}.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
+            rm -rf /usr/local/go;
+            tar -C /usr/local -xzf /tmp/sbx-go.tgz;
+            rm -f /tmp/sbx-go.tgz;
+            ln -sf /usr/local/go/bin/go /usr/local/bin/go;
+            ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt;
+            echo 'export PATH=$PATH:/home/agent/go/bin' >> /etc/sandbox-persistent.sh;
+            go version
+          description: Ensure the Go toolchain is available (install when the workload image lacks it)

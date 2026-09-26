@@ -6,23 +6,23 @@
       "extra-files": [
         {
           "type": "generic",
-          "path": "kit-dotnet/spec.yaml"
+          "path": "kit-dotnet/kit-dotnet.yaml"
         },
         {
           "type": "generic",
-          "path": "kit-node/spec.yaml"
+          "path": "kit-node/kit-node.yaml"
         },
         {
           "type": "generic",
-          "path": "kit-python/spec.yaml"
+          "path": "kit-python/kit-python.yaml"
         },
         {
           "type": "generic",
-          "path": "kit-go/spec.yaml"
+          "path": "kit-go/kit-go.yaml"
         },
         {
           "type": "generic",
-          "path": "kit-rust/spec.yaml"
+          "path": "kit-rust/kit-rust.yaml"
         },
         {
           "type": "generic",

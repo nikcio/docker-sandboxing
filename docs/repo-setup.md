@@ -1,8 +1,6 @@
 # GitHub repository setup
 
-One-time setup that makes this repo's automations work: CI on every PR,
-release-please release PRs, and image publishing to Docker Hub. Do this
-once as a repo admin (Settings are admin-only).
+One-time setup that makes this repo's automations work: CI on every PR, release-please release PRs, and image publishing to Docker Hub. Do this once as a repo admin (Settings are admin-only).
 
 ## The workflows
 
@@ -12,31 +10,21 @@ once as a repo admin (Settings are admin-only).
 | Release Please (`release-please.yml`) | pushes to `main` | a GitHub App (steps 1–2) |
 | Publish images (`publish-image.yml`) | a release is published | Docker Hub secrets (step 2) |
 
-Validate runs `sbx kit validate` on every kit and mixin plus a static
-BuildKit check on every template Dockerfile. No secrets involved.
+Validate builds every kit and mixin with the v3 sandbox-kit frontend (`docker buildx build -f <dir>/<name>.yaml <dir>` — the strict descriptor decode is the validation; no secrets involved).
 
 ## 1. Create the release-please GitHub App
 
-The release PR is created with a GitHub App token because the default
-`GITHUB_TOKEN` does not trigger workflow runs for anything it creates —
-a `GITHUB_TOKEN`-authored release PR could never collect the required
-checks.
+The release PR is created with a GitHub App token because the default `GITHUB_TOKEN` does not trigger workflow runs for anything it creates — a `GITHUB_TOKEN`-authored release PR could never collect the required checks.
 
-1. GitHub → Settings → Developer settings → GitHub Apps → **New GitHub
-   App**.
-2. Fill in name and homepage URL; set the webhook URL to empty (no
-   webhook needed).
+1. GitHub → Settings → Developer settings → GitHub Apps → **New GitHub App**.
+2. Fill in name and homepage URL; set the webhook URL to empty (no webhook needed).
 3. Repository permissions:
    - **Contents**: Read and write (tags, releases)
    - **Pull requests**: Read and write (the release PR)
    - Metadata stays read-only (mandatory).
-4. Under "Where can this app be installed?" keep **Only on this account**,
-   then create the app.
-5. Install it on `docker-sandboxing` — repository access: **Only select
-   repositories** → this repo.
-6. On the app's page: **General → About** — copy the **Client ID**
-   (`APP_CLIENT_ID`), then **Private keys → Generate a private key** and
-   keep the downloaded `.pem` (`APP_PRIVATE_KEY`).
+4. Under "Where can this app be installed?" keep **Only on this account**, then create the app.
+5. Install it on `docker-sandboxing` — repository access: **Only select repositories** → this repo.
+6. On the app's page: **General → About** — copy the **Client ID** (`APP_CLIENT_ID`), then **Private keys → Generate a private key** and keep the downloaded `.pem` (`APP_PRIVATE_KEY`).
 
 ## 2. Add the repository secrets
 
@@ -49,49 +37,36 @@ Settings → Secrets and variables → Actions → **New repository secret**:
 | `DOCKERHUB_USERNAME` | the Docker Hub account that owns `nikcio/<image>` |
 | `DOCKERHUB_TOKEN` | a Docker Hub **access token** with Read & Write (Docker Hub → Account Settings → Security → New Access Token) — not the account password |
 
-Publishing pushes every image in `images.json` as public
-`docker.io/nikcio/<name>:vX.Y.Z` + `:latest` on Docker Hub.
+Publishing pushes every image in `images.json` as public `docker.io/nikcio/<name>:vX.Y.Z` + `:latest` on Docker Hub.
 
 ## 3. Protect `main`
 
-Recommended policies and why they matter when an autonomous agent works in
-this repo: [Branch policies for AI agents](agent-branch-protection.md).
+Recommended policies and why they matter when an autonomous agent works in this repo: [Branch policies for AI agents](agent-branch-protection.md).
 
-Settings → Rules → Rulesets → **New branch ruleset** (or classic branch
-protection under Settings → Branches) for `main`:
+Settings → Rules → Rulesets → **New branch ruleset** (or classic branch protection under Settings → Branches) for `main`:
 
-- **Require a pull request before merging** — work happens in worktrees
-  and lands via PRs (see
-  [agent-guidance/worktrees.md](../agent-guidance/worktrees.md)).
+- **Require a pull request before merging** — work happens in worktrees and lands via PRs (see [agent-guidance/worktrees.md](../agent-guidance/worktrees.md)).
 - **Require status checks to pass**, then select:
-  - `Kits & mixins (sbx kit validate)`
-  - `Dockerfile (buildx check) (template-dotnet)`
-  - `Dockerfile (buildx check) (template-node)`
-  - `Dockerfile (buildx check) (template-python)`
-  - `Dockerfile (buildx check) (template-go)`
-  - `Dockerfile (buildx check) (template-rust)`
+  - `Workload kit (v3 frontend build, linux/amd64, dotnet)`
+  - `Workload kit (v3 frontend build, linux/amd64, go)`
+  - `Workload kit (v3 frontend build, linux/amd64, node)`
+  - `Workload kit (v3 frontend build, linux/amd64, python)`
+  - `Workload kit (v3 frontend build, linux/amd64, rust)`
+  - `Workload kit (v3 frontend build, linux/arm64, dotnet)`
+  - `Workload kit (v3 frontend build, linux/arm64, go)`
+  - `Workload kit (v3 frontend build, linux/arm64, node)`
+  - `Workload kit (v3 frontend build, linux/arm64, python)`
+  - `Workload kit (v3 frontend build, linux/arm64, rust)`
 
-The checks appear after the first PR runs the Validate workflow. Validate
-runs on every PR (no path filtering) and always produces exactly these
-six checks, so the fixed required set is safe. Two caveats keep it that
-way: don't add path filters to `validate.yml` (a filtered-out PR never
-reports the required checks and can never merge), and after adding or
-renaming an image in `images.json`, update this required list to match
-the new check names.
+The checks appear after the first PR runs the Validate workflow. Validate runs on every PR (no path filtering) and always produces exactly these checks (one per workload kit × platform in `images.json`), so the fixed required set is safe. Two caveats keep it that way: don't add path filters to `validate.yml` (a filtered-out PR never reports the required checks and can never merge), and after adding or renaming an image in `images.json`, update this required list to match the new check names.
 
-The release PR is an ordinary PR: it runs the same checks and must pass
-before you merge it. Don't require checks from workflows that only run
-on pushes to `main` (release-please, publish-image) — they never appear
-on PRs and would deadlock every merge.
+The release PR is an ordinary PR: it runs the same checks and must pass before you merge it. Don't require checks from workflows that only run on pushes to `main` (release-please, publish-image) — they never appear on PRs and would deadlock every merge.
 
 ## How a release flows
 
 1. Conventional Commits (`feat`/`fix`/`deps`) land on `main`.
-2. Release Please opens or updates a release PR (version bump, published
-   kit tags, `&ref=` pins).
+2. Release Please opens or updates a release PR (version bump, example image-reference pins).
 3. You merge the release PR → tag `vX.Y.Z` + GitHub release.
 4. Publish images builds `images.json` and pushes to Docker Hub.
 
-Commit and versioning conventions:
-[agent-guidance/commit-messages.md](../agent-guidance/commit-messages.md),
-[agent-guidance/versioning.md](../agent-guidance/versioning.md).
+Commit and versioning conventions: [agent-guidance/commit-messages.md](../agent-guidance/commit-messages.md), [agent-guidance/versioning.md](../agent-guidance/versioning.md).

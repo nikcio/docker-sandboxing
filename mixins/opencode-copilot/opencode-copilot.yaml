@@ -1,0 +1,29 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: OpenCode GitHub Copilot provider
+description: >
+  GitHub Copilot model provider for OpenCode. Sign-in happens in OpenCode
+  (OAuth device flow) — this mixin keeps the device-flow hosts and the
+  Copilot API hosts reachable, and ships the OpenCode config fragment that
+  enables the github-copilot provider. No credential request: the proxy
+  does not hold a Copilot token; OpenCode mints and refreshes one itself.
+version: "0.2.0"
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # OAuth device flow: device code, access token exchange, and token
+          # refresh (github.com/login/oauth/*).
+          - github.com:443
+
+          # Copilot session token mint (api.github.com/copilot_internal).
+          - api.github.com:443
+
+          # Copilot API: models list + inference. The wildcard covers the
+          # business/enterprise plan endpoints (api.business./api.enterprise.
+          # githubcopilot.com).
+          - api.githubcopilot.com:443
+          - "*.githubcopilot.com:443"

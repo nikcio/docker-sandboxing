@@ -1,0 +1,40 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: workload
+displayName: Shell (Node)
+description: Shell workload with the Node toolchain baked in (agent user,
+  workspace, persistent shell). Launches bash; compose the
+  launch-opencode mixin to run OpenCode instead.
+
+# The version is bumped by release-please (the tag the examples pin).
+# x-release-please-start-version
+version: "2.2.0"
+# x-release-please-end-version
+
+args:
+  nvm_version:
+    default: "v0.40.7"
+    pattern: '^v[0-9]+\.[0-9]+\.[0-9]+$'
+    description: nvm release to install in the workload image
+    buildArg: NVM_VERSION
+  node_version:
+    default: "24"
+    pattern: '^[0-9]+$'
+    description: Node.js major version to install via nvm
+    buildArg: NODE_VERSION
+  pnpm_version:
+    default: "12"
+    pattern: '^[0-9]+$'
+    description: PNPM major version to install
+    buildArg: PNPM_VERSION
+  playwright_version:
+    default: "latest"
+    pattern: '^(latest|[0-9]+\.[0-9]+\.[0-9]+)$'
+    description: Playwright npm package version
+    buildArg: PLAYWRIGHT_VERSION
+
+capabilities:
+  - type: com.docker.sandbox/sbx@1
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      filename: AGENTS.md

@@ -1,0 +1,98 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Node.js / NVM / PNPM
+description: >
+  Adds Node.js with nvm and PNPM when the workload image lacks them, and
+  keeps the npm/nodejs hosts reachable for installs at runtime.
+version: "0.5.0"
+
+args:
+  nvm_version:
+    default: "v0.40.7"
+    pattern: '^v[0-9]+\.[0-9]+\.[0-9]+$'
+    description: nvm release to install (skipped when node + pnpm are already present)
+  node_version:
+    default: "24"
+    pattern: '^[0-9]+$'
+    description: Node.js major version for nvm to install
+  pnpm_version:
+    default: "12"
+    pattern: '^[0-9]+$'
+    description: PNPM major version to install
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      install:
+        allow:
+          # nvm itself (the check-and-install step clones the nvm repo from
+          # GitHub when the workload image lacks node) + the node dists it
+          # fetches (nodejs.org / iojs.org)
+          - github.com:443
+          - "*.github.com:443"
+          - nodejs.org:443
+          - "*.nodejs.org:443"
+          - iojs.org:443
+
+          # npm registry (the pnpm install in the check-and-install step)
+          - registry.npmjs.org:443
+          - "*.npmjs.org:443"
+
+          # apt packages the installer needs
+          - archive.ubuntu.com:80
+          - security.ubuntu.com:80
+          - ports.ubuntu.com:80
+
+      runtime:
+        allow:
+          # nvm install / nodejs.org distribution
+          - nodejs.org:443
+          - "*.nodejs.org:443"
+
+          # nvm's io.js mirror (fetched by every `nvm ls-remote`; needed for
+          # io.js listings and installs)
+          - iojs.org:443
+
+          # npm registry (pnpm/npm/npx installs and fetches)
+          - registry.npmjs.org:443
+          - "*.npmjs.org:443"
+          - npmjs.com:443
+          - "*.npmjs.com:443"
+
+          # pnpm.io: pnpm docs and settings reference for agent lookups —
+          # pnpm's own errors point here (e.g. the minimumReleaseAge gate
+          # below links pnpm.io/settings#minimumreleaseageexclude)
+          - pnpm.io:443
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        - command: >
+            set -e;
+            if command -v node >/dev/null 2>&1 && command -v pnpm >/dev/null 2>&1; then exit 0; fi;
+            install -m 0755 -d /var/lib/apt/sbx-install-lists;
+            export DEBIAN_FRONTEND=noninteractive;
+            { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+            apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+            export NVM_DIR=/home/agent/.nvm;
+            [ -e "$NVM_DIR/nvm.sh" ] || git clone -q --depth 1 --branch "${{ kit.args.nvm_version }}" https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+            unset NPM_CONFIG_PREFIX;
+            . "$NVM_DIR/nvm.sh";
+            nvm install "${{ kit.args.node_version }}";
+            nvm alias default "${{ kit.args.node_version }}";
+            nvm use default;
+            NODE_BIN="$(find "$NVM_DIR"/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)";
+            for b in node npm npx pnpm pnpx corepack; do if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/usr/local/bin/$b"; fi; done;
+            { echo 'export NVM_DIR=/home/agent/.nvm'; echo 'unset NPM_CONFIG_PREFIX'; echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'; } >> /etc/sandbox-persistent.sh;
+            unset NPM_CONFIG_PREFIX;
+            npm install -g "pnpm@${{ kit.args.pnpm_version }}";
+            PNPM_BIN="$(command -v pnpm)";
+            if [ "$(dirname "$PNPM_BIN")" != "/usr/local/bin" ]; then ln -sf "$PNPM_BIN" /usr/local/bin/pnpm; fi;
+            node --version;
+            pnpm --version
+          description: Ensure node (nvm) + pnpm are available (install when the workload image lacks them)
+
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      contentFile: ./note.md

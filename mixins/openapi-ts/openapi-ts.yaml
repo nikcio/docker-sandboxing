@@ -1,0 +1,15 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: openapi-typescript / openapi-fetch docs
+description: >
+  Adds access to the openapi-typescript / openapi-fetch docs site.
+version: "0.1.0"
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          - openapi-ts.dev:443
+          - "*.openapi-ts.dev:443"

@@ -1,0 +1,51 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: OpenCode launcher
+description: >
+  Launches the OpenCode agent at sandbox startup. Writes the sandbox
+  launch shim (/usr/local/bin/agent-launch — exec opencode) from an
+  install hook; the workload's entrypoint execs it when present and
+  falls back to plain bash otherwise, so the same workload image runs
+  with or without this mixin. A startup hook re-writes the shim on
+  later boots (idempotent).
+version: "0.1.0"
+
+capabilities:
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        - command: |
+            set -e
+            printf '%s\n' \
+              '#!/bin/sh' \
+              'command -v opencode >/dev/null 2>&1 || { echo "agent-launch: opencode not found — compose the opencode mixin" >&2; exit 127; }' \
+              'exec opencode' \
+              > /usr/local/bin/agent-launch
+            chmod 755 /usr/local/bin/agent-launch
+            chown root:root /usr/local/bin/agent-launch
+          description: Write the agent launch shim (exec opencode)
+      startup:
+        # The install hook already wrote the shim; this only re-creates it
+        # if something removed it. Root explicitly (the path is root-owned)
+        # and best-effort: the shim's presence is the install hook's job.
+        - command: |
+            if [ ! -x /usr/local/bin/agent-launch ]; then
+              printf '%s\n' \
+                '#!/bin/sh' \
+                'exec opencode' \
+                > /usr/local/bin/agent-launch \
+                && chmod 755 /usr/local/bin/agent-launch
+            fi
+          user: "root"
+          description: Ensure the agent launch shim exists (best-effort re-check on later boots)
+
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      content: |
+        ## OpenCode launcher
+
+        The sandbox launches OpenCode (the `launch-opencode` mixin's
+        agent shim). The agent runs as your default model provider
+        configures; set the project default model in the repo-root
+        `opencode.jsonc` (`"model": "<provider>/<model>"`).

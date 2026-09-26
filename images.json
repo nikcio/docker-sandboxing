@@ -1,30 +1,30 @@
 {
-  "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each context and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). Pair every image with a published kit spec that pins docker.io/nikcio/<name>:vX.Y.Z and register that spec in .release-please-config.json (extra-files) so releases bump it.",
+  "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each workload kit from its v3 descriptor (docker buildx build -f <dir>/<descriptor> <dir>) and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). The workloads build their stack toolchain directly on the unversioned shell base image. Mixins are not published as images \u2014 they are consumed as git references (see examples/*.sbxenv.yaml). The release-please extra-files blocks keep every versioned reference (kit version fields, example refs) at the release version.",
   "images": [
     {
-      "name": "opencode-dotnet",
-      "context": "template-dotnet",
-      "spec": "kit-dotnet/spec.yaml"
+      "name": "sbx-kit-dotnet",
+      "context": "kit-dotnet",
+      "descriptor": "kit-dotnet.yaml"
     },
     {
-      "name": "opencode-node",
-      "context": "template-node",
-      "spec": "kit-node/spec.yaml"
+      "name": "sbx-kit-go",
+      "context": "kit-go",
+      "descriptor": "kit-go.yaml"
     },
     {
-      "name": "opencode-python",
-      "context": "template-python",
-      "spec": "kit-python/spec.yaml"
+      "name": "sbx-kit-node",
+      "context": "kit-node",
+      "descriptor": "kit-node.yaml"
     },
     {
-      "name": "opencode-go",
-      "context": "template-go",
-      "spec": "kit-go/spec.yaml"
+      "name": "sbx-kit-python",
+      "context": "kit-python",
+      "descriptor": "kit-python.yaml"
     },
     {
-      "name": "opencode-rust",
-      "context": "template-rust",
-      "spec": "kit-rust/spec.yaml"
+      "name": "sbx-kit-rust",
+      "context": "kit-rust",
+      "descriptor": "kit-rust.yaml"
     }
   ]
 }

@@ -23,9 +23,18 @@ jobs:
         id: images
         run: echo "images=$(jq -c '.images' images.json)" >> "$GITHUB_OUTPUT"
 
+  # Every workload kit builds from its v3 descriptor with the sandbox-kit
+  # frontend — plain OCI images whose manifest annotation carries the
+  # validated descriptor. The workloads bake their stack toolchain on the
+  # unversioned shell base image. Mixins are not published: they are
+  # consumed as git references. Release-version verification happens in
+  # the descriptors and examples, which release-please rewrites in the
+  # release PR; the built images are tagged with the release version.
   build:
-    needs: matrix
+    name: Publish ${{ matrix.name }}
     runs-on: ubuntu-latest
+    needs: matrix
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -37,17 +46,14 @@ jobs:
       - name: Set VERSION variable from tag
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
-      - name: Verify published kit references this image
-        if: ${{ matrix.spec != '' }}
-        run: |
-          image="${IMAGE_PREFIX}/${{ matrix.name }}:v${VERSION}"
-          grep -qF "$image" "${{ matrix.spec }}" || {
-            echo "::error::${{ matrix.spec }} does not reference $image"
-            exit 1
-          }
-
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # QEMU lets BuildKit build the arm64 halves natively absent from
+      # the amd64 runner; the workload recipes are arch-aware already
+      # (dpkg --print-architecture, per-arch toolchain downloads).
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
 
       - name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -55,10 +61,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+      - name: Build and push (linux/amd64 + linux/arm64)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.descriptor }}
+          platforms: linux/amd64,linux/arm64
+          provenance: false
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:v${{ env.VERSION }}

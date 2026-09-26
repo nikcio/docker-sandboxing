@@ -1,0 +1,101 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Playwright
+description: >
+  Installs Playwright and the Chromium headless shell for browser
+  automation and testing when the workload image lacks them.
+version: "0.3.0"
+
+args:
+  nvm_version:
+    default: "v0.40.7"
+    pattern: '^v[0-9]+\.[0-9]+\.[0-9]+$'
+    description: nvm release for the fallback node bootstrap (when the workload lacks node)
+  node_version:
+    default: "24"
+    pattern: '^[0-9]+$'
+    description: Node.js major version for the fallback bootstrap
+  playwright_version:
+    default: "latest"
+    pattern: '^(latest|[0-9]+\.[0-9]+\.[0-9]+)$'
+    description: Playwright npm package version to install
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      install:
+        allow:
+          # nvm (the check-and-install step bootstraps node when missing)
+          # + the node dists nvm fetches (nodejs.org / iojs.org)
+          - github.com:443
+          - "*.github.com:443"
+          - nodejs.org:443
+          - "*.nodejs.org:443"
+          - iojs.org:443
+
+          # npm (playwright package) + browser download CDNs — the
+          # browsers are installed by the creation hook, not the agent
+          - registry.npmjs.org:443
+          - "*.npmjs.org:443"
+          - cdn.playwright.dev:443
+          - "*.cdn.playwright.dev:443"
+          - playwright.azureedge.net:443
+          - playwright.download.prss.microsoft.com:443
+          - storage.googleapis.com:443
+
+          # apt packages the installer + browser deps need
+          - archive.ubuntu.com:80
+          - security.ubuntu.com:80
+          - ports.ubuntu.com:80
+
+      runtime:
+        allow:
+          # npm package install (also covered by the node mixin — rules union)
+          - registry.npmjs.org:443
+          - "*.npmjs.org:443"
+
+          # Playwright browser downloads. The CDN serves regular builds, and
+          # 302-redirects Chrome-for-Testing builds (builds/cft/...) to
+          # storage.googleapis.com — the redirect target must be allowed too
+          # (the sandbox proxy blocks cross-host redirects otherwise).
+          - cdn.playwright.dev:443
+          - "*.cdn.playwright.dev:443"
+          - playwright.azureedge.net:443
+          - playwright.download.prss.microsoft.com:443
+          - storage.googleapis.com:443
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        - command: >
+            set -e;
+            if command -v node >/dev/null 2>&1; then :; else
+              install -m 0755 -d /var/lib/apt/sbx-install-lists;
+              export DEBIAN_FRONTEND=noninteractive;
+              { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+              apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+              export NVM_DIR=/home/agent/.nvm;
+              [ -e "$NVM_DIR/nvm.sh" ] || git clone -q --depth 1 --branch "${{ kit.args.nvm_version }}" https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+              unset NPM_CONFIG_PREFIX;
+              . "$NVM_DIR/nvm.sh";
+              nvm install "${{ kit.args.node_version }}";
+              nvm alias default "${{ kit.args.node_version }}";
+              nvm use default;
+              NODE_BIN="$(find "$NVM_DIR"/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)";
+              for b in node npm npx corepack; do if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/usr/local/bin/$b"; fi; done;
+              { echo 'export NVM_DIR=/home/agent/.nvm'; echo 'unset NPM_CONFIG_PREFIX'; echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'; } >> /etc/sandbox-persistent.sh;
+            fi;
+            if [ -d /home/agent/.cache/ms-playwright ] && ls /home/agent/.cache/ms-playwright/chromium_headless_shell-* >/dev/null 2>&1; then
+              echo "[playwright] chromium headless shell already installed — skipping";
+              exit 0;
+            fi;
+            unset NPM_CONFIG_PREFIX;
+            npm install -g "playwright@${{ kit.args.playwright_version }}";
+            PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium-headless-shell;
+            chown -R agent:agent /home/agent/.cache/ms-playwright
+          description: Ensure Playwright + Chromium headless shell (skipped when already present)
+
+  - type: com.docker.sandbox/agent-context@1
+    config:
+      contentFile: ./note.md

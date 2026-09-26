@@ -1,37 +1,24 @@
 # rust
 
-Rust toolchain egress for the sandbox: a rustup-managed stable toolchain
-(when the template image lacks one), cargo, crates.io access, and docs
-hosts.
+Rust toolchain egress for the sandbox: a rustup-managed stable toolchain (when the workload image lacks one), cargo, crates.io access, and docs hosts.
 
 ## Usage
 
-Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+Add the mixin to the `kits:` list in your project's `sbxenv.yaml` (pin the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/rust   # Rust / cargo
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/rust&ref=vX.Y.Z   # Rust / cargo
 ```
 
-For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/rust <agent> .`
+For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/rust <workload> .`
 
-The install runs at **sandbox creation only** and needs egress — the
-domains in the table below plus the Ubuntu apt mirrors
-(`archive.ubuntu.com`/`security.ubuntu.com`) for its `apt-get` calls. On
-template images that already ship cargo the install is a cheap no-op.
+The install runs at **sandbox creation only** and needs egress — the domains in the table below plus the Ubuntu apt mirrors (`archive.ubuntu.com`/`security.ubuntu.com`) for its `apt-get` calls. On workload images that already ship cargo the install is a cheap no-op.
 
 ## How it works
 
-- **Check-and-install**: when `cargo` is missing, installs the C build
-  toolchain + OpenSSL dev headers via apt, then runs the rustup installer
-  as the `agent` user with `RUSTUP_HOME`/`CARGO_HOME` in the agent home
-  (stable toolchain, plus `rust-analyzer`), and symlinks the cargo bin
-  directory onto `PATH` — the same agent-owned rustup layout as the
-  template images.
-- The env vars are exported via `/etc/sandbox-persistent.sh` so login
-  shells pick them up.
+- **Check-and-install**: when `cargo` is missing, installs the C build toolchain + OpenSSL dev headers via apt, then runs the rustup installer as the `agent` user with `RUSTUP_HOME`/`CARGO_HOME` in the agent home (stable toolchain, plus `rust-analyzer`), and symlinks the cargo bin directory onto `PATH` — the same agent-owned rustup layout as the workload images.
+- The env vars are exported via `/etc/sandbox-persistent.sh` so login shells pick them up.
 
 ## Network domains
 

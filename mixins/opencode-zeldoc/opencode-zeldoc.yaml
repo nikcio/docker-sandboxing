@@ -1,0 +1,33 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: OpenCode Zeldoc.ai provider
+description: >
+  Zeldoc.ai model provider for OpenCode: proxy-managed API key,
+  opencode-zeldoc plugin config, and network rules for the Zeldoc hosts.
+version: "0.5.0"
+
+capabilities:
+  - type: com.docker.sandbox/credential@1
+    description: Zeldoc.ai API key for AI model access.
+    config:
+      service: zeldoc
+      phase: runtime
+      apiKey:
+        name: ZELDOC_API_KEY
+        proxyManaged: true
+        inject:
+          - domain: api.zeldoc.ai
+            header: Authorization
+            format: Basic %s
+
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Model API (auth injected by the proxy) + docs for webfetch.
+          - api.zeldoc.ai:443
+          - zeldoc.ai:443
+          - docs.zeldoc.ai:443
+          # Plugin install: opencode fetches opencode-zeldoc from npm at start.
+          - registry.npmjs.org:443
