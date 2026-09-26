@@ -1,45 +1,22 @@
 # Mixins
 
-A mixin adds exactly one capability area to the sandbox: network egress
-rules, credential requests, install steps, files, and a note for the
-agent. The sandbox network policy is deny-by-default — the union of the
-composed mixins' rules is the only outbound traffic. Drop the mixin lines
-your project doesn't need from the `kits:` list in your `sbxenv.yaml`.
+A mixin adds exactly one capability area to the sandbox: network egress rules, credential requests, install steps, files, and a note for the agent. The sandbox network policy is deny-by-default — the union of the composed mixins' rules is the only outbound traffic. Drop the mixin lines your project doesn't need from the `kits:` list in your `sbxenv.yaml`.
 
-Mixins here are v3 descriptors (`mixins/<area>/<area>.yaml` plus a
-`<area>.dockerfile` where the mixin ships config files). They are
-consumed as **git references** in your `sbxenv.yaml`'s `kits:` list,
-pinned to a release — not as published images:
+Mixins here are v3 descriptors (`mixins/<area>/<area>.yaml` plus a `<area>.dockerfile` where the mixin ships config files). They are consumed as **git references** in your `sbxenv.yaml`'s `kits:` list, pinned to a release — not as published images:
 
     git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/<area>&ref=<tag>
 
-See [Version compatibility](https://docs.docker.com/ai/sandboxes/#version-compatibility):
-a v3 workload requires v3 mixins, and sbx v0.45+.
+See [Version compatibility](https://docs.docker.com/ai/sandboxes/#version-compatibility): a v3 workload requires v3 mixins, and sbx v0.45+.
 
 ## Any mixin on any workload
 
-Stack mixins don't have to match the workload's baked toolchain. Every
-toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool
-mixins (`browser`, `playwright`, `sbx`, `nikcio-openapi-codegen`) carry a
-self-contained check-and-install lifecycle `install` hook: at sandbox
-creation it verifies the tool is present and installs it when the
-workload image lacks it. Compose, for example, the `python` mixin onto
-the Go workload and the sandbox gets a working `python3` + `uv`; no
-rebuild needed.
+Stack mixins don't have to match the workload's baked toolchain. Every toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins (`browser`, `playwright`, `sbx`, `nikcio-openapi-codegen`) carry a self-contained check-and-install lifecycle `install` hook: at sandbox creation it verifies the tool is present and installs it when the workload image lacks it. Compose, for example, the `python` mixin onto the Go workload and the sandbox gets a working `python3` + `uv`; no rebuild needed.
 
 Rules of thumb:
 
-- Install paths and env match the workload images (same `DOTNET_ROOT`,
-  nvm in the agent home, uv-managed CPython, `/usr/local/go`,
-  agent-owned rustup) — a later image rebuild converges to the same
-  layout.
-- Install hooks run at **creation only** (kit changes never apply to
-  running sandboxes) and need egress: the mixin declares it in the
-  `install` phase of its network policy (the runtime closes install
-  grants before the agent starts). A blocked download fails the install
-  hook — check `sbx policy log`.
-- On a workload that already has the tool the check is a cheap no-op, so
-  keeping the install hooks in every composition is safe.
+- Install paths and env match the workload images (same `DOTNET_ROOT`, nvm in the agent home, uv-managed CPython, `/usr/local/go`, agent-owned rustup) — a later image rebuild converges to the same layout.
+- Install hooks run at **creation only** (kit changes never apply to running sandboxes) and need egress: the mixin declares it in the `install` phase of its network policy (the runtime closes install grants before the agent starts). A blocked download fails the install hook — check `sbx policy log`.
+- On a workload that already has the tool the check is a cheap no-op, so keeping the install hooks in every composition is safe.
 
 ## Catalog
 
@@ -69,9 +46,7 @@ Rules of thumb:
 | `sbx` | The `sbx` CLI inside the sandbox for kit authoring; skipped when the workload has it |
 | `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the stock kits and examples do not compose it |
 
-Network hosts per mixin are listed in the mixin's descriptor
-(`mixins/<area>/<area>.yaml`), and each mixin ships a
-`mixins/<area>/README.md` with usage and details.
+Network hosts per mixin are listed in the mixin's descriptor (`mixins/<area>/<area>.yaml`), and each mixin ships a `mixins/<area>/README.md` with usage and details.
 
 ## Common sets
 
@@ -91,37 +66,16 @@ Network hosts per mixin are listed in the mixin's descriptor
 
 Notes:
 
-- `opencode` installs the OpenCode agent; compose it together with
-  `launch-opencode` to start OpenCode at sandbox startup. Any agent can
-  be installed by a mixin instead. The model-provider mixins
-  (`opencode-zeldoc`, `opencode-copilot`) merge their config fragments
-  through `opencode` — compose them together. `env-guard` (the
-  no-.env policy) is optional.
-- The `playwright` and `sbx` mixins run `apt` at creation — their
-  install hooks declare the Ubuntu apt mirrors in their install-phase
-  policy. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`)
-  per registry the in-sandbox Docker engine pulls from.
-- - `opencode-zeldoc` and/or `opencode-copilot` give the agent a model provider.
-  The
-  `opencode` mixin installs the newest opencode at every creation by
-  default (arg `version: latest`); pin it with a `version` value to
-  freeze the agent release.
+- `opencode` installs the OpenCode agent; compose it together with `launch-opencode` to start OpenCode at sandbox startup. Any agent can be installed by a mixin instead. The model-provider mixins (`opencode-zeldoc`, `opencode-copilot`) merge their config fragments through `opencode` — compose them together. `env-guard` (the no-.env policy) is optional.
+- The `playwright` and `sbx` mixins run `apt` at creation — their install hooks declare the Ubuntu apt mirrors in their install-phase policy. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker engine pulls from.
+- - `opencode-zeldoc` and/or `opencode-copilot` give the agent a model provider. The `opencode` mixin installs the newest opencode at every creation by default (arg `version: latest`); pin it with a `version` value to freeze the agent release.
 
 ## Version overrides
 
-Every installed tool's version is a kit argument, overridable per
-environment (`--kit-arg` in `sbxenv.yaml`'s `kits:` entries or at
-`sbx run`) or per build (`--build-arg` for workload kit images):
+Every installed tool's version is a kit argument, overridable per environment (`--kit-arg` in `sbxenv.yaml`'s `kits:` entries or at `sbx run`) or per build (`--build-arg` for workload kit images):
 
-- **Workload images** (stack toolchains baked at build): the `kit-*/`
-descriptors declare args like `node_version`, `go_version`,
-`python_version`, `rust_version`, `dotnet_channel`, `playwright_version`
-— build the kit with `--build-arg <arg>=<value>` to change them.
-- **Creation-time installs** (mixin install hooks): `opencode`'s
-`version` (default `latest`), `node`'s `nvm_version`/`node_version`/
-`pnpm_version`, `python`'s `python_version`, `rust`'s `rust_version`,
-`dotnet`'s `channel`, `browser`'s `channel`, `nikcio-openapi-codegen`'s
-`tool_version` — override with `--kit-arg`:
+- **Workload images** (stack toolchains baked at build): the `kit-*/` descriptors declare args like `node_version`, `go_version`, `python_version`, `rust_version`, `dotnet_channel`, `playwright_version` — build the kit with `--build-arg <arg>=<value>` to change them.
+- **Creation-time installs** (mixin install hooks): `opencode`'s `version` (default `latest`), `node`'s `nvm_version`/`node_version`/ `pnpm_version`, `python`'s `python_version`, `rust`'s `rust_version`, `dotnet`'s `channel`, `browser`'s `channel`, `nikcio-openapi-codegen`'s `tool_version` — override with `--kit-arg`:
 
 ```yaml
 kits:
@@ -130,30 +84,16 @@ kits:
       version: "1.18.32"
 ```
 
-Each arg carries a `default` (the documented behavior) and a `pattern` or `enum`
-validating overrides; a failing value is rejected at sandbox creation.
+Each arg carries a `default` (the documented behavior) and a `pattern` or `enum` validating overrides; a failing value is rejected at sandbox creation.
 
 ## Model providers (opencode-zeldoc / opencode-copilot)
 
-Provider mixins don't fight over one config file: each ships a
-pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json`
-inside the sandbox (via its image layer), and the `opencode` mixin
-merges all fragments into the single config OpenCode loads via
-`OPENCODE_CONFIG` — an install hook, before the agent starts. Compose
-`opencode` with any provider mixin — their config fragments only merge
-through it:
+Provider mixins don't fight over one config file: each ships a pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json` inside the sandbox (via its image layer), and the `opencode` mixin merges all fragments into the single config OpenCode loads via `OPENCODE_CONFIG` — an install hook, before the agent starts. Compose `opencode` with any provider mixin — their config fragments only merge through it:
 
-- `enabled_providers` lists are **unioned** — compose `opencode-zeldoc` and
-  `opencode-copilot` together and both stay selectable with `/models`.
-- Fragments merge in filename order and later fragments win conflicts,
-  but **no fragment sets the default model** — the project-level
-  `opencode.jsonc` owns it. Commit one in the repo root (see
-  [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or
-  `"model": "github-copilot/<model-id>"`; without it opencode falls back
-  to its own default, and `/models` always works per session.
+- `enabled_providers` lists are **unioned** — compose `opencode-zeldoc` and `opencode-copilot` together and both stay selectable with `/models`.
+- Fragments merge in filename order and later fragments win conflicts, but **no fragment sets the default model** — the project-level `opencode.jsonc` owns it. Commit one in the repo root (see [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or `"model": "github-copilot/<model-id>"`; without it opencode falls back to its own default, and `/models` always works per session.
 
-Swapping providers (or changing any mixin) only applies to **new**
-sandboxes — see "Changing mixins" below.
+Swapping providers (or changing any mixin) only applies to **new** sandboxes — see "Changing mixins" below.
 
 ## Changing mixins
 
@@ -164,6 +104,4 @@ sbx rm <sandbox-name>
 sbx env run
 ```
 
-Need something specific to your project (a private feed, env vars, an
-agent note)? Add an in-project kit — see
-[project-kit.md](project-kit.md).
+Need something specific to your project (a private feed, env vars, an agent note)? Add an in-project kit — see [project-kit.md](project-kit.md).

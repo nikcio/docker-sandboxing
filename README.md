@@ -1,19 +1,14 @@
 # docker-sandboxing
 
-Run [OpenCode](https://opencode.ai) in a sandboxed [Docker
-Sandboxes](https://docs.docker.com/ai/sandboxes/) VM inside your own repo:
-copy the example for your stack into your project, run one command, and
-OpenCode starts in a VM with your toolchain preinstalled.
+Run [OpenCode](https://opencode.ai) in a sandboxed [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) VM inside your own repo: copy the example for your stack into your project, run one command, and OpenCode starts in a VM with your toolchain preinstalled.
 
-The sandbox is the isolation boundary: outbound network is deny-by-default and
-API keys are injected by a proxy — the sandbox only ever sees placeholders.
+The sandbox is the isolation boundary: outbound network is deny-by-default and API keys are injected by a proxy — the sandbox only ever sees placeholders.
 
 ## Use it in your project
 
 ### 1. Copy the example for your stack
 
-Copy the example matching your stack into your project's root and rename it
-`sbxenv.yaml`. Commit it so teammates get the same sandbox.
+Copy the example matching your stack into your project's root and rename it `sbxenv.yaml`. Commit it so teammates get the same sandbox.
 
 | Your stack | Copy this example |
 | ---------- | ----------------- |
@@ -40,11 +35,9 @@ From your project root:
 sbx env run
 ```
 
-OpenCode starts automatically. When you quit it, the sandbox exits — rerun
-`sbx env run` whenever you want it back.
+OpenCode starts automatically. When you quit it, the sandbox exits — rerun `sbx env run` whenever you want it back.
 
-Full walkthrough (prerequisites, first run, daily use):
-[docs/getting-started.md](docs/getting-started.md).
+Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md](docs/getting-started.md).
 
 ## Guides
 
@@ -121,25 +114,13 @@ Everything below is for developing the kits and mixins.
 └── agent-guidance/                   # worktrees, versioning, commit conventions
 ```
 
-Every workload builds on `docker/sandbox-templates:shell` (agent user,
-workspace, persistent-shell env, tini) and adds its stack in its own
-`kit-*/kit-*.dockerfile`: Git (+ git-lfs), Node.js via NVM + PNPM, and
-Playwright with the Chromium headless shell. The workloads are shell
-kits — they launch bash; compose the `opencode` mixin (the agent, newest
-npm release by default — pin it with its `version` arg) and the
-`launch-opencode` mixin (startup launch) to run OpenCode on any of
-them.
+Every workload builds on `docker/sandbox-templates:shell` (agent user, workspace, persistent-shell env, tini) and adds its stack in its own `kit-*/kit-*.dockerfile`: Git (+ git-lfs), Node.js via NVM + PNPM, and Playwright with the Chromium headless shell. The workloads are shell kits — they launch bash; compose the `opencode` mixin (the agent, newest npm release by default — pin it with its `version` arg) and the `launch-opencode` mixin (startup launch) to run OpenCode on any of them.
 
-Kits are [v3 kit descriptors](https://github.com/docker/sandbox-kit-spec)
-(`# syntax=docker/sandbox-kit:3`), requiring sbx v0.45+. The workload
-defines the image and launch; mixins declare network/credential/lifecycle
-capabilities and ship files through their own image layers.
+Kits are [v3 kit descriptors](https://github.com/docker/sandbox-kit-spec) (`# syntax=docker/sandbox-kit:3`), requiring sbx v0.45+. The workload defines the image and launch; mixins declare network/credential/lifecycle capabilities and ship files through their own image layers.
 
 ### Working on the repo
 
-Work in a git worktree branched from `main`
-([agent-guidance/worktrees.md](agent-guidance/worktrees.md)) — other agent
-sessions share this checkout concurrently.
+Work in a git worktree branched from `main` ([agent-guidance/worktrees.md](agent-guidance/worktrees.md)) — other agent sessions share this checkout concurrently.
 
 ```bash
 docker buildx build kit-node/ --file kit-node/kit-node.yaml   # build = validate (strict descriptor decode)
@@ -147,9 +128,4 @@ docker buildx build mixins/node/ --file mixins/node/node.yaml # (declaration-onl
 sbx env run                   # dev sandbox: kit-node/ + mixins/ loaded from the working copy
 ```
 
-Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`
-(or the wizard again).
-Releases are cut by release-please from Conventional Commits on `main` —
-see [agent-guidance/versioning.md](agent-guidance/versioning.md) and
-[agent-guidance/commit-messages.md](agent-guidance/commit-messages.md).
-Repo conventions: [AGENTS.md](AGENTS.md).
+Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run` (or the wizard again). Releases are cut by release-please from Conventional Commits on `main` — see [agent-guidance/versioning.md](agent-guidance/versioning.md) and [agent-guidance/commit-messages.md](agent-guidance/commit-messages.md). Repo conventions: [AGENTS.md](AGENTS.md).
