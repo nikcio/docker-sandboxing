@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-sbx:vX.Y.Z   # sbx CLI inside the sandbox
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/sbx&ref=vX.Y.Z   # sbx CLI inside the sandbox
 ```
 
 For local development, point `--kit` at the directory instead:

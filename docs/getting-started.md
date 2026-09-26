@@ -87,22 +87,23 @@ Optional: a GitHub personal access token so the agent can push and open PRs
 — see [github-pat.md](github-pat.md). Cloning public repos (read-only) and
 git over SSH work without one; pushing over HTTPS always needs it.
 
-The kit images are pulled from Docker Hub (`docker.io/nikcio/...`) — no
-builds needed on your machine. Kits are v3 descriptors, which need
-`sbx` v0.45 or later.
+The workload images are pulled from Docker Hub
+(`docker.io/nikcio/sbx-kit-*`) and the mixins are fetched from this
+GitHub repo — no builds needed on your machine. Kits are v3 descriptors,
+which need `sbx` v0.45 or later.
 
 ## Host settings
 
 One one-time `sbx` setting on your host:
 
-- **Allow the kit source** (required — sbx only fetches kits from allowed
-  sources; Docker Hub is allowed by default, so this is only needed if you
-  have customized the list). The setting replaces the whole list, so merge
+- **Allow the kit sources** (required — sbx only fetches remote kits from
+  allowed sources; Docker Hub is allowed by default but the mixins come
+  from this GitHub repo). The setting replaces the whole list, so merge
   with your current entries — check them first with
   `sbx settings get kit.allowedSources`:
 
   ```bash
-  sbx settings set kit.allowedSources '["docker.io/"]'
+  sbx settings set kit.allowedSources '["docker.io/","github.com/nikcio/"]'
   ```
 
 - **Optional:** let the sandboxed agent read images you paste:

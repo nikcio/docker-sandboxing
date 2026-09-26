@@ -10,7 +10,7 @@ the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-env-guard:vX.Y.Z # workspace .env guard
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=vX.Y.Z # workspace .env guard
 ```
 
 For local development, point `--kit` at the directory instead:

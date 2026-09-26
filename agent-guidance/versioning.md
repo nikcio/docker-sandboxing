@@ -34,7 +34,7 @@ A single SemVer version for the whole repo, managed by
 
 - Never bump pinned versions by hand — the release PR owns every
   `x-release-please` block.
-- `kit/` (the base kit) and `sbxenv.yaml` (dev env) are never bumped.
+- `sbxenv.yaml` (dev env) is never bumped.
 - `kit-<stack>/` all share the same shape — the only intended differences
   are the stack toolchain in the Dockerfile and the `displayName:` (see
   the header of `kit-node/kit-node.yaml`).

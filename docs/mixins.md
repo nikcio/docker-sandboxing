@@ -6,9 +6,11 @@ agent. The sandbox network policy is deny-by-default — the union of the
 composed mixins' rules is the only outbound traffic. Drop the mixin lines
 your project doesn't need from the `kits:` list in your `sbxenv.yaml`.
 
-Kits here are v3 descriptors (`mixins/<area>/<area>.yaml` plus a
-`<area>.dockerfile` where the mixin ships files), published as plain OCI
-images on Docker Hub (`docker.io/nikcio/sbx-mixin-<area>`). See
+Mixins here are v3 descriptors (`mixins/<area>/<area>.yaml` plus a
+`<area>.dockerfile` where the mixin ships config files). They are
+consumed as **git references** — `git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/<area>&ref=<tag>`
+in your `sbxenv.yaml`'s `kits:` list, pinned to a release — not as
+published images. See
 [Version compatibility](https://docs.docker.com/ai/sandboxes/#version-compatibility):
 a v3 workload requires v3 mixins, and sbx v0.45+.
 
@@ -42,6 +44,7 @@ Rules of thumb:
 | Mixin | Adds |
 | ----- | ---- |
 | `opencode` | The OpenCode agent (newest npm release by default; pin it with the mixin's `version` arg), permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), and the combined provider config (`OPENCODE_CONFIG` merge). Required in every OpenCode sandbox, and required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
+| `launch-opencode` | Launches OpenCode at sandbox startup (the workloads' bash entrypoint execs the mixin's agent shim). Compose it with `opencode`; without it the workload launches a plain shell |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or fails sandbox creation (direct mode). Declaration-only — the guard is one lifecycle install command in the descriptor. Optional — the examples compose it |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
@@ -117,7 +120,7 @@ descriptors declare args like `node_version`, `go_version`,
 
 ```yaml
 kits:
-  - source: docker.io/nikcio/sbx-mixin-opencode:vX.Y.Z
+  - source: git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=vX.Y.Z
     args:
       version: "1.18.32"
 ```

@@ -10,7 +10,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-open-egress:vX.Y.Z   # allow all outbound domains
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/open-egress&ref=vX.Y.Z   # allow all outbound domains
 ```
 
 For local development, point `--kit` at the directory instead:

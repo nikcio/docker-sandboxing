@@ -13,7 +13,7 @@ the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-opencode:vX.Y.Z # opencode + config + provider merge
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=vX.Y.Z # opencode + config + provider merge
 ```
 
 For local development, point `--kit` at the directory instead:

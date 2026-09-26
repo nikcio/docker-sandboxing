@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-python:vX.Y.Z   # python + uv
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/python&ref=vX.Y.Z   # python + uv
 ```
 
 For local development, point `--kit` at the directory instead:

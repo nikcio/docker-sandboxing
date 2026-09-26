@@ -97,40 +97,37 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 Everything below is for developing the kits and mixins.
 
 ```text
-├── kit-<stack>/                      # workload kits (kind: workload, v3): one per stack —
+├── kit-<stack>/                      # shell workload kits (kind: workload, v3): one per stack —
 ├── kit-node/                         #   <kit>.yaml descriptor + <kit>.dockerfile. Each Dockerfile
 ├── kit-dotnet/                       #   builds the whole workload on the shell base image
 ├── kit-python/                       #   (docker/sandbox-templates:shell): stack toolchain, git-lfs,
-├── kit-go/                           #   Node via NVM + PNPM, Playwright; published as
-├── kit-rust/                         #   sbx-kit-opencode-<stack>
-├── mixins/
+├── kit-go/                           #   Node via NVM + PNPM, Playwright; launches bash by default
+├── kit-rust/                         #   (compose launch-opencode to run OpenCode); published as
+│                                     #   sbx-kit-<stack>
+├── mixins/                           # one single-purpose mixin per area (kind: mixin, v3):
+│   │                                 #   <area>.yaml descriptor (capabilities: network policy,
+│   │                                 #   credentials, lifecycle, agent-context) + optional
+│   │                                 #   <area>.dockerfile for shipped config — consumed as git
+│   │                                 #   references (kits: list or --kit), not published as images
 │   ├── opencode/                     # the OpenCode agent: newest npm release at creation,
-│   │                                 #   permissive config (~/.config/opencode/opencode.jsonc),
-│   │                                 #   provider-fragment merge (OPENCODE_CONFIG) fed by provider
-│   │                                 #   mixins' mixins.d/ fragments
-│   ├── env-guard/                    # the workspace .env guard (self-contained: script ships in
-│   │                                 #   its own image, runs as a lifecycle install hook)
-│   └── <area>/                       # one single-purpose mixin per area (kind: mixin, v3):
-│                                     #   <area>.yaml descriptor (capabilities: network policy,
-│                                     #   credentials, lifecycle, agent-context) + optional
-│                                     #   <area>.dockerfile for shipped files — composed explicitly
-│                                     #   at launch (--kit flags or kits: list)
-├── kit/                              # the shell workload kit (shell base image + git setup), used by
-│                                     #   this repo's own sbxenv.yaml
+│   │                                 #   permissive config, provider-fragment merge
+│   ├── launch-opencode/              # launches OpenCode at sandbox startup (the workloads'
+│   │                                 #   bash entrypoint execs its agent shim)
+│   ├── env-guard/                    # the workspace .env guard (one install-hook command)
+│   └── <area>/                       # stack toolchains, providers, registries, tools
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack)
 ├── docs/                             # user guides (see above)
-├── agent-guidance/                   # worktrees, versioning, commit conventions
-└── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in v2 opencode kit —
-                                      #   upstream of the old opencode-docker template; nothing loads it
+└── agent-guidance/                   # worktrees, versioning, commit conventions
 ```
 
 Every workload builds on `docker/sandbox-templates:shell` (agent user,
 workspace, persistent-shell env, tini) and adds its stack in its own
 `kit-*/kit-*.dockerfile`: Git (+ git-lfs), Node.js via NVM + PNPM, and
-Playwright with the Chromium headless shell. The OpenCode agent is
-installed by the `opencode` mixin (newest npm release at creation by
-default — pin it with its `version` arg), so the same kit image serves
-any agent version without a rebuild.
+Playwright with the Chromium headless shell. The workloads are shell
+kits — they launch bash; compose the `opencode` mixin (the agent, newest
+npm release by default — pin it with its `version` arg) and the
+`launch-opencode` mixin (startup launch) to run OpenCode on any of
+them.
 
 Kits are [v3 kit descriptors](https://github.com/docker/sandbox-kit-spec)
 (`# syntax=docker/sandbox-kit:3`), requiring sbx v0.45+. The workload
@@ -146,7 +143,7 @@ sessions share this checkout concurrently.
 ```bash
 docker buildx build kit-node/ --file kit-node/kit-node.yaml   # build = validate (strict descriptor decode)
 docker buildx build mixins/node/ --file mixins/node/node.yaml # (declaration-only mixins have no Dockerfile)
-sbx env run                   # dev sandbox: kit/ + mixins/ loaded from the working copy
+sbx env run                   # dev sandbox: kit-node/ + mixins/ loaded from the working copy
 ```
 
 Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`

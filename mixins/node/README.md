@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-node:vX.Y.Z   # node / npm / pnpm
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=vX.Y.Z   # node / npm / pnpm
 ```
 
 For local development, point `--kit` at the directory instead:

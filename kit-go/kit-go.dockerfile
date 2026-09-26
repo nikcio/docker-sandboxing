@@ -1,15 +1,11 @@
 # syntax=docker/dockerfile:1
 
-# OpenCode workload on the shell base image: the base provides the
+# Shell workload on the shell base image: the base provides the
 # platform floor (agent uid 1000, workspace, BASH_ENV persistent shell,
 # tini); this recipe adds the official Go toolchain (GOTOOLCHAIN=auto
 # pulls newer toolchains via the module proxy), git-lfs, Node.js via nvm,
 # PNPM, and Playwright with the Chromium headless shell, plus the launch
 # contract.
-#
-# The agent itself is installed by the opencode mixin's install hook
-# (opencode-ai@latest) — compose it, or bake a pinned agent by replacing
-# the hook's npm install with a RUN here.
 #
 # (The shell base is unversioned — nothing here is release-bumped; the
 # kit's version lives in kit-go.yaml.)
@@ -71,8 +67,11 @@ USER agent
 RUN git config --global --add safe.directory "*" \
     && git config --global init.defaultBranch main
 
-# The launch contract: the shell base launches bash under tini; this
-# workload launches opencode under the same supervisor.
+# The launch contract: bash by default. When the launch-opencode mixin
+# is composed it writes /usr/local/bin/agent-launch (exec opencode) and
+# this entrypoint hands over to it; without the mixin the shell runs.
+# The agent-under-bash contract (sbx@1) is satisfied either way: the
+# host launches this command under bash, so BASH_ENV is sourced.
 USER agent
-ENTRYPOINT ["tini", "--", "opencode"]
+ENTRYPOINT ["tini", "--", "bash", "-c", "[ -x /usr/local/bin/agent-launch ] && exec /usr/local/bin/agent-launch || exec bash"]
 CMD []

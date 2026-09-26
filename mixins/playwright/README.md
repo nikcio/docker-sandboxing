@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-playwright:vX.Y.Z   # Playwright + Chromium headless shell
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=vX.Y.Z   # Playwright + Chromium headless shell
 ```
 
 For local development, point `--kit` at the directory instead:

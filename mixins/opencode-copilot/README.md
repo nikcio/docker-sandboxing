@@ -12,7 +12,7 @@ the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-opencode-copilot:vX.Y.Z # GitHub Copilot provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-copilot&ref=vX.Y.Z # GitHub Copilot provider
 ```
 
 Requires the `opencode` mixin — the provider config fragment

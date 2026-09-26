@@ -15,14 +15,15 @@ name: my-project
 # The workload kit (agent:) and the mixin refs are pinned to the latest
 # release; release-please bumps them (do not edit by hand).
 # x-release-please-start-version
-agent: docker.io/nikcio/sbx-kit-opencode-go:v2.2.0
+agent: docker.io/nikcio/sbx-kit-go:v2.2.0
 
 kits:
-  - docker.io/nikcio/sbx-mixin-opencode:v2.2.0               # opencode agent + config + provider merge (required)
-  - docker.io/nikcio/sbx-mixin-env-guard:v2.2.0              # workspace .env guard
-  - docker.io/nikcio/sbx-mixin-opencode-zeldoc:v2.2.0                 # Zeldoc.ai provider
-  - docker.io/nikcio/sbx-mixin-github-cli:v2.2.0             # git push auth (proxy-managed GitHub token)
-  - docker.io/nikcio/sbx-mixin-go:v2.2.0                     # Go toolchain (module proxy egress)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=v2.2.0        # opencode agent + config + provider merge (required)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/launch-opencode&ref=v2.2.0        # launch opencode at startup
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v2.2.0        # workspace .env guard
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-zeldoc&ref=v2.2.0        # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/github-cli&ref=v2.2.0        # git push auth (proxy-managed GitHub token)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/go&ref=v2.2.0        # Go toolchain (module proxy egress)
 # x-release-please-end-version
 
 workspace:

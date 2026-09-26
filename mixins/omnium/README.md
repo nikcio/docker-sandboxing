@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-omnium:vX.Y.Z   # Omnium API
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/omnium&ref=vX.Y.Z   # Omnium API
 ```
 
 For local development, point `--kit` at the directory instead:

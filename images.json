@@ -1,145 +1,30 @@
 {
-  "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each entry from its v3 descriptor (docker buildx build -f <dir>/<descriptor> <dir>) and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). The kit-*/ workloads build their stack toolchain directly on the unversioned shell base image; mixin images carry their own files. The release-please extra-files blocks keep every versioned reference (kit version fields, example refs) at the release version.",
+  "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each workload kit from its v3 descriptor (docker buildx build -f <dir>/<descriptor> <dir>) and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). The workloads build their stack toolchain directly on the unversioned shell base image. Mixins are not published as images \u2014 they are consumed as git references (see examples/*.sbxenv.yaml). The release-please extra-files blocks keep every versioned reference (kit version fields, example refs) at the release version.",
   "images": [
     {
-      "name": "sbx-kit-opencode",
-      "context": "kit",
-      "descriptor": "kit.yaml"
-    },
-    {
-      "name": "sbx-kit-opencode-dotnet",
+      "name": "sbx-kit-dotnet",
       "context": "kit-dotnet",
       "descriptor": "kit-dotnet.yaml"
     },
     {
-      "name": "sbx-kit-opencode-go",
+      "name": "sbx-kit-go",
       "context": "kit-go",
       "descriptor": "kit-go.yaml"
     },
     {
-      "name": "sbx-kit-opencode-node",
+      "name": "sbx-kit-node",
       "context": "kit-node",
       "descriptor": "kit-node.yaml"
     },
     {
-      "name": "sbx-kit-opencode-python",
+      "name": "sbx-kit-python",
       "context": "kit-python",
       "descriptor": "kit-python.yaml"
     },
     {
-      "name": "sbx-kit-opencode-rust",
+      "name": "sbx-kit-rust",
       "context": "kit-rust",
       "descriptor": "kit-rust.yaml"
-    },
-    {
-      "name": "sbx-mixin-browser",
-      "context": "mixins/browser",
-      "descriptor": "browser.yaml"
-    },
-    {
-      "name": "sbx-mixin-docker-hub",
-      "context": "mixins/docker-hub",
-      "descriptor": "docker-hub.yaml"
-    },
-    {
-      "name": "sbx-mixin-dotnet",
-      "context": "mixins/dotnet",
-      "descriptor": "dotnet.yaml"
-    },
-    {
-      "name": "sbx-mixin-env-guard",
-      "context": "mixins/env-guard",
-      "descriptor": "env-guard.yaml"
-    },
-    {
-      "name": "sbx-mixin-gcr",
-      "context": "mixins/gcr",
-      "descriptor": "gcr.yaml"
-    },
-    {
-      "name": "sbx-mixin-ghcr",
-      "context": "mixins/ghcr",
-      "descriptor": "ghcr.yaml"
-    },
-    {
-      "name": "sbx-mixin-github-cli",
-      "context": "mixins/github-cli",
-      "descriptor": "github-cli.yaml"
-    },
-    {
-      "name": "sbx-mixin-go",
-      "context": "mixins/go",
-      "descriptor": "go.yaml"
-    },
-    {
-      "name": "sbx-mixin-mcr",
-      "context": "mixins/mcr",
-      "descriptor": "mcr.yaml"
-    },
-    {
-      "name": "sbx-mixin-nikcio-openapi-codegen",
-      "context": "mixins/nikcio-openapi-codegen",
-      "descriptor": "nikcio-openapi-codegen.yaml"
-    },
-    {
-      "name": "sbx-mixin-node",
-      "context": "mixins/node",
-      "descriptor": "node.yaml"
-    },
-    {
-      "name": "sbx-mixin-omnium",
-      "context": "mixins/omnium",
-      "descriptor": "omnium.yaml"
-    },
-    {
-      "name": "sbx-mixin-open-egress",
-      "context": "mixins/open-egress",
-      "descriptor": "open-egress.yaml"
-    },
-    {
-      "name": "sbx-mixin-openapi-ts",
-      "context": "mixins/openapi-ts",
-      "descriptor": "openapi-ts.yaml"
-    },
-    {
-      "name": "sbx-mixin-opencode",
-      "context": "mixins/opencode",
-      "descriptor": "opencode.yaml"
-    },
-    {
-      "name": "sbx-mixin-opencode-copilot",
-      "context": "mixins/opencode-copilot",
-      "descriptor": "opencode-copilot.yaml"
-    },
-    {
-      "name": "sbx-mixin-opencode-zeldoc",
-      "context": "mixins/opencode-zeldoc",
-      "descriptor": "opencode-zeldoc.yaml"
-    },
-    {
-      "name": "sbx-mixin-playwright",
-      "context": "mixins/playwright",
-      "descriptor": "playwright.yaml"
-    },
-    {
-      "name": "sbx-mixin-python",
-      "context": "mixins/python",
-      "descriptor": "python.yaml"
-    },
-    {
-      "name": "sbx-mixin-rust",
-      "context": "mixins/rust",
-      "descriptor": "rust.yaml"
-    },
-    {
-      "name": "sbx-mixin-sbx",
-      "context": "mixins/sbx",
-      "descriptor": "sbx.yaml"
-    },
-    {
-      "name": "sbx-mixin-uniform",
-      "context": "mixins/uniform",
-      "descriptor": "uniform.yaml"
     }
   ]
 }

@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-dotnet:vX.Y.Z   # .NET / NuGet
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet&ref=vX.Y.Z   # .NET / NuGet
 ```
 
 For local development, point `--kit` at the directory instead:

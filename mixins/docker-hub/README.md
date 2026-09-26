@@ -10,7 +10,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-docker-hub:vX.Y.Z   # Docker Hub registry egress
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker-hub&ref=vX.Y.Z   # Docker Hub registry egress
 ```
 
 For local development, point `--kit` at the directory instead:

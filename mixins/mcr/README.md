@@ -10,7 +10,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-mcr:vX.Y.Z   # Microsoft Container Registry egress
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/mcr&ref=vX.Y.Z   # Microsoft Container Registry egress
 ```
 
 For local development, point `--kit` at the directory instead:

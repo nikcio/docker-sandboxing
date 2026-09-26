@@ -1,14 +1,14 @@
 schemaVersion: "1"
 name: docker-sandboxing
-agent: ./kit
+agent: ./kit-node
 
 kits:
   - ./mixins/opencode
+  - ./mixins/launch-opencode
   - ./mixins/opencode-zeldoc
   - ./mixins/github-cli
   - ./mixins/docker-hub
   - ./mixins/sbx
-  - ./mixins/open-egress
 
 workspace:
   path: .

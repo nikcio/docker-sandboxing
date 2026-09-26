@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-openapi-ts:vX.Y.Z   # openapi-ts docs
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/openapi-ts&ref=vX.Y.Z   # openapi-ts docs
 ```
 
 For local development, point `--kit` at the directory instead:

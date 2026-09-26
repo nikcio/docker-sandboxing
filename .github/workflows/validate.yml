@@ -28,14 +28,16 @@ jobs:
         id: images
         run: echo "images=$(jq -c '.images' images.json)" >> "$GITHUB_OUTPUT"
 
-  # Every kit and mixin builds with the v3 sandbox-kit frontend (the
+  # Every workload kit builds with the v3 sandbox-kit frontend (the
   # descriptor's # syntax= line dispatches it). The build validates the
   # descriptor strictly — sbx kit validate has no v3 source-kit path, and
   # buildx --check cannot run foreign frontends, so a real build is the
   # only local validation. No Docker login needed: layers stay local.
-  # Pushing happens in publish-image.yml at release time.
-  kits-mixins:
-    name: Kit or mixin (v3 frontend build)
+  # Pushing happens in publish-image.yml at release time. Mixins are
+  # consumed as git references and validated by the sandboxes that build
+  # them; they carry no images.json entry.
+  kits:
+    name: Workload kit (v3 frontend build)
     runs-on: ubuntu-latest
     needs: images
     strategy:

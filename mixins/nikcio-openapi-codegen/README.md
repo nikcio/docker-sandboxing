@@ -12,7 +12,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-nikcio-openapi-codegen:vX.Y.Z   # openapi-codegen (C#)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/nikcio-openapi-codegen&ref=vX.Y.Z   # openapi-codegen (C#)
 ```
 
 For local development, point `--kit` at the directory instead:

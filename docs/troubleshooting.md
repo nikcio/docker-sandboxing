@@ -54,15 +54,14 @@ sandbox):
 - **Clone mode** (`clone: true`): the sandbox deletes them from its local
   copy and warns after a 5-second pause.
 
-## My changes to a kit/mixin/template are not picked up
+## My changes to a kit/mixin are not picked up
 
 - **Kit/mixin descriptor changes** apply only to new sandboxes — recreate with
   `sbx rm <name>` + `sbx env run`. While iterating on a clone, point the
-  `kits:` lines at local directories (e.g. `./kit-dotnet`)
-  instead of git refs.
-- **Template (Dockerfile) changes** need a rebuild and reload, then a
-  sandbox recreation — build the template with `docker build` and load it
-  with `sbx template load`.
+  `kits:` lines at local directories (e.g. `./mixins/node`) instead of
+  git refs; the workload kit (`agent:`) likewise (e.g. `./kit-node`).
+- **Workload Dockerfile changes** need a rebuild — build the kit image
+  with `docker buildx build` (see README) and recreate the sandbox.
 
 ## The agent's dev server is not reachable from my host
 

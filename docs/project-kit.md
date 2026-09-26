@@ -116,8 +116,8 @@ of the stock mixins.
 
    ```yaml
    kits:
-     - docker.io/nikcio/sbx-mixin-opencode:vX.Y.Z
-     - docker.io/nikcio/sbx-mixin-env-guard:vX.Y.Z
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=vX.Y.Z
+     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=vX.Y.Z
      # ...the other stock mixins your project keeps...
      - ./sandbox-kit
    ```

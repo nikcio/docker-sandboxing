@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-browser:vX.Y.Z   # Google Chrome
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/browser&ref=vX.Y.Z   # Google Chrome
 ```
 
 For local development, point `--kit` at the directory instead:

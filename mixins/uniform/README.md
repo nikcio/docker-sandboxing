@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-uniform:vX.Y.Z   # Uniform DXP
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/uniform&ref=vX.Y.Z   # Uniform DXP
 ```
 
 For local development, point `--kit` at the directory instead:

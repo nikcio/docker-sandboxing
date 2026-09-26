@@ -10,7 +10,7 @@ the version to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-opencode-zeldoc:vX.Y.Z # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-zeldoc&ref=vX.Y.Z # Zeldoc.ai provider
 ```
 
 For local development, point `--kit` at the directory instead:

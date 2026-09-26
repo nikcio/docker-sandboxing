@@ -11,7 +11,7 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - docker.io/nikcio/sbx-mixin-rust:vX.Y.Z   # Rust / cargo
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/rust&ref=vX.Y.Z   # Rust / cargo
 ```
 
 For local development, point `--kit` at the directory instead:
