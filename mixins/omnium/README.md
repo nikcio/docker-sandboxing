@@ -29,7 +29,7 @@ Omnium hosts are allowed.
   target, minted host-side by POSTing the API user's `ClientId` +
   `ClientSecret` to `/api/token` on that environment's API host — create
   API users in the Omnium GUI under Configuration > Authorization > API
-  Users. Full walkthrough: [docs/omnium-api-key.md](../../docs/omnium-api-key.md).
+Users. Full walkthrough: [docs/omnium-api-key.md](../../docs/omnium-api-key.md).
 - **Docs and status** are reachable without a token, for research.
 
 ## Network domains

@@ -54,7 +54,7 @@ first file.
 
 - Re-running applies changed `env:` values to the next session. Changes to
   kits, ports, workspaces, or `sandboxOptions` only apply to **new**
-  sandboxes — remove and run again (see [getting-started.md](getting-started.md)).
+sandboxes — remove and run again (see [getting-started.md](getting-started.md)).
 
 This repo uses the same pattern: `sbxenv.yaml` is committed, and a
 gitignored `local.sbxenv.yaml` holds machine-specific overrides.

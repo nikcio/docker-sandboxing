@@ -65,4 +65,5 @@ sbx env exec -- ls /home/agent/.claude/skills /home/agent/.agents/skills
   `--no-share-skills` at creation.
 - `sbx reset` clears the shared store.
 
-Details: [Share agent skills](https://docs.docker.com/ai/sandboxes/workflows/agent-skills/).
+Details: [Share agent
+skills](https://docs.docker.com/ai/sandboxes/workflows/agent-skills/).

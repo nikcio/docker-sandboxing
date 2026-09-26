@@ -8,10 +8,12 @@ your project doesn't need from the `kits:` list in your `sbxenv.yaml`.
 
 Mixins here are v3 descriptors (`mixins/<area>/<area>.yaml` plus a
 `<area>.dockerfile` where the mixin ships config files). They are
-consumed as **git references** — `git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/<area>&ref=<tag>`
-in your `sbxenv.yaml`'s `kits:` list, pinned to a release — not as
-published images. See
-[Version compatibility](https://docs.docker.com/ai/sandboxes/#version-compatibility):
+consumed as **git references** in your `sbxenv.yaml`'s `kits:` list,
+pinned to a release — not as published images:
+
+    git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/<area>&ref=<tag>
+
+See [Version compatibility](https://docs.docker.com/ai/sandboxes/#version-compatibility):
 a v3 workload requires v3 mixins, and sbx v0.45+.
 
 ## Any mixin on any workload
@@ -98,7 +100,8 @@ Notes:
   install hooks declare the Ubuntu apt mirrors in their install-phase
   policy. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`)
   per registry the in-sandbox Docker engine pulls from.
-- `opencode-zeldoc` and/or `opencode-copilot` give the agent a model provider. The
+- - `opencode-zeldoc` and/or `opencode-copilot` give the agent a model provider.
+  The
   `opencode` mixin installs the newest opencode at every creation by
   default (arg `version: latest`); pin it with a `version` value to
   freeze the agent release.

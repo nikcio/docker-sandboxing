@@ -1,6 +1,7 @@
 # Commit Messages
 
-This project uses [Conventional Commits](https://www.conventionalcommits.org/) style:
+This project uses [Conventional Commits](https://www.conventionalcommits.org/)
+style:
 
 ```
 type(scope): description
@@ -27,7 +28,8 @@ feat(kit)!: change entrypoint contract
 
 ## Scopes
 
-Common scopes: `kit`, `template`, `mixins`, `scripts`, `release`, `docs`, `deps`. Omit the scope when the change doesn't fit one.
+Common scopes: `kit`, `template`, `mixins`, `scripts`, `release`, `docs`,
+`deps`. Omit the scope when the change doesn't fit one.
 
 ## Examples
 

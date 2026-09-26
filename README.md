@@ -1,8 +1,9 @@
 # docker-sandboxing
 
-Run [OpenCode](https://opencode.ai) in a sandboxed [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/)
-VM inside your own repo: copy the example for your stack into your project,
-run one command, and OpenCode starts in a VM with your toolchain preinstalled.
+Run [OpenCode](https://opencode.ai) in a sandboxed [Docker
+Sandboxes](https://docs.docker.com/ai/sandboxes/) VM inside your own repo:
+copy the example for your stack into your project, run one command, and
+OpenCode starts in a VM with your toolchain preinstalled.
 
 The sandbox is the isolation boundary: outbound network is deny-by-default and
 API keys are injected by a proxy — the sandbox only ever sees placeholders.

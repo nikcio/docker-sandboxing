@@ -95,8 +95,11 @@ token (steps 2–3) — rotation is the same commands as registering.
   its tokens stop working on the next call.
 - Vault alternative: `sbx secret set omnium --ref 'op://Private/Omnium/token'`.
 - Optional auto-refresh: keep the ClientSecret in a host-only file and
-  store a command that mints a token on refresh —
-  `sbx secret set omnium --command 'curl -s -X POST "https://apitest.omnium.no/api/token?clientId=YOUR_CLIENT_ID&clientSecret=$(cat ~/.omnium-client-secret)"' --refresh 24h`
+  store a command that mints a token on refresh:
+
+  ```bash
+  sbx secret set omnium --command 'curl -s -X POST "https://apitest.omnium.no/api/token?clientId=YOUR_CLIENT_ID&clientSecret=$(cat ~/.omnium-client-secret)"' --refresh 24h
+  ```
 
 ## Without a token
 

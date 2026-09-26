@@ -17,8 +17,8 @@ For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/opencode-zeldoc <workload> .`
 
 Requires the `opencode` mixin — the provider config fragment
-only merges through it (compose `opencode-copilot` alongside; `enabled_providers`
-lists are unioned, so both providers stay selectable).
+only merges through it (compose `opencode-copilot` alongside;
+`enabled_providers` lists are unioned, so both providers stay selectable).
 
 ## How it works
 
@@ -26,7 +26,8 @@ lists are unioned, so both providers stay selectable).
   `proxyManaged: true` — the sandbox only sees a placeholder; the proxy
   injects the real `Authorization: Basic <key>` header on requests to
   `api.zeldoc.ai`. Register the key host-side with
-  `sbx secret set zeldoc` (see [docs/zeldoc-api-key.md](../../docs/zeldoc-api-key.md)).
+`sbx secret set zeldoc` (see
+[docs/zeldoc-api-key.md](../../docs/zeldoc-api-key.md)).
 - **Config fragment**: ships a pure-JSON fragment to
   `~/.config/opencode/mixins.d/20-zeldoc.json`, merged into the combined
   `OPENCODE_CONFIG` by the `opencode` mixin's install hook, before the

@@ -28,7 +28,8 @@ The opencode TUI starts with GitHub Copilot as the provider. If Copilot
 isn't signed in yet (fresh sandbox = fresh sign-in):
 
 1. Run `/connect` in the TUI and pick **GitHub Copilot**.
-2. opencode shows a code — open [github.com/login/device](https://github.com/login/device)
+2. 2. opencode shows a code — open
+  [github.com/login/device](https://github.com/login/device)
    **in your host browser** and enter it.
 3. Run `/models` to pick a model.
 

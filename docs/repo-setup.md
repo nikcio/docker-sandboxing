@@ -78,12 +78,11 @@ protection under Settings → Branches) for `main`:
 
 The checks appear after the first PR runs the Validate workflow. Validate
 runs on every PR (no path filtering) and always produces exactly these
-checks (one per workload kit × platform in `images.json`), so the fixed required set is
-safe. Two caveats keep it that
-way: don't add path filters to `validate.yml` (a filtered-out PR never
-reports the required checks and can never merge), and after adding or
-renaming an image in `images.json`, update this required list to match
-the new check names.
+checks (one per workload kit × platform in `images.json`), so the fixed required
+set is safe. Two caveats keep it that way: don't add path filters to
+`validate.yml` (a filtered-out PR never reports the required checks and can
+never merge), and after adding or renaming an image in `images.json`, update
+this required list to match the new check names.
 
 The release PR is an ordinary PR: it runs the same checks and must pass
 before you merge it. Don't require checks from workflows that only run

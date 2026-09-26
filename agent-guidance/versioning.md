@@ -4,12 +4,14 @@ A single SemVer version for the whole repo, managed by
 [release-please](https://github.com/googleapis/release-please):
 
 - `.release-please-manifest.json` — current version
-- `.release-please-config.json` — release config (`extra-files` lists everything a release rewrites)
+- - `.release-please-config.json` — release config (`extra-files` lists
+  everything a release rewrites)
 - `CHANGELOG.md` — generated in the release PR
 
 ## Release flow
 
-1. Conventional commits land on `main` (see [commit-messages.md](commit-messages.md)).
+1. 1. Conventional commits land on `main` (see
+  [commit-messages.md](commit-messages.md)).
 2. The release-please workflow opens a release PR that bumps:
    - `CHANGELOG.md`
    - `version` in `kit-<stack>/kit-<stack>.yaml`

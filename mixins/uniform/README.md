@@ -27,7 +27,8 @@ Uniform hosts are allowed.
   `x-api-key` header on requests to the Uniform hosts. The key is a
   service-account key or personal access token for the Management API and
   Edge Delivery API — create it in Uniform under Security > Service
-  Accounts. Full walkthrough: [docs/uniform-api-key.md](../../docs/uniform-api-key.md).
+Accounts. Full walkthrough:
+[docs/uniform-api-key.md](../../docs/uniform-api-key.md).
 
 ## Network domains
 
