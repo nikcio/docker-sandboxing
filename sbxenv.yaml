@@ -1,6 +1,6 @@
 schemaVersion: "1"
 name: docker-sandboxing
-agent: ./kit-node
+agent: shell
 
 kits:
   - ./mixins/opencode
