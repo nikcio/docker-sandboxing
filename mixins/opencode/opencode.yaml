@@ -86,14 +86,15 @@ capabilities:
               cp /usr/share/sandbox/opencode/opencode.jsonc /home/agent/.config/opencode/opencode.jsonc
             fi
             chown -R agent:agent /home/agent/.config/opencode
-            if [ ! -d "$__frag_dir" ] || ! find "$__frag_dir" -maxdepth 1 -name '*.json' | grep -q .; then
-              printf '%s\n' "$__seed" > "$__out"
-              echo "[mixins-config] no mixins fragments in $__frag_dir — wrote the empty combined config"
-              exit 0
-            fi
             if find "$__frag_dir" -maxdepth 1 -name '*.jsonc' | grep -q .; then
               echo "ERROR [mixins-config]: comment-bearing fragments are not supported — fragments in $__frag_dir must be comment-free .json (jq does the merging)" >&2
               exit 1
+            fi
+            if [ ! -d "$__frag_dir" ] || ! find "$__frag_dir" -maxdepth 1 -name '*.json' | grep -q .; then
+              printf '%s\n' "$__seed" > "$__out"
+              chown agent:agent "$__out"
+              echo "[mixins-config] no mixins fragments in $__frag_dir — wrote the empty combined config"
+              exit 0
             fi
             for __f in "$__frag_dir"/*.json; do
               jq -e 'type == "object"' "$__f" > /dev/null || {
@@ -104,7 +105,7 @@ capabilities:
             __tmp="$(mktemp "$__home/.config/opencode/.sandbox-mixins.jsonc.XXXXXX")"
             jq -s '
             def unionkey:
-                [keys[] | select(test("^enabled_|^disabled_"))] | .[];
+                [keys[] | select(test("^enabled_|^disabled_|^plugin$"))] | .[];
             reduce .[] as $f (
                 {};
                 . as $acc
@@ -120,6 +121,7 @@ capabilities:
               cat "$__tmp"
             } > "$__out"
             rm -f "$__tmp"
+            chown agent:agent "$__out"
             echo "[mixins-config] merged $(find "$__frag_dir" -maxdepth 1 -name '*.json' | wc -l) mixins fragment(s) -> $__out"
           description: Seed the base config and merge provider fragments into OPENCODE_CONFIG
 

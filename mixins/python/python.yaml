@@ -53,6 +53,11 @@ capabilities:
           - python.org:443
           - "*.python.org:443"
 
+          # uv fetches missing interpreters at agent time from astral-sh's
+          # GitHub release assets (same hosts as the install phase)
+          - github.com:443
+          - objects.githubusercontent.com:443
+
   - type: com.docker.sandbox/lifecycle@1
     config:
       install:

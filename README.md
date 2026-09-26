@@ -124,8 +124,8 @@ Work in a git worktree branched from `main` ([agent-guidance/worktrees.md](agent
 
 ```bash
 docker buildx build kit-node/ --file kit-node/kit-node.yaml   # build = validate (strict descriptor decode)
-docker buildx build mixins/node/ --file mixins/node/node.yaml # (declaration-only mixins have no Dockerfile)
-sbx env run                   # dev sandbox: kit-node/ + mixins/ loaded from the working copy
+docker buildx build mixins/dotnet/ --file mixins/dotnet/dotnet.yaml # (declaration-only mixins have no Dockerfile)
+sbx env run                   # dev sandbox: built-in shell agent + mixins/ from the working copy
 ```
 
 Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run` (or the wizard again). Releases are cut by release-please from Conventional Commits on `main` — see [agent-guidance/versioning.md](agent-guidance/versioning.md) and [agent-guidance/commit-messages.md](agent-guidance/commit-messages.md). Repo conventions: [AGENTS.md](AGENTS.md).

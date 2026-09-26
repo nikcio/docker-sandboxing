@@ -13,7 +13,7 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/sbx <workload> .`
 
-The install runs at **sandbox creation only**. Skipped when the template image already ships the CLI.
+The install runs at **sandbox creation only**. Skipped when the workload image already ships the CLI.
 
 ## How it works
 

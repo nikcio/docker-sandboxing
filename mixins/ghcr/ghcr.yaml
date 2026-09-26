@@ -12,6 +12,7 @@ capabilities:
     config:
       runtime:
         allow:
-          # GitHub Container Registry
+          # GitHub Container Registry (+ the blob-redirect host)
           - ghcr.io:443
           - "*.ghcr.io:443"
+          - pkg-containers.githubusercontent.com:443

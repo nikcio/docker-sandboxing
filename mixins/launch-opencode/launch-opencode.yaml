@@ -19,6 +19,7 @@ capabilities:
             set -e
             printf '%s\n' \
               '#!/bin/sh' \
+              'command -v opencode >/dev/null 2>&1 || { echo "agent-launch: opencode not found — compose the opencode mixin" >&2; exit 127; }' \
               'exec opencode' \
               > /usr/local/bin/agent-launch
             chmod 755 /usr/local/bin/agent-launch

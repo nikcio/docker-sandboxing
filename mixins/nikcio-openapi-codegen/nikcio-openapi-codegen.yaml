@@ -36,6 +36,7 @@ capabilities:
 
           # dotnet-install fallback + feeds (when no dotnet mixin provided the SDK)
           - "*.microsoft.com:443"
+          - "*.dotnet.microsoft.com:443"
           - dot.net:443
           - "*.dot.net:443"
           - aka.ms:443
@@ -72,7 +73,11 @@ capabilities:
             fi;
             if sudo -u agent bash -lc 'command -v openapi-codegen >/dev/null 2>&1'; then exit 0; fi;
             echo 'export PATH=$PATH:/home/agent/.dotnet/tools' >> /etc/sandbox-persistent.sh;
-            sudo -u agent dotnet tool install --global "Nikcio.OpenApiCodeGen@${{ kit.args.tool_version }}"
+            if [ "${{ kit.args.tool_version }}" = "latest" ]; then
+              sudo -u agent dotnet tool install --global Nikcio.OpenApiCodeGen;
+            else
+              sudo -u agent dotnet tool install --global "Nikcio.OpenApiCodeGen@${{ kit.args.tool_version }}";
+            fi
           description: Install the openapi-codegen .NET global tool (skipped when already present)
 
   - type: com.docker.sandbox/agent-context@1

@@ -20,6 +20,6 @@ The sandbox network policy is deny-by-default, so `docker pull`/`build` fails un
 | Domain | Why |
 | ------ | --- |
 | `docker.io`, `*.docker.io` | Registry API + image manifests |
-| `*.docker.com` | Registry auth/token endpoints |
+| `*.docker.com` | Docker web/UI hosts (`hub.docker.com`) |
 | `production.cloudflare.docker.com` | Blob/layer downloads (CDN) |
 | `production.cloudfront.docker.com` | Blob/layer downloads (CDN fallback) |

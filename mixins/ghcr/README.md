@@ -13,7 +13,7 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/ghcr <workload> .`
 
-The sandbox network policy is deny-by-default, so `docker pull`/`build` fails until the registry hosts are allowed. Private images additionally need registry auth — see [docs/github-pat.md](../../docs/github-pat.md).
+The sandbox network policy is deny-by-default, so `docker pull`/`build` fails until the registry hosts are allowed. Private images additionally need registry auth: the sandbox does not see your GitHub token (the proxy injects it only for github.com hosts), so authenticate the in-sandbox docker daemon via `sbx registries` or a read:packages PAT stored separately.
 
 ## Network domains
 

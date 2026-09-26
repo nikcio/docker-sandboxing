@@ -24,4 +24,4 @@ The sandbox network policy is deny-by-default, so API calls fail until the Unifo
 | Domain | Why |
 | ------ | --- |
 | `uniform.app`, `*.uniform.app` | Dashboard, Management API, docs (docs.uniform.app), per-team app subdomains — US and EU |
-| `uniform.global`, `*.uniform.global` | Edge Delivery API + image CDN (`img.uniform.global` / `img.eu.uniform.global`), US and EU |
+| `uniform.global`, `*.uniform.global`, `*.eu.uniform.global` | Edge Delivery API + image CDN (`img.uniform.global` / `img.eu.uniform.global`), US and EU |

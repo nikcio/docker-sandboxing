@@ -47,16 +47,16 @@ Settings → Rules → Rulesets → **New branch ruleset** (or classic branch pr
 
 - **Require a pull request before merging** — work happens in worktrees and lands via PRs (see [agent-guidance/worktrees.md](../agent-guidance/worktrees.md)).
 - **Require status checks to pass**, then select:
-  - `Workload kit (v3 frontend build, linux/amd64) (kit-dotnet)`
-  - `Workload kit (v3 frontend build, linux/amd64) (kit-go)`
-  - `Workload kit (v3 frontend build, linux/amd64) (kit-node)`
-  - `Workload kit (v3 frontend build, linux/amd64) (kit-python)`
-  - `Workload kit (v3 frontend build, linux/amd64) (kit-rust)`
-  - `Workload kit (v3 frontend build, linux/arm64) (kit-dotnet)`
-  - `Workload kit (v3 frontend build, linux/arm64) (kit-go)`
-  - `Workload kit (v3 frontend build, linux/arm64) (kit-node)`
-  - `Workload kit (v3 frontend build, linux/arm64) (kit-python)`
-  - `Workload kit (v3 frontend build, linux/arm64) (kit-rust)`
+  - `Workload kit (v3 frontend build, linux/amd64, dotnet)`
+  - `Workload kit (v3 frontend build, linux/amd64, go)`
+  - `Workload kit (v3 frontend build, linux/amd64, node)`
+  - `Workload kit (v3 frontend build, linux/amd64, python)`
+  - `Workload kit (v3 frontend build, linux/amd64, rust)`
+  - `Workload kit (v3 frontend build, linux/arm64, dotnet)`
+  - `Workload kit (v3 frontend build, linux/arm64, go)`
+  - `Workload kit (v3 frontend build, linux/arm64, node)`
+  - `Workload kit (v3 frontend build, linux/arm64, python)`
+  - `Workload kit (v3 frontend build, linux/arm64, rust)`
 
 The checks appear after the first PR runs the Validate workflow. Validate runs on every PR (no path filtering) and always produces exactly these checks (one per workload kit × platform in `images.json`), so the fixed required set is safe. Two caveats keep it that way: don't add path filters to `validate.yml` (a filtered-out PR never reports the required checks and can never merge), and after adding or renaming an image in `images.json`, update this required list to match the new check names.
 

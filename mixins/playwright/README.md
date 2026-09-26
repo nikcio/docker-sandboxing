@@ -1,6 +1,6 @@
 # playwright
 
-Installs **Playwright** and the Chromium **headless shell** (the smallest browser download) for browser automation and end-to-end testing, plus Node via nvm when the template image lacks one.
+Installs **Playwright** and the Chromium **headless shell** (the smallest browser download) for browser automation and end-to-end testing, plus Node via nvm when the workload image lacks one.
 
 ## Usage
 

@@ -12,6 +12,7 @@ capabilities:
     config:
       runtime:
         allow:
-          # Google Container Registry
+          # Google Container Registry (+ the blob-redirect host)
           - gcr.io:443
           - "*.gcr.io:443"
+          - storage.googleapis.com:443

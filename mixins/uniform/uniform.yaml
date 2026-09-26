@@ -53,3 +53,4 @@ capabilities:
           - uniform.global:443
           - eu.uniform.global:443
           - "*.uniform.global:443"
+          - "*.eu.uniform.global:443"

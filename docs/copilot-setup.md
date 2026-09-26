@@ -21,7 +21,7 @@ sbx env run
 The opencode TUI starts with GitHub Copilot as the provider. If Copilot isn't signed in yet (fresh sandbox = fresh sign-in):
 
 1. Run `/connect` in the TUI and pick **GitHub Copilot**.
-2. 2. opencode shows a code — open [github.com/login/device](https://github.com/login/device) **in your host browser** and enter it.
+2. opencode shows a code — open [github.com/login/device](https://github.com/login/device) **in your host browser** and enter it.
 3. Run `/models` to pick a model.
 
 No default model is picked for you — set it in a project-level `opencode.jsonc` (see [project-kit.md](project-kit.md)) or pick per session with `/models`; some models (e.g. the flagship Claude/GPT ones) need a higher Copilot plan ([plans](https://github.com/features/copilot/plans)) — if a model errors, pick another with `/models`.

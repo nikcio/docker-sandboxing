@@ -6,7 +6,7 @@ Mixins here are v3 descriptors (`mixins/<area>/<area>.yaml` plus a `<area>.docke
 
     git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/<area>&ref=<tag>
 
-See [Version compatibility](https://docs.docker.com/ai/sandboxes/#version-compatibility): a v3 workload requires v3 mixins, and sbx v0.45+.
+See [Version compatibility](https://docs.docker.com/ai/sandboxes/customize/#version-compatibility): a v3 workload requires v3 mixins, and sbx v0.45+.
 
 ## Any mixin on any workload
 
@@ -53,22 +53,22 @@ Network hosts per mixin are listed in the mixin's descriptor (`mixins/<area>/<ar
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli` |
-| .NET only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `dotnet` |
+| Node only | `opencode`, `launch-opencode`, `env-guard`, `opencode-zeldoc`, `github-cli` |
+| .NET only | `opencode`, `launch-opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `dotnet` |
 | .NET + OpenAPI codegen (C# models) | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
-| Python only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `python` |
-| Go only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `go` |
-| Rust only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `rust` |
-| Node + typed API client (openapi-typescript) | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
-| Node frontend with Uniform | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
-| Browser automation | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
+| Python only | `opencode`, `launch-opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `python` |
+| Go only | `opencode`, `launch-opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `go` |
+| Rust only | `opencode`, `launch-opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `rust` |
+| Node + typed API client (openapi-typescript) | `opencode`, `launch-opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `opencode`, `launch-opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
+| Node frontend with Uniform | `opencode`, `launch-opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
+| Browser automation | `opencode`, `launch-opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
 
 Notes:
 
 - `opencode` installs the OpenCode agent; compose it together with `launch-opencode` to start OpenCode at sandbox startup. Any agent can be installed by a mixin instead. The model-provider mixins (`opencode-zeldoc`, `opencode-copilot`) merge their config fragments through `opencode` — compose them together. `env-guard` (the no-.env policy) is optional.
 - The `playwright` and `sbx` mixins run `apt` at creation — their install hooks declare the Ubuntu apt mirrors in their install-phase policy. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker engine pulls from.
-- - `opencode-zeldoc` and/or `opencode-copilot` give the agent a model provider. The `opencode` mixin installs the newest opencode at every creation by default (arg `version: latest`); pin it with a `version` value to freeze the agent release.
+- `opencode-zeldoc` and/or `opencode-copilot` give the agent a model provider. The `opencode` mixin installs the newest opencode at every creation by default (arg `version: latest`); pin it with a `version` value to freeze the agent release.
 
 ## Version overrides
 

@@ -3,9 +3,10 @@ schemaVersion: "3"
 kind: mixin
 displayName: Open egress (all domains)
 description: >
-  Adds an allow-all network policy, replacing the deny-by-default baseline.
-  Compose it when capability egress would otherwise block the work the
-  sandbox has to do.
+  Adds an allow-all network policy for the agent's runtime phase,
+  replacing the deny-by-default baseline (other kits' deny rules still
+  win). Compose it when capability egress would otherwise block the work
+  the sandbox has to do.
 version: "0.1.0"
 
 capabilities:

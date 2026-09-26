@@ -27,8 +27,12 @@ capabilities:
       install:
         allow:
           # nvm (the check-and-install step bootstraps node when missing)
+          # + the node dists nvm fetches (nodejs.org / iojs.org)
           - github.com:443
           - "*.github.com:443"
+          - nodejs.org:443
+          - "*.nodejs.org:443"
+          - iojs.org:443
 
           # npm (playwright package) + browser download CDNs — the
           # browsers are installed by the creation hook, not the agent
@@ -72,7 +76,7 @@ capabilities:
               { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
               apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
               export NVM_DIR=/home/agent/.nvm;
-              git clone -q --depth 1 --branch "${{ kit.args.nvm_version }}" https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+              [ -e "$NVM_DIR/nvm.sh" ] || git clone -q --depth 1 --branch "${{ kit.args.nvm_version }}" https://github.com/nvm-sh/nvm.git "$NVM_DIR";
               unset NPM_CONFIG_PREFIX;
               . "$NVM_DIR/nvm.sh";
               nvm install "${{ kit.args.node_version }}";
@@ -82,7 +86,10 @@ capabilities:
               for b in node npm npx corepack; do if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/usr/local/bin/$b"; fi; done;
               { echo 'export NVM_DIR=/home/agent/.nvm'; echo 'unset NPM_CONFIG_PREFIX'; echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'; } >> /etc/sandbox-persistent.sh;
             fi;
-            if command -v playwright >/dev/null 2>&1 && npx playwright install --dry-run chromium-headless-shell 2>/dev/null | grep -q "already installed"; then exit 0; fi;
+            if [ -d /home/agent/.cache/ms-playwright ] && ls /home/agent/.cache/ms-playwright/chromium_headless_shell-* >/dev/null 2>&1; then
+              echo "[playwright] chromium headless shell already installed — skipping";
+              exit 0;
+            fi;
             unset NPM_CONFIG_PREFIX;
             npm install -g "playwright@${{ kit.args.playwright_version }}";
             PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium-headless-shell;

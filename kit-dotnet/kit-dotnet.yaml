@@ -11,6 +11,33 @@ description: Shell workload with the .NET toolchain baked in (agent user,
 version: "2.2.0"
 # x-release-please-end-version
 
+args:
+  nvm_version:
+    default: "v0.40.7"
+    pattern: '^v[0-9]+\.[0-9]+\.[0-9]+$'
+    description: nvm release to install in the workload image
+    buildArg: NVM_VERSION
+  node_version:
+    default: "24"
+    pattern: '^[0-9]+$'
+    description: Node.js major version to install via nvm
+    buildArg: NODE_VERSION
+  pnpm_version:
+    default: "12"
+    pattern: '^[0-9]+$'
+    description: PNPM major version to install
+    buildArg: PNPM_VERSION
+  playwright_version:
+    default: "latest"
+    pattern: '^(latest|[0-9]+\.[0-9]+\.[0-9]+)$'
+    description: Playwright npm package version
+    buildArg: PLAYWRIGHT_VERSION
+  dotnet_channel:
+    default: "10.0"
+    pattern: '^[0-9]+\.[0-9]+$'
+    description: .NET release channel for the SDK install
+    buildArg: DOTNET_CHANNEL
+
 capabilities:
   - type: com.docker.sandbox/sbx@1
   - type: com.docker.sandbox/agent-context@1

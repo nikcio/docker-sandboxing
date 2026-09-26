@@ -32,7 +32,7 @@ capabilities:
             if command -v google-chrome >/dev/null 2>&1; then exit 0; fi
             && install -m 0755 -d /var/lib/apt/sbx-lists
             && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq || true
-            && curl -fsSL https://dl.google.com/linux/direct/google-chrome-${{ kit.args.channel }}_current_amd64.deb
+            && curl -fsSL https://dl.google.com/linux/direct/google-chrome-${{ kit.args.channel }}_current_$(dpkg --print-architecture).deb
             -o /tmp/google-chrome.deb
             && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y /tmp/google-chrome.deb
             && rm -f /tmp/google-chrome.deb

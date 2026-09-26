@@ -33,7 +33,7 @@ For environments created from a `sbxenv.yaml`, the example file already declares
 
 ## Rotate / remove
 
-- - Rotation is the same command as storing: `sbx secret set github --sandbox <name>`.
+- Rotation is the same command as storing: `sbx secret set github --sandbox <name>`.
 - `sbx env rm` removes the environment's scoped secret; for `--sandbox`-scoped secrets use `sbx secret rm github`.
 - Revoke the token from GitHub anytime.
 

@@ -25,13 +25,13 @@ feat(kit)!: change entrypoint contract
 
 ## Scopes
 
-Common scopes: `kit`, `template`, `mixins`, `scripts`, `release`, `docs`, `deps`. Omit the scope when the change doesn't fit one.
+Common scopes: `kit`, `mixins`, `release`, `docs`, `deps`, `ci`. Omit the scope when the change doesn't fit one.
 
 ## Examples
 
 ```
 feat(kit): auto-bump published image tag with the release
-fix(template): pin NVM install to a verified checksum
+fix(kit): pin NVM install to a verified checksum
 docs: update README consumption flow
 ci: verify kit references the pushed image tag
 ```

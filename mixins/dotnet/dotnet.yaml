@@ -32,6 +32,10 @@ capabilities:
           - "*.dot.net:443"
           - aka.ms:443
 
+          # dotnet-install fallback redirects (builds.dotnet.microsoft.com
+          # — the single-label rule above doesn't match the sub-subdomain)
+          - "*.dotnet.microsoft.com:443"
+
           # apt packages the installer needs
           - archive.ubuntu.com:80
           - security.ubuntu.com:80

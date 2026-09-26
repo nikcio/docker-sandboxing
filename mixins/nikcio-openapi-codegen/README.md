@@ -19,7 +19,7 @@ Needs the `dotnet` mixin — the install ensures the SDK first when it is missin
 
 - **SDK**: when `dotnet` is missing, installs it the same way the `dotnet` mixin does (apt feed, falling back to the dot.net install script).
 - **Tool**: `dotnet tool install --global Nikcio.OpenApiCodeGen` as the `agent` user; `~/.dotnet/tools` is added to `PATH` via `/etc/sandbox-persistent.sh`. Skipped when `openapi-codegen` is already on `PATH`.
-- The agent note (`~/.sbx-agents.d/nikcio-openapi-codegen.md`) documents the CLI for the agent.
+- The agent note (shipped via the mixin's `agent-context` capability) documents the CLI for the agent.
 
 ## Network domains
 

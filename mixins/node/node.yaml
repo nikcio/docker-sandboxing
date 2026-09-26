@@ -76,7 +76,7 @@ capabilities:
             { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
             apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
             export NVM_DIR=/home/agent/.nvm;
-            git clone -q --depth 1 --branch "${{ kit.args.nvm_version }}" https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+            [ -e "$NVM_DIR/nvm.sh" ] || git clone -q --depth 1 --branch "${{ kit.args.nvm_version }}" https://github.com/nvm-sh/nvm.git "$NVM_DIR";
             unset NPM_CONFIG_PREFIX;
             . "$NVM_DIR/nvm.sh";
             nvm install "${{ kit.args.node_version }}";

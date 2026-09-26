@@ -19,5 +19,5 @@ The sandbox network policy is deny-by-default, so `docker pull`/`build` fails un
 
 | Domain | Why |
 | ------ | --- |
-| `mcr.microsoft.com`, `*.mcr.microsoft.com` | Registry API, manifests, and blob/layer downloads |
+| `mcr.microsoft.com`, `*.mcr.microsoft.com` | Registry API + manifests (blobs come from `*.data.mcr.microsoft.com`) |
 | `*.data.mcr.microsoft.com` | Blob/layer download endpoints |
