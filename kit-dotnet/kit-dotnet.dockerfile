@@ -61,9 +61,16 @@ RUN NODE_BIN="$(ls -d "${NVM_DIR}"/versions/node/*/bin | sort -V | tail -n 1)" \
     done \
     && chown agent:agent /home/agent/.bashrc /home/agent/.profile
 
-USER agent
+USER root
+# Install the Playwright package first, then the browser OS deps as
+# root (npx playwright install-deps uses apt; doing it here keeps the
+# agent-side step sudo-free, which matters under QEMU arm64 builds
+# where setuid does not work).
 RUN npm install -g "playwright@${PLAYWRIGHT_VERSION}" \
-    && PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium-headless-shell
+    && npx playwright install-deps chromium-headless-shell
+
+USER agent
+RUN PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install chromium-headless-shell
 
 USER root
 RUN chown -R agent:agent /home/agent/.cache/ms-playwright
