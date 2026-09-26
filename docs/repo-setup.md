@@ -65,15 +65,20 @@ protection under Settings → Branches) for `main`:
   and lands via PRs (see
   [agent-guidance/worktrees.md](../agent-guidance/worktrees.md)).
 - **Require status checks to pass**, then select:
-  - `Workload kit (v3 frontend build) (kit-dotnet)`
-  - `Workload kit (v3 frontend build) (kit-go)`
-  - `Workload kit (v3 frontend build) (kit-node)`
-  - `Workload kit (v3 frontend build) (kit-python)`
-  - `Workload kit (v3 frontend build) (kit-rust)`
+  - `Workload kit (v3 frontend build, linux/amd64) (kit-dotnet)`
+  - `Workload kit (v3 frontend build, linux/amd64) (kit-go)`
+  - `Workload kit (v3 frontend build, linux/amd64) (kit-node)`
+  - `Workload kit (v3 frontend build, linux/amd64) (kit-python)`
+  - `Workload kit (v3 frontend build, linux/amd64) (kit-rust)`
+  - `Workload kit (v3 frontend build, linux/arm64) (kit-dotnet)`
+  - `Workload kit (v3 frontend build, linux/arm64) (kit-go)`
+  - `Workload kit (v3 frontend build, linux/arm64) (kit-node)`
+  - `Workload kit (v3 frontend build, linux/arm64) (kit-python)`
+  - `Workload kit (v3 frontend build, linux/arm64) (kit-rust)`
 
 The checks appear after the first PR runs the Validate workflow. Validate
 runs on every PR (no path filtering) and always produces exactly these
-checks (one per workload kit in `images.json`), so the fixed required set is
+checks (one per workload kit × platform in `images.json`), so the fixed required set is
 safe. Two caveats keep it that
 way: don't add path filters to `validate.yml` (a filtered-out PR never
 reports the required checks and can never merge), and after adding or
