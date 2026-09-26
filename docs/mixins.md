@@ -89,10 +89,11 @@ Network hosts per mixin are listed in the mixin's descriptor
 
 Notes:
 
-- `opencode` (the agent + config + provider merge) is required in every
-  OpenCode sandbox and with every model provider (`opencode-zeldoc`, `opencode-copilot`) —
-  their config fragments only merge through it. `env-guard` (the
-  no-.env policy) is optional.
+- `opencode` (the agent + config + provider merge) is what turns a
+  shell workload into an OpenCode sandbox; any agent can be installed
+  by a mixin instead. It is required with the model providers
+  (`opencode-zeldoc`, `opencode-copilot`) — their config fragments only
+  merge through it. `env-guard` (the no-.env policy) is optional.
 - The `playwright` and `sbx` mixins run `apt` at creation — their
   install hooks declare the Ubuntu apt mirrors in their install-phase
   policy. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`)
