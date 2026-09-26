@@ -27,9 +27,17 @@ capabilities:
       install:
         allow:
           # nvm itself (the check-and-install step clones the nvm repo from
-          # GitHub when the workload image lacks node)
+          # GitHub when the workload image lacks node) + the node dists it
+          # fetches (nodejs.org / iojs.org)
           - github.com:443
           - "*.github.com:443"
+          - nodejs.org:443
+          - "*.nodejs.org:443"
+          - iojs.org:443
+
+          # npm registry (the pnpm install in the check-and-install step)
+          - registry.npmjs.org:443
+          - "*.npmjs.org:443"
 
           # apt packages the installer needs
           - archive.ubuntu.com:80

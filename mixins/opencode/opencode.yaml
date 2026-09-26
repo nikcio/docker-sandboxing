@@ -32,6 +32,10 @@ capabilities:
           # are fetched from npm when OpenCode starts.
           - registry.npmjs.org:443
 
+          # OpenCode's own hosted-model / auth endpoints (used when the
+          # agent is configured with opencode's hosted models)
+          - models.opencode.ai:443
+
   - type: com.docker.sandbox/lifecycle@1
     config:
       install:
@@ -44,13 +48,13 @@ capabilities:
             set -e;
             if ! command -v npm >/dev/null 2>&1; then echo "[opencode] npm is not available — install node or compose the node mixin" >&2; exit 0; fi;
             OC_PREFIX=/usr/local/share/npm-global;
-            if [ "${{ kit.args.version }}" != "latest" ] && command -v opencode >/dev/null 2>&1 && opencode --version 2>/dev/null | grep -qF "${{ kit.args.version }}"; then
+            if [ "${{ kit.args.version }}" != "latest" ] && command -v opencode >/dev/null 2>&1 && opencode --version 2>/dev/null | grep -qxE "${{ kit.args.version }}"; then
               echo "[opencode] ${{ kit.args.version }} already installed — skipping";
               exit 0;
             fi;
-            npm install -g --prefix "$OC_PREFIX" "opencode-ai@${{ kit.args.version }}";
+            sudo -u agent env HOME=/home/agent npm install -g --prefix "$OC_PREFIX" "opencode-ai@${{ kit.args.version }}";
             opencode --version
-          description: Install opencode (version from the version kit arg; "latest" upgrades at every creation)
+          description: Install opencode (version from the version kit arg; "latest" upgrades at every creation; runs as the agent user)
 
         # Seed the permissive base config (ships in this image at
         # /usr/share/sandbox/opencode/opencode.jsonc — edit/bash/webfetch

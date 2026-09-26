@@ -30,6 +30,16 @@ capabilities:
           - github.com:443
           - "*.github.com:443"
 
+          # npm (playwright package) + browser download CDNs — the
+          # browsers are installed by the creation hook, not the agent
+          - registry.npmjs.org:443
+          - "*.npmjs.org:443"
+          - cdn.playwright.dev:443
+          - "*.cdn.playwright.dev:443"
+          - playwright.azureedge.net:443
+          - playwright.download.prss.microsoft.com:443
+          - storage.googleapis.com:443
+
           # apt packages the installer + browser deps need
           - archive.ubuntu.com:80
           - security.ubuntu.com:80

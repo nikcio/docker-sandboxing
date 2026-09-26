@@ -12,8 +12,7 @@ Use based on your task:
 
 ## Artifacts
 
-- template-*/Dockerfile - sandbox template images.
-- kit-* - Workload kits (kind: workload, v3 descriptor + Dockerfile) pinning the template images
+- kit-* - Workload kits (kind: workload, v3 descriptor + Dockerfile) building the stack toolchain on the shell base image
 - mixins/* - Reusable config fragments for sandboxes (kind: mixin). Must work in isolation and composition. List all required domains and software for usage on a base kit.
   - Each mixin is a v3 descriptor (`mixins/<area>/<area>.yaml`, optional `<area>.dockerfile`) with a `README.md` describing its purpose, usage, and any special instructions. Keep it simple.
 

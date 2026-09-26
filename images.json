@@ -1,5 +1,5 @@
 {
-  "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each entry and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). Workload images build the template-*/Dockerfile context; kit and mixin images build the v3 descriptor named by `descriptor` (docker buildx build -f <dir>/<descriptor> <dir>) and carry their validated descriptor in a manifest annotation. The release-please extra-files blocks keep every versioned reference (workload FROM tag, example refs) at the release version.",
+  "note": "One entry per publishable image. .github/workflows/publish-image.yml builds each entry from its v3 descriptor (docker buildx build -f <dir>/<descriptor> <dir>) and pushes docker.io/nikcio/<name>:v<release> (plus :latest) when a release is published (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repo secrets). The kit-*/ workloads build their stack toolchain directly on the unversioned shell base image; mixin images carry their own files. The release-please extra-files blocks keep every versioned reference (kit version fields, example refs) at the release version.",
   "images": [
     {
       "name": "sbx-kit-opencode",
@@ -9,32 +9,27 @@
     {
       "name": "sbx-kit-opencode-dotnet",
       "context": "kit-dotnet",
-      "descriptor": "kit-dotnet.yaml",
-      "verify": "kit-dotnet/kit-dotnet.dockerfile"
+      "descriptor": "kit-dotnet.yaml"
     },
     {
       "name": "sbx-kit-opencode-go",
       "context": "kit-go",
-      "descriptor": "kit-go.yaml",
-      "verify": "kit-go/kit-go.dockerfile"
+      "descriptor": "kit-go.yaml"
     },
     {
       "name": "sbx-kit-opencode-node",
       "context": "kit-node",
-      "descriptor": "kit-node.yaml",
-      "verify": "kit-node/kit-node.dockerfile"
+      "descriptor": "kit-node.yaml"
     },
     {
       "name": "sbx-kit-opencode-python",
       "context": "kit-python",
-      "descriptor": "kit-python.yaml",
-      "verify": "kit-python/kit-python.dockerfile"
+      "descriptor": "kit-python.yaml"
     },
     {
       "name": "sbx-kit-opencode-rust",
       "context": "kit-rust",
-      "descriptor": "kit-rust.yaml",
-      "verify": "kit-rust/kit-rust.dockerfile"
+      "descriptor": "kit-rust.yaml"
     },
     {
       "name": "sbx-mixin-browser",

@@ -111,8 +111,8 @@ on PRs and would deadlock every merge.
 ## How a release flows
 
 1. Conventional Commits (`feat`/`fix`/`deps`) land on `main`.
-2. Release Please opens or updates a release PR (version bump, published
-   kit tags, `&ref=` pins).
+2. Release Please opens or updates a release PR (version bump, example
+   image-reference pins).
 3. You merge the release PR → tag `vX.Y.Z` + GitHub release.
 4. Publish images builds `images.json` and pushes to Docker Hub.
 

@@ -42,7 +42,7 @@ Rules of thumb:
 | Mixin | Adds |
 | ----- | ---- |
 | `opencode` | The OpenCode agent (newest npm release by default; pin it with the mixin's `version` arg), permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), and the combined provider config (`OPENCODE_CONFIG` merge). Required in every OpenCode sandbox, and required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
-| `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or fails sandbox creation (direct mode). Self-contained — the script ships in the mixin's own image and runs as a lifecycle install hook. Optional — the examples compose it |
+| `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or fails sandbox creation (direct mode). Declaration-only — the guard is one lifecycle install command in the descriptor. Optional — the examples compose it |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `github-cli` | GitHub CLI (`gh`) install + proxy-managed GitHub auth (see [github-pat.md](github-pat.md)) |
@@ -74,15 +74,15 @@ Network hosts per mixin are listed in the mixin's descriptor
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
 | Node only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli` |
-| .NET only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `dotnet` |
-| .NET + OpenAPI codegen (C# models) | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
-| Python only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `python` |
-| Go only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `go` |
-| Rust only | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `rust` |
-| Node + typed API client (openapi-typescript) | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `node`, `docker-hub` |
-| Node frontend with Uniform | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `node`, `uniform` |
-| Browser automation | `opencode`, `env-guard`, `zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
+| .NET only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `dotnet` |
+| .NET + OpenAPI codegen (C# models) | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
+| Python only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `python` |
+| Go only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `go` |
+| Rust only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `rust` |
+| Node + typed API client (openapi-typescript) | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
+| Node frontend with Uniform | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
+| Browser automation | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
 
 Notes:
 
@@ -122,7 +122,7 @@ kits:
       version: "1.18.32"
 ```
 
-Each arg carries a `default` (the documented behavior) and a `pattern`
+Each arg carries a `default` (the documented behavior) and a `pattern` or `enum`
 validating overrides; a failing value is rejected at sandbox creation.
 
 ## Model providers (opencode-zeldoc / opencode-copilot)

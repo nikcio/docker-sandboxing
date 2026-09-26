@@ -69,7 +69,7 @@ Full walkthrough (prerequisites, first run, daily use):
 | Mixin | Adds | Required |
 | ----- | ---- | -------- |
 | `opencode` | the OpenCode agent (newest npm release at creation), permissive OpenCode config, and the provider-config merge (`OPENCODE_CONFIG`) | every OpenCode sandbox |
-| `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or fails creation (direct mode) | optional |
+| `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or fails creation (direct mode), via one install-hook command in its descriptor | optional |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
 | `opencode-copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
 | `github-cli` | GitHub CLI (`gh`) + proxy-managed GitHub auth | — |

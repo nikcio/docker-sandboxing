@@ -5,9 +5,6 @@
 # environment the base wires up). Kit authoring and debugging happen
 # here; compose the mixins your task needs.
 #
-# x-release-please-start-version
-# (the shell base is unversioned; the block anchors the release bump)
-# x-release-please-end-version
 FROM docker/sandbox-templates:shell
 
 USER root

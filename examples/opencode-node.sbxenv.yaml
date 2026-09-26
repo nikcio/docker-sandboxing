@@ -2,7 +2,7 @@
 #
 # 1. Copy this file into your project's root and rename it sbxenv.yaml
 #    (commit it so teammates get the same sandbox).
-# 2. Adjust `name:` below and drop the kit lines your project doesn't need
+# 2. Adjust `name:` below and drop the mixin lines your project doesn't need
 #    (see ../docs/mixins.md).
 # 3. Run from your project root:  sbx env run
 #

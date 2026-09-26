@@ -43,6 +43,6 @@ A single SemVer version for the whole repo, managed by
 
 1. A workload kit directory (e.g. `kit-python/`): descriptor + Dockerfile
    building on `docker/sandbox-templates:shell` (copy an existing kit).
-3. An entry in `images.json`, the kit files in
+2. An entry in `images.json`, the kit files in
    `.release-please-config.json` → `extra-files`, and the check names in
    `docs/repo-setup.md` → required status checks.

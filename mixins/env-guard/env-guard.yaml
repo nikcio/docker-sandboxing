@@ -34,7 +34,7 @@ capabilities:
               __envs="$(find "$WORKSPACE_DIR" \( -type f -o -type l \) \
                 \( -name .env -o -name '.env.*' \) \
                 ! -name '.env.example' ! -name '.env.sample' ! -name '.env.template' \
-                -not -path '*/.git/*' 2>/dev/null)"
+                -not -path '*/.git/*' 2>/dev/null || true)"
             else
               __clean="workspace not checked (WORKSPACE_DIR is not set)"
             fi

@@ -9,9 +9,8 @@
 # (opencode-ai@latest) — compose it, or bake a pinned agent by replacing
 # the hook's npm install with a RUN here.
 #
-# x-release-please-start-version
-# (the shell base is unversioned; the block anchors the release bump)
-# x-release-please-end-version
+# (The shell base is unversioned — nothing here is release-bumped; the
+# kit's version lives in kit-node.yaml.)
 FROM docker/sandbox-templates:shell
 
 ARG NVM_VERSION=v0.40.7

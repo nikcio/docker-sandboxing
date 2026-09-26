@@ -11,9 +11,8 @@
 # (opencode-ai@latest) — compose it, or bake a pinned agent by replacing
 # the hook's npm install with a RUN here.
 #
-# x-release-please-start-version
-# (the shell base is unversioned; the block anchors the release bump)
-# x-release-please-end-version
+# (The shell base is unversioned — nothing here is release-bumped; the
+# kit's version lives in kit-go.yaml.)
 FROM docker/sandbox-templates:shell
 
 ARG GO_VERSION=1.27.1

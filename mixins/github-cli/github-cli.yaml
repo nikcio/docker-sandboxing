@@ -37,9 +37,17 @@ capabilities:
 
   - type: com.docker.sandbox/network-policy@1
     config:
+      install:
+        allow:
+          # gh CLI apt repo (package + keyring) + apt mirrors
+          - cli.github.com:443
+          - archive.ubuntu.com:80
+          - security.ubuntu.com:80
+          - ports.ubuntu.com:80
+
       runtime:
         allow:
-          # gh CLI apt repo (package + keyring; kept for upgrades)
+          # gh CLI apt repo (kept for agent-run upgrades)
           - cli.github.com:443
 
           # The credential inject hosts (api/github/uploads/raw) are named

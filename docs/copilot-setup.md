@@ -9,7 +9,7 @@ GitHub's OAuth device flow, and the token stays inside the sandbox VM
 ## 1. Add the mixin
 
 Add the `opencode-copilot` mixin to the `kits:` list in your `sbxenv.yaml` (pin
-the same `&ref=` as the other mixin lines). The default examples use
+the same version as the other mixin lines). The default examples use
 Zeldoc — swap the `opencode-zeldoc` line for `opencode-copilot`, or keep both:
 
 ```yaml

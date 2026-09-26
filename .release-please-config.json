@@ -26,26 +26,6 @@
         },
         {
           "type": "generic",
-          "path": "kit-dotnet/kit-dotnet.dockerfile"
-        },
-        {
-          "type": "generic",
-          "path": "kit-node/kit-node.dockerfile"
-        },
-        {
-          "type": "generic",
-          "path": "kit-python/kit-python.dockerfile"
-        },
-        {
-          "type": "generic",
-          "path": "kit-go/kit-go.dockerfile"
-        },
-        {
-          "type": "generic",
-          "path": "kit-rust/kit-rust.dockerfile"
-        },
-        {
-          "type": "generic",
           "path": "examples/opencode-dotnet.sbxenv.yaml"
         },
         {

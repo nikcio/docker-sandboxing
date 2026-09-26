@@ -102,7 +102,7 @@ One one-time `sbx` setting on your host:
   `sbx settings get kit.allowedSources`:
 
   ```bash
-  sbx settings set kit.allowedSources '["docker.io/","github.com/nikcio/"]'
+  sbx settings set kit.allowedSources '["docker.io/"]'
   ```
 
 - **Optional:** let the sandboxed agent read images you paste:

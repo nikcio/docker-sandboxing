@@ -17,7 +17,13 @@ capabilities:
     config:
       install:
         allow:
+          # Chrome .deb download
           - dl.google.com:443
+
+          # apt (fonts-noto-color-emoji install; the .deb install itself)
+          - archive.ubuntu.com:80
+          - security.ubuntu.com:80
+          - ports.ubuntu.com:80
 
   - type: com.docker.sandbox/lifecycle@1
     config:

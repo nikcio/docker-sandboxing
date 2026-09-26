@@ -9,7 +9,7 @@ version: "0.5.0"
 
 args:
   python_version:
-    default: "3.12"
+    default: "3.14"
     pattern: '^[0-9]+\.[0-9]+$'
     description: CPython version for uv to install (skipped when python3 + pip are already present)
 
@@ -21,11 +21,17 @@ capabilities:
           # uv installer (`curl -LsSf https://astral.sh/uv/install.sh | sh`) —
           # astral.sh 301-redirects the installer script to releases.astral.sh,
           # which is also the installer's primary artifact host (binaries fall
-          # back to GitHub releases, covered by the github hosts below). Also
-          # used by the check-and-install step on workloads without python.
+          # back to GitHub releases). Also used by the check-and-install step
+          # on workloads without python.
           - astral.sh:443
           - releases.astral.sh:443
           - raw.githubusercontent.com:443
+
+          # uv python install fetches CPython builds from astral-sh's
+          # GitHub release assets (objects.githubusercontent.com serves
+          # the actual download after the github.com redirect)
+          - github.com:443
+          - objects.githubusercontent.com:443
 
           # apt packages the installer needs
           - archive.ubuntu.com:80

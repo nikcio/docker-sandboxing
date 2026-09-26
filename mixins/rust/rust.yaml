@@ -20,10 +20,11 @@ capabilities:
         allow:
           # rustup installer (`curl -fsSL https://sh.rustup.rs | sh`) — the
           # short link redirects the installer script to
-          # raw.githubusercontent.com; rustup-init binaries come from
-          # static.rust-lang.org below
+          # raw.githubusercontent.com, and rustup-init binaries come from
+          # static.rust-lang.org
           - sh.rustup.rs:443
           - raw.githubusercontent.com:443
+          - static.rust-lang.org:443
 
           # apt packages the installer needs
           - archive.ubuntu.com:80
