@@ -1,0 +1,66 @@
+schemaVersion: "2"
+kind: mixin
+name: kit-builder
+displayName: Kit builder (Docker + buildx)
+description: >
+  Turns the sandbox into a Docker build sandbox: guarantees the Docker CLI,
+  buildx, and a running engine so the agent can build, run, and push
+  container images (including sandbox template images) from inside the
+  sandbox. Registry egress is included for Docker Hub; compose the other
+  registry mixins (ghcr, gcr, mcr) for more.
+version: 0.1.0
+
+setup:
+  install:
+    - command: >
+        set -e;
+        if command -v docker >/dev/null 2>&1 && docker buildx version >/dev/null 2>&1; then exit 0; fi;
+        install -m 0755 -d /etc/apt/keyrings;
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc;
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list;
+        install -m 0755 -d /var/lib/apt/sbx-lists;
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq;
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends docker-ce-cli docker-buildx-plugin;
+        rm -rf /var/lib/apt/sbx-lists;
+        docker --version;
+        docker buildx version
+      description: Ensure the Docker CLI + buildx plugin are available (skipped when the template image already has them)
+
+  startup:
+    # The runtime starts dockerd for images labeled start-docker=true (the
+    # opencode-* template images carry it); this guard makes the mixin
+    # self-sufficient on any base. `docker info` succeeding means something
+    # already started the engine. Backgrounded so startup is not blocked
+    # while dockerd comes up; dockerd logs to /var/log/dockerd.log.
+    - command:
+        - sh
+        - -c
+        - |
+          set -eu
+          command -v dockerd >/dev/null 2>&1 || exit 0
+          if docker info >/dev/null 2>&1; then exit 0; fi
+          if ! pgrep -x dockerd >/dev/null 2>&1; then
+            nohup dockerd >> /var/log/dockerd.log 2>&1 &
+          fi
+      user: "0"
+      background: true
+      description: Start dockerd unless the runtime already did
+
+permissions:
+  network:
+    allow:
+      # Docker apt repo (docker-ce-cli/docker-buildx-plugin for the
+      # check-and-install step; kept for upgrades)
+      - download.docker.com:443
+
+      # Docker Hub registry egress (docker pull/build/push)
+      - docker.io
+      - "*.docker.io"
+      - "*.docker.com"
+      - production.cloudflare.docker.com
+      - production.cloudfront.docker.com
+
+      # Buildx frontend + BuildKit image pulls (used by `docker buildx
+      # build` with the docker driver and by BuildKit's frontend fetches)
+      - registry-1.docker.io:443
+      - auth.docker.io:443

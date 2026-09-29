@@ -59,6 +59,7 @@ Rules of thumb:
 | `browser` | Google Chrome install (dl.google.com egress for the .deb; sites stay gated by the other mixins); skipped when the template has it |
 | `playwright` | Playwright + Chromium headless shell (smallest download); installs node via nvm when the template lacks one |
 | `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the template has it |
+| `kit-builder` | Docker build sandbox: guarantees the Docker CLI + buildx + a running engine (engine guard for bases without the start-docker label) with Docker Hub egress included; lets the agent build/run/push images (incl. template images). Registry auth is not injected |
 | `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the stock kits and examples do not compose it |
 
 Network hosts per mixin are listed at the top of each
@@ -78,6 +79,7 @@ Network hosts per mixin are listed at the top of each
 | Rust only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `rust` |
 | Node + typed API client (openapi-typescript) | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `openapi-ts` |
 | Node + in-sandbox Docker | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `docker-hub` |
+| Kit authoring + image builds | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `kit-builder`, `sbx` (plus a registry mixin per push target, e.g. `ghcr`) |
 | Node frontend with Uniform | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `uniform` |
 | Browser automation | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
 
@@ -87,10 +89,10 @@ Notes:
   `global-opencode-config` is required when composing a model provider
   (`zeldoc`, `copilot`) — their config fragments only merge through it.
   `env-guard` (the no-.env policy) is optional.
-- The `playwright` mixin and `sbx` run `apt` at creation — their install
-  steps need the Ubuntu apt mirrors. Compose a registry mixin
+- The `playwright` mixin, `sbx`, and `kit-builder` run `apt` at creation —
+  their install steps need the Ubuntu apt mirrors. Compose a registry mixin
   (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker
-  engine pulls from.
+  engine pulls from; `kit-builder` already includes Docker Hub.
 - Every set should include at least one model provider (`zeldoc` and/or
   `copilot`). Add `opencode-update` to keep opencode current: the
   template images bake a fixed opencode version, and this mixin rolls it

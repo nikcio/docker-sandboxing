@@ -84,6 +84,7 @@ Full walkthrough (prerequisites, first run, daily use):
 | `go` | Go module proxy + checksum DB egress (`go get`/`go install`, GOTOOLCHAIN downloads) | — |
 | `rust` | crates.io + rustup egress for cargo | — |
 | `docker-hub` / `gcr` / `ghcr` / `mcr` | registry egress for the in-sandbox Docker engine, per registry | — |
+| `kit-builder` | Docker build sandbox: Docker CLI + buildx + running engine (Docker Hub egress included) so the agent can build/run/push images | — |
 | `browser` | Google Chrome install (software only) | — |
 | `playwright` | Playwright + the Chromium headless shell | — |
 | `sbx` | the `sbx` CLI inside the sandbox (kit authoring) | — |
@@ -122,6 +123,8 @@ Everything below is for developing the template, kit, and mixins.
 │   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
 │   │                                 #   merge fed by provider mixins' mixins.d/ fragments
 │   ├── env-guard/                    # the workspace .env guard (startup command)
+│   ├── kit-builder/                  # Docker build sandbox: CLI + buildx + engine guard,
+│   │                                 #   Docker Hub egress included (agent builds images)
 │   └── <area>/                       # one single-purpose mixin per area (kind: mixin): network
 │                                     #   rules, env vars, credentials, install steps, agent
 │   │                                 #   memory note (.sbx-agents.d/<area>.md) — composed
