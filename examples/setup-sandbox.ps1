@@ -169,8 +169,16 @@ Info "Allowing the kit sources for this repo's kits..."
 $existing = sbx settings get kit.allowedSources 2>$null
 if (-not $existing) { $existing = "[]" }
 Info "Current kit.allowedSources: $existing"
-sbx settings set kit.allowedSources '["docker.io/","github.com/nikcio/"]'
-Info "Done. If you had other entries in the list, re-add them (rerun this step after checking the output above)."
+# Escape the embedded quotes on Windows PowerShell 5.1 / PowerShell < 7.3:
+# those versions strip double quotes when passing arguments to native
+# executables, which corrupts JSON (`[\"..\"..]` keeps them intact).
+# PowerShell 7.3+ passes arguments correctly and must NOT get the escapes.
+if ($PSVersionTable.PSVersion -ge [version]"7.3") {
+    $allowedSources = '["docker.io/","github.com/nikcio/"]'
+} else {
+    $allowedSources = '[\"docker.io/\",\"github.com/nikcio/\"]'
+}
+sbx settings set kit.allowedSources $allowedSourcesInfo "Done. If you had other entries in the list, re-add them (rerun this step after checking the output above)."
 
 # Optional: let the sandboxed agent read images you paste
 # sbx settings set clipboard.imagePaste true
