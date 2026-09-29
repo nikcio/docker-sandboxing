@@ -101,6 +101,13 @@ Two one-time `sbx` settings on your host:
   sbx settings set kit.allowedSources '["docker.io/","github.com/nikcio/"]'
   ```
 
+  On Windows PowerShell, the shell eats the inner quotes — use the
+  stop-parsing token so the JSON reaches `sbx` intact:
+
+  ```powershell
+  sbx --% settings set kit.allowedSources "[\"docker.io/\",\"github.com/nikcio/\"]"
+  ```
+
 - **Optional:** let the sandboxed agent read images you paste:
 
   ```bash
