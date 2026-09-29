@@ -4,7 +4,7 @@ name: go
 displayName: Go / Go modules
 description: >
   Add Go toolchain support.
-version: 0.3.0
+version: 0.4.0
 
 setup:
   install:
@@ -15,7 +15,9 @@ setup:
         export DEBIAN_FRONTEND=noninteractive;
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
-        curl -fsSL "https://go.dev/dl/go1.25.5.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
+        GO_VERSION="$(curl -fsSL 'https://go.dev/dl/?mode=json' | sed -n 's/.*"version": *"go\([^"]*\)".*/\1/p' | head -n 1)";
+        [ -n "$GO_VERSION" ] || { echo "could not resolve latest Go version from go.dev feed" >&2; exit 1; };
+        curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
         rm -rf /usr/local/go;
         tar -C /usr/local -xzf /tmp/sbx-go.tgz;
         rm -f /tmp/sbx-go.tgz;
@@ -23,7 +25,7 @@ setup:
         ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt;
         echo 'export PATH=$PATH:/home/agent/go/bin' >> /etc/sandbox-persistent.sh;
         go version
-      description: Ensure the Go toolchain is available (install when the template image lacks it)
+      description: Ensure the latest Go toolchain is available (resolves the newest release from the go.dev feed when the sandbox lacks it)
 
 permissions:
   network:

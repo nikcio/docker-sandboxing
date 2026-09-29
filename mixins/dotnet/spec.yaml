@@ -4,20 +4,21 @@ name: dotnet
 displayName: .NET / NuGet
 description: >
   Install .NET and allow network access to needed domains.
-version: 0.4.0
+version: 0.5.0
 
 setup:
   install:
     - command: >
         set -e;
-        if command -v dotnet >/dev/null 2>&1; then exit 0; fi;
+        if command -v dotnet >/dev/null 2>&1 && [ "$(dotnet --version 2>/dev/null | cut -d. -f1,2)" = "10.0" ] && [ "$(dotnet --version 2>/dev/null | cut -d. -f3 | cut -d- -f1 | cut -dx -f1)" -ge 400 ]; then exit 0; fi;
         install -m 0755 -d /var/lib/apt/sbx-install-lists;
         export DEBIAN_FRONTEND=noninteractive;
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
-        if apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends dotnet-sdk-10.0 2>/dev/null; then
+        if apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends dotnet-sdk-10.0 2>/dev/null && [ "$(dotnet --version 2>/dev/null | cut -d. -f3 | cut -d- -f1 | cut -dx -f1)" -ge 400 ]; then
           { echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export DOTNET_GENERATE_ASPNET_CERTIFICATE=false'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
         else
+          rm -rf /usr/share/dotnet;
           DOTNET_ROOT=/usr/share/dotnet sh -c '
             set -e
             curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/sbx-dotnet-install.sh
@@ -29,7 +30,7 @@ setup:
           { echo 'export DOTNET_ROOT=/usr/share/dotnet'; echo 'export PATH=$PATH:/usr/share/dotnet/tools'; echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
         fi;
         dotnet --version
-      description: Ensure the .NET SDK is available (install when the template image lacks it)
+      description: Ensure the .NET SDK is available at the latest patch level (refreshes the apt feed, installs or upgrades when the sandbox lacks it)
 
 environment:
   variables:

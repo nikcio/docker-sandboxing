@@ -4,7 +4,7 @@ name: playwright
 displayName: Playwright
 description: >
   Installs Playwright and the Chromium headless shell for browser automation and testing.
-version: 0.1.1
+version: 0.2.0
 
 setup:
   install:
@@ -27,11 +27,13 @@ setup:
           { echo 'export NVM_DIR=/home/agent/.nvm'; echo 'unset NPM_CONFIG_PREFIX'; echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'; } >> /etc/sandbox-persistent.sh;
         fi;
         if command -v playwright >/dev/null 2>&1 && npx playwright install --dry-run chromium-headless-shell 2>/dev/null | grep -q "already installed"; then exit 0; fi;
+        export DEBIAN_FRONTEND=noninteractive;
+        { apt-get update -qq || true; };
         unset NPM_CONFIG_PREFIX;
         npm install -g playwright;
         PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium-headless-shell;
         chown -R agent:agent /home/agent/.cache/ms-playwright
-      description: Ensure Playwright + Chromium headless shell (skipped when already present)
+      description: Ensure Playwright + Chromium headless shell (refreshes the apt feed before the system-library install)
 
 permissions:
   network:
