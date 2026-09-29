@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/nikcio/docker-sandboxing/compare/v2.2.1...v2.3.0) (2026-09-29)
+
+
+### Features
+
+* **scripts:** add guided sbx setup example scripts (bash + PowerShell) ([#89](https://github.com/nikcio/docker-sandboxing/issues/89)) ([c7fcd36](https://github.com/nikcio/docker-sandboxing/commit/c7fcd368313930edec1c77234923aa0101fd2b06))
+
 ## [2.2.1](https://github.com/nikcio/docker-sandboxing/compare/v2.2.0...v2.2.1) (2026-09-29)
 
 
