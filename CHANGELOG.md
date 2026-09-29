@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/nikcio/docker-sandboxing/compare/v2.2.0...v2.2.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* **mixins:** upgrade stale distro go/dotnet to latest upstream release ([#87](https://github.com/nikcio/docker-sandboxing/issues/87)) ([ac19ccf](https://github.com/nikcio/docker-sandboxing/commit/ac19ccfec06cb64a66ac6d9aa3f9ba6ccce474a4))
+
 ## [2.2.0](https://github.com/nikcio/docker-sandboxing/compare/v2.1.0...v2.2.0) (2026-09-25)
 
 
