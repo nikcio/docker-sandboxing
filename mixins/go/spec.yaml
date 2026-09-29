@@ -4,27 +4,29 @@ name: go
 displayName: Go / Go modules
 description: >
   Add Go toolchain support.
-version: 0.3.1
+version: 0.4.0
 
 setup:
   install:
     - command: >
         set -e;
-        if command -v go >/dev/null 2>&1; then exit 0; fi;
         install -m 0755 -d /var/lib/apt/sbx-install-lists;
         export DEBIAN_FRONTEND=noninteractive;
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
-        GO_VERSION="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n 1)";
-        curl -fsSL "https://go.dev/dl/${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
+        GO_LATEST="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n 1)";
+        GO_CURRENT="$(go version 2>/dev/null | awk '{print $3}' || true)";
+        if [ "${GO_CURRENT}" = "${GO_LATEST}" ]; then exit 0; fi;
+        curl -fsSL "https://go.dev/dl/${GO_LATEST}.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
         rm -rf /usr/local/go;
         tar -C /usr/local -xzf /tmp/sbx-go.tgz;
         rm -f /tmp/sbx-go.tgz;
         ln -sf /usr/local/go/bin/go /usr/local/bin/go;
         ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt;
+        hash -r;
         echo 'export PATH=$PATH:/home/agent/go/bin' >> /etc/sandbox-persistent.sh;
         go version
-      description: Ensure the Go toolchain is available (install when the template image lacks it)
+      description: Ensure the latest Go toolchain is available (upgrades distro Go to the latest upstream release)
 
 permissions:
   network:

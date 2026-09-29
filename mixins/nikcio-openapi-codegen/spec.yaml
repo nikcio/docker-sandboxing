@@ -4,36 +4,39 @@ name: nikcio-openapi-codegen
 displayName: OpenAPI Code Generator (C#)
 description: >
   Installs the openapi-code-generator .NET global tool Nikcio.OpenApiCodeGen.
-version: 0.3.1
+version: 0.4.0
 
 setup:
   install:
     - command: >
         set -e;
-        if command -v dotnet >/dev/null 2>&1; then :; else
-          install -m 0755 -d /var/lib/apt/sbx-install-lists;
-          export DEBIAN_FRONTEND=noninteractive;
-          { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
-          apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
-          if apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends dotnet-sdk-10.0 2>/dev/null; then
+        install -m 0755 -d /var/lib/apt/sbx-install-lists;
+        export DEBIAN_FRONTEND=noninteractive;
+        { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+        export DOTNET_LATEST="$(curl -fsSL 'https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json' | grep -o '"latest-sdk": *"[^"]*"' | head -n 1 | grep -o '[0-9][0-9.]*')";
+        DOTNET_CURRENT="$(dotnet --version 2>/dev/null || true)";
+        if [ -z "${DOTNET_CURRENT}" ] || [ "${DOTNET_CURRENT}" != "${DOTNET_LATEST}" ]; then
+          if [ -z "${DOTNET_CURRENT}" ] && apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends "dotnet-sdk-10.0=${DOTNET_LATEST}-*" 2>/dev/null; then
             { echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export DOTNET_GENERATE_ASPNET_CERTIFICATE=false'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
           else
             DOTNET_ROOT=/usr/share/dotnet sh -c '
               set -e
               curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/sbx-dotnet-install.sh
               chmod +x /tmp/sbx-dotnet-install.sh
-              /tmp/sbx-dotnet-install.sh --channel 10.0 --quality ga --install-dir "$DOTNET_ROOT"
+              /tmp/sbx-dotnet-install.sh --version "${DOTNET_LATEST}" --install-dir "$DOTNET_ROOT"
               rm -f /tmp/sbx-dotnet-install.sh
               ln -sf "$DOTNET_ROOT/dotnet" /usr/local/bin/dotnet
               mkdir -p "$DOTNET_ROOT/tools"';
             { echo 'export DOTNET_ROOT=/usr/share/dotnet'; echo 'export PATH=$PATH:/usr/share/dotnet/tools'; echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
           fi;
+          hash -r;
           dotnet --version;
         fi;
         if sudo -u agent bash -lc 'command -v openapi-codegen >/dev/null 2>&1'; then exit 0; fi;
         echo 'export PATH=$PATH:/home/agent/.dotnet/tools' >> /etc/sandbox-persistent.sh;
         sudo -u agent dotnet tool install --global Nikcio.OpenApiCodeGen
-      description: Install the openapi-codegen .NET global tool (skipped when already present)
+      description: Install the openapi-codegen .NET global tool on top of the latest .NET SDK
 
 permissions:
   network:
