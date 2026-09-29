@@ -178,7 +178,8 @@ if ($PSVersionTable.PSVersion -ge [version]"7.3") {
 } else {
     $allowedSources = '[\"docker.io/\",\"github.com/nikcio/\"]'
 }
-sbx settings set kit.allowedSources $allowedSourcesInfo "Done. If you had other entries in the list, re-add them (rerun this step after checking the output above)."
+sbx settings set kit.allowedSources $allowedSources
+Info "Done. If you had other entries in the list, re-add them (rerun this step after checking the output above)."
 
 # Optional: let the sandboxed agent read images you paste
 # sbx settings set clipboard.imagePaste true
