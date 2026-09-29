@@ -4,7 +4,7 @@ name: nikcio-openapi-codegen
 displayName: OpenAPI Code Generator (C#)
 description: >
   Installs the openapi-code-generator .NET global tool Nikcio.OpenApiCodeGen.
-version: 0.3.0
+version: 0.3.1
 
 setup:
   install:
@@ -22,7 +22,7 @@ setup:
               set -e
               curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/sbx-dotnet-install.sh
               chmod +x /tmp/sbx-dotnet-install.sh
-              /tmp/sbx-dotnet-install.sh --channel 10.0 --install-dir "$DOTNET_ROOT"
+              /tmp/sbx-dotnet-install.sh --channel 10.0 --quality ga --install-dir "$DOTNET_ROOT"
               rm -f /tmp/sbx-dotnet-install.sh
               ln -sf "$DOTNET_ROOT/dotnet" /usr/local/bin/dotnet
               mkdir -p "$DOTNET_ROOT/tools"';

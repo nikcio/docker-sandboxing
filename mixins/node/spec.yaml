@@ -4,7 +4,7 @@ name: node
 displayName: Node.js / NVM / PNPM
 description: >
   Adds Node.js with nvm and PNPM.
-version: 0.3.1
+version: 0.3.2
 
 setup:
   install:
@@ -16,7 +16,7 @@ setup:
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
         export NVM_DIR=/home/agent/.nvm;
-        git clone -q --depth 1 --branch v0.40.7 https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+        git clone -q --depth 1 --branch v0.40.8 https://github.com/nvm-sh/nvm.git "$NVM_DIR";
         unset NPM_CONFIG_PREFIX;
         . "$NVM_DIR/nvm.sh";
         nvm install 24;

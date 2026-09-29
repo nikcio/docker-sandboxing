@@ -4,7 +4,7 @@ name: go
 displayName: Go / Go modules
 description: >
   Add Go toolchain support.
-version: 0.3.0
+version: 0.3.1
 
 setup:
   install:
@@ -15,7 +15,8 @@ setup:
         export DEBIAN_FRONTEND=noninteractive;
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
-        curl -fsSL "https://go.dev/dl/go1.25.5.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
+        GO_VERSION="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n 1)";
+        curl -fsSL "https://go.dev/dl/${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
         rm -rf /usr/local/go;
         tar -C /usr/local -xzf /tmp/sbx-go.tgz;
         rm -f /tmp/sbx-go.tgz;

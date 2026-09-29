@@ -4,7 +4,7 @@ ARG BASE_IMAGE=docker/sandbox-templates:opencode-docker
 FROM ${BASE_IMAGE}
 
 ARG DOTNET_CHANNEL=10.0
-ARG NVM_VERSION=v0.40.7
+ARG NVM_VERSION=v0.40.8
 ARG NODE_VERSION=24
 ARG PNPM_VERSION=12
 ARG PLAYWRIGHT_VERSION=latest
@@ -31,7 +31,7 @@ RUN apt-get update \
 
 RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \
     && chmod +x /tmp/dotnet-install.sh \
-    && /tmp/dotnet-install.sh --channel "${DOTNET_CHANNEL}" --install-dir "${DOTNET_ROOT}" \
+    && /tmp/dotnet-install.sh --channel "${DOTNET_CHANNEL}" --quality ga --install-dir "${DOTNET_ROOT}" \
     && rm /tmp/dotnet-install.sh \
     && ln -sf "${DOTNET_ROOT}/dotnet" /usr/local/bin/dotnet
 
