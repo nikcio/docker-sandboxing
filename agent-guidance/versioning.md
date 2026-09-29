@@ -12,8 +12,10 @@ A single SemVer version for the whole repo, managed by
 1. Conventional commits land on `main` (see [commit-messages.md](commit-messages.md)).
 2. The release-please workflow opens a release PR that bumps:
    - `CHANGELOG.md`
-   - `version` + the `sandbox.image` tag in `kit-<stack>/spec.yaml`
-   - the `&ref=vX.Y.Z` git pins in `examples/*.sbxenv.yaml`
+    - `version` + the `sandbox.image` tag in `kit-<stack>/spec.yaml`
+    - the `&ref=main` git pins in `examples/*.sbxenv.yaml` (updated in place;
+      the examples track `main` — the pins use the ref name `main`, so the
+      rewrite is a no-op that keeps the `x-release-please` block in sync)
 3. Merging the release PR tags `vX.Y.Z` and publishes the GitHub release.
 4. The `publish-image.yml` workflow builds every image in `images.json` and
    pushes `docker.io/nikcio/<name>:vX.Y.Z` (plus `:latest`) as public
