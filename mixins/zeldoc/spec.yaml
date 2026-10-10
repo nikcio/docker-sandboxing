@@ -4,8 +4,9 @@ name: zeldoc
 displayName: Zeldoc.ai provider
 description: >
   Zeldoc.ai model provider for OpenCode: proxy-managed API key,
-  opencode-zeldoc plugin config, and network rules for the Zeldoc hosts.
-version: 0.4.0
+  opencode-zeldoc plugin config, a default "high" model variant (seeded
+  into the opencode state file), and network rules for the Zeldoc hosts.
+version: 0.5.0
 
 credentials:
   - service: zeldoc
@@ -18,6 +19,43 @@ credentials:
         - domain: api.zeldoc.ai
           header: Authorization
           format: Basic %s
+
+setup:
+  startup:
+    - command:
+        - sh
+        - -c
+        - |
+          # Seed the opencode model-preference state file so the zdev
+          # variant starts at "high" on first launch. Only writes when
+          # the key is unset — never overrides a variant the user has
+          # already picked (cycling persists to this file).
+          __state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/opencode"
+          __state_file="$__state_dir/model.json"
+          mkdir -p "$__state_dir"
+          if [ ! -f "$__state_file" ]; then
+            printf '{"recent":[],"favorite":[],"variant":{"zeldoc/zdev":"high"}}\n' > "$__state_file"
+            echo "[zeldoc] seeded model state: variant zeldoc/zdev -> high"
+          elif command -v jq > /dev/null 2>&1; then
+            # File exists: fill in the key only if it is missing entirely.
+            __has="$(jq -r --arg k 'zeldoc/zdev' '.variant | has($k)' "$__state_file" 2>/dev/null || echo unknown)"
+            if [ "$__has" = "false" ]; then
+              __tmp="$(mktemp "$__state_dir/.model.json.XXXXXX")"
+              if jq --arg k 'zeldoc/zdev' --arg v high '.variant[$k] = $v' "$__state_file" > "$__tmp"; then
+                mv -f "$__tmp" "$__state_file"
+                echo "[zeldoc] set model state: variant zeldoc/zdev -> high"
+              else
+                rm -f "$__tmp"
+                echo "WARNING [zeldoc]: could not update $__state_file (invalid JSON?) — leaving it untouched" >&2
+              fi
+            fi
+            unset __has __tmp
+          fi
+          unset __state_dir __state_file
+      user: "agent"
+      description: >
+        Seed the opencode model state file with variant zeldoc/zdev=high
+        (first-run only; never overrides an existing choice)
 
 permissions:
   network:
