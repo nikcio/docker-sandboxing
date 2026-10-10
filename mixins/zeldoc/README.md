@@ -1,7 +1,8 @@
 # zeldoc
 
 Zeldoc.ai model provider for OpenCode: proxy-managed API key,
-`opencode-zeldoc` plugin config, and network rules for the Zeldoc hosts.
+`opencode-zeldoc` plugin config, a default `high` model variant for
+`zeldoc/zdev`, and network rules for the Zeldoc hosts.
 
 ## Usage
 
@@ -36,6 +37,11 @@ lists are unioned, so both providers stay selectable).
   limits and prices). No manual `provider` block
   with a models list — the plugin is the source of truth, per the
   [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode).
+- **Default variant**: a startup command seeds the OpenCode model state
+  file (`~/.local/state/opencode/model.json`) with
+  `variant: {"zeldoc/zdev": "high"}` so the first TUI launch starts on the
+  `high` variant. It only fills the key in when missing — a variant you
+  have already picked (cycling persists to this file) is never overridden.
 
 ## Network domains
 
