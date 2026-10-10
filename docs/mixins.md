@@ -59,6 +59,7 @@ Rules of thumb:
 | `browser` | Google Chrome install (dl.google.com egress for the .deb; sites stay gated by the other mixins); skipped when the template has it |
 | `playwright` | Playwright + Chromium headless shell (smallest download); installs node via nvm when the template lacks one |
 | `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the template has it |
+| `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh); check-and-install for templates without it |
 | `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the stock kits and examples do not compose it |
 
 Network hosts per mixin are listed at the top of each
