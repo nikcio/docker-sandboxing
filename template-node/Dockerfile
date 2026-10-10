@@ -8,7 +8,12 @@ ARG NODE_VERSION=24
 ARG PNPM_VERSION=12
 ARG PLAYWRIGHT_VERSION=latest
 
-ENV NVM_DIR=/home/agent/.nvm
+# C.UTF-8 is always present on glibc (no locale-gen needed); a bare LANG
+# makes man-db's profile script print "manpath: can't set the locale" on
+# every shell start.
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    NVM_DIR=/home/agent/.nvm
 
 USER root
 RUN apt-get update \

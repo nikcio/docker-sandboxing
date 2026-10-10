@@ -9,7 +9,12 @@ ARG NODE_VERSION=24
 ARG PNPM_VERSION=12
 ARG PLAYWRIGHT_VERSION=latest
 
-ENV PATH="/usr/local/go/bin:/home/agent/go/bin:${PATH}" \
+# C.UTF-8 is always present on glibc (no locale-gen needed); a bare LANG
+# makes man-db's profile script print "manpath: can't set the locale" on
+# every shell start.
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PATH="/usr/local/go/bin:/home/agent/go/bin:${PATH}" \
     NVM_DIR=/home/agent/.nvm
 
 USER root

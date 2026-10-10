@@ -9,7 +9,12 @@ ARG NODE_VERSION=24
 ARG PNPM_VERSION=12
 ARG PLAYWRIGHT_VERSION=latest
 
-ENV UV_LINK_MODE=copy \
+# C.UTF-8 is always present on glibc (no locale-gen needed); a bare LANG
+# makes man-db's profile script print "manpath: can't set the locale" on
+# every shell start.
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    UV_LINK_MODE=copy \
     UV_PYTHON_INSTALL_DIR=/home/agent/.local/share/uv/python \
     NVM_DIR=/home/agent/.nvm
 

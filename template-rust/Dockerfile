@@ -9,7 +9,12 @@ ARG NODE_VERSION=24
 ARG PNPM_VERSION=12
 ARG PLAYWRIGHT_VERSION=latest
 
-ENV RUSTUP_HOME=/home/agent/.rustup \
+# C.UTF-8 is always present on glibc (no locale-gen needed); a bare LANG
+# makes man-db's profile script print "manpath: can't set the locale" on
+# every shell start.
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    RUSTUP_HOME=/home/agent/.rustup \
     CARGO_HOME=/home/agent/.cargo \
     PATH="/home/agent/.cargo/bin:${PATH}" \
     NVM_DIR=/home/agent/.nvm
