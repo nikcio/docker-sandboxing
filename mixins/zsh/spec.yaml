@@ -1,0 +1,34 @@
+schemaVersion: "2"
+kind: mixin
+name: zsh
+displayName: Zsh + Oh My Zsh
+description: >
+  Installs zsh with Oh My Zsh for the agent user and makes it the login shell.
+version: 0.1.0
+
+setup:
+  install:
+    - command: >
+        if [ -x /usr/bin/zsh ] && [ -d /home/agent/.oh-my-zsh ]; then exit 0; fi
+        && export DEBIAN_FRONTEND=noninteractive
+        && install -m 0755 -d /var/lib/apt/sbx-lists
+        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq || true
+        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y -qq --no-install-recommends zsh git curl ca-certificates
+        && rm -rf /var/lib/apt/sbx-lists
+        && git clone -q --depth 1 https://github.com/ohmyzsh/ohmyzsh.git /home/agent/.oh-my-zsh
+        && chown -R agent:agent /home/agent/.oh-my-zsh
+        && cp -n /home/agent/.oh-my-zsh/templates/zshrc.zsh-template /home/agent/.zshrc
+        && chown agent:agent /home/agent/.zshrc
+        && if [ "$(getent passwd agent | cut -d: -f7)" != "/usr/bin/zsh" ]; then chsh -s /usr/bin/zsh agent; fi
+        && zsh --version
+      description: Install zsh + Oh My Zsh for the agent user (skipped when already present)
+
+permissions:
+  network:
+    allow:
+      # Oh My Zsh repo (install/update)
+      - github.com:443
+      - "*.github.com:443"
+      - raw.githubusercontent.com:443
+      # ohmyz.sh: docs and wiki referenced by the framework itself
+      - ohmyz.sh:443
