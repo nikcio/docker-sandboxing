@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.3.0](https://github.com/nikcio/docker-sandboxing/compare/v2.2.1...v2.3.0) (2026-10-10)
+
+
+### Features
+
+* **mixins:** default zeldoc/zdev variant to high via opencode state file ([#94](https://github.com/nikcio/docker-sandboxing/issues/94)) ([6a96f40](https://github.com/nikcio/docker-sandboxing/commit/6a96f404aab059068f6bc9af5d10cfb27d3f579b))
+* **scripts:** add guided sbx setup example scripts (bash + PowerShell) ([#89](https://github.com/nikcio/docker-sandboxing/issues/89)) ([c7fcd36](https://github.com/nikcio/docker-sandboxing/commit/c7fcd368313930edec1c77234923aa0101fd2b06))
+
+
+### Bug Fixes
+
+* **kit:** set C.UTF-8 locale in the stack kits to silence manpath warning ([#98](https://github.com/nikcio/docker-sandboxing/issues/98)) ([c002adb](https://github.com/nikcio/docker-sandboxing/commit/c002adb5684a7be16d504d737ce048ccd6f5e237))
+* **kit:** set C.UTF-8 locale to silence manpath warning ([#97](https://github.com/nikcio/docker-sandboxing/issues/97)) ([795ef7c](https://github.com/nikcio/docker-sandboxing/commit/795ef7cd093aadb70e981575e446a959f47f5059))
+
 ## [2.2.1](https://github.com/nikcio/docker-sandboxing/compare/v2.2.0...v2.2.1) (2026-09-29)
 
 
