@@ -46,6 +46,14 @@ setup:
       background: true
       description: Start dockerd unless the runtime already did
 
+environment:
+  variables:
+    # C.UTF-8 is always present on glibc (no locale-gen needed); without
+    # it man-db's profile script prints "manpath: can't set the locale"
+    # on every shell start (the base image ships no locale env).
+    LANG: C.UTF-8
+    LC_ALL: C.UTF-8
+
 permissions:
   network:
     allow:
