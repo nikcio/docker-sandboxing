@@ -65,8 +65,8 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 | `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry + opencode-host egress) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
 | `opencode-copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
-| `github-cli` | GitHub CLI (`gh`) + proxy-managed GitHub auth | — |
-| `repo-clone` | clones extra GitHub repos (from the `repositories` kit argument) into the workspace at creation, via the github-cli token; inaccessible repos are skipped | needs `github-cli` |
+| `github-cli` | GitHub CLI (`gh`) + git identity; auth rides the built-in agent's proxy-managed `github` credential | — |
+| `repo-clone` | clones extra GitHub repos (from the `repositories` kit argument) into the workspace at creation, via the built-in `github` credential; inaccessible repos are skipped | needs `github-cli` |
 | `uniform` | Uniform DXP egress: docs, dashboard + Management API, Edge Delivery API (incl. EU + image CDN), proxy-managed `x-api-key` | — |
 | `omnium` | Omnium OMS/e-commerce API egress (proxy-managed bearer token) | — |
 | `node` | nodejs.org + npm registry egress | — |

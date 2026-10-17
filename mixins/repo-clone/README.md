@@ -25,8 +25,9 @@ kits:
 Run `sbx env run --env-arg repos=owner/other-repo` to override the list
 for one invocation.
 
-**Requires the `github-cli` mixin** in the same sandbox: the clone
-authenticates via the proxy-managed `github` credential it declares.
+**Requires the `github-cli` mixin** in the same sandbox (for the git
+identity setup and `github.com` egress): the clone authenticates via the
+proxy-managed `github` credential the built-in agent kit declares.
 Public repositories also clone fine as long as `github.com` egress is
 allowed (the `github-cli` mixin allows it).
 

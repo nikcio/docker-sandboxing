@@ -1,10 +1,10 @@
 # Clones extra GitHub repositories into the sandbox workspace at creation.
 #
 # Compose with the github-cli mixin: the clone authenticates through the
-# proxy-managed github credential (the real token is injected by the proxy
-# into requests to github.com — the in-container GH_TOKEN is only a
-# sentinel), so private repositories the token can read clone fine and the
-# token itself never enters the sandbox.
+# proxy-managed github credential the built-in agent kit declares (the
+# real token is injected by the proxy into requests to github.com — the
+# in-container GH_TOKEN is only a sentinel), so private repositories the
+# token can read clone fine and the token itself never enters the sandbox.
 #
 # The repository list comes from the `repositories` kit argument — one
 # `owner/repo` per line (whitespace-separated also works). In an
@@ -32,9 +32,9 @@ displayName: Repository clone
 description: >
   Clones extra GitHub repositories (owner/repo list from the
   `repositories` kit argument) into the workspace at sandbox creation.
-  Auth goes through the proxy-managed github credential from the
-  github-cli mixin; repositories the token cannot access are skipped
-  with a warning.
+  Auth goes through the proxy-managed github credential the
+  built-in agent kit declares; repositories the token cannot access
+  are skipped with a warning.
 version: 0.1.0
 
 args:
