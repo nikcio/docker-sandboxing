@@ -88,27 +88,24 @@ of the stock mixins.
    when the sandbox starts. Keep it short and directive — what the
    agent must know or do for this project (see `mixins/node` in the
    docker-sandboxing repo for an example). How `AGENTS.md` files are
-   loaded: [agents-md.md](agents-md.md).
+   loaded: [agent-memory.md](agent-memory.md).
 
 3. List it in your `sbxenv.yaml` after the stock kits (local paths are
    relative to the env file):
 
-   ```yaml
-   kits:
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-dotnet&ref=v0.6.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/agents-md&ref=v0.6.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0
-     # ...the other stock mixins your project keeps...
-     - ./sandbox-kit
-   ```
+    ```yaml
+    kits:
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-dotnet&ref=v0.6.0
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0
+      # ...the other stock mixins your project keeps...
+      - ./sandbox-kit
+    ```
 
-   Keep the stock agent kit (`kit-<stack>`) and `agents-md`
+   Keep the stock agent kit (`kit-<stack>`) and `global-opencode-config`
    (required) — the kit defines the image and entrypoint wrapper, the
-   `agents-md` mixin ships the sandbox `AGENTS.md` baseline.
-   Add `global-opencode-config` when composing a model provider; the
-   list above also includes the optional `env-guard` (the no-.env
-   policy). Your kit only adds capabilities.
+   `global-opencode-config` mixin ships the sandbox `AGENTS.md` baseline
+   (and merges model-provider config fragments).
 
 4. Validate and recreate the sandbox (kit changes only apply to new
    sandboxes):
