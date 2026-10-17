@@ -29,7 +29,7 @@ sbx prompts for the token ("Enter secret:") and stores it in its secret store (t
 
 ## 3. Approve the credential binding
 
-For environments created from a `sbxenv.yaml`, the example file already declares the `bindings.github` block that approves injection for the GitHub hosts. Keep it in your copy (and in sync with `mixins/github-cli/spec.yaml`). If you change `bindings:`, recreate the environment.
+The first time you create a sandbox, sbx asks you to approve that the `github` secret may be injected for the GitHub hosts — approve the prompt and you're done. The credential comes from the built-in agent kit; the `github-cli` mixin only adds the CLI and the git-identity setup, so no per-mixin configuration is needed.
 
 ## Rotate / remove
 
