@@ -4,7 +4,7 @@ The premade mixins in this repo each add exactly one capability area to the sand
 
 ## Any mixin on the base kit
 
-Every toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins (`browser`, `playwright`, `sbx`, `nikcio-openapi-codegen`) carry a self-contained check-and-install `setup.install` step: at sandbox creation it verifies the tool is present and installs it when the kit's base image lacks it. The built-in Docker template image (`docker/sandbox-templates:opencode-docker`) ships no stack toolchain, so the stack mixins do the install. Compose, for example, the `python` mixin onto the base kit and the sandbox gets a working `python3` + `uv`; no rebuild needed.
+Every toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins (`playwright`, `sbx`, `nikcio-openapi-codegen`) carry a self-contained check-and-install `setup.install` step: at sandbox creation it verifies the tool is present and installs it when the kit's base image lacks it. The built-in Docker template image (`docker/sandbox-templates:opencode-docker`) ships no stack toolchain, so the stack mixins do the install. Compose, for example, the `python` mixin onto the base kit and the sandbox gets a working `python3` + `uv`; no rebuild needed.
 
 Rules of thumb:
 
@@ -36,7 +36,6 @@ Rules of thumb:
 | `gcr` | Google Container Registry egress for the in-sandbox Docker engine |
 | `ghcr` | GitHub Container Registry egress for the in-sandbox Docker engine |
 | `mcr` | Microsoft Container Registry egress for the in-sandbox Docker engine |
-| `browser` | Google Chrome install (dl.google.com egress for the .deb; sites stay gated by the other mixins); skipped when the base image has it |
 | `playwright` | Playwright + Chromium headless shell (smallest download); installs node via nvm when the base image lacks one |
 | `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the base image has it |
 | `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh); check-and-install when the base image lacks it |
@@ -59,7 +58,7 @@ Network hosts per mixin are listed at the top of each `mixins/<area>/spec.yaml`,
 | Node + typed API client (openapi-typescript) | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
 | Node + in-sandbox Docker | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
 | Node frontend with Uniform | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
-| Browser automation | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
+| Browser automation | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `playwright` |
 
 Notes:
 

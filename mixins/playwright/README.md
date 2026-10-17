@@ -13,7 +13,7 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/playwright <agent> .`
 
-The install runs at **sandbox creation only**. Pair it with the `browser` mixin when Chrome itself is needed too.
+The install runs at **sandbox creation only**.
 
 ## How it works
 

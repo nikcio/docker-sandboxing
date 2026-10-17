@@ -27,7 +27,6 @@ kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=v2.3.0                   # node/npm
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet&ref=v2.3.0                 # .NET/NuGet
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker-hub&ref=v2.3.0             # in-sandbox docker (Docker Hub registry egress)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/browser&ref=v2.3.0                # Google Chrome
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v2.3.0             # Playwright + Chromium headless shell
 # x-release-please-end-version
 

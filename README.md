@@ -77,7 +77,6 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 | `go` | Go module proxy + checksum DB egress (`go get`/`go install`, GOTOOLCHAIN downloads) | — |
 | `rust` | crates.io + rustup egress for cargo | — |
 | `docker-hub` / `gcr` / `ghcr` / `mcr` | registry egress for the in-sandbox Docker engine, per registry | — |
-| `browser` | Google Chrome install (software only) | — |
 | `playwright` | Playwright + the Chromium headless shell | — |
 | `sbx` | the `sbx` CLI inside the sandbox (kit authoring) | — |
 | `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh) | — |
