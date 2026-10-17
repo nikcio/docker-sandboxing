@@ -36,23 +36,3 @@ kits:
 workspace:
   path: . # the repo itself; point elsewhere if the env file sits outside the project
   clone: false # true = sandbox works on its own copy (safer: the agent cannot touch your local folder)
-
-sandboxOptions:
-  cpus: 4
-  memory: 8g
-
-ports:
-  - sandbox: 8080 # net/http / gin / echo dev server
-    host: 8080
-  - sandbox: 3000 # fiber / frontend dev server
-    host: 3000
-
-# Approves GitHub token injection for the sandbox (docs/github-pat.md).
-bindings:
-  github:
-    apiKey:
-      domains:
-        - api.github.com
-        - github.com
-        - uploads.github.com
-        - raw.githubusercontent.com
