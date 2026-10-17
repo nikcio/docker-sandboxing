@@ -70,7 +70,7 @@ Notes:
 Provider mixins manage their own config: each runs a startup command that merges its keys (`enabled_providers`, and for Zeldoc the `plugin` list) straight into the global `~/.config/opencode/opencode.json(c)` — creating the file if it does not exist. That means they work standalone (opencode installed by any means), no `opencode` mixin required:
 
 - `enabled_providers` entries are **unioned** — compose `opencode-zeldoc` and `opencode-copilot` together and both stay selectable with `/models` (each startup command only touches its own keys).
-- **No provider mixin sets the default model** — the project-level `opencode.jsonc` owns it. Commit one in the repo root (see [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or `"model": "github-copilot/<model-id>"`; without it opencode falls back to its own default, and `/models` always works per session.
+- **No provider mixin sets the default model** — the project-level `opencode.jsonc` owns it. Commit one in the repo root (see [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev"` or `"model": "github-copilot/<model-id>"`; without it opencode falls back to its own default, and `/models` always works per session.
 
 Swapping providers (or changing any mixin) only applies to **new** sandboxes — see "Changing mixins" below.
 

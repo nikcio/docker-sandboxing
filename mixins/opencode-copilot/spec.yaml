@@ -25,6 +25,10 @@ setup:
             __file="$__dir/opencode.jsonc"
           fi
           mkdir -p "$__dir"
+          if ! command -v jq > /dev/null 2>&1; then
+            echo "ERROR [copilot]: jq is not available — cannot enable the github-copilot provider in the global config (the base image ships jq; install it or report this)" >&2
+            exit 1
+          fi
           if [ ! -f "$__file" ]; then
             printf '{\n  "$schema": "https://opencode.ai/config.json"\n}\n' > "$__file"
           fi

@@ -18,10 +18,10 @@ setup:
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl;
         rm -rf /var/lib/apt/sbx-install-lists;
-        curl -fsSL https://opencode.ai/v2/install | bash;
+        curl -fsSL https://opencode.ai/v2/install | env HOME=/home/agent bash;
         ln -sf /home/agent/.opencode/bin/opencode /usr/local/bin/opencode;
         opencode --version
-      description: Install OpenCode 2 via the official curl installer (skipped when opencode is already present)
+      description: Install OpenCode 2 via the official curl installer (HOME pinned to the agent user so the binary lands where the symlink points; skipped when opencode is already present)
 
   startup:
     - command:

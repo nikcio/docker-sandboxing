@@ -94,9 +94,9 @@ Everything below is for developing the mixins in this repo.
 ├── mixins/
 │   ├── opencode/                     # OpenCode itself: CLI install (curl, v2) + owns
 │   │                                 #   OPENCODE_CONFIG: permissive OpenCode config
-│   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
-│   │                                 #   merge fed by provider mixins' mixins.d/ fragments
-│   │                                 #   (provider mixins also merge their config into the
+│   │                                 #   (~/.config/opencode/opencode.json) + mixins.d/
+│   │                                 #   fragment merge (third-party kit fragments;
+│   │                                 #   provider mixins merge their config into the
 │   │                                 #   global config themselves, so they work standalone)
 │   ├── env-guard/                    # the workspace .env guard (startup command)
 │   └── <area>/                       # one single-purpose premade mixin per area (kind: mixin):
