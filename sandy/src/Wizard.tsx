@@ -42,10 +42,11 @@ const STEPS: Step[] = [
   },
 ];
 
-export default function Wizard({ status, onFinished, onRefresh }: Props) {
+export default function Wizard({ status: initialStatus, onFinished, onRefresh }: Props) {
   const [states, setStates] = useState<Record<string, StepState>>({});
   const [outputs, setOutputs] = useState<Record<string, string>>({});
   const [finished, setFinished] = useState(false);
+  let status = initialStatus;
 
   const setStep = (id: string, s: StepState, output?: string) => {
     setStates((prev) => ({ ...prev, [id]: s }));
@@ -96,6 +97,16 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
       if (!ok) return;
     }
     setFinished(true);
+  };
+
+  const rerunAll = async () => {
+    setStates({});
+    setOutputs({});
+    setFinished(false);
+    // The status snapshot may still say "installed"/"signed in", which would
+    // make runRemaining skip those steps — force a full re-run instead.
+    status = null;
+    await runRemaining();
   };
 
   const allDone =
@@ -160,7 +171,7 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
             </button>
           )}
           {(finished || allDone) && (
-            <button className="secondary" onClick={runRemaining} disabled={busy}>
+            <button className="secondary" onClick={rerunAll} disabled={busy}>
               Re-run steps
             </button>
           )}

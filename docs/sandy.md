@@ -25,7 +25,7 @@ Download the installer for your platform from the [releases page](https://github
 | Platform | File |
 | -------- | ---- |
 | macOS (Apple silicon) | `.dmg` |
-| Windows | `.msi` |
+| Windows | `.msi` (or the NSIS `.exe` setup) |
 | Linux | `.AppImage` or `.deb` |
 
 ## Building from source

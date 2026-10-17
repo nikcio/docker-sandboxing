@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SetupStatus, SandboxInfo, listSandboxes } from "./api";
 
 interface Props {
@@ -25,17 +25,28 @@ export default function CommandCenter({ status, onOpenWizard, onRefreshStatus }:
   const [sandboxes, setSandboxes] = useState<SandboxInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const inFlight = useRef(false);
+  // Keep the latest callback without re-triggering effects when the parent
+  // re-renders.
+  const refreshStatusRef = useRef(onRefreshStatus);
+  useEffect(() => {
+    refreshStatusRef.current = onRefreshStatus;
+  }, [onRefreshStatus]);
 
   const refresh = useCallback(async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     try {
       const list = await listSandboxes();
       setSandboxes(list);
       setError(null);
     } catch (e) {
       setError(String(e));
+    } finally {
+      inFlight.current = false;
     }
-    onRefreshStatus();
-  }, [onRefreshStatus]);
+    refreshStatusRef.current();
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -80,7 +91,7 @@ export default function CommandCenter({ status, onOpenWizard, onRefreshStatus }:
       {sandboxes && sandboxes.length === 0 && (
         <div className="empty">
           <div className="big">🏜️</div>
-          No sandboxes running right now.
+          No sandboxes right now.
           <br />
           Sandboxes appear here when an agent starts one — for example by running{" "}
           <code>sbx env run</code> or <code>sbx run</code> in a project.
@@ -99,7 +110,7 @@ export default function CommandCenter({ status, onOpenWizard, onRefreshStatus }:
           </thead>
           <tbody>
             {sandboxes.map((sbx) => (
-              <tr key={sbx.name + sbx.raw}>
+              <tr key={sbx.name}>
                 <td>
                   <strong>{sbx.name}</strong>
                 </td>

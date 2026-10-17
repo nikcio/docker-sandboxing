@@ -1,10 +1,7 @@
 mod sbx;
 
 use serde::Serialize;
-use sbx::{
-    ensure_sbx_installed, get_setting, is_sbx_installed, list_sandboxes, run_login,
-    set_clipboard_image_paste, SBX_COMMAND, SSH_SETUP_COMMAND,
-};
+use sbx::{ensure_sbx_installed, get_setting, is_sbx_installed, list_sandboxes, run_login, set_clipboard_image_paste};
 
 #[derive(Serialize)]
 pub struct SetupStatus {
@@ -50,7 +47,7 @@ fn enable_image_paste() -> Result<(), String> {
 
 #[tauri::command]
 fn setup_ssh() -> Result<String, String> {
-    sbx::run_capture(&[SSH_SETUP_COMMAND])
+    sbx::run_capture(&["setup", sbx::SSH_SETUP_COMMAND])
 }
 
 #[tauri::command]
@@ -63,25 +60,15 @@ fn sandboxes() -> Result<Vec<sbx::SandboxInfo>, String> {
     list_sandboxes()
 }
 
-#[tauri::command]
-fn open_docs() -> Result<(), String> {
-    let _ = SBX_COMMAND;
-    let _ = SSH_SETUP_COMMAND;
-    Ok(())
-}
-
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             status,
             install_sbx,
             enable_image_paste,
             setup_ssh,
             login,
-            sandboxes,
-            open_docs
+            sandboxes
         ])
         .run(tauri::generate_context!())
         .expect("error while running Sandy");

@@ -7,7 +7,7 @@ use serde::Serialize;
 use std::process::Command;
 
 pub const SBX_COMMAND: &str = "sbx";
-pub const SSH_SETUP_COMMAND: &str = "setup";
+pub const SSH_SETUP_COMMAND: &str = "ssh";
 
 #[derive(Debug, Serialize, Clone)]
 pub struct SandboxInfo {
@@ -43,34 +43,27 @@ pub fn is_sbx_installed() -> bool {
     which::which(SBX_COMMAND).is_ok()
 }
 
-/// Run `sbx` with args, capturing combined stdout+stderr as text.
+/// Run `sbx` with args, capturing stdout (stderr is merged into the error
+/// path only, so progress noise never pollutes parsed output).
 pub fn run_capture(args: &[&str]) -> Result<String, String> {
     let output = sbx_command(args)
         .output()
         .map_err(|e| format!("failed to run {}: {}", SBX_COMMAND, e))?;
-    let mut text = String::from_utf8_lossy(&output.stdout).to_string();
-    let err = String::from_utf8_lossy(&output.stderr);
-    if !err.trim().is_empty() {
-        if !text.trim().is_empty() {
-            text.push('\n');
-        }
-        text.push_str(&err);
-    }
+    let text = String::from_utf8_lossy(&output.stdout).to_string();
     if !output.status.success() {
+        let mut msg = String::from_utf8_lossy(&output.stderr).to_string();
+        if msg.trim().is_empty() {
+            msg = text;
+        }
         return Err(format!(
             "{} {} failed (exit {}):\n{}",
             SBX_COMMAND,
             args.join(" "),
             output.status.code().unwrap_or(-1),
-            text.trim()
+            msg.trim()
         ));
     }
     Ok(text.trim().to_string())
-}
-
-/// Best-effort run: returns combined output regardless of exit code.
-fn run_capture_lossy(args: &[&str]) -> String {
-    run_capture(args).unwrap_or_else(|e| e)
 }
 
 /// Whether the user is signed in to Docker (`sbx whoami` succeeds).
@@ -98,7 +91,8 @@ pub fn set_clipboard_image_paste() -> Result<(), String> {
 }
 
 /// Whether `sbx setup ssh` has been applied, detected by the managed block
-/// in the user's SSH config.
+/// in the user's SSH config. Matched loosely so small wording or
+/// capitalization changes in the managed block don't break detection.
 pub fn is_ssh_set_up() -> Result<bool, String> {
     let config_path = if is_windows() {
         std::env::var("USERPROFILE")
@@ -110,7 +104,7 @@ pub fn is_ssh_set_up() -> Result<bool, String> {
             .map_err(|_| "HOME not set".to_string())?
     };
     match std::fs::read_to_string(&config_path) {
-        Ok(content) => Ok(content.contains("docker sandboxes (managed)")),
+        Ok(content) => Ok(content.to_lowercase().contains("docker sandboxes")),
         Err(_) => Ok(false),
     }
 }
@@ -141,16 +135,24 @@ pub fn ensure_sbx_installed() -> Result<String, String> {
                     .to_string(),
             );
         }
-        log.push_str(&run_via("brew", &["install", "docker/tap/sbx"], None)?);
+        log.push_str(&run_via("brew", &["install", "docker/tap/sbx"])?);
+        if !is_sbx_installed() {
+            return Err(format!(
+                "Installation finished but sbx was not found on PATH.\nOutput:\n{}",
+                log
+            ));
+        }
     }
 
     #[cfg(target_os = "windows")]
     {
-        // WinGet installs the per-user MSI and updates PATH for new shells.
+        // WinGet installs the per-user MSI and adds its bin directory to the
+        // user PATH — but only for processes started afterwards. Sandy keeps
+        // its current environment, so report success and let the user
+        // restart instead of failing the step.
         log.push_str(&run_via(
             "powershell",
             &["-NoProfile", "-Command", "winget install -h Docker.sbx"],
-            None,
         )?);
         log.push_str("\nRestart Sandy so the updated PATH is picked up.\n");
     }
@@ -159,6 +161,12 @@ pub fn ensure_sbx_installed() -> Result<String, String> {
     {
         let mut push = |line: &str| log.push_str(line);
         install_sbx_linux(&mut push)?;
+        if !is_sbx_installed() {
+            return Err(format!(
+                "Installation finished but sbx was not found on PATH.\nRestart Sandy (so the updated PATH is picked up) and try again.\nOutput:\n{}",
+                log
+            ));
+        }
     }
 
     #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
@@ -166,27 +174,27 @@ pub fn ensure_sbx_installed() -> Result<String, String> {
         return Err("This platform is not supported yet.".to_string());
     }
 
-    if !is_sbx_installed() {
-        return Err(format!(
-            "Installation finished but sbx was not found on PATH.\nOutput:\n{}",
-            log
-        ));
-    }
     Ok(log)
 }
 
-/// Linux: add Docker's apt repository and install the docker-sbx package,
-/// then add the user to the kvm group for local sandboxes.
-/// Mirrors https://docs.docker.com/ai/sandboxes/install/ (Ubuntu).
+/// Linux (Ubuntu/Debian): add Docker's apt repository and install the
+/// docker-sbx package, then add the current user to the kvm group for
+/// local sandboxes. Mirrors https://docs.docker.com/ai/sandboxes/install/.
 #[cfg(target_os = "linux")]
 fn install_sbx_linux(log: &mut dyn FnMut(&str)) -> Result<(), String> {
+    if !std::path::Path::new("/usr/bin/apt-get").exists() {
+        return Err(
+            "Only Ubuntu/Debian systems are supported by the automatic installer.\n\
+             See https://docs.docker.com/ai/sandboxes/install/ for manual instructions."
+                .to_string(),
+        );
+    }
     let script = r#"set -e
 curl -fsSL https://get.docker.com -o /tmp/sandy-get-docker.sh
-sudo sh /tmp/sandy-get-docker.sh --dry-run REPO_ONLY=1 2>/dev/null || true
 sudo REPO_ONLY=1 sh /tmp/sandy-get-docker.sh
 rm -f /tmp/sandy-get-docker.sh
 sudo apt-get install -y docker-sbx
-sudo usermod -aG kvm "$USER" || true
+sudo usermod -aG kvm "$(logname 2>/dev/null || id -un)" || echo "warning: could not add user to the kvm group" >&2
 "#;
     log("Running the Docker install script (may ask for your password)...\n");
     let status = std::process::Command::new("bash")
@@ -196,7 +204,8 @@ sudo usermod -aG kvm "$USER" || true
         .map_err(|e| format!("failed to start installer: {}", e))?;
     if !status.success() {
         return Err(format!(
-            "the Linux install script failed (exit {})",
+            "the Linux install script failed (exit {}). If no password prompt appeared, \
+             Sandy may need to be started from a terminal once so sudo can ask for it.",
             status.code().unwrap_or(-1)
         ));
     }
@@ -204,14 +213,10 @@ sudo usermod -aG kvm "$USER" || true
     Ok(())
 }
 
-/// Run an external program (brew/powershell) with inherited stdio so the
-/// user sees progress, capturing the tail of the output for the log.
+/// Run an external program (brew/powershell), capturing the tail of the
+/// output for the wizard log.
 #[cfg(any(target_os = "macos", target_os = "windows"))]
-fn run_via(
-    program: &str,
-    args: &[&str],
-    _dir: Option<&std::path::Path>,
-) -> Result<String, String> {
+fn run_via(program: &str, args: &[&str]) -> Result<String, String> {
     use std::io::Read;
     use std::process::Stdio;
 
@@ -263,10 +268,10 @@ fn tail(s: &str, max: usize) -> String {
     format!("…{}", &s[start..])
 }
 
-/// Parse `sbx ls` output into sandbox rows. Falls back to a single-column
-/// parse when the table layout differs.
+/// List local sandboxes (`sbx ls`), parsed into rows. Errors propagate so
+/// the UI can show them instead of inventing rows.
 pub fn list_sandboxes() -> Result<Vec<SandboxInfo>, String> {
-    let out = run_capture_lossy(&["ls"]);
+    let out = run_capture(&["ls"])?;
     if out.is_empty() {
         return Ok(vec![]);
     }
@@ -276,24 +281,33 @@ pub fn list_sandboxes() -> Result<Vec<SandboxInfo>, String> {
 fn parse_ls(out: &str) -> Vec<SandboxInfo> {
     let mut rows = Vec::new();
     let mut header_cols: Option<Vec<(usize, usize)>> = None;
+    // Box-drawing tables carry interior pipes; once the header has them we
+    // split data rows on pipes directly instead of header word spans.
+    let mut pipe_table = false;
 
     for line in out.lines() {
         let trimmed = line.trim_end();
-        if trimmed.trim().is_empty() {
+        if trimmed.trim().is_empty() || is_separator_line(trimmed) {
             continue;
         }
-        let lower = trimmed.to_lowercase();
-        if lower.contains("name") && lower.contains("state") {
-            header_cols = Some(header_spans(trimmed));
+        // Only the first table header is recognized; later lines that happen
+        // to contain "name" and "state" stay data rows.
+        if header_cols.is_none() && is_header_line(trimmed) {
+            pipe_table = trimmed.contains('│') || trimmed.contains('|');
+            let header = strip_border_pipes(trimmed).replace(['│', '|'], " ");
+            header_cols = Some(header_spans(&header));
             continue;
         }
-        // Separator lines like ─── or ---
-        if trimmed.chars().next().map(|c| c == '─' || c == '-').unwrap_or(false) {
-            continue;
-        }
-        let cols = match &header_cols {
-            Some(spans) => split_by_spans(trimmed, spans),
-            None => vec![trimmed.trim().to_string()],
+        let cols = if pipe_table {
+            strip_border_pipes(trimmed)
+                .split(['│', '|'])
+                .map(|c| c.trim().to_string())
+                .collect()
+        } else {
+            match &header_cols {
+                Some(spans) => split_by_spans(trimmed, spans),
+                None => vec![trimmed.trim().to_string()],
+            }
         };
         let get = |i: usize| cols.get(i).map(|s| s.trim().to_string()).unwrap_or_default();
         rows.push(SandboxInfo {
@@ -307,8 +321,42 @@ fn parse_ls(out: &str) -> Vec<SandboxInfo> {
     rows
 }
 
-/// Find the character spans of each header word so data rows can be split
-/// on the same columns.
+fn is_header_line(line: &str) -> bool {
+    let lower = line.trim().trim_start_matches(['│', '|']).trim().to_lowercase();
+    lower.starts_with("name") && lower.contains("state")
+}
+
+/// Remove a leading and trailing border pipe from a box-drawing table row
+/// and trim the result.
+fn strip_border_pipes(line: &str) -> &str {
+    let t = line.trim();
+    let stripped = t
+        .trim_start_matches(['│', '|'])
+        .trim_end_matches(['│', '|']);
+    stripped.trim_end()
+}
+
+/// True for table decoration lines (┌───┬───┐, ├───┼───┤, +----+----+, ───).
+fn is_separator_line(line: &str) -> bool {
+    let mut has_separator = false;
+    for c in line.trim().chars() {
+        if c.is_whitespace() {
+            continue;
+        }
+        if matches!(
+            c,
+            '─' | '━' | '-' | '=' | '+' | '┌' | '┐' | '└' | '┘' | '├' | '┤' | '┬' | '┴' | '┼' | '│' | '|'
+        ) {
+            has_separator = true;
+        } else {
+            return false;
+        }
+    }
+    has_separator
+}
+
+/// Find the byte spans of each header word so data rows can be split on the
+/// same columns.
 fn header_spans(header: &str) -> Vec<(usize, usize)> {
     let mut spans = Vec::new();
     let mut start: Option<usize> = None;
@@ -331,9 +379,9 @@ fn split_by_spans(line: &str, spans: &[(usize, usize)]) -> Vec<String> {
     let mut out = Vec::new();
     for (i, (s, _e)) in spans.iter().enumerate() {
         let end = if i + 1 < spans.len() { spans[i + 1].0 } else { line.len() };
-        let a = (*s).min(line.len());
-        let b = end.min(line.len());
-        out.push(line[a..b].trim().to_string());
+        // Use get() so a value wider than its header column (which shifts
+        // byte offsets on multi-byte UTF-8) can never panic on a slice.
+        out.push(line.get(*s..end).unwrap_or("").trim().to_string());
     }
     out
 }
@@ -361,14 +409,42 @@ build     stopped  claude   /home/me/api
     #[test]
     fn parses_box_drawing_table() {
         let sample = "\
-NAME   STATE      AGENT
-alpha  running    claude
-beta   creating   codex
+┌───────┬──────────┬────────┐
+│ NAME  │ STATE    │ AGENT  │
+├───────┼──────────┼────────┤
+│ alpha │ running  │ claude │
+│ beta  │ creating │ codex  │
+└───────┴──────────┴────────┘
 ";
         let rows = parse_ls(sample);
         assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].name, "alpha");
+        assert_eq!(rows[0].state, "running");
         assert_eq!(rows[1].name, "beta");
         assert_eq!(rows[1].state, "creating");
+    }
+
+    #[test]
+    fn utf8_values_do_not_panic() {
+        let sample = "\
+NAME     STATE    AGENT  WORKSPACE
+demo     running  claude /home/ünïcødé/プロジェクト
+";
+        let rows = parse_ls(sample);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].name, "demo");
+    }
+
+    #[test]
+    fn data_row_with_name_and_state_words_is_not_a_header() {
+        let sample = "\
+NAME   STATE   AGENT
+demo   running claude
+weird  paused  /home/name/state
+";
+        let rows = parse_ls(sample);
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[1].name, "weird");
     }
 
     #[test]

@@ -25,32 +25,16 @@ body {
   user-select: none;
 }
 
+pre,
+td strong,
+code {
+  user-select: text;
+}
+
 #root {
   height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
-}
-
-header h1 {
-  font-size: 18px;
-  margin: 0;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-.logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
 }
 
 main {

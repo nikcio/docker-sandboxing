@@ -61,31 +61,29 @@ jobs:
 
       - name: Build Tauri app
         working-directory: sandy
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ""
         run: npm run tauri build -- --target ${{ matrix.target }}
 
       - name: Prepare artifacts (Linux)
         if: runner.os == 'Linux'
         run: |
           mkdir -p artifacts
-          find sandy/src-tauri/target -name '*.AppImage' -exec cp {} artifacts/ \;
-          find sandy/src-tauri/target -name '*.deb' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.AppImage' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.deb' -exec cp {} artifacts/ \;
 
       - name: Prepare artifacts (macOS)
         if: runner.os == 'macOS'
         run: |
           mkdir -p artifacts
-          find sandy/src-tauri/target -name '*.dmg' -exec cp {} artifacts/ \;
-          find sandy/src-tauri/target -name '*.app.tar.gz' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.dmg' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.app' -maxdepth 0 -exec cp {} artifacts/ \;
 
       - name: Prepare artifacts (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          Get-ChildItem -Recurse sandy/src-tauri/target -Include *.msi | Copy-Item -Destination artifacts
-          Get-ChildItem -Recurse sandy/src-tauri/target -Include *.exe | Where-Object { $_.Name -notin @('sandy.exe') } | Copy-Item -Destination artifacts
+          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/msi/*.msi' | Copy-Item -Destination artifacts
+          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/nsis/*-setup.exe' | Copy-Item -Destination artifacts
 
       - name: Upload artifacts to release
         if: startsWith(github.ref, 'refs/tags/')
