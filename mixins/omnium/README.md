@@ -13,11 +13,11 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/omnium <agent> .`
 
-The sandbox network policy is deny-by-default, so API calls fail until the Omnium hosts are allowed.
+The sandbox network policy is deny by default, so API calls fail until the Omnium hosts are allowed.
 
 ## How it works
 
-- **Credential**: declares `OMNIUM_API_KEY` with `proxyManaged: true` — the sandbox only sees a placeholder; the proxy injects the real `Authorization: Bearer <token>` header on requests to the Omnium API hosts. The token is an API access token (JWT) for the environment you target, minted host-side by POSTing the API user's `ClientId` + `ClientSecret` to `/api/token` on that environment's API host — create API users in the Omnium GUI under Configuration > Authorization > API Users. Full walkthrough: [docs/omnium-api-key.md](../../docs/omnium-api-key.md).
+- **Credential.** Declares `OMNIUM_API_KEY` with `proxyManaged: true`. The sandbox only sees a placeholder; the proxy injects the real `Authorization: Bearer <token>` header on requests to the Omnium API hosts. The token is an API access token (JWT) for the environment you target, minted host-side by POSTing the API user's `ClientId` + `ClientSecret` to `/api/token` on that environment's API host. Create API users in the Omnium GUI under Configuration > Authorization > API Users. Full walkthrough: [docs/omnium-api-key.md](../../docs/omnium-api-key.md).
 - **Docs and status** are reachable without a token, for research.
 
 ## Network domains

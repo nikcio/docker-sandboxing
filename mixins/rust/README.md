@@ -13,11 +13,11 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/rust <agent> .`
 
-The install runs at **sandbox creation only** and needs egress — the domains in the table below plus the Ubuntu apt mirrors (`archive.ubuntu.com`/`security.ubuntu.com`) for its `apt-get` calls. On base images that already ship cargo the install is a cheap no-op.
+The install runs at sandbox creation only and needs egress. It uses the domains in the table below plus the Ubuntu apt mirrors (`archive.ubuntu.com`/`security.ubuntu.com`) for its `apt-get` calls. On base images that already ship cargo the install is a no-op.
 
 ## How it works
 
-- **Check-and-install**: when `cargo` is missing, installs the C build toolchain + OpenSSL dev headers via apt, then runs the rustup installer as the `agent` user with `RUSTUP_HOME`/`CARGO_HOME` in the agent home (stable toolchain, plus `rust-analyzer`), and symlinks the cargo bin directory onto `PATH` — the same agent-owned rustup layout as the base images.
+- **Check-and-install.** When `cargo` is missing, installs the C build toolchain + OpenSSL dev headers via apt, then runs the rustup installer as the `agent` user with `RUSTUP_HOME`/`CARGO_HOME` in the agent home (stable toolchain, plus `rust-analyzer`), and symlinks the cargo bin directory onto `PATH`, the same agent-owned rustup layout as the base images.
 - The env vars are exported via `/etc/sandbox-persistent.sh` so login shells pick them up.
 
 ## Network domains

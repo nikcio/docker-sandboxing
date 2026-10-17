@@ -1,6 +1,6 @@
 # herdr
 
-Installs the [**Herdr**](https://herdr.dev) CLI — the runtime coding agents
+Installs the [Herdr](https://herdr.dev) CLI, the runtime coding agents
 run on. Herdr is a background server that owns your agents' terminals:
 agents keep working when you detach, and you reconnect from any machine
 and find them where you left them.
@@ -18,18 +18,18 @@ kits:
 For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/herdr <agent> .`
 
-The install runs at **sandbox creation only** and needs egress — the
+The install runs at sandbox creation only and needs egress. It uses the
 domains in the table below. Skipped when the base image already
 ships `herdr`.
 
 ## How it works
 
-- **Check-and-install**: when `herdr` is missing, runs the official
+- **Check-and-install.** When `herdr` is missing, runs the official
   installer (`curl -fsSL https://herdr.dev/install.sh | sh`) pinned to
   `/usr/local/bin` so it is on `PATH` for every user. The installer
   verifies the SHA-256 checksum of the downloaded binary against the
   release manifest before installing.
-- **Updates**: `herdr update` works inside the sandbox — it downloads
+- **Updates.** `herdr update` works inside the sandbox. It downloads
   new releases from GitHub releases (covered by the network rules).
 
 ## Network domains

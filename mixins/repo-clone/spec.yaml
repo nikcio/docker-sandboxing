@@ -2,11 +2,11 @@
 #
 # Compose with the github-cli mixin: the clone authenticates through the
 # proxy-managed github credential the built-in agent kit declares (the
-# real token is injected by the proxy into requests to github.com — the
+# real token is injected by the proxy into requests to github.com; the
 # in-container GH_TOKEN is only a sentinel), so private repositories the
 # token can read clone fine and the token itself never enters the sandbox.
 #
-# The repository list comes from the `repositories` kit argument — one
+# The repository list comes from the `repositories` kit argument: one
 # `owner/repo` per line (whitespace-separated also works). In an
 # sbxenv.yaml, pass it from an environment argument:
 #
@@ -19,11 +19,11 @@
 #         repositories: ${{ env.args.repos }}
 #
 # The value is interpolated into a single-quoted shell string, so a `'` in
-# a repository name would break the quoting — stick to owner/repo names
+# a repository name would break the quoting. Stick to owner/repo names
 # (they cannot contain quotes anyway).
 #
 # Repositories the token cannot access (or that do not exist) are skipped
-# with a warning — one bad entry never fails the sandbox. Existing
+# with a warning, so one bad entry never fails the sandbox. Existing
 # directories are left untouched (idempotent re-creates).
 schemaVersion: "2"
 kind: mixin
@@ -50,8 +50,8 @@ setup:
     # Literal block (`|`), not folded (`>`): folding joins the top-level
     # script lines with spaces and breaks the syntax. Install-step
     # commands must be strings in the v2 mixin schema, so the array form
-    # (["bash", "-c", ...]) is not an option here — a `bash -c` invocation
-    # is implicit for install commands.
+    # (["bash", "-c", ...]) is not an option here, because a `bash -c`
+    # invocation is implicit for install commands.
     - command: |
         set -e
         repos="$(printf '%s' '${{ kit.args.repositories }}' | tr '\n' ' ')"

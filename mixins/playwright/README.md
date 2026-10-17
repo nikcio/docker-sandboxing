@@ -17,8 +17,8 @@ The install runs at **sandbox creation only**.
 
 ## How it works
 
-- **Node**: when `node` is missing, installs it via nvm exactly like the `node` mixin (Node 24 default, symlinks onto `PATH`, nvm in the agent home).
-- **Playwright**: `npm install -g playwright`, then `npx playwright install --with-deps chromium-headless-shell` — `--with-deps` pulls Chromium's system libraries via apt. Skipped when the headless shell is already installed.
+- **Node.** When `node` is missing, installs it via nvm exactly like the `node` mixin (Node 24 default, symlinks onto `PATH`, nvm in the agent home).
+- **Playwright.** `npm install -g playwright`, then `npx playwright install --with-deps chromium-headless-shell`. `--with-deps` pulls Chromium's system libraries via apt. Skipped when the headless shell is already installed.
 - Browsers land in `/home/agent/.cache/ms-playwright`, chowned to the `agent` user.
 - The sandbox has no display server, so everything runs headless.
 
@@ -26,7 +26,7 @@ The install runs at **sandbox creation only**.
 
 | Domain | Why |
 | ------ | --- |
-| `registry.npmjs.org`, `*.npmjs.org` | npm package install (also covered by the `node` mixin — rules union) |
+| `registry.npmjs.org`, `*.npmjs.org` | npm package install (also covered by the `node` mixin; rules union) |
 | `cdn.playwright.dev`, `*.cdn.playwright.dev` | Playwright browser downloads |
 | `playwright.azureedge.net` | Browser download CDN |
 | `playwright.download.prss.microsoft.com` | Browser download CDN fallback |

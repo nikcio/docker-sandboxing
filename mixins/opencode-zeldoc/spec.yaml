@@ -39,7 +39,7 @@ setup:
           fi
           mkdir -p "$__dir"
           if ! command -v jq > /dev/null 2>&1; then
-            echo "ERROR [zeldoc]: jq is not available — cannot enable the zeldoc provider in the global config (the base image ships jq; install it or report this)" >&2
+            echo "ERROR [zeldoc]: jq is not available: cannot enable the zeldoc provider in the global config (the base image ships jq; install it or report this)" >&2
             exit 1
           fi
           if [ ! -f "$__file" ]; then
@@ -54,7 +54,7 @@ setup:
             echo "[zeldoc] enabled provider zeldoc + plugin opencode-zeldoc in $__file"
           else
             rm -f "$__tmp"
-            echo "WARNING [zeldoc]: could not update $__file (invalid JSON?) — leaving it untouched" >&2
+            echo "WARNING [zeldoc]: could not update $__file (invalid JSON?): leaving it untouched" >&2
           fi
           unset __dir __file __tmp
       user: "agent"
@@ -67,7 +67,7 @@ setup:
         - |
           # Seed the opencode model-preference state file so the zdev
           # variant starts at "high" on first launch. Only writes when
-          # the key is unset — never overrides a variant the user has
+          # the key is unset: never overrides a variant the user has
           # already picked (cycling persists to this file).
           __state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/opencode"
           __state_file="$__state_dir/model.json"
@@ -85,7 +85,7 @@ setup:
                 echo "[zeldoc] set model state: variant zeldoc/zdev -> high"
               else
                 rm -f "$__tmp"
-                echo "WARNING [zeldoc]: could not update $__state_file (invalid JSON?) — leaving it untouched" >&2
+                echo "WARNING [zeldoc]: could not update $__state_file (invalid JSON?): leaving it untouched" >&2
               fi
             fi
             unset __has __tmp

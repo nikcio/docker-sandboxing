@@ -6,9 +6,9 @@ A repository of premade mixins for [Docker Sandboxes](https://docs.docker.com/ai
 
 Use based on your task:
 
-- **[Worktrees](agent-guidance/worktrees.md)** — the mandatory isolated workspace for every code change. Read before writing any code in this repo.
-- **[Versioning](agent-guidance/versioning.md)** — release-please flow, version bumps, adding a stack mixin. Read when preparing a release or touching pinned versions.
-- **[Commit Messages](agent-guidance/commit-messages.md)** — Conventional Commits style, types, scopes, examples. Read when writing commit messages.
+- [Worktrees](agent-guidance/worktrees.md) is the mandatory isolated workspace for every code change. Read before writing any code in this repo.
+- [Versioning](agent-guidance/versioning.md) covers the release-please flow, version bumps, and adding a stack mixin. Read when preparing a release or touching pinned versions.
+- [Commit Messages](agent-guidance/commit-messages.md) defines the Conventional Commits style, types, scopes, and examples. Read when writing commit messages.
 
 ## Artifacts
 
@@ -19,4 +19,4 @@ Use based on your task:
 ## Development
 
 - Keep documentation simple and up to date. The docs are the main entry point for consumers of this project. The main audience is developers who has no knowledge of sbx.
-- Keep mixins single-purpose and composable. They are the building blocks for sandboxes — a new mixin is the primary contribution this repo accepts.
+- Keep mixins single-purpose and composable. They are the building blocks for sandboxes, and a new mixin is the primary contribution this repo accepts.

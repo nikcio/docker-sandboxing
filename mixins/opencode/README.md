@@ -13,23 +13,23 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/opencode <agent> .`
 
-Model provider mixins (`opencode-zeldoc`, `opencode-copilot`) work without it — they merge their own config into the global config file. Composing it alongside them is still fine and is the common setup (it ships the permissive base config and the locale env).
+Model provider mixins (`opencode-zeldoc`, `opencode-copilot`) work without it, because they merge their own config into the global config file. Composing it alongside them is still fine and is the common setup (it ships the permissive base config and the locale env).
 
 ## How it works
 
-- **Install**: when `opencode` is missing from `PATH`, runs the official v2 installer (`curl -fsSL https://opencode.ai/v2/install | env HOME=/home/agent bash`) and symlinks the binary into `/usr/local/bin`. `HOME` is pinned to the agent user so the binary lands where the symlink points (install steps run as root). No Node.js/nvm involved — the installer ships a standalone binary. A no-op on images that already ship opencode.
-- **Base config**: ships a permissive comment-free `~/.config/opencode/opencode.json` (edit/bash/webfetch allowed — the sandbox is the isolation boundary; comment-free so the provider mixins' jq merges can parse it) and points `OPENCODE_CONFIG` at the combined file.
-- **Locale env**: sets `LANG`/`LC_ALL` to `C.UTF-8` — the template images ship no locale env, and without it man-db's profile script prints `manpath: can't set the locale` on every shell start. `C.UTF-8` is always present on glibc, no `locale-gen` needed.
-- **Fragment merge**: a startup command merges every `~/.config/opencode/mixins.d/*.{json,jsonc}` fragment into the combined config with `jq`:
+- **Install.** When `opencode` is missing from `PATH`, runs the official v2 installer (`curl -fsSL https://opencode.ai/v2/install | env HOME=/home/agent bash`) and symlinks the binary into `/usr/local/bin`. `HOME` is pinned to the agent user so the binary lands where the symlink points (install steps run as root). No Node.js/nvm involved; the installer ships a standalone binary. A no-op on images that already ship opencode.
+- **Base config.** Ships a permissive comment-free `~/.config/opencode/opencode.json` (edit/bash/webfetch allowed, because the sandbox is the isolation boundary; comment-free so the provider mixins' jq merges can parse it) and points `OPENCODE_CONFIG` at the combined file.
+- **Locale env.** Sets `LANG`/`LC_ALL` to `C.UTF-8`. The template images ship no locale env, and without it man-db's profile script prints `manpath: can't set the locale` on every shell start. `C.UTF-8` is always present on glibc, no `locale-gen` needed.
+- **Fragment merge.** A startup command merges every `~/.config/opencode/mixins.d/*.{json,jsonc}` fragment into the combined config with `jq`:
   - Objects merge recursively; later fragments win scalar conflicts.
   - Array-valued keys whose name starts with `enabled_` or `disabled_`
-    (e.g. `enabled_mixins`, `enabled_providers`) are unioned — that is
+    (e.g. `enabled_mixins`, `enabled_providers`) are unioned. That is
     what lets third-party kit fragments compose without clobbering each other.
-  - Comment-bearing `.jsonc` fragments are rejected — fragments must be
+  - Comment-bearing `.jsonc` fragments are rejected. Fragments must be
     comment-free `.json`.
   - No fragments (or a missing directory) yields the minimal valid config,
     so `OPENCODE_CONFIG` always points at a loadable file.
-  - The output is regenerated at every start — edit the owning mixin in
+  - The output is regenerated at every start. Edit the owning mixin in
     this repo (or a `mixins.d/` fragment) and restart the sandbox.
 
 ## Network domains
