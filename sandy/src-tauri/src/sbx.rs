@@ -459,4 +459,185 @@ weird  paused  /home/name/state
         assert!(parse_ls("").is_empty());
         assert!(parse_ls("  \n \n").is_empty());
     }
+
+    // ---- Integration tests against a mock `sbx` executable ----
+    //
+    // These spawn a mock `sbx` shell script (/tmp/opencode/mockbin/sbx) by
+    // putting its directory first on PATH. Because env vars are process-wide
+    // and cargo runs tests in parallel threads, every env-dependent scenario
+    // lives in a small number of sequential test functions (and PATH is set
+    // exactly once via a `Once`, always to the same value).
+
+    const MOCK_BIN_DIR: &str = "/tmp/opencode/mockbin";
+
+    fn set_mock_path() {
+        use std::sync::Once;
+        static SET_PATH: Once = Once::new();
+        SET_PATH.call_once(|| {
+            let orig = std::env::var("PATH").unwrap_or_default();
+            std::env::set_var("PATH", format!("{}:{}", MOCK_BIN_DIR, orig));
+        });
+    }
+
+    /// Env vars are process-wide but cargo runs tests in parallel threads,
+    /// so every test that mutates (or whose children read) mock-behavior env
+    /// vars must hold this lock for its whole body.
+    fn env_lock() -> std::sync::MutexGuard<'static, ()> {
+        use std::sync::{Mutex, OnceLock};
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    /// All success-path CLI scenarios, run sequentially so the mock's
+    /// behavior env vars never race with each other.
+    #[test]
+    fn cli_mock_success_paths() {
+        let _guard = env_lock();
+        set_mock_path();
+
+        // run_capture: plain table, trimmed output.
+        let out = run_capture(&["whoami"]).expect("whoami should succeed");
+        assert_eq!(out, "testuser");
+
+        // Unknown subcommand still exits 1 in the mock -> Err even on the
+        // "success" side of the fixture.
+        let err = run_capture(&["definitely-not-a-command"]).unwrap_err();
+        assert!(err.contains("sbx definitely-not-a-command failed (exit 1)"), "got: {err}");
+        assert!(err.contains("unknown command"), "stderr should be included, got: {err}");
+
+        // is_signed_in: mock whoami exits 0.
+        assert_eq!(is_signed_in(), Ok(true));
+
+        // get_setting default: clipboard.imagePaste prints "false".
+        assert_eq!(get_setting("clipboard.imagePaste"), Ok("false".to_string()));
+
+        // get_setting with a mock-controlled value.
+        std::env::set_var("SBX_MOCK_PASTE", "true");
+        assert_eq!(get_setting("clipboard.imagePaste"), Ok("true".to_string()));
+        std::env::remove_var("SBX_MOCK_PASTE");
+
+        // settings set: exit 0.
+        assert_eq!(set_clipboard_image_paste(), Ok(()));
+
+        // setup ssh: exit 0, no output.
+        assert_eq!(run_capture(&["setup", SSH_SETUP_COMMAND]), Ok(String::new()));
+
+        // list_sandboxes: plain table -> parsed rows.
+        let rows = list_sandboxes().expect("plain ls should parse");
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].name, "demo");
+        assert_eq!(rows[0].state, "running");
+        assert_eq!(rows[0].agent, "opencode");
+        assert_eq!(rows[0].workspace, "/home/me/project");
+        assert_eq!(rows[1].name, "build");
+        assert_eq!(rows[1].state, "stopped");
+        assert_eq!(rows[1].agent, "claude");
+        assert_eq!(rows[1].workspace, "/home/me/api");
+        assert!(rows[0].raw.contains("demo"), "raw should keep the original line");
+
+        // list_sandboxes: box-drawing table via env-controlled mock variant.
+        std::env::set_var("SBX_MOCK_LS_STYLE", "box");
+        let rows = list_sandboxes().expect("box ls should parse");
+        std::env::remove_var("SBX_MOCK_LS_STYLE");
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].name, "alpha");
+        assert_eq!(rows[0].state, "running");
+        assert_eq!(rows[0].agent, "claude");
+        assert_eq!(rows[1].name, "beta");
+        assert_eq!(rows[1].state, "creating");
+        assert_eq!(rows[1].agent, "codex");
+
+        // list_sandboxes: empty output -> empty vec, no error.
+        std::env::set_var("SBX_MOCK_LS_EMPTY", "1");
+        let rows = list_sandboxes().expect("empty ls should succeed");
+        std::env::remove_var("SBX_MOCK_LS_EMPTY");
+        assert!(rows.is_empty());
+    }
+
+    /// Failure-path CLI scenarios (SBX_MOCK_FAIL=1), sequential and isolated
+    /// from the success test so the env flag never leaks across threads.
+    #[test]
+    fn cli_mock_failure_paths() {
+        let _guard = env_lock();
+        set_mock_path();
+
+        std::env::set_var("SBX_MOCK_FAIL", "1");
+
+        // run_capture: exit 1 -> Err with command, exit code and stderr.
+        let err = run_capture(&["ls"]).unwrap_err();
+        assert!(err.contains("sbx ls failed (exit 1)"), "got: {err}");
+        assert!(err.contains("simulated failure"), "stderr body expected, got: {err}");
+
+        // list_sandboxes propagates the error instead of inventing rows.
+        let err = list_sandboxes().unwrap_err();
+        assert!(err.contains("sbx ls failed (exit 1)"), "got: {err}");
+
+        // set_clipboard_image_paste wraps the failure.
+        let err = set_clipboard_image_paste().unwrap_err();
+        assert!(err.starts_with("could not enable image paste:"), "got: {err}");
+        assert!(err.contains("simulated failure"), "got: {err}");
+
+        // get_setting propagates the failure.
+        assert!(get_setting("clipboard.imagePaste").is_err());
+
+        // is_signed_in maps a failing whoami to Ok(false), not Err.
+        assert_eq!(is_signed_in(), Ok(false));
+
+        std::env::remove_var("SBX_MOCK_FAIL");
+    }
+
+    /// Installation checks against the mock on PATH.
+    #[test]
+    fn sbx_installed_checks_with_mock() {
+        set_mock_path();
+        assert!(is_sbx_installed());
+        assert_eq!(
+            ensure_sbx_installed(),
+            Ok("sbx is already installed".to_string())
+        );
+    }
+
+    /// SSH-config detection: HOME-dependent, so scenarios run sequentially
+    /// in one test to avoid racing other tests' HOME reads.
+    #[test]
+    fn ssh_config_detection_scenarios() {
+        let _guard = env_lock();
+        let tmp = std::env::temp_dir().join(format!("sandy-ssh-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(tmp.join(".ssh")).expect("create temp HOME");
+
+        let orig_home = std::env::var("HOME").ok();
+
+        // Empty HOME: not set up, and a missing config file is not an error.
+        std::env::set_var("HOME", &tmp);
+        assert_eq!(is_ssh_set_up(), Ok(false));
+
+        // Managed block present (case-insensitive match on "docker sandboxes").
+        let config = tmp.join(".ssh/config");
+        std::fs::write(
+            &config,
+            "# >>> docker sandboxes (managed) >>>\nHost sbx*\n  IdentityFile ~/.ssh/sbx\n",
+        )
+        .expect("write ssh config");
+        assert_eq!(is_ssh_set_up(), Ok(true));
+
+        // Uppercase variant also matches (detection is case-insensitive).
+        std::fs::write(&config, "# DOCKER SANDBOXES MANAGED BLOCK\n").expect("rewrite ssh config");
+        assert_eq!(is_ssh_set_up(), Ok(true));
+
+        // Unrelated config content: false.
+        std::fs::write(&config, "Host github.com\n  User git\n").expect("rewrite ssh config");
+        assert_eq!(is_ssh_set_up(), Ok(false));
+
+        // HOME unset: explicit error.
+        std::env::remove_var("HOME");
+        assert_eq!(is_ssh_set_up(), Err("HOME not set".to_string()));
+
+        // Restore the caller's environment.
+        match orig_home {
+            Some(h) => std::env::set_var("HOME", h),
+            None => std::env::remove_var("HOME"),
+        }
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
 }
