@@ -12,33 +12,50 @@ Rules of thumb:
 - Install steps run at **creation only** (mixin changes never apply to running sandboxes) and need egress: each mixin owns the domains its install touches (download host, the Ubuntu apt mirrors `archive.ubuntu.com`/`security.ubuntu.com`/`ports.ubuntu.com` when the step calls `apt-get`, and the CA revocation endpoints). A blocked download fails the install step — check `sbx policy log`.
 - When the tool is already present the check is a cheap no-op, so keeping the install steps in every composition is safe.
 
+## Version arguments
+
+Every mixin that installs software declares a version argument in its `spec.yaml` (`args:` block) and defaults to the latest version (upstream release, or the distro's latest apt package for apt installs) when no value is supplied. Pin a version per sandbox with `--kit-arg`, or pin it in `sbxenv.yaml` with an `args:` entry on the mixin's `kits:` item:
+
+```bash
+sbx env run --kit-arg node.pnpmVersion=10 --kit-arg dotnet.dotnetVersion=9.0.100
+```
+
+```yaml
+kits:
+  - source: git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=v2.3.0
+    args:
+      pnpmVersion: "10"
+```
+
+Leave the argument out (or empty) and the mixin installs the latest release it resolves at creation time. A `--kit-arg` value overrides a value pinned in `sbxenv.yaml`. Version arguments only apply when the mixin actually installs: when the base image already ships the tool, the check-and-install step is a no-op and the pinned version is unused. Which arguments a mixin takes is listed in its `mixins/<mixin>/spec.yaml` (`args:` block) and README. Version changes only apply to **new** sandboxes.
+
 ## Catalog
 
 | Mixin | Adds |
 | ----- | ---- |
-| `opencode` | OpenCode itself: installs the CLI via npm when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env. Required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
+| `opencode` | OpenCode itself: installs the CLI via npm when the sandbox lacks it (`opencodeVersion` arg, empty = latest), permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env. Required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
-| `github-cli` | GitHub CLI (`gh`) install + git-identity setup; GitHub auth rides the built-in agent's proxy-managed `github` credential (see [github-pat.md](github-pat.md)) |
+| `github-cli` | GitHub CLI (`gh`) install (`ghVersion` arg, empty = latest apt package) + git-identity setup; GitHub auth rides the built-in agent's proxy-managed `github` credential (see [github-pat.md](github-pat.md)) |
 | `repo-clone` | Clones extra GitHub repositories (from the `repositories` kit argument) into the workspace at creation, via the built-in proxy-managed `github` credential; repos the token cannot access are skipped with a warning (see the mixin's README) |
 | `uniform` | Uniform DXP egress: docs site, dashboard + Management API (uniform.app), Edge Delivery API (uniform.global, incl. EU + image CDN), proxy-managed `x-api-key` auth (see [uniform-api-key.md](uniform-api-key.md)) |
 | `omnium` | Omnium OMS/e-commerce egress: REST API hosts (production/test/dev, each with Swagger), tech docs, proxy-managed `Authorization: Bearer` auth (see [omnium-api-key.md](omnium-api-key.md)) |
-| `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry (pnpm/npm/npx), pnpm.io docs; pnpm installs gated to versions published ≥24h ago; check-and-install (nvm node + pnpm) when the base image lacks them |
+| `node` | Node.js toolchain egress: nodejs.org (nvm installs), npm registry (pnpm/npm/npx), pnpm.io docs; pnpm installs gated to versions published ≥24h ago; check-and-install (nvm node + pnpm) when the base image lacks them; `nodeVersion`/`pnpmVersion`/`nvmVersion` args (empty = latest) |
 | `openapi-ts` | openapi-ts.dev docs egress for the openapi-typescript + openapi-fetch packages |
-| `dotnet` | .NET/NuGet egress + telemetry opt-out; check-and-install (SDK via apt feed / dot.net script) when the base image lacks dotnet |
-| `nikcio-openapi-codegen` | Installs the openapi-code-generator .NET global tool (Nikcio.OpenApiCodeGen — the `openapi-codegen` CLI) + openapi.nikcio.com docs egress; needs `dotnet`; ensures the SDK first |
-| `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer), python.org docs; check-and-install (uv + CPython) when the base image lacks python3 |
-| `go` | Go toolchain egress: module proxy + checksum DB (`go get`/`go install`, GOTOOLCHAIN toolchain downloads), dl.google.com (go.dev/dl artifacts), go.dev/golang.org docs; check-and-install (official tarball) when the base image lacks go |
-| `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs; check-and-install (rustup) when the base image lacks cargo |
+| `dotnet` | .NET/NuGet egress + telemetry opt-out; check-and-install (SDK via apt feed / dot.net script) when the base image lacks dotnet; `dotnetVersion` arg (empty = latest SDK) |
+| `nikcio-openapi-codegen` | Installs the openapi-code-generator .NET global tool (Nikcio.OpenApiCodeGen — the `openapi-codegen` CLI; `codegenVersion` arg, empty = latest) + openapi.nikcio.com docs egress; needs `dotnet`; ensures the SDK first (`dotnetVersion` arg, empty = latest) |
+| `python` | Python toolchain egress: PyPI index + package files (uv/pip), astral.sh (uv installer), python.org docs; check-and-install (uv + CPython) when the base image lacks python3; `pythonVersion`/`uvVersion` args (empty = latest) |
+| `go` | Go toolchain egress: module proxy + checksum DB (`go get`/`go install`, GOTOOLCHAIN toolchain downloads), dl.google.com (go.dev/dl artifacts), go.dev/golang.org docs; check-and-install (official tarball) when the base image lacks go; `goVersion` arg (empty = latest) |
+| `rust` | Rust toolchain egress: crates.io index/API + package CDN (cargo), static.rust-lang.org (rustup), sh.rustup.rs (installer), rust-lang.org + docs.rs docs; check-and-install (rustup) when the base image lacks cargo; `rustVersion` (empty = stable) + `profile` args |
 | `docker-hub` | Docker Hub registry egress for the in-sandbox Docker engine |
 | `gcr` | Google Container Registry egress for the in-sandbox Docker engine |
 | `ghcr` | GitHub Container Registry egress for the in-sandbox Docker engine |
 | `mcr` | Microsoft Container Registry egress for the in-sandbox Docker engine |
-| `playwright` | Playwright + Chromium headless shell (smallest download); installs node via nvm when the base image lacks one |
+| `playwright` | Playwright + Chromium headless shell (smallest download; `playwrightVersion` arg, empty = latest); installs node via nvm when the base image lacks one (`nodeVersion`/`nvmVersion` args, empty = latest) |
 | `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the base image has it |
 | `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh); check-and-install when the base image lacks it |
-| `herdr` | The [Herdr](https://herdr.dev) CLI — the agent runtime: a background server that owns the agents' terminals, so agents keep working when you detach and can be resumed from any machine; check-and-install at creation |
+| `herdr` | The [Herdr](https://herdr.dev) CLI — the agent runtime: a background server that owns the agents' terminals, so agents keep working when you detach and can be resumed from any machine; check-and-install at creation (`herdrVersion` arg, empty = latest) |
 | `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the examples do not compose it |
 
 Network hosts per mixin are listed at the top of each `mixins/<area>/spec.yaml`, and each mixin ships a `mixins/<area>/README.md` with usage and details.

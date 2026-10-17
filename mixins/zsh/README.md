@@ -21,6 +21,15 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 - The agent's `~/.zshrc` is agent-owned — the agent is free to customize plugins/themes afterwards.
 - Scripts and `exec` calls still run through bash; only interactive/login shells pick up zsh.
 
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `zshVersion` | *(empty = latest apt candidate)* | zsh apt package version (`5.9-8ubuntu3`) |
+| `ohMyZshRef` | *(empty = master HEAD)* | Oh My Zsh git ref to clone (`master`, a tag, …) |
+
+Pass values with `--kit-arg zsh.ohMyZshRef=master` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+
 ## Network domains
 
 | Domain | Why |

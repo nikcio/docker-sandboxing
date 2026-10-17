@@ -20,6 +20,14 @@ The install runs at **sandbox creation only**. Skipped when the base image alrea
 - Adds Docker's apt repo and keyring, then installs the `docker-sbx` package from it, using an isolated apt list directory (the same pattern as the other mixins) so the sandbox's apt state stays clean.
 - The Docker apt repo stays configured so `apt upgrade` keeps the CLI current.
 
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `sbxVersion` | *(empty = latest apt candidate)* | `docker-sbx` apt package version (`0.23.0-1~ubuntu.24.04~noble`) |
+
+Pass values with `--kit-arg sbx.sbxVersion=0.23.0-1` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+
 ## Network domains
 
 | Domain | Why |

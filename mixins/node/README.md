@@ -17,8 +17,18 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 ## How it works
 
-- **Check-and-install**: when `node`/`pnpm` are missing, clones nvm into the agent home, installs Node 24 as the default, symlinks `node`/`npm`/`npx`/`pnpm`/… onto `PATH`, and exports `NVM_DIR` via `/etc/sandbox-persistent.sh` — the same nvm-in-agent-home layout as the base image.
+- **Check-and-install**: when `node`/`pnpm` are missing, clones nvm into the agent home, installs the latest Node (or a pinned version) as the default, symlinks `node`/`npm`/`npx`/`pnpm`/… onto `PATH`, and exports `NVM_DIR` via `/etc/sandbox-persistent.sh` — the same nvm-in-agent-home layout as the base image.
 - **pnpm version gate**: sets `PNPM_CONFIG_MINIMUM_RELEASE_AGE=1440`, so pnpm refuses versions published less than 24h ago — a supply-chain guard against freshly published compromised packages.
+
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `nodeVersion` | *(empty = latest)* | Node.js version to install (`24`, `22.11.0`, …) |
+| `pnpmVersion` | *(empty = latest)* | PNPM version to install (`10`, `12.14.0`, …) |
+| `nvmVersion` | *(empty = latest release)* | NVM version to clone (`v0.40.8`) |
+
+Pass values with `--kit-arg node.nodeVersion=22` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

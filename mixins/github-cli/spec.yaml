@@ -4,7 +4,13 @@ name: github-cli
 displayName: GitHub CLI
 description: >
   Installs Github CLI
-version: 0.5.2
+version: 0.6.0
+
+args:
+  ghVersion:
+    default: ""
+    description: GitHub CLI version to install (empty = latest apt package)
+    pattern: '^$|^[0-9]+(\.[0-9]+)*$'
 
 setup:
   install:
@@ -16,7 +22,10 @@ setup:
         && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
         && install -m 0755 -d /var/lib/apt/sbx-lists
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq
-        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends gh
+        && GH_PKG="gh"
+        && GH_SPEC="${{ kit.args.ghVersion }}"
+        && if [ -n "${GH_SPEC}" ]; then GH_PKG="gh=${GH_SPEC}"; fi
+        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends ${GH_PKG}
         && rm -rf /var/lib/apt/sbx-lists
       description: Install the gh CLI (skipped when the base image already has it)
 

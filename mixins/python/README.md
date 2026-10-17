@@ -17,9 +17,18 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 ## How it works
 
-- **Check-and-install**: when `python3` (with working pip) is missing, installs `uv` to `/usr/local/bin`, then `uv python install 3.12` as the `agent` user into the agent home, and symlinks `python3`/`python` onto `PATH` — the same uv-managed layout as the base images.
+- **Check-and-install**: when `python3` (with working pip) is missing, installs `uv` to `/usr/local/bin`, then installs the latest stable CPython (or a pinned version) as the `agent` user into the agent home, and symlinks `python3`/`python` onto `PATH` — the same uv-managed layout as the base images.
 - `UV_PYTHON_INSTALL_DIR` and `UV_LINK_MODE=copy` are exported via `/etc/sandbox-persistent.sh` so login shells use the same interpreter store.
 - `python3-venv` is installed as a best-effort for venv workflows.
+
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `pythonVersion` | *(empty = latest stable)* | CPython version for uv to install (`3.13`, `3.12.7`, …) |
+| `uvVersion` | *(empty = latest)* | uv version to install (`0.12.0`) |
+
+Pass values with `--kit-arg python.pythonVersion=3.13` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

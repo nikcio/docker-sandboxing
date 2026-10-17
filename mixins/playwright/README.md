@@ -17,10 +17,20 @@ The install runs at **sandbox creation only**.
 
 ## How it works
 
-- **Node**: when `node` is missing, installs it via nvm exactly like the `node` mixin (Node 24 default, symlinks onto `PATH`, nvm in the agent home).
+- **Node**: when `node` is missing, installs it via nvm exactly like the `node` mixin (latest Node default, symlinks onto `PATH`, nvm in the agent home).
 - **Playwright**: `npm install -g playwright`, then `npx playwright install --with-deps chromium-headless-shell` — `--with-deps` pulls Chromium's system libraries via apt. Skipped when the headless shell is already installed.
 - Browsers land in `/home/agent/.cache/ms-playwright`, chowned to the `agent` user.
 - The sandbox has no display server, so everything runs headless.
+
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `playwrightVersion` | *(empty = latest)* | Playwright version to install (`1.60.0`) |
+| `nodeVersion` | *(empty = latest)* | Node.js version installed via nvm when the base image lacks node (`24`) |
+| `nvmVersion` | *(empty = latest release)* | NVM version to clone (`v0.40.8`) |
+
+Pass values with `--kit-arg playwright.playwrightVersion=1.60.0` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

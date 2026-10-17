@@ -17,7 +17,7 @@ For local development, point `--kit` at the directory instead: `sbx run --kit ./
 
 ## How it works
 
-- **Install**: when `opencode` is missing from `PATH`, installs Node via nvm (when npm is missing too) and then `npm install -g opencode-ai@latest`. A no-op on images that already ship opencode.
+- **Install**: when `opencode` is missing from `PATH`, installs Node via nvm (when npm is missing too) and then `npm install -g opencode-ai@latest` (or a pinned version). A no-op on images that already ship opencode.
 - **Base config**: ships a permissive `~/.config/opencode/opencode.jsonc` (edit/bash/webfetch allowed — the sandbox is the isolation boundary) and points `OPENCODE_CONFIG` at the combined file.
 - **Locale env**: sets `LANG`/`LC_ALL` to `C.UTF-8` — the template images ship no locale env, and without it man-db's profile script prints `manpath: can't set the locale` on every shell start. `C.UTF-8` is always present on glibc, no `locale-gen` needed.
 - **Fragment merge**: a startup command merges every `~/.config/opencode/mixins.d/*.{json,jsonc}` fragment into the combined config with `jq`:
@@ -31,6 +31,16 @@ For local development, point `--kit` at the directory instead: `sbx run --kit ./
     so `OPENCODE_CONFIG` always points at a loadable file.
   - The output is regenerated at every start — edit the owning mixin in
     this repo (or a `mixins.d/` fragment) and restart the sandbox.
+
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `opencodeVersion` | *(empty = latest)* | OpenCode version to install (`1.19.0`) |
+| `nodeVersion` | *(empty = latest)* | Node.js version installed via nvm when the base image lacks npm (`24`) |
+| `nvmVersion` | *(empty = latest release)* | NVM version to clone (`v0.40.8`) |
+
+Pass values with `--kit-arg opencode.opencodeVersion=1.19.0` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

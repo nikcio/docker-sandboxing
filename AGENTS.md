@@ -14,6 +14,7 @@ Use based on your task:
 
 - mixins/* - Premade, reusable config fragments for sandboxes (kind: mixin). Must work in isolation and composition. Each mixin owns its install steps, env vars, and all the network domains its traffic needs (apt mirrors, revocation endpoints, download hosts).
   - Each mixin should have a `spec.yaml` and a `README.md` describing its purpose, usage, and any special instructions. Keep it simple.
+  - Every software version a mixin installs or pins MUST be settable through a declared `args` entry (e.g. `version`) referenced as `${{ kit.args.version }}` in the spec, and MUST default to the latest upstream version when the installer supplies no value. Never hardcode a software version in a command, URL, or package name — read it from an arg (or resolve latest dynamically when the arg is unset).
 - examples/*.sbxenv.yaml - Ready-to-copy environment examples per stack, showing how to compose the mixins.
 
 ## Development

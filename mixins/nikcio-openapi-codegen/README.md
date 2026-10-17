@@ -20,6 +20,15 @@ Needs the `dotnet` mixin — the install ensures the SDK first when it is missin
 - **SDK**: when `dotnet` is missing, installs it the same way the `dotnet` mixin does (apt feed, falling back to the dot.net install script).
 - **Tool**: `dotnet tool install --global Nikcio.OpenApiCodeGen` as the `agent` user; `~/.dotnet/tools` is added to `PATH` via `/etc/sandbox-persistent.sh`. Skipped when `openapi-codegen` is already on `PATH`.
 
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `codegenVersion` | *(empty = latest)* | Nikcio.OpenApiCodeGen version to install (`1.6.2`) |
+| `dotnetVersion` | *(empty = latest SDK)* | .NET SDK version installed when missing (`9.0.100`) |
+
+Pass values with `--kit-arg nikcio-openapi-codegen.codegenVersion=1.6.2` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+
 ## Network domains
 
 | Domain | Why |
