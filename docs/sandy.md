@@ -50,10 +50,10 @@ Packages are pinned exactly and installs reject anything published in the last 2
 
 If `pnpm tauri dev` on Windows fails with `link: extra operand '…'`, the wrong `link.exe` was found on your PATH — Git Bash ships a Unix `link` tool with the same name as the MSVC linker. Build from a developer shell instead so the MSVC toolchain comes first:
 
-- **PowerShell**: `Import-Module "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"; Enter-VsDevShell -VsInstallPath "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools" -SkipAutomaticLocation` (adjust the path to your VS/BuildTools install), or
-- launch the **x64 Native Tools Command Prompt for VS 2022** from the Start menu and run the commands there.
+- **PowerShell**: `Import-Module "C:\Program Files\Microsoft Visual Studio\18\BuildTools\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"; Enter-VsDevShell -VsInstallPath "C:\Program Files\Microsoft Visual Studio\18\BuildTools" -SkipAutomaticLocation` (adjust `18\BuildTools` to your edition — find the folder under `C:\Program Files\Microsoft Visual Studio\`), or
+- launch the **x64 Native Tools Command Prompt for VS** from the Start menu and run the commands there.
 
-The VS Build Tools installer must include the **Desktop development with C++** workload.
+The VS Build Tools installer must include the **Desktop development with C++** workload (`winget install Microsoft.VisualStudio.BuildTools`, currently major version 18 / "Visual Studio 2026").
 
 ## Notes
 
