@@ -86,7 +86,7 @@ setup:
               # jq-less fallback: a single fragment needs no merging.
               cp -- "${fragments[0]}" "$tmp"
           else
-              fail "jq is not available and there are ${#fragments[@]} fragments to merge — install jq (the template images ship it)"
+              fail "jq is not available and there are ${#fragments[@]} fragments to merge — install jq (the base image ships it)"
           fi
 
           {

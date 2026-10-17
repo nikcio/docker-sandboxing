@@ -1,7 +1,7 @@
 # opencode-update
 
 Rolls opencode to the newest npm release at sandbox creation — the
-template images bake a fixed opencode version, and this mixin updates it.
+base images bake a fixed opencode version, and this mixin updates it.
 
 ## Usage
 
@@ -26,7 +26,7 @@ no start cost.
   left alone).
 - Otherwise runs `npm install -g --prefix <opencode-prefix> opencode-ai@latest`
   as the `agent` user, in-place, and prints the new version.
-- Compose the `node` mixin when the template image lacks npm — the update
+- Compose the `node` mixin when the base image lacks npm — the update
   step needs it.
 
 ## Network domains

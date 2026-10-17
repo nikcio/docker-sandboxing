@@ -18,7 +18,7 @@ setup:
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends gh
         && rm -rf /var/lib/apt/sbx-lists
-      description: Install the gh CLI (skipped when the template image already has it)
+      description: Install the gh CLI (skipped when the base image already has it)
 
   startup:
     # Force git committer identity from GH_TOKEN and prevent the agent from overriding it

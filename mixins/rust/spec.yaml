@@ -20,7 +20,7 @@ setup:
         ln -sf /home/agent/.cargo/bin/* /usr/local/bin/;
         { echo 'export RUSTUP_HOME=/home/agent/.rustup'; echo 'export CARGO_HOME=/home/agent/.cargo'; } >> /etc/sandbox-persistent.sh;
         RUSTUP_HOME=/home/agent/.rustup CARGO_HOME=/home/agent/.cargo cargo --version
-      description: Ensure the Rust toolchain is available (install when the template image lacks it)
+      description: Ensure the Rust toolchain is available (install when the base image lacks it)
 
 permissions:
   network:

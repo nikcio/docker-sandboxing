@@ -19,7 +19,7 @@ setup:
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends fonts-noto-color-emoji
         && rm -rf /var/lib/apt/sbx-lists
         && rm -f /etc/apt/sources.list.d/google-chrome.list
-      description: Install Google Chrome (skipped when the template image already has it)
+      description: Install Google Chrome (skipped when the base image already has it)
 
 permissions:
   network:

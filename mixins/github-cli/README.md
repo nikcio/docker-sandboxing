@@ -32,7 +32,7 @@ fail until the GitHub hosts are allowed.
   repositories and permissions the agent needs.
 - **Auth domains**: `api.github.com`, `github.com`, `uploads.github.com`,
   and `raw.githubusercontent.com`.
-- `gh` itself is on `PATH` after creation. If the template image does not
+- `gh` itself is on `PATH` after creation. If the base image does not
   ship `gh`, the mixin installs it from the official `cli.github.com` apt
   repository (skipped when `gh` is already available).
 - **Git identity**: a startup command resolves the GitHub login, name,

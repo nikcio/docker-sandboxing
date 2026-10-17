@@ -25,8 +25,8 @@ git worktree remove /tmp/opencode/<topic>   # after the PR is up
   untracked files into your commit. Stage paths explicitly, and remove your
   untracked files from a shared checkout as soon as they are committed on
   your branch.
-- **Stale reads.** Re-read shared files (`images.json`,
-  `.release-please-config.json`, `README.md`, `AGENTS.md`, `docs/`) in your
+- **Stale reads.** Re-read shared files (`.release-please-config.json`,
+  `README.md`, `AGENTS.md`, `docs/`) in your
   worktree before editing them — an in-flight PR may have changed them.
   Keep shared-file hunks additive so parallel PRs merge cleanly.
 - **Wrong tree.** `git status` in the main checkout says nothing about your

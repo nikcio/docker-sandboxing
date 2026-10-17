@@ -18,7 +18,7 @@ For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/browser <agent> .`
 
 The install runs at **sandbox creation only**. On
-template images that already ship Chrome the install is a no-op.
+base images that already ship Chrome the install is a no-op.
 
 ## How it works
 

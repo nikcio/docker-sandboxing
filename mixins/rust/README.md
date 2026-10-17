@@ -1,7 +1,7 @@
 # rust
 
 Rust toolchain egress for the sandbox: a rustup-managed stable toolchain
-(when the template image lacks one), cargo, crates.io access, and docs
+(when the base image lacks one), cargo, crates.io access, and docs
 hosts.
 
 ## Usage
@@ -20,7 +20,7 @@ For local development, point `--kit` at the directory instead:
 The install runs at **sandbox creation only** and needs egress — the
 domains in the table below plus the Ubuntu apt mirrors
 (`archive.ubuntu.com`/`security.ubuntu.com`) for its `apt-get` calls. On
-template images that already ship cargo the install is a cheap no-op.
+base images that already ship cargo the install is a cheap no-op.
 
 ## How it works
 
@@ -29,7 +29,7 @@ template images that already ship cargo the install is a cheap no-op.
   as the `agent` user with `RUSTUP_HOME`/`CARGO_HOME` in the agent home
   (stable toolchain, plus `rust-analyzer`), and symlinks the cargo bin
   directory onto `PATH` — the same agent-owned rustup layout as the
-  template images.
+  base images.
 - The env vars are exported via `/etc/sandbox-persistent.sh` so login
   shells pick them up.
 

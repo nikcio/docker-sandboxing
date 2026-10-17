@@ -1,7 +1,7 @@
 # node
 
 Node.js toolchain egress for the sandbox: nvm-managed Node + pnpm install
-(when the template image lacks them), the npm registry for package
+(when the base image lacks them), the npm registry for package
 installs, and docs hosts.
 
 ## Usage
@@ -20,7 +20,7 @@ For local development, point `--kit` at the directory instead:
 The install runs at **sandbox creation only** and needs egress — the
 domains in the table below plus the Ubuntu apt mirrors
 (`archive.ubuntu.com`/`security.ubuntu.com`) for its `apt-get` calls. On
-template images that already ship Node the install is a cheap no-op.
+base images that already ship Node the install is a cheap no-op.
 
 ## How it works
 
@@ -28,7 +28,7 @@ template images that already ship Node the install is a cheap no-op.
   the agent home, installs Node 24 as the default, symlinks
   `node`/`npm`/`npx`/`pnpm`/… onto `PATH`, and exports `NVM_DIR` via
   `/etc/sandbox-persistent.sh` — the same nvm-in-agent-home layout as the
-  template images.
+  base images.
 - **pnpm version gate**: sets `PNPM_CONFIG_MINIMUM_RELEASE_AGE=1440`, so
   pnpm refuses versions published less than 24h ago — a supply-chain
   guard against freshly published compromised packages.
