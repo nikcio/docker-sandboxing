@@ -1,5 +1,8 @@
+packages:
+  - "."
+
+# Project settings — these take precedence over any user/global pnpm config.
 # Reject packages published less than 24 hours ago (supply-chain protection).
 minimumReleaseAge: 1440
-
 # All versions are pinned exactly; no caret/tilde ranges.
 savePrefix: ""
