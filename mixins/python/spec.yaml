@@ -5,7 +5,7 @@ displayName: Python / uv
 description: >
   Adds a uv-managed Python interpreter to the sandbox, with the uv tool for
   package and venv management.
-version: 0.3.0
+version: 0.3.1
 
 setup:
   install:
@@ -51,3 +51,20 @@ permissions:
       # www.python.org/ftp, devguide.python.org lifecycles, peps.python.org)
       - python.org:443
       - "*.python.org:443"
+
+      # Ubuntu apt mirrors: the install step calls apt-get when the
+      # base image lacks the tool. ports.ubuntu.com carries arm64 packages.
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      - ports.ubuntu.com
+
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
+      # common public CAs. Hit by curl/git/node when they do HTTPS
+      # revocation checks during the install.
+      - "*.digicert.com"
+      - "*.symcd.com"
+      - "*.symcb.com"
+      - "*.ws.symantec.com"
+      - "*.sectigo.com"
+      - "*.usertrust.com"
+      - "*.globalsign.com"

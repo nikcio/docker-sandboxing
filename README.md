@@ -23,7 +23,7 @@ Copy the example matching your stack into your project's root and rename it `sbx
 | Setting | What to do |
 | ------- | ---------- |
 | `name:` | Set it to your project's name. |
-| `kits:` | Drop the lines your project doesn't need — see the mixin reference below; `global-opencode-config` is required when you compose a model provider. |
+| `kits:` | Drop the lines your project doesn't need — see the mixin reference below; `opencode` is required when you compose a model provider. |
 | `workspace.path: .` | Leave as is — it targets your repo. |
 
 ### 3. Run it
@@ -60,9 +60,9 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 
 | Mixin | Adds | When to compose |
 | ----- | ---- | -------- |
-| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`opencode-zeldoc`, `opencode-copilot`) — the provider fragment merges through it |
+| `opencode` | OpenCode itself: installs the CLI via npm when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env (`LANG`/`LC_ALL`) | with a model provider (`opencode-zeldoc`, `opencode-copilot`) — the provider fragment merges through it |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
-| `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress) — add the kit line for fresh opencode on every sandbox | opt-in |
+| `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry + opencode-host egress) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
 | `opencode-copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
 | `github-cli` | GitHub CLI (`gh`) + proxy-managed GitHub auth | — |
@@ -92,11 +92,9 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 Everything below is for developing the mixins in this repo.
 
 ```text
-├── kit/                              # the base kit (kind: sandbox): Docker's built-in
-│                                     #   opencode template image + opencode entrypoint;
-│                                     #   the stack toolchains come from mixins/<stack>
 ├── mixins/
-│   ├── global-opencode-config/       # owns OPENCODE_CONFIG: permissive OpenCode config
+│   ├── opencode/                     # OpenCode itself: CLI install (npm) + owns
+│   │                                 #   OPENCODE_CONFIG: permissive OpenCode config
 │   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
 │   │                                 #   merge fed by provider mixins' mixins.d/ fragments
 │   ├── env-guard/                    # the workspace .env guard (startup command)
@@ -110,22 +108,23 @@ Everything below is for developing the mixins in this repo.
 ├── sbxenv.yaml                       # this repo's dev sandbox: local paths into the working copy
 ├── opencode.jsonc                    # opencode settings for working in this repo
 └── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in opencode kit —
-                                      #   the image the kit runs on; nothing loads it
+                                      #   what the built-in `opencode` agent runs on; nothing loads it
 ```
 
-The sandbox runs on Docker's built-in
+The sandboxes run Docker's built-in agents (e.g. `agent: opencode`, on Docker's
 [`docker/sandbox-templates:opencode-docker`](https://docs.docker.com/ai/sandboxes/)
-image — no images are published from this repo, and there is one base kit
-(`kit/`). Stack toolchains (Node, .NET, Python, Go, Rust) install at sandbox
-creation via the `mixins/<stack>` mixins.
+image) — no images are published from this repo, and there are no kits. Each
+mixin owns its own install steps, locale env, and network rules; stack
+toolchains (Node, .NET, Python, Go, Rust) install at sandbox creation via the
+`mixins/<stack>` mixins.
 
 ### Working on the repo
 
 Work in a git worktree branched from `main` ([agent-guidance/worktrees.md](agent-guidance/worktrees.md)) — other agent sessions share this checkout concurrently.
 
 ```bash
-sbx kit validate kit/                  # validate a kit or mixin after edits (requires being signed in to Docker; `sbx kit pack <dir> -o /tmp/x.zip` works offline)
-sbx env run                            # dev sandbox: kit/ + mixins/ loaded from the working copy
+sbx kit pack mixins/opencode -o /tmp/x.zip   # validate a mixin after edits (works offline; `sbx kit validate` requires being signed in to Docker)
+sbx env run                                  # dev sandbox: mixins/ loaded from the working copy
 ```
 
-Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`. Releases are cut by release-please from Conventional Commits on `main` — see [agent-guidance/versioning.md](agent-guidance/versioning.md) and [agent-guidance/commit-messages.md](agent-guidance/commit-messages.md). Repo conventions: [AGENTS.md](AGENTS.md).
+Mixin changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`. Releases are cut by release-please from Conventional Commits on `main` — see [agent-guidance/versioning.md](agent-guidance/versioning.md) and [agent-guidance/commit-messages.md](agent-guidance/commit-messages.md). Repo conventions: [AGENTS.md](AGENTS.md).

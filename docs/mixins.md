@@ -2,21 +2,21 @@
 
 The premade mixins in this repo each add exactly one capability area to the sandbox: network egress rules, environment settings, install steps, and a note for the agent. The sandbox network policy is deny-by-default — the union of the composed mixins' rules is the only outbound traffic. Drop the mixin lines your project doesn't need from the `kits:` list in your `sbxenv.yaml`.
 
-## Any mixin on the base kit
+## Any mixin on the built-in agent
 
-Every toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins (`playwright`, `sbx`, `nikcio-openapi-codegen`) carry a self-contained check-and-install `setup.install` step: at sandbox creation it verifies the tool is present and installs it when the kit's base image lacks it. The built-in Docker template image (`docker/sandbox-templates:opencode-docker`) ships no stack toolchain, so the stack mixins do the install. Compose, for example, the `python` mixin onto the base kit and the sandbox gets a working `python3` + `uv`; no rebuild needed.
+Every toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins (`playwright`, `sbx`, `nikcio-openapi-codegen`, `opencode`) carry a self-contained check-and-install `setup.install` step: at sandbox creation it verifies the tool is present and installs it when the base image lacks it. The built-in Docker template image (`docker/sandbox-templates:opencode-docker`, which the built-in `opencode` agent runs on) ships no stack toolchain, so the stack mixins do the install. Compose, for example, the `python` mixin onto the built-in `opencode` agent and the sandbox gets a working `python3` + `uv`; no rebuild needed.
 
 Rules of thumb:
 
 - Install paths and env match the mixin-owned toolchains (same `DOTNET_ROOT`, nvm in the agent home, uv-managed CPython, `/usr/local/go`, agent-owned rustup).
-- Install steps run at **creation only** (kit changes never apply to running sandboxes) and need egress: the mixin owning the download host (e.g. `node` for npm installs, `dotnet` for the .NET SDK feed) plus the Ubuntu apt mirrors (`archive.ubuntu.com`/`security.ubuntu.com`) when the step calls `apt-get`. A blocked download fails the install step — check `sbx policy log`.
+- Install steps run at **creation only** (mixin changes never apply to running sandboxes) and need egress: each mixin owns the domains its install touches (download host, the Ubuntu apt mirrors `archive.ubuntu.com`/`security.ubuntu.com`/`ports.ubuntu.com` when the step calls `apt-get`, and the CA revocation endpoints). A blocked download fails the install step — check `sbx policy log`.
 - When the tool is already present the check is a cheap no-op, so keeping the install steps in every composition is safe.
 
 ## Catalog
 
 | Mixin | Adds |
 | ----- | ---- |
-| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
+| `opencode` | OpenCode itself: installs the CLI via npm when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env. Required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress). Composed by the examples — drop the line if you don't want opencode auto-updated; runs once at creation, no start cost |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
@@ -40,7 +40,7 @@ Rules of thumb:
 | `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the base image has it |
 | `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh); check-and-install when the base image lacks it |
 | `herdr` | The [Herdr](https://herdr.dev) CLI — the agent runtime: a background server that owns the agents' terminals, so agents keep working when you detach and can be resumed from any machine; check-and-install at creation |
-| `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the base kit and examples do not compose it |
+| `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the examples do not compose it |
 
 Network hosts per mixin are listed at the top of each `mixins/<area>/spec.yaml`, and each mixin ships a `mixins/<area>/README.md` with usage and details.
 
@@ -49,26 +49,26 @@ Network hosts per mixin are listed at the top of each `mixins/<area>/spec.yaml`,
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node` |
-| .NET only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet` |
-| .NET + OpenAPI codegen (C# models) | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
-| Python only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `python` |
-| Go only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `go` |
-| Rust only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `rust` |
-| Node + typed API client (openapi-typescript) | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
-| Node frontend with Uniform | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
-| Browser automation | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `playwright` |
+| Node only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node` |
+| .NET only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet` |
+| .NET + OpenAPI codegen (C# models) | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
+| Python only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `python` |
+| Go only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `go` |
+| Rust only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `rust` |
+| Node + typed API client (openapi-typescript) | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
+| Node frontend with Uniform | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
+| Browser automation | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `playwright` |
 
 Notes:
 
-- `global-opencode-config` is the only merge path for model-provider config fragments — required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`). `env-guard` (the no-.env policy) is optional.
+- `opencode` is the only merge path for model-provider config fragments — required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`). `env-guard` (the no-.env policy) is optional.
 - The `playwright` mixin and `sbx` run `apt` at creation — their install steps need the Ubuntu apt mirrors. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker engine pulls from.
 - Every set should include at least one model provider (`opencode-zeldoc` and/or `opencode-copilot`). Add `opencode-update` to keep opencode current: the built-in template image bakes a fixed opencode version, and this mixin rolls it to the newest npm release at creation.
 
 ## Model providers (opencode-zeldoc / opencode-copilot)
 
-Provider mixins don't fight over one config file: each ships a pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json` inside the sandbox, and the `global-opencode-config` mixin merges all fragments into the single config OpenCode loads via `OPENCODE_CONFIG` at every start. Compose `global-opencode-config` with any provider mixin — the provider config fragment merges through it:
+Provider mixins don't fight over one config file: each ships a pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json` inside the sandbox, and the `opencode` mixin merges all fragments into the single config OpenCode loads via `OPENCODE_CONFIG` at every start. Compose `opencode` with any provider mixin — the provider config fragment merges through it:
 
 - `enabled_providers` lists are **unioned** — compose `opencode-zeldoc` and `opencode-copilot` together and both stay selectable with `/models`.
 - Fragments merge in filename order and later fragments win conflicts, but **no fragment sets the default model** — the project-level `opencode.jsonc` owns it. Commit one in the repo root (see [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or `"model": "github-copilot/<model-id>"`; without it opencode falls back to its own default, and `/models` always works per session.

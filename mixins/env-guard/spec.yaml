@@ -11,7 +11,7 @@
 # a symlink removes the link, not the file it points at.
 #
 # Optional — compose it to enforce the no-.env policy. Pairs with the
-# mixins/global-opencode-config (permissive OpenCode config + provider
+# mixins/opencode (permissive OpenCode config + provider
 # merge). No network rules: capability egress comes from the other mixins.
 schemaVersion: "2"
 kind: mixin

@@ -1,6 +1,6 @@
 # Docker sandboxing
 
-A repository of premade mixins for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/): reusable building blocks (toolchains, tools, network egress, model providers) that compose with Docker's built-in template image into sandboxed VMs for coding agents.
+A repository of premade mixins for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/): reusable building blocks (toolchains, tools, network egress, model providers) that compose with Docker's built-in agents into sandboxed VMs for coding agents.
 
 ## Documentation
 
@@ -12,8 +12,7 @@ Use based on your task:
 
 ## Artifacts
 
-- kit/ - The base sandbox (kind: sandbox) running on Docker's built-in template image (docker/sandbox-templates:opencode-docker). Stack toolchains come from the mixins, not the image.
-- mixins/* - Premade, reusable config fragments for sandboxes (kind: mixin). Must work in isolation and composition. List all required domains and software for usage on a base kit.
+- mixins/* - Premade, reusable config fragments for sandboxes (kind: mixin). Must work in isolation and composition. Each mixin owns its install steps, env vars, and all the network domains its traffic needs (apt mirrors, revocation endpoints, download hosts).
   - Each mixin should have a `spec.yaml` and a `README.md` describing its purpose, usage, and any special instructions. Keep it simple.
 - examples/*.sbxenv.yaml - Ready-to-copy environment examples per stack, showing how to compose the mixins.
 

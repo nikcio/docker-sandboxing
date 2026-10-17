@@ -4,7 +4,7 @@ name: node
 displayName: Node.js / NVM / PNPM
 description: >
   Adds Node.js with nvm and PNPM.
-version: 0.3.1
+version: 0.3.2
 
 setup:
   install:
@@ -65,3 +65,20 @@ permissions:
       # pnpm's own errors point here (e.g. the minimumReleaseAge gate
       # above links pnpm.io/settings#minimumreleaseageexclude)
       - pnpm.io:443
+
+      # Ubuntu apt mirrors: the install step calls apt-get when the base
+      # image lacks the tool. ports.ubuntu.com carries arm64 packages.
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      - ports.ubuntu.com
+
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
+      # common public CAs. Hit by curl/git/node when they do HTTPS
+      # revocation checks during the install.
+      - "*.digicert.com"
+      - "*.symcd.com"
+      - "*.symcb.com"
+      - "*.ws.symantec.com"
+      - "*.sectigo.com"
+      - "*.usertrust.com"
+      - "*.globalsign.com"

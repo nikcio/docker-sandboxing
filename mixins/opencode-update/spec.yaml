@@ -5,7 +5,7 @@ displayName: OpenCode update
 description: >
   Rolls opencode to the newest npm release at sandbox creation (the
   base images bake a fixed opencode version).
-version: 0.1.0
+version: 0.1.1
 
 setup:
   install:
@@ -23,3 +23,6 @@ permissions:
   network:
     allow:
       - registry.npmjs.org:443
+
+      # opencode update checks (latest-release lookup)
+      - models.opencode.ai:443
