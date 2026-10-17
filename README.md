@@ -1,6 +1,6 @@
 # docker-sandboxing
 
-A collection of premade mixins for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/): reusable building blocks that add stack toolchains, tools, network egress, and model providers to a sandboxed VM in your own repo. Copy the example for your stack into your project, run one command, and your coding agent starts in a VM with the toolchain installed at creation. The sandboxes work with any coding agent — the shipped examples use OpenCode.
+A collection of premade mixins for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/): reusable building blocks that add stack toolchains, tools, network egress, and model providers to a sandboxed VM in your own repo. Copy the example for your stack into your project, run one command, and your coding agent starts in a VM with the toolchain installed at creation.
 
 The sandbox is the isolation boundary: outbound network is deny-by-default and API keys are injected by a proxy — the sandbox only ever sees placeholders.
 

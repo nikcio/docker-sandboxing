@@ -1,6 +1,6 @@
 # Docker sandboxing
 
-A repository of premade mixins for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/): reusable building blocks (toolchains, tools, network egress, model providers) that compose with Docker's built-in template image into sandboxed VMs for coding agents. The shipped examples use OpenCode, but the sandboxes work with any coding agent.
+A repository of premade mixins for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/): reusable building blocks (toolchains, tools, network egress, model providers) that compose with Docker's built-in template image into sandboxed VMs for coding agents.
 
 ## Documentation
 
