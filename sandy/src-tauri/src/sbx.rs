@@ -109,13 +109,16 @@ pub fn is_ssh_set_up() -> Result<bool, String> {
     }
 }
 
-/// Open the browser for Docker OAuth and wait for completion.
+/// Open the browser for Docker OAuth and wait for completion. If the user
+/// is already signed in, `sbx login` reports that and exits 0 — treat it as
+/// success instead of a failure.
 pub fn run_login() -> Result<String, String> {
     let out = run_capture(&["login"])?;
-    if !is_signed_in()? {
-        return Err(format!("login did not complete:\n{}", out));
+    if is_signed_in()? {
+        Ok(out)
+    } else {
+        Err(format!("login did not complete:\n{}", out))
     }
-    Ok(out)
 }
 
 /// Install the sbx CLI for the current platform. Returns combined command
@@ -521,6 +524,10 @@ weird  paused  /home/name/state
 
         // setup ssh: exit 0, no output.
         assert_eq!(run_capture(&["setup", SSH_SETUP_COMMAND]), Ok(String::new()));
+
+        // login with the mock (whoami exits 0, so "already signed in"
+        // reports from the real CLI are treated as success, not failure).
+        assert!(run_login().is_ok());
 
         // list_sandboxes: plain table -> parsed rows.
         let rows = list_sandboxes().expect("plain ls should parse");

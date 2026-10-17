@@ -3,7 +3,7 @@ import { SetupStatus, SandboxInfo, listSandboxes } from "./api";
 
 interface Props {
   status: SetupStatus | null;
-  onOpenWizard: () => void;
+  onOpenSetup: () => void;
   onRefreshStatus: () => void;
 }
 
@@ -21,7 +21,7 @@ function StatePill({ state }: { state: string }) {
   return <span className={`state-pill ${running ? "running" : ""}`}>{state || "unknown"}</span>;
 }
 
-export default function CommandCenter({ status, onOpenWizard, onRefreshStatus }: Props) {
+export default function CommandCenter({ status, onOpenSetup, onRefreshStatus }: Props) {
   const [sandboxes, setSandboxes] = useState<SandboxInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -59,28 +59,35 @@ export default function CommandCenter({ status, onOpenWizard, onRefreshStatus }:
   }, [autoRefresh, refresh]);
 
   return (
-    <main>
-      <div className="cc-head">
-        <h2>Your sandboxes</h2>
+    <div>
+      <div className="page-head">
+        <h1>Sandboxes</h1>
         <div className="badges">
           <Badge label="CLI installed" on={!!status?.sbx_installed} />
           <Badge label="Signed in" on={!!status?.signed_in} />
           <Badge label="Image paste" on={!!status?.image_paste_on} />
           <Badge label="SSH" on={!!status?.ssh_set_up} />
         </div>
-        <div className="row">
-          <label className="muted" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      </div>
+      <p className="page-sub">Running local sandboxes, refreshing automatically.</p>
+
+      <div className="cc-top">
+        <span className="muted" style={{ fontSize: 13 }}>
+          {sandboxes ? `${sandboxes.length} sandbox${sandboxes.length === 1 ? "" : "es"}` : "…"}
+        </span>
+        <div className="cc-actions">
+          <label>
             <input
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
             />
-            Auto
+            Auto-refresh
           </label>
-          <button className="secondary" onClick={refresh}>
+          <button className="ghost" onClick={refresh}>
             Refresh
           </button>
-          <button className="secondary" onClick={onOpenWizard}>
+          <button className="ghost" onClick={onOpenSetup}>
             Setup
           </button>
         </div>
@@ -124,6 +131,6 @@ export default function CommandCenter({ status, onOpenWizard, onRefreshStatus }:
           </tbody>
         </table>
       )}
-    </main>
+    </div>
   );
 }
