@@ -62,7 +62,6 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 | ----- | ---- | -------- |
 | `opencode` | OpenCode itself: installs the CLI via npm when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env (`LANG`/`LC_ALL`) | with a model provider (`opencode-zeldoc`, `opencode-copilot`) — the provider fragment merges through it |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
-| `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry + opencode-host egress) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
 | `opencode-copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
 | `github-cli` | GitHub CLI (`gh`) + git identity; auth rides the built-in agent's proxy-managed `github` credential | — |

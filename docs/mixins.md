@@ -18,7 +18,6 @@ Rules of thumb:
 | ----- | ---- |
 | `opencode` | OpenCode itself: installs the CLI via npm when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env. Required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
-| `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress). Composed by the examples — drop the line if you don't want opencode auto-updated; runs once at creation, no start cost |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `github-cli` | GitHub CLI (`gh`) install + git-identity setup; GitHub auth rides the built-in agent's proxy-managed `github` credential (see [github-pat.md](github-pat.md)) |
@@ -49,22 +48,22 @@ Network hosts per mixin are listed at the top of each `mixins/<area>/spec.yaml`,
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node` |
-| .NET only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet` |
-| .NET + OpenAPI codegen (C# models) | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
-| Python only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `python` |
-| Go only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `go` |
-| Rust only | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `rust` |
-| Node + typed API client (openapi-typescript) | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
-| Node frontend with Uniform | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
-| Browser automation | `opencode`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `playwright` |
+| Node only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node` |
+| .NET only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `dotnet` |
+| .NET + OpenAPI codegen (C# models) | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
+| Python only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `python` |
+| Go only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `go` |
+| Rust only | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `rust` |
+| Node + typed API client (openapi-typescript) | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
+| Node frontend with Uniform | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
+| Browser automation | `opencode`, `env-guard`, `opencode-zeldoc`, `github-cli`, `node`, `playwright` |
 
 Notes:
 
 - `opencode` is the only merge path for model-provider config fragments — required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`). `env-guard` (the no-.env policy) is optional.
 - The `playwright` mixin and `sbx` run `apt` at creation — their install steps need the Ubuntu apt mirrors. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker engine pulls from.
-- Every set should include at least one model provider (`opencode-zeldoc` and/or `opencode-copilot`). Add `opencode-update` to keep opencode current: the built-in template image bakes a fixed opencode version, and this mixin rolls it to the newest npm release at creation.
+- Every set should include at least one model provider (`opencode-zeldoc` and/or `opencode-copilot`).
 
 ## Model providers (opencode-zeldoc / opencode-copilot)
 

@@ -4,7 +4,6 @@ agent: shell
 
 kits:
   - ./mixins/opencode
-  - ./mixins/opencode-update
   - ./mixins/opencode-zeldoc
   - ./mixins/github-cli
   - ./mixins/docker-hub
