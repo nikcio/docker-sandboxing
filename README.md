@@ -1,6 +1,6 @@
 # docker-sandboxing
 
-Run [OpenCode](https://opencode.ai) in a sandboxed [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) VM inside your own repo: copy the example for your stack into your project, run one command, and OpenCode starts in a VM with your stack toolchain installed at creation. The sandboxes work with any coding agent — the shipped examples use OpenCode.
+A collection of premade mixins for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/): reusable building blocks that add stack toolchains, tools, network egress, and model providers to a sandboxed VM in your own repo. Copy the example for your stack into your project, run one command, and your coding agent starts in a VM with the toolchain installed at creation.
 
 The sandbox is the isolation boundary: outbound network is deny-by-default and API keys are injected by a proxy — the sandbox only ever sees placeholders.
 
@@ -89,7 +89,7 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 
 ## Developing this repo
 
-Everything below is for developing the kit and mixins.
+Everything below is for developing the mixins in this repo.
 
 ```text
 ├── kit/                              # the base kit (kind: sandbox): Docker's built-in
@@ -100,11 +100,12 @@ Everything below is for developing the kit and mixins.
 │   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
 │   │                                 #   merge fed by provider mixins' mixins.d/ fragments
 │   ├── env-guard/                    # the workspace .env guard (startup command)
-│   └── <area>/                       # one single-purpose mixin per area (kind: mixin): network
-│                                     #   rules, env vars, credentials, install steps, agent
-│   │                                 #   memory note (.sbx-agents.d/<area>.md) — composed
-│                                     #   explicitly at launch (--kit flags or kits: list)
-├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack)
+│   └── <area>/                       # one single-purpose premade mixin per area (kind: mixin):
+│   │                                 #   network rules, env vars, credentials, install steps,
+│   │                                 #   agent memory note (.sbx-agents.d/<area>.md) — composed
+│   │                                 #   explicitly at launch (--kit flags or kits: list)
+├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack),
+│                                     #   composing this repo's mixins
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
 ├── sbxenv.yaml                       # this repo's dev sandbox: local paths into the working copy
