@@ -28,12 +28,16 @@ jobs:
         id: contexts
         run: echo "contexts=$(jq -c '[.images[] | {context}]' images.json)" >> "$GITHUB_OUTPUT"
 
-  # Validate every kit and mixin with the sandbox CLI's own validator —
-  # the same check scripts/bootstrap.sh runs locally. sbx (docker-sbx)
-  # comes from Docker's apt repo (see mixins/sbx/spec.yaml); validation
-  # is local and needs no Docker login.
+  # Validate every kit and mixin with the sandbox CLI's own artifact
+  # check. sbx (docker-sbx) comes from Docker's apt repo (see
+  # mixins/sbx/spec.yaml). `sbx kit pack` runs the same spec/artifact
+  # validation as `sbx kit validate` but fully offline — since 0.47.0,
+  # `kit validate` requires a Docker sign-in (it loads a kit policy from
+  # administrator settings), which CI does not have. pack fails without
+  # leaving an output file, so the throwaway .zip is only produced on
+  # success.
   kits-mixins:
-    name: Kits & mixins (sbx kit validate)
+    name: Kits & mixins (sbx kit pack)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,16 +55,16 @@ jobs:
       - name: Validate mixins
         run: |
           for mixin in mixins/*/; do
-            echo "::group::sbx kit validate ${mixin}"
-            sbx kit validate "${mixin}"
+            echo "::group::sbx kit pack ${mixin}"
+            sbx kit pack "${mixin}" -o /tmp/kit-check.zip
             echo "::endgroup::"
           done
 
       - name: Validate kits
         run: |
           for kit in kit*/; do
-            echo "::group::sbx kit validate ${kit}"
-            sbx kit validate "${kit}"
+            echo "::group::sbx kit pack ${kit}"
+            sbx kit pack "${kit}" -o /tmp/kit-check.zip
             echo "::endgroup::"
           done
 
