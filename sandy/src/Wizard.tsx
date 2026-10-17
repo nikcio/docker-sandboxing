@@ -182,7 +182,9 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
               Re-run
             </button>
           )}
-          {state === "error" && (
+          {/* One skip button: pending steps can be skipped forward; after an
+              error, skip is the way to move past the failed step. */}
+          {state === "error" && current < STEPS.length - 1 && (
             <button className="ghost" onClick={skip} disabled={busy}>
               Skip for now
             </button>

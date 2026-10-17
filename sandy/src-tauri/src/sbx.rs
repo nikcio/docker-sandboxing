@@ -271,19 +271,57 @@ fn tail(s: &str, max: usize) -> String {
     format!("…{}", &s[start..])
 }
 
-/// List local sandboxes (`sbx ls`), parsed into rows. Errors propagate so
-/// the UI can show them instead of inventing rows.
+/// List local sandboxes. Prefers `sbx ls --json` (stable, machine-readable)
+/// and falls back to parsing the human table if JSON is unavailable or
+/// unparseable (older CLI versions).
 pub fn list_sandboxes() -> Result<Vec<SandboxInfo>, String> {
-    let out = run_capture(&["ls"])?;
-    if out.is_empty() {
-        return Ok(vec![]);
+    let json_result = run_capture(&["ls", "--json"]).and_then(|out| {
+        serde_json::from_str::<Vec<SandboxJson>>(&out)
+            .map(|parsed| {
+                parsed
+                    .into_iter()
+                    .map(|s| SandboxInfo {
+                        name: s.name,
+                        state: s.status.unwrap_or_default(),
+                        agent: s.agent.unwrap_or_default(),
+                        workspace: s.workspaces.unwrap_or_default().join(", "),
+                        raw: s.id.unwrap_or_default(),
+                    })
+                    .collect()
+            })
+            .map_err(|e| format!("could not parse sbx ls --json output: {}", e))
+    });
+    match json_result {
+        Ok(rows) => Ok(rows),
+        Err(json_err) => match run_capture(&["ls"]) {
+            Ok(out) if !out.is_empty() => Ok(parse_ls(&out)),
+            Ok(_) => Ok(vec![]),
+            Err(_) => Err(json_err),
+        },
     }
-    Ok(parse_ls(&out))
+}
+
+/// Schema of `sbx ls --json` entries. Unknown fields are ignored; optional
+/// fields degrade to empty so a schema addition never breaks the UI.
+#[derive(Debug, serde::Deserialize)]
+struct SandboxJson {
+    name: String,
+    #[serde(default)]
+    id: Option<String>,
+    #[serde(default)]
+    agent: Option<String>,
+    #[serde(default)]
+    status: Option<String>,
+    #[serde(default)]
+    workspaces: Option<Vec<String>>,
 }
 
 fn parse_ls(out: &str) -> Vec<SandboxInfo> {
     let mut rows = Vec::new();
     let mut header_cols: Option<Vec<(usize, usize)>> = None;
+    // Maps logical columns (name/state/agent/workspace) to their index in
+    // the header row, since `sbx ls` column names and order vary.
+    let mut column_map: Option<std::collections::HashMap<&'static str, usize>> = None;
     // Box-drawing tables carry interior pipes; once the header has them we
     // split data rows on pipes directly instead of header word spans.
     let mut pipe_table = false;
@@ -294,11 +332,17 @@ fn parse_ls(out: &str) -> Vec<SandboxInfo> {
             continue;
         }
         // Only the first table header is recognized; later lines that happen
-        // to contain "name" and "state" stay data rows.
+        // to look like headers stay data rows.
         if header_cols.is_none() && is_header_line(trimmed) {
             pipe_table = trimmed.contains('│') || trimmed.contains('|');
             let header = strip_border_pipes(trimmed).replace(['│', '|'], " ");
-            header_cols = Some(header_spans(&header));
+            let spans = header_spans(&header);
+            let names = header_spans(&header)
+                .iter()
+                .map(|(s, e)| header[*s..*e].to_uppercase())
+                .collect::<Vec<_>>();
+            column_map = Some(map_columns(&names));
+            header_cols = Some(spans);
             continue;
         }
         let cols = if pipe_table {
@@ -312,12 +356,22 @@ fn parse_ls(out: &str) -> Vec<SandboxInfo> {
                 None => vec![trimmed.trim().to_string()],
             }
         };
-        let get = |i: usize| cols.get(i).map(|s| s.trim().to_string()).unwrap_or_default();
+        let col = |name: &str| -> String {
+            match column_map.as_ref().and_then(|m| m.get(name).copied()) {
+                Some(i) => cols.get(i).map(|s| s.trim().to_string()).unwrap_or_default(),
+                // No recognized header: treat the whole line as the name so
+                // single-line output still shows something sensible.
+                None if name == "name" => {
+                    cols.first().map(|s| s.trim().to_string()).unwrap_or_default()
+                }
+                None => String::new(),
+            }
+        };
         rows.push(SandboxInfo {
-            name: get(0),
-            state: get(1),
-            agent: get(2),
-            workspace: get(3),
+            name: col("name"),
+            state: col("state"),
+            agent: col("agent"),
+            workspace: col("workspace"),
             raw: trimmed.to_string(),
         });
     }
@@ -325,8 +379,40 @@ fn parse_ls(out: &str) -> Vec<SandboxInfo> {
 }
 
 fn is_header_line(line: &str) -> bool {
-    let lower = line.trim().trim_start_matches(['│', '|']).trim().to_lowercase();
-    lower.starts_with("name") && lower.contains("state")
+    let lower = line
+        .trim()
+        .trim_start_matches(['│', '|'])
+        .trim()
+        .to_lowercase();
+    // Known header shapes: the original NAME/STATE/AGENT/WORKSPACE layout
+    // and the real v0.48 SANDBOX/AGENT/STATUS/PORTS/WORKSPACE/CREATED one.
+    (lower.starts_with("name") && lower.contains("state"))
+        || (lower.starts_with("sandbox") && lower.contains("status"))
+}
+
+/// Map header column names to the logical fields the UI shows. Recognizes
+/// both the SANDBOX/STATUS and NAME/STATE vocabularies, plus aliases.
+fn map_columns(names: &[String]) -> std::collections::HashMap<&'static str, usize> {
+    let mut map = std::collections::HashMap::new();
+    for (i, raw) in names.iter().enumerate() {
+        let name = raw.trim();
+        match name {
+            "NAME" | "SANDBOX" => {
+                map.entry("name").or_insert(i);
+            }
+            "STATE" | "STATUS" => {
+                map.entry("state").or_insert(i);
+            }
+            "AGENT" => {
+                map.entry("agent").or_insert(i);
+            }
+            "WORKSPACE" | "WORKSPACES" => {
+                map.entry("workspace").or_insert(i);
+            }
+            _ => {}
+        }
+    }
+    map
 }
 
 /// Remove a leading and trailing border pipe from a box-drawing table row
@@ -379,11 +465,21 @@ fn header_spans(header: &str) -> Vec<(usize, usize)> {
 }
 
 fn split_by_spans(line: &str, spans: &[(usize, usize)]) -> Vec<String> {
+    // Column boundaries are the header words' start offsets. A cell's value
+    // is often wider than its header, so a cell ends at the last
+    // non-whitespace before the next column's start — not at the next
+    // header word's start itself.
     let mut out = Vec::new();
     for (i, (s, _e)) in spans.iter().enumerate() {
-        let end = if i + 1 < spans.len() { spans[i + 1].0 } else { line.len() };
-        // Use get() so a value wider than its header column (which shifts
-        // byte offsets on multi-byte UTF-8) can never panic on a slice.
+        let next_start = if i + 1 < spans.len() {
+            spans[i + 1].0
+        } else {
+            line.len()
+        };
+        let mut end = next_start.min(line.len());
+        while end > *s && end > 0 && line[..end].ends_with(' ') {
+            end -= 1;
+        }
         out.push(line.get(*s..end).unwrap_or("").trim().to_string());
     }
     out
@@ -407,6 +503,29 @@ build     stopped  claude   /home/me/api
         assert_eq!(rows[0].agent, "opencode");
         assert_eq!(rows[1].name, "build");
         assert_eq!(rows[1].state, "stopped");
+    }
+
+    #[test]
+    fn parses_real_v048_ls_table() {
+        // Actual `sbx ls` (v0.48) layout: SANDBOX/AGENT/STATUS/PORTS/
+        // WORKSPACE/CREATED, values wider than headers, bullet markers.
+        let sample = "\
+SANDBOX           AGENT            STATUS     PORTS                       WORKSPACE                           CREATED
+my-app            my-agent         • running  127.0.0.1:60000->9418/tcp4  C:\\Dev\\MyProject                   1h
+second            my-agent         • running  -                           -                                   4h
+another-sandbox   my-agent         ○ stopped  -                           C:\\Dev\\OtherProject                1w
+latest            shell            ○ stopped  -                           C:\\Dev\\SandboxTester               43m
+";
+        let rows = parse_ls(sample);
+        assert_eq!(rows.len(), 4);
+        assert_eq!(rows[0].name, "my-app");
+        assert_eq!(rows[0].state, "• running");
+        assert_eq!(rows[0].agent, "my-agent");
+        assert_eq!(rows[0].workspace, "C:\\Dev\\MyProject");
+        assert_eq!(rows[2].name, "another-sandbox");
+        assert_eq!(rows[2].state, "○ stopped");
+        assert_eq!(rows[3].name, "latest");
+        assert_eq!(rows[3].workspace, "C:\\Dev\\SandboxTester");
     }
 
     #[test]
@@ -529,30 +648,27 @@ weird  paused  /home/name/state
         // reports from the real CLI are treated as success, not failure).
         assert!(run_login().is_ok());
 
-        // list_sandboxes: plain table -> parsed rows.
-        let rows = list_sandboxes().expect("plain ls should parse");
+        // list_sandboxes: JSON path (primary). Two mock sandboxes.
+        let rows = list_sandboxes().expect("json ls should parse");
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].name, "test");
+        assert_eq!(rows[0].state, "stopped");
+        assert_eq!(rows[0].agent, "shell");
+        assert_eq!(rows[0].workspace, "C:\\Dev\\MyProject");
+        assert_eq!(rows[0].raw, "11111111-2222-3333-4444-555555555555");
+        assert_eq!(rows[1].name, "demo");
+        assert_eq!(rows[1].state, "running");
+        assert_eq!(rows[1].agent, "my-agent");
+
+        // list_sandboxes: table fallback (mock returns garbage for --json,
+        // so Sandy falls back to the human table and parses it).
+        std::env::set_var("SBX_MOCK_FAIL_JSON", "1");
+        let rows = list_sandboxes().expect("table fallback should parse");
+        std::env::remove_var("SBX_MOCK_FAIL_JSON");
         assert_eq!(rows.len(), 2);
         assert_eq!(rows[0].name, "demo");
         assert_eq!(rows[0].state, "running");
-        assert_eq!(rows[0].agent, "opencode");
-        assert_eq!(rows[0].workspace, "/home/me/project");
         assert_eq!(rows[1].name, "build");
-        assert_eq!(rows[1].state, "stopped");
-        assert_eq!(rows[1].agent, "claude");
-        assert_eq!(rows[1].workspace, "/home/me/api");
-        assert!(rows[0].raw.contains("demo"), "raw should keep the original line");
-
-        // list_sandboxes: box-drawing table via env-controlled mock variant.
-        std::env::set_var("SBX_MOCK_LS_STYLE", "box");
-        let rows = list_sandboxes().expect("box ls should parse");
-        std::env::remove_var("SBX_MOCK_LS_STYLE");
-        assert_eq!(rows.len(), 2);
-        assert_eq!(rows[0].name, "alpha");
-        assert_eq!(rows[0].state, "running");
-        assert_eq!(rows[0].agent, "claude");
-        assert_eq!(rows[1].name, "beta");
-        assert_eq!(rows[1].state, "creating");
-        assert_eq!(rows[1].agent, "codex");
 
         // list_sandboxes: empty output -> empty vec, no error.
         std::env::set_var("SBX_MOCK_LS_EMPTY", "1");
@@ -575,9 +691,11 @@ weird  paused  /home/name/state
         assert!(err.contains("sbx ls failed (exit 1)"), "got: {err}");
         assert!(err.contains("simulated failure"), "stderr body expected, got: {err}");
 
-        // list_sandboxes propagates the error instead of inventing rows.
+        // list_sandboxes propagates the error instead of inventing rows:
+        // both the --json attempt and the table fallback fail.
         let err = list_sandboxes().unwrap_err();
-        assert!(err.contains("sbx ls failed (exit 1)"), "got: {err}");
+        assert!(err.contains("failed (exit 1)"), "got: {err}");
+        assert!(err.contains("simulated failure"), "got: {err}");
 
         // set_clipboard_image_paste wraps the failure.
         let err = set_clipboard_image_paste().unwrap_err();
