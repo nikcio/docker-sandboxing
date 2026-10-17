@@ -106,9 +106,7 @@ Everything below is for developing the mixins in this repo.
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
 ├── sbxenv.yaml                       # this repo's dev sandbox: local paths into the working copy
-├── opencode.jsonc                    # opencode settings for working in this repo
-└── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in opencode kit —
-                                      #   what the built-in `opencode` agent runs on; nothing loads it
+└── opencode.jsonc                    # opencode settings for working in this repo
 ```
 
 The sandboxes run Docker's built-in agents (e.g. `agent: opencode`, on Docker's
