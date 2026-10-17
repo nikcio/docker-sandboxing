@@ -7,7 +7,7 @@
 # 3. Run from your project root:  sbx env run
 #
 # The rust mixin owns crates.io + rust-lang egress for cargo/rustup; git
-# dependencies ride the git mixin's GitHub egress (mixins/rust).
+# dependencies ride the github-cli mixin's GitHub egress (mixins/rust).
 #
 # Full guide: ../docs/getting-started.md
 # Environment file docs: https://docs.docker.com/ai/sandboxes/configuration/environment-files/

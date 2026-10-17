@@ -1,6 +1,6 @@
 # Getting started
 
-Run a coding agent in a sandboxed VM inside your own repo in three steps: **install `sbx`**, **copy the example for your stack**, and **run one command**. The sandboxes work with any coding agent; the shipped examples use [OpenCode](https://opencode.ai), which starts in a VM with your stack toolchain installed at creation.
+Run a coding agent in a sandboxed VM inside your own repo in a few steps: **install `sbx`**, **sign in**, **copy the example for your stack**, **adjust the config**, and **run one command**. The sandboxes work with any coding agent; the shipped examples use [OpenCode](https://opencode.ai), which starts in a VM with your stack toolchain installed at creation.
 
 The sandbox is the isolation boundary: outbound network is deny-by-default and API keys are injected by a proxy — the sandbox only ever sees placeholders.
 

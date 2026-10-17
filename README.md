@@ -23,7 +23,7 @@ Copy the example matching your stack into your project's root and rename it `sbx
 | Setting | What to do |
 | ------- | ---------- |
 | `name:` | Set it to your project's name. |
-| `kits:` | Drop the lines your project doesn't need — the mixin reference below marks what every kit needs. |
+| `kits:` | Drop the lines your project doesn't need — see the mixin reference below; `global-opencode-config` is required when you compose a model provider. |
 | `workspace.path: .` | Leave as is — it targets your repo. |
 
 ### 3. Run it
@@ -42,7 +42,7 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 
 | Guide | Covers |
 | ----- | ------ |
-| [Getting started](docs/getting-started.md) | prerequisites, the three steps, first run, daily use |
+| [Getting started](docs/getting-started.md) | prerequisites, the steps, first run, daily use |
 | [Set your Zeldoc API key](docs/zeldoc-api-key.md) | get, register, and approve the model provider key |
 | [Use GitHub Copilot](docs/copilot-setup.md) | run the agent on your Copilot subscription (or both providers) |
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
@@ -79,6 +79,8 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 | `browser` | Google Chrome install (software only) | — |
 | `playwright` | Playwright + the Chromium headless shell | — |
 | `sbx` | the `sbx` CLI inside the sandbox (kit authoring) | — |
+| `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh) | — |
+| `herdr` | the [Herdr](https://herdr.dev) CLI — agent runtime; agents keep working when detached, resume from any machine | — |
 | `open-egress` | allows all outbound domains (replaces the deny-by-default baseline) | opt-in |
 
 Full mixin details: [docs/mixins.md](docs/mixins.md).
@@ -105,6 +107,8 @@ Everything below is for developing the kit and mixins.
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack)
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
+├── sbxenv.yaml                       # this repo's dev sandbox: local paths into the working copy
+├── opencode.jsonc                    # opencode settings for working in this repo
 └── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in opencode kit —
                                       #   the image the kit runs on; nothing loads it
 ```
@@ -120,7 +124,7 @@ creation via the `mixins/<stack>` mixins.
 Work in a git worktree branched from `main` ([agent-guidance/worktrees.md](agent-guidance/worktrees.md)) — other agent sessions share this checkout concurrently.
 
 ```bash
-sbx kit validate kit/                  # validate a kit or mixin after edits
+sbx kit validate kit/                  # validate a kit or mixin after edits (requires being signed in to Docker; `sbx kit pack <dir> -o /tmp/x.zip` works offline)
 sbx env run                            # dev sandbox: kit/ + mixins/ loaded from the working copy
 ```
 

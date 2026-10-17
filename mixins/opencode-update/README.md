@@ -13,7 +13,7 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/opencode-update <agent> .`
 
-Not in the stock kits — opt in by adding the line. Runs once at creation, no start cost.
+Composed by the examples — drop the line if you don't want opencode rolled to the newest release at every sandbox creation. Runs once at creation, no start cost.
 
 ## How it works
 

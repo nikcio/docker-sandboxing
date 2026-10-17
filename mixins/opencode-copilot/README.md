@@ -18,7 +18,7 @@ Full sign-in walkthrough: [docs/copilot-setup.md](../../docs/copilot-setup.md).
 ## How it works
 
 - **Sign-in**: inside the TUI run `/connect`, then complete `github.com/login/device` in your host browser. The token is stored inside the VM at `~/.local/share/opencode/auth.json` — there is no proxy-managed secret (unlike the `opencode-zeldoc` mixin).
-- **Config fragment**: ships a pure-JSON fragment to `~/.config/opencode/mixins.d/10-copilot.json`, merged into the combined `OPENCODE_CONFIG` by `global-opencode-config` at every start.:mixins/opencode-copilot/README.md
+- **Config fragment**: ships a pure-JSON fragment to `~/.config/opencode/mixins.d/10-copilot.json`, merged into the combined `OPENCODE_CONFIG` by `global-opencode-config` at every start.
 
 ## Network domains
 

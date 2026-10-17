@@ -68,9 +68,9 @@ An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `s
 
     ```yaml
     kits:
-      - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit&ref=v0.6.0
-      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
-      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit&ref=<copy the pin from the examples>
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=<same ref>
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=<same ref>
       # ...the other stock mixins your project keeps...
       - ./sandbox-kit
     ```
@@ -80,7 +80,7 @@ An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `s
 4. Validate and recreate the sandbox (kit changes only apply to new sandboxes):
 
    ```bash
-   sbx kit validate ./sandbox-kit
+   sbx kit validate ./sandbox-kit   # requires being signed in to Docker; `sbx kit pack ./sandbox-kit -o /tmp/x.zip` works offline
    sbx rm <sandbox-name>
    sbx env run
    ```

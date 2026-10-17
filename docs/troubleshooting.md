@@ -34,23 +34,9 @@ The workspace must not contain `.env` files (secrets stay out of the sandbox):
 - **Direct mode** (default): the sandbox refuses to start. Delete the `.env` file(s) in your project on the host, then recreate.
 - **Clone mode** (`clone: true`): the sandbox deletes them from its local copy and warns after a 5-second pause.
 
-## My sandbox fails to fetch a kit after upgrading (`#dir=kit-<stack>` not found)
-
-The per-stack kits (`kit-node`, `kit-dotnet`, `kit-python`, `kit-go`, `kit-rust`)
-were removed — only the base kit (`kit/`) remains. In your `sbxenv.yaml`:
-
-- Replace the kit ref `#dir=kit-<stack>&ref=...` with `#dir=kit&ref=...`
-  (same pinned version).
-- Remove the `agent: opencode-<stack>` line — the base kit's entrypoint
-  already starts OpenCode.
-- Keep the stack mixin (`mixins/<stack>`) — that is where the toolchain
-  comes from now.
-
-See the [examples](../examples) for the full composition.
-
 ## My changes to a kit/mixin are not picked up
 
-- **Kit/mixin spec changes** apply only to new sandboxes — recreate with `sbx rm <name>` + `sbx env run`. While iterating on a clone, point the `kits:` lines at local directories (e.g. `./kit`) instead of git refs.
+Kit/mixin spec changes apply only to new sandboxes — recreate with `sbx rm <name>` + `sbx env run`.
 
 ## The agent's dev server is not reachable from my host
 

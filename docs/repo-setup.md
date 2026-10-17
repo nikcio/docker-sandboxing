@@ -9,7 +9,7 @@ One-time setup that makes this repo's automations work: CI on every PR and relea
 | Validate (`validate.yml`) | every PR, pushes to `main`, manual | nothing — works out of the box |
 | Release Please (`release-please.yml`) | pushes to `main` | a GitHub App (steps 1–2) |
 
-Validate runs the `sbx` spec check on every kit and mixin. No secrets involved.
+Validate runs `sbx kit pack` on every kit and mixin (the offline equivalent of `sbx kit validate`). No secrets involved.
 
 ## 1. Create the release-please GitHub App
 

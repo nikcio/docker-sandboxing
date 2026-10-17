@@ -2,7 +2,7 @@
 
 A mixin adds exactly one capability area to the sandbox: network egress rules, environment settings, install steps, and a note for the agent. The sandbox network policy is deny-by-default — the union of the composed mixins' rules is the only outbound traffic. Drop the mixin lines your project doesn't need from the `kits:` list in your `sbxenv.yaml`.
 
-## Any mixin on any kit
+## Any mixin on the base kit
 
 Every toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins (`browser`, `playwright`, `sbx`, `nikcio-openapi-codegen`) carry a self-contained check-and-install `setup.install` step: at sandbox creation it verifies the tool is present and installs it when the kit's base image lacks it. The built-in Docker template image (`docker/sandbox-templates:opencode-docker`) ships no stack toolchain, so the stack mixins do the install. Compose, for example, the `python` mixin onto the base kit and the sandbox gets a working `python3` + `uv`; no rebuild needed.
 
@@ -18,7 +18,7 @@ Rules of thumb:
 | ----- | ---- |
 | `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
-| `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress). Not in the example compositions — add the line for fresh opencode on every sandbox; runs once at creation, no start cost |
+| `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress). Composed by the examples — drop the line if you don't want opencode auto-updated; runs once at creation, no start cost |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
 | `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `github-cli` | GitHub CLI (`gh`) install + proxy-managed GitHub auth (see [github-pat.md](github-pat.md)) |
@@ -39,7 +39,8 @@ Rules of thumb:
 | `playwright` | Playwright + Chromium headless shell (smallest download); installs node via nvm when the base image lacks one |
 | `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the base image has it |
 | `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh); check-and-install when the base image lacks it |
-| `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the stock kit and examples do not compose it |
+| `herdr` | The [Herdr](https://herdr.dev) CLI — the agent runtime: a background server that owns the agents' terminals, so agents keep working when you detach and can be resumed from any machine; check-and-install at creation |
+| `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the base kit and examples do not compose it |
 
 Network hosts per mixin are listed at the top of each `mixins/<area>/spec.yaml`, and each mixin ships a `mixins/<area>/README.md` with usage and details.
 
