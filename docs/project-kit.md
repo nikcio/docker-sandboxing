@@ -58,11 +58,10 @@ An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `s
    ├── spec.yaml
    └── files/
        └── home/
-           └── .sbx-agents.d/
-               └── my-project.md   # agent memory note
+           └── .config/
+               └── my-tool/
+                   └── config.json   # any config or dotfile the sandbox home needs
    ```
-
-   A note in `.sbx-agents.d/` is appended to the sandbox `AGENTS.md` when the sandbox starts. Keep it short and directive — what the agent must know or do for this project (see `mixins/node` in the docker-sandboxing repo for an example). The workspace `AGENTS.md` wins over the runtime-generated sandbox environment file next to the workspace folder (the fallback when your repo has none).
 
 3. List it in your `sbxenv.yaml` after the stock kits (local paths are relative to the env file):
 

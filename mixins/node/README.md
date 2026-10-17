@@ -19,7 +19,6 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 - **Check-and-install**: when `node`/`pnpm` are missing, clones nvm into the agent home, installs Node 24 as the default, symlinks `node`/`npm`/`npx`/`pnpm`/… onto `PATH`, and exports `NVM_DIR` via `/etc/sandbox-persistent.sh` — the same nvm-in-agent-home layout as the base image.
 - **pnpm version gate**: sets `PNPM_CONFIG_MINIMUM_RELEASE_AGE=1440`, so pnpm refuses versions published less than 24h ago — a supply-chain guard against freshly published compromised packages.
-- The agent note (`~/.sbx-agents.d/node.md`) tells the agent Node is nvm-managed and to prefer `pnpm`.
 
 ## Network domains
 

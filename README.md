@@ -101,9 +101,8 @@ Everything below is for developing the mixins in this repo.
 │   │                                 #   merge fed by provider mixins' mixins.d/ fragments
 │   ├── env-guard/                    # the workspace .env guard (startup command)
 │   └── <area>/                       # one single-purpose premade mixin per area (kind: mixin):
-│   │                                 #   network rules, env vars, credentials, install steps,
-│   │                                 #   agent memory note (.sbx-agents.d/<area>.md) — composed
-│   │                                 #   explicitly at launch (--kit flags or kits: list)
+│   │                                 #   network rules, env vars, credentials, install steps —
+│   │                                 #   composed explicitly at launch (--kit flags or kits: list)
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack),
 │                                     #   composing this repo's mixins
 ├── docs/                             # user guides (see above)
