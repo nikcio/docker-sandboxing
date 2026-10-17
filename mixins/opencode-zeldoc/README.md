@@ -1,47 +1,25 @@
 # opencode-zeldoc
 
-Zeldoc.ai model provider for OpenCode: proxy-managed API key,
-`opencode-zeldoc` plugin config, a default `high` model variant for
-`zeldoc/zdev`, and network rules for the Zeldoc hosts.
+Zeldoc.ai model provider for OpenCode: proxy-managed API key, `opencode-zeldoc` plugin config, a default `high` model variant for `zeldoc/zdev`, and network rules for the Zeldoc hosts.
 
 ## Usage
 
-Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+Add the mixin to the `kits:` list in your project's `sbxenv.yaml` (pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-zeldoc   # Zeldoc.ai provider
 ```
 
-For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/opencode-zeldoc <agent> .`
+For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/opencode-zeldoc <agent> .`
 
-Requires the `global-opencode-config` mixin — the provider config fragment
-only merges through it (compose `opencode-copilot` alongside; `enabled_providers`
-lists are unioned, so both providers stay selectable).
+Compose the `global-opencode-config` mixin — the provider config fragment only merges through it (compose `opencode-copilot` alongside; `enabled_providers` lists are unioned, so both providers stay selectable).
 
 ## How it works
 
-- **Credential**: declares `ZELDOC_API_KEY` (required) with
-  `proxyManaged: true` — the sandbox only sees a placeholder; the proxy
-  injects the real `Authorization: Basic <key>` header on requests to
-  `api.zeldoc.ai`. Register the key host-side with
-  `sbx secret set zeldoc` (see [docs/zeldoc-api-key.md](../../docs/zeldoc-api-key.md)).
-- **Config fragment**: ships a pure-JSON fragment to
-  `~/.config/opencode/mixins.d/20-zeldoc.json`, merged into the combined
-  `OPENCODE_CONFIG` by `global-opencode-config` at every start. It enables
-  the `zeldoc` provider, installs the
-  [`opencode-zeldoc` plugin](https://github.com/martinmose/opencode-zeldoc)
-  (the model picker lists exactly the models your key can use, with real
-  limits and prices). No manual `provider` block
-  with a models list — the plugin is the source of truth, per the
-  [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode).
-- **Default variant**: a startup command seeds the OpenCode model state
-  file (`~/.local/state/opencode/model.json`) with
-  `variant: {"zeldoc/zdev": "high"}` so the first TUI launch starts on the
-  `high` variant. It only fills the key in when missing — a variant you
-  have already picked (cycling persists to this file) is never overridden.
+- **Credential**: declares `ZELDOC_API_KEY` (required) with `proxyManaged: true` — the sandbox only sees a placeholder; the proxy injects the real `Authorization: Basic <key>` header on requests to `api.zeldoc.ai`. Register the key host-side with `sbx secret set zeldoc` (see [docs/zeldoc-api-key.md](../../docs/zeldoc-api-key.md)).
+- **Config fragment**: ships a pure-JSON fragment to `~/.config/opencode/mixins.d/20-zeldoc.json`, merged into the combined `OPENCODE_CONFIG` by `global-opencode-config` at every start. It enables the `zeldoc` provider, installs the [`opencode-zeldoc` plugin](https://github.com/martinmose/opencode-zeldoc) (the model picker lists exactly the models your key can use, with real limits and prices). No manual `provider` block with a models list — the plugin is the source of truth, per the [Zeldoc guide](https://docs.zeldoc.ai/connect-opencode).
+- **Default variant**: a startup command seeds the OpenCode model state file (`~/.local/state/opencode/model.json`) with `variant: {"zeldoc/zdev": "high"}` so the first TUI launch starts on the `high` variant. It only fills the key in when missing — a variant you have already picked (cycling persists to this file) is never overridden.
 
 ## Network domains
 

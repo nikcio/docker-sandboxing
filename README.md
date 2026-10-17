@@ -1,18 +1,14 @@
 # docker-sandboxing
 
-Run [OpenCode](https://opencode.ai) in a sandboxed [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/)
-VM inside your own repo: copy the example for your stack into your project,
-run one command, and OpenCode starts in a VM with your stack toolchain installed at creation.
+Run [OpenCode](https://opencode.ai) in a sandboxed [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) VM inside your own repo: copy the example for your stack into your project, run one command, and OpenCode starts in a VM with your stack toolchain installed at creation. The sandboxes work with any coding agent — the shipped examples use OpenCode.
 
-The sandbox is the isolation boundary: outbound network is deny-by-default and
-API keys are injected by a proxy — the sandbox only ever sees placeholders.
+The sandbox is the isolation boundary: outbound network is deny-by-default and API keys are injected by a proxy — the sandbox only ever sees placeholders.
 
 ## Use it in your project
 
 ### 1. Copy the example for your stack
 
-Copy the example matching your stack into your project's root and rename it
-`sbxenv.yaml`. Commit it so teammates get the same sandbox.
+Copy the example matching your stack into your project's root and rename it `sbxenv.yaml`. Commit it so teammates get the same sandbox.
 
 | Your stack | Copy this example |
 | ---------- | ----------------- |
@@ -27,7 +23,7 @@ Copy the example matching your stack into your project's root and rename it
 | Setting | What to do |
 | ------- | ---------- |
 | `name:` | Set it to your project's name. |
-| `kits:` | Drop the lines your project doesn't need — the mixin reference below marks which mixins are required. |
+| `kits:` | Drop the lines your project doesn't need — see the mixin reference below; `global-opencode-config` is required when you compose a model provider. |
 | `workspace.path: .` | Leave as is — it targets your repo. |
 
 ### 3. Run it
@@ -38,17 +34,15 @@ From your project root:
 sbx env run
 ```
 
-OpenCode starts automatically. When you quit it, the sandbox exits — rerun
-`sbx env run` whenever you want it back.
+OpenCode starts automatically. When you quit it, the sandbox exits — rerun `sbx env run` whenever you want it back.
 
-Full walkthrough (prerequisites, first run, daily use):
-[docs/getting-started.md](docs/getting-started.md).
+Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md](docs/getting-started.md).
 
 ## Guides
 
 | Guide | Covers |
 | ----- | ------ |
-| [Getting started](docs/getting-started.md) | prerequisites, the three steps, first run, daily use |
+| [Getting started](docs/getting-started.md) | prerequisites, the steps, first run, daily use |
 | [Set your Zeldoc API key](docs/zeldoc-api-key.md) | get, register, and approve the model provider key |
 | [Use GitHub Copilot](docs/copilot-setup.md) | run the agent on your Copilot subscription (or both providers) |
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
@@ -64,9 +58,9 @@ Full walkthrough (prerequisites, first run, daily use):
 
 ## Mixin reference
 
-| Mixin | Adds | Required |
+| Mixin | Adds | When to compose |
 | ----- | ---- | -------- |
-| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`opencode-zeldoc`, `opencode-copilot`) |
+| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`opencode-zeldoc`, `opencode-copilot`) — the provider fragment merges through it |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
 | `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
@@ -85,6 +79,8 @@ Full walkthrough (prerequisites, first run, daily use):
 | `browser` | Google Chrome install (software only) | — |
 | `playwright` | Playwright + the Chromium headless shell | — |
 | `sbx` | the `sbx` CLI inside the sandbox (kit authoring) | — |
+| `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh) | — |
+| `herdr` | the [Herdr](https://herdr.dev) CLI — agent runtime; agents keep working when detached, resume from any machine | — |
 | `open-egress` | allows all outbound domains (replaces the deny-by-default baseline) | opt-in |
 
 Full mixin details: [docs/mixins.md](docs/mixins.md).
@@ -111,6 +107,8 @@ Everything below is for developing the kit and mixins.
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack)
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
+├── sbxenv.yaml                       # this repo's dev sandbox: local paths into the working copy
+├── opencode.jsonc                    # opencode settings for working in this repo
 └── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in opencode kit —
                                       #   the image the kit runs on; nothing loads it
 ```
@@ -123,18 +121,11 @@ creation via the `mixins/<stack>` mixins.
 
 ### Working on the repo
 
-Work in a git worktree branched from `main`
-([agent-guidance/worktrees.md](agent-guidance/worktrees.md)) — other agent
-sessions share this checkout concurrently.
+Work in a git worktree branched from `main` ([agent-guidance/worktrees.md](agent-guidance/worktrees.md)) — other agent sessions share this checkout concurrently.
 
 ```bash
-sbx kit validate kit/                  # validate a kit or mixin after edits
+sbx kit validate kit/                  # validate a kit or mixin after edits (requires being signed in to Docker; `sbx kit pack <dir> -o /tmp/x.zip` works offline)
 sbx env run                            # dev sandbox: kit/ + mixins/ loaded from the working copy
 ```
 
-Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`
-(or the wizard again).
-Releases are cut by release-please from Conventional Commits on `main` —
-see [agent-guidance/versioning.md](agent-guidance/versioning.md) and
-[agent-guidance/commit-messages.md](agent-guidance/commit-messages.md).
-Repo conventions: [AGENTS.md](AGENTS.md).
+Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`. Releases are cut by release-please from Conventional Commits on `main` — see [agent-guidance/versioning.md](agent-guidance/versioning.md) and [agent-guidance/commit-messages.md](agent-guidance/commit-messages.md). Repo conventions: [AGENTS.md](AGENTS.md).

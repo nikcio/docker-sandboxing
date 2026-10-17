@@ -7,7 +7,7 @@
 # 3. Run from your project root:  sbx env run
 #
 # The python mixin owns PyPI egress for uv/pip; interpreter downloads via
-# `uv python install` ride the git mixin's GitHub egress (mixins/python).
+# `uv python install` ride the github-cli mixin's GitHub egress (mixins/python).
 #
 # Full guide: ../docs/getting-started.md
 # Environment file docs: https://docs.docker.com/ai/sandboxes/configuration/environment-files/

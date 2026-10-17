@@ -19,7 +19,7 @@ For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/herdr <agent> .`
 
 The install runs at **sandbox creation only** and needs egress — the
-domains in the table below. Skipped when the template image already
+domains in the table below. Skipped when the base image already
 ships `herdr`.
 
 ## How it works

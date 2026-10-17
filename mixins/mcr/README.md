@@ -1,23 +1,19 @@
 # mcr
 
-Network rules so the in-sandbox Docker engine can pull base images and
-build containers against Microsoft Container Registry.
+Network rules so the in-sandbox Docker engine can pull base images and build containers against Microsoft Container Registry.
 
 ## Usage
 
-Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
-(pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
+Add the mixin to the `kits:` list in your project's `sbxenv.yaml` (pin `&ref=<tag>` to a release, as the [examples](../../examples) do):
 
 ```yaml
 kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/mcr   # Microsoft Container Registry egress
 ```
 
-For local development, point `--kit` at the directory instead:
-`sbx run --kit ./mixins/mcr <agent> .`
+For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/mcr <agent> .`
 
-The sandbox network policy is deny-by-default, so `docker pull`/`build`
-fails until the registry hosts are allowed.
+The sandbox network policy is deny-by-default, so `docker pull`/`build` fails until the registry hosts are allowed.
 
 ## Network domains
 

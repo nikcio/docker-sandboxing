@@ -1,6 +1,6 @@
 # Docker sandboxing
 
-Docker Sandboxes kits for running OpenCode agents in sandboxed VMs, composed from Docker's built-in template images plus mixins.
+Docker Sandboxes kits for running OpenCode agents in sandboxed VMs, composed from Docker's built-in template image plus mixins. The shipped examples use OpenCode, but the sandboxes work with any coding agent.
 
 ## Documentation
 

@@ -17,9 +17,7 @@ type(scope): description
 | `ci` | CI/CD changes |
 | `test` | Test changes |
 
-`feat`, `fix`, and `deps` trigger a release-please release; other types land
-without one. Add `!` after the type (or a `BREAKING CHANGE:` footer in the
-body) for a major release:
+`feat`, `fix`, and `deps` trigger a release-please release; other types land without one. Add `!` after the type (or a `BREAKING CHANGE:` footer in the body) for a major release:
 
 ```
 feat(kit)!: change the base kit entrypoint contract

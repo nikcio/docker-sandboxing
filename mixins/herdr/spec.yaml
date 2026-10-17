@@ -19,7 +19,7 @@ setup:
         rm -rf /var/lib/apt/sbx-install-lists;
         curl -fsSL https://herdr.dev/install.sh | HERDR_INSTALL_DIR=/usr/local/bin sh;
         herdr --version
-      description: Install the herdr CLI (skipped when the template image already has it)
+      description: Install the herdr CLI (skipped when the base image already has it)
 
 permissions:
   network:

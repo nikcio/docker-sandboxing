@@ -1,7 +1,6 @@
 # Versioning
 
-A single SemVer version for the whole repo, managed by
-[release-please](https://github.com/googleapis/release-please):
+A single SemVer version for the whole repo, managed by [release-please](https://github.com/googleapis/release-please):
 
 - `.release-please-manifest.json` — current version
 - `.release-please-config.json` — release config (`extra-files` lists everything a release rewrites)
@@ -30,8 +29,7 @@ installed by the mixins at sandbox creation.
 
 ## Rules
 
-- Never bump pinned versions by hand — the release PR owns every
-  `x-release-please` block.
+- Never bump pinned versions by hand — the release PR owns every `x-release-please` block.
 - `kit/` (the base kit) and `sbxenv.yaml` (dev env) are never bumped.
 
 ## Adding a stack
