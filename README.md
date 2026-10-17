@@ -59,10 +59,10 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 
 ## Mixin reference
 
-| Mixin | Adds | Required |
+| Mixin | Adds | When to compose |
 | ----- | ---- | -------- |
 | `agents-md` | sandbox `AGENTS.md` baseline (guidance files + per-mixin notes) | every kit |
-| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`zeldoc`, `copilot`) |
+| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | in OpenCode sandboxes with a model provider (`zeldoc`, `copilot`) — the provider fragment merges through it |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
 | `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
@@ -92,13 +92,13 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 Everything below is for developing the template, kit, and mixins.
 
 ```text
-├── template-dotnet/Dockerfile   # → opencode-dotnet:v1: .NET SDK, Node via NVM, PNPM, Playwright
-├── template-node/Dockerfile          # → opencode-node:v1: Node via NVM, PNPM, Playwright
-├── template-python/Dockerfile        # → opencode-python:v1: uv-managed CPython, uv, Node via NVM, PNPM, Playwright
-├── template-go/Dockerfile            # → opencode-go:v1: official Go toolchain (GO_VERSION build-arg,
+├── template-dotnet/Dockerfile   # → opencode-dotnet:vX.Y.Z (released): .NET SDK, Node via NVM, PNPM, Playwright
+├── template-node/Dockerfile          # → opencode-node:vX.Y.Z: Node via NVM, PNPM, Playwright
+├── template-python/Dockerfile        # → opencode-python:vX.Y.Z: uv-managed CPython, uv, Node via NVM, PNPM, Playwright
+├── template-go/Dockerfile            # → opencode-go:vX.Y.Z: official Go toolchain (GO_VERSION build-arg,
 │                                     #   GOTOOLCHAIN=auto for newer toolchains via the module proxy),
 │                                     #   Node via NVM, PNPM, Playwright
-├── template-rust/Dockerfile          # → opencode-rust:v1: rustup-managed stable toolchain
+├── template-rust/Dockerfile          # → opencode-rust:vX.Y.Z: rustup-managed stable toolchain
 │                                     #   (clippy + rustfmt + rust-analyzer), cargo, C build toolchain,
 │                                     #   Node via NVM, PNPM, Playwright
 ├── kit-<stack>/                      # sandbox kits (kind: sandbox): one per stack template —
@@ -140,4 +140,4 @@ sbx kit validate kit-node/             # validate a kit or mixin after edits
 sbx env run                   # dev sandbox: kit/ + mixins/ loaded from the working copy
 ```
 
-Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run` (or the wizard again). Releases are cut by release-please from Conventional Commits on `main` — see [agent-guidance/versioning.md](agent-guidance/versioning.md) and [agent-guidance/commit-messages.md](agent-guidance/commit-messages.md). Repo conventions: [AGENTS.md](AGENTS.md).
+Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`. Releases are cut by release-please from Conventional Commits on `main` — see [agent-guidance/versioning.md](agent-guidance/versioning.md) and [agent-guidance/commit-messages.md](agent-guidance/commit-messages.md). Repo conventions: [AGENTS.md](AGENTS.md).
