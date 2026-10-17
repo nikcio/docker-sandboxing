@@ -1,6 +1,6 @@
 schemaVersion: "2"
 kind: mixin
-name: copilot
+name: opencode-copilot
 displayName: GitHub Copilot provider
 description: >
   GitHub Copilot model provider for OpenCode.

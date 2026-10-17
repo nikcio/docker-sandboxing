@@ -6,7 +6,7 @@ kits:
   - ./kit
   - ./mixins/global-opencode-config
   - ./mixins/opencode-update
-  - ./mixins/zeldoc
+  - ./mixins/opencode-zeldoc
   - ./mixins/github-cli
   - ./mixins/docker-hub
   - ./mixins/sbx
