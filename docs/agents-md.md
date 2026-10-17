@@ -31,7 +31,7 @@ The `agents-md` mixin (`mixins/agents-md/` in the docker-sandboxing repo, compos
 Because it is generated:
 
 - it sits **outside your repo** — it never shows up in `git status`;
-- it is **rebuilt at every sandbox start** — hand-edits are lost.
+- it is **rebuilt at every sandbox start** — the mixin ships the rebuild as a `setup.startup` command (not an install step), so it reruns on every start, not just at creation. Hand-edits to the file do not survive the next start (and a recreate starts from scratch): treat the file as generated output, never edit it directly.
 
 ## Where to put your rules
 
@@ -39,7 +39,7 @@ Because it is generated:
 
 2. **Personal, cross-project rules** (tone, review habits): put them in `~/.config/opencode/AGENTS.md` on your host. Nothing copies this file into sandboxes — global rules apply to host sessions only.
 
-3. **Project-specific sandbox notes** (private feeds, egress, agent notes): add a note to your in-project kit — see [project-kit.md](project-kit.md).
+3. **Project-specific sandbox notes** (private feeds, egress, agent notes): add a note to your in-project kit — see [project-kit.md](project-kit.md). Ship the note as a file (`files/home/.sbx-agents.d/<name>.md`), not via an `agentInstructions.filename` override: the `filename` field belongs to the kit (the stock kits set it to `AGENTS.md`), and setting it in a mixin is an error.
 
 ## Loading both files
 
