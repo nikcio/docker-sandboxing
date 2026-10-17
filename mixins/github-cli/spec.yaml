@@ -4,7 +4,7 @@ name: github-cli
 displayName: GitHub CLI
 description: >
   Installs Github CLI
-version: 0.4.0
+version: 0.5.0
 
 setup:
   install:
@@ -55,6 +55,11 @@ setup:
           "$git_path" config --global user.name "$name"
           "$git_path" config --global user.email "$email"
           "$git_path" config --global --replace-all safe.directory '*'
+          # Non-interactive defaults: no editor is available in the sandbox,
+          # so merge/rebase must never try to open one.
+          "$git_path" config --global core.editor true
+          "$git_path" config --global pull.rebase false
+          "$git_path" config --global merge.ff false
           {
             printf 'GIT_AUTHOR_NAME=%q\n' "$name"
             printf 'GIT_AUTHOR_EMAIL=%q\n' "$email"
