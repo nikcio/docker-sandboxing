@@ -33,9 +33,3 @@ kits:
 workspace:
   path: . # the repo itself; point elsewhere if the env file sits outside the project
   clone: false # true = sandbox works on its own copy (safer: the agent cannot touch your local folder)
-
-ports:
-  - sandbox: 5000 # ASP.NET / dotnet run
-    host: 5000
-  - sandbox: 3000 # node / vite dev server
-    host: 3000

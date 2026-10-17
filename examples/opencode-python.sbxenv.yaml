@@ -38,9 +38,3 @@ workspace:
 
 env:
   PYTHONUNBUFFERED: 1 # stream logs instead of buffering stdout
-
-ports:
-  - sandbox: 8000 # uvicorn / fastapi dev server
-    host: 8000
-  - sandbox: 5000 # flask / django runserver
-    host: 5000
