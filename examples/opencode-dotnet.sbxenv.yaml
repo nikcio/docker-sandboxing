@@ -41,12 +41,6 @@ sandboxOptions:
   cpus: 4
   memory: 8g
 
-ports:
-  - sandbox: 5000 # ASP.NET / dotnet run
-    host: 5000
-  - sandbox: 3000 # node / vite dev server
-    host: 3000
-
 # Approves GitHub token injection for the sandbox (docs/github-pat.md).
 bindings:
   github:

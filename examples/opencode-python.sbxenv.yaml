@@ -43,12 +43,6 @@ sandboxOptions:
   cpus: 4
   memory: 8g
 
-ports:
-  - sandbox: 8000 # uvicorn / fastapi dev server
-    host: 8000
-  - sandbox: 5000 # flask / django runserver
-    host: 5000
-
 # Approves GitHub token injection for the sandbox (docs/github-pat.md).
 bindings:
   github:

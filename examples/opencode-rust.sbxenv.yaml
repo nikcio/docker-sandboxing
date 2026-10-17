@@ -40,12 +40,6 @@ sandboxOptions:
   cpus: 4
   memory: 8g
 
-ports:
-  - sandbox: 8080 # actix-web / axum dev server
-    host: 8080
-  - sandbox: 3000 # web UI / API port
-    host: 3000
-
 # Approves GitHub token injection for the sandbox (docs/github-pat.md).
 bindings:
   github:
