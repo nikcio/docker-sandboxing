@@ -18,7 +18,7 @@ For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/sbx <agent> .`
 
 The install runs at **sandbox creation only**. Skipped when the
-template image already ships the CLI.
+base image already ships the CLI.
 
 ## How it works
 

@@ -1,7 +1,7 @@
 # go
 
 Go toolchain egress for the sandbox: the toolchain install (when the
-template image lacks it), module proxy + checksum database for
+base image lacks it), module proxy + checksum database for
 `go get`/`go install`, and docs hosts.
 
 ## Usage
@@ -20,13 +20,13 @@ For local development, point `--kit` at the directory instead:
 The install runs at **sandbox creation only** and needs egress — the
 domains in the table below plus the Ubuntu apt mirrors
 (`archive.ubuntu.com`/`security.ubuntu.com`) for its `apt-get` calls. On
-template images that already ship Go the install is a cheap no-op.
+base images that already ship Go the install is a cheap no-op.
 
 ## How it works
 
 - **Check-and-install**: when `go` is missing, installs the official
   tarball for the running architecture into `/usr/local/go` (the same
-  layout as the template images) and symlinks `go`/`gofmt` onto `PATH`.
+  layout as the base images) and symlinks `go`/`gofmt` onto `PATH`.
 - `~/go/bin` is added to `PATH` via `/etc/sandbox-persistent.sh` so
   `go install`ed binaries are picked up in login shells.
 - With `GOTOOLCHAIN=auto` (template default), newer toolchain downloads
