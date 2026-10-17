@@ -13,12 +13,12 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/env-guard <agent> .`
 
-Optional but composed by the [examples](../../examples). No network rules — capability egress comes from the other mixins.
+Optional but composed by the [examples](../../examples). No network rules; capability egress comes from the other mixins.
 
 ## How it works
 
 Ships the guard as a startup command (`setup.startup` in [spec.yaml](spec.yaml)) that runs before the agent starts.
 
-- **Clone mode** (`workspace.clone: true`): `.env` files — including `.env.local`-style variants and symlinked `.env` files — are removed from the sandbox-local copy, with a warning and a short pause.
+- **Clone mode** (`workspace.clone: true`): `.env` files, including `.env.local`-style variants and symlinked `.env` files, are removed from the sandbox-local copy, with a warning and a short pause.
 - **Direct mode** (`workspace.clone: false`, the workspace tree mounted in place): the sandbox refuses to start when a `.env` file exists.
 - On the all-clear, a short line reports the result.

@@ -13,7 +13,7 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/openapi-ts <agent> .`
 
-Pair it with the `node` mixin — package installs themselves flow through the npm registry rules that mixin owns.
+Pair it with the `node` mixin. Package installs themselves flow through the npm registry rules that mixin owns.
 
 ## Network domains
 

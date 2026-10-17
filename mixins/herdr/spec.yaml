@@ -3,7 +3,7 @@ kind: mixin
 name: herdr
 displayName: Herdr
 description: >
-  Installs the Herdr CLI (agent runtime — keep coding agents running and
+  Installs the Herdr CLI (agent runtime, keeps coding agents running and
   resume them from any machine) for the agent user.
 version: 0.2.0
 

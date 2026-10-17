@@ -1,13 +1,13 @@
 # Set your Uniform API key
 
-With the `uniform` mixin the sandboxed agent can read the [Uniform docs](https://docs.uniform.app/docs) and call the Uniform platform APIs (Management API and Edge Delivery API) from a frontend integration. The key is registered on your host only — the sandbox never sees it. A proxy injects it into requests to `uniform.app` / `uniform.global` (and the EU hosts) as the `x-api-key` header the Uniform SDK and CLI use.
+With the `uniform` mixin the sandboxed agent can read the [Uniform docs](https://docs.uniform.app/docs) and call the Uniform platform APIs (Management API and Edge Delivery API) from a frontend integration. The key is registered on your host only, and the sandbox never sees it. A proxy injects it into requests to `uniform.app` / `uniform.global` (and the EU hosts) as the `x-api-key` header the Uniform SDK and CLI use.
 
 ## 1. Create the key
 
 1. Open your team at [uniform.app](https://uniform.app) (or [eu.uniform.app](https://eu.uniform.app) for EU teams).
 2. **Security → Service Accounts → Add Service Account** (personal access tokens work too).
-3. Name it (e.g. `sandbox`) and assign the roles the agent needs for your project — delivery/read roles unless the agent should push content or run CLI commands that write.
-4. Create it and copy the **Key**. From the same screen, also copy the project ID ("Copy as Project ID"). Skip "Copy as .env" — the key must not land in a project `.env` (see step 3).
+3. Name it (e.g. `sandbox`) and assign the roles the agent needs for your project. Use delivery/read roles unless the agent should push content or run CLI commands that write.
+4. Create it and copy the **Key**. From the same screen, also copy the project ID ("Copy as Project ID"). Skip "Copy as .env", because the key must not land in a project `.env` (see step 3).
 
 ## 2. Register the key with sbx
 
@@ -19,7 +19,7 @@ sbx prompts for the key and stores it in its secret store (the OS keychain).
 
 ## 3. Add the project ID to your sbxenv.yaml
 
-The project ID is not a secret. Pass it to the sandbox in the `env:` block — never as a project `.env` file, which the `env-guard` mixin removes (or refuses to start over, in direct mode):
+The project ID is not a secret. Pass it to the sandbox in the `env:` block, never as a project `.env` file, which the `env-guard` mixin removes (or refuses to start over, in direct mode):
 
 ```yaml
 env:
@@ -28,7 +28,7 @@ env:
 
 ## 4. Approve the credential binding
 
-The first time you create a sandbox, sbx asks you to approve that the `uniform` key may be injected for the `uniform.app` / `uniform.global` hosts — approve the prompt and you're done.
+The first time you create a sandbox, sbx asks you to approve that the `uniform` key may be injected for the `uniform.app` / `uniform.global` hosts. Approve the prompt and you're done.
 
 ## Verify
 

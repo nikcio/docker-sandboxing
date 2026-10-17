@@ -13,7 +13,7 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/gcr <agent> .`
 
-The sandbox network policy is deny-by-default, so `docker pull`/`build` fails until the registry hosts are allowed.
+The sandbox network policy is deny by default, so `docker pull`/`build` fails until the registry hosts are allowed.
 
 ## Network domains
 

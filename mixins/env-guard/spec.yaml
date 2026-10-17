@@ -1,16 +1,16 @@
 # Workspace .env guard: the workspace must never contain a .env file.
 #
-# Ships the guard as setup.startup (see below) — a startup command that
+# Ships the guard as setup.startup (see below), a startup command that
 # runs before opencode starts.
 #
 # What counts: the literal name .env plus the dotenv variants loaders
-# pick up (.env.local, .env.production, ...). Symlinks count too — a
+# pick up (.env.local, .env.production, ...). Symlinks count too, since a
 # committed .env symlink to a host-side file would otherwise slip past
 # `-type f` and be read by the agent. The clone-mode deletion uses
 # rm -f -- on the found path only (never the symlink's target): deleting
 # a symlink removes the link, not the file it points at.
 #
-# Optional — compose it to enforce the no-.env policy. Pairs with the
+# Optional. Compose it to enforce the no-.env policy. Pairs with the
 # mixins/opencode (permissive OpenCode config + provider
 # merge). No network rules: capability egress comes from the other mixins.
 schemaVersion: "2"
@@ -21,7 +21,7 @@ description: >
   Enforces the no-.env policy in the workspace: clone mode removes .env
   files (including .env.local-style variants and symlinked .env files)
   from the sandbox-local copy (warning + short pause), direct mode
-  refuses to start when one exists. No network rules — capability
+  refuses to start when one exists. No network rules; capability
   egress comes from the other mixins.
 version: 0.2.0
 
@@ -35,7 +35,7 @@ setup:
           # removes offenders from the sandbox-local copy; direct mode
           # (host tree mounted in place) refuses to start instead of
           # deleting host files. No-op when there is no workspace
-          # (WORKSPACE_DIR unset). The fatal branch exits nonzero —
+          # (WORKSPACE_DIR unset). The fatal branch exits nonzero, and
           # the sandbox refuses to start.
           __envs=""
           __clean="workspace clean (no .env files)"

@@ -6,8 +6,8 @@
 #   1. Installs the `sbx` CLI if it isn't already installed
 #   2. Signs you in with `sbx login`
 #   3. Registers your secrets:
-#        - zeldoc  (global  — the model provider key)
-#        - github  (sandbox — the GitHub token so the agent can push)
+#        - zeldoc  (global, the model provider key)
+#        - github  (sandbox, the GitHub token so the agent can push)
 #   4. Prints how to run the sandbox
 #
 # === How to customize ======================================================
@@ -19,7 +19,7 @@
 set -euo pipefail
 
 # --------------------------------------------------------------------------
-# CONFIGURATION — tweak these to fit your project
+# CONFIGURATION: tweak these to fit your project
 # --------------------------------------------------------------------------
 
 # Sandbox name: must match the `name:` in your sbxenv.yaml. Secrets set with
@@ -36,13 +36,13 @@ SBX_INSTALL_MACOS="brew install docker/tap/sbx"
 SBX_INSTALL_LINUX="curl -fsSL https://get.docker.com | sudo SBX=1 sh"
 
 # --------------------------------------------------------------------------
-# SECRET HELPERS — extend this section for your own secrets
+# SECRET HELPERS: extend this section for your own secrets
 #
 #   secret_set <secret-name> <scope> <docs-url>
 #     scope: "global" (available to every sandbox) or "sandbox" (scoped to
 #     $SANDBOX_NAME only).
 #
-#   Example — add a private npm token scoped to the sandbox:
+#   Example: add a private npm token scoped to the sandbox:
 #     secret_set npm_token sandbox "https://docs.npmjs.com/creating-and-viewing-access-tokens"
 #   ...then reference it from sbxenv.yaml bindings.
 # --------------------------------------------------------------------------
@@ -130,12 +130,12 @@ fi
 
 step "Step 3/4: secrets"
 
-# zeldoc: GLOBAL — model provider key, available to all your sandboxes.
+# zeldoc: GLOBAL, model provider key, available to all your sandboxes.
 # Get/register/approve your key: https://docs.zeldoc.ai/connect-opencode
 # Repo docs: docs/zeldoc-api-key.md
 secret_set zeldoc global "https://docs.zeldoc.ai/connect-opencode"
 
-# github: SANDBOX-SCOPED — fine-grained PAT so the agent can push over HTTPS.
+# github: SANDBOX-SCOPED, fine-grained PAT so the agent can push over HTTPS.
 # Create one at GitHub: Settings -> Developer settings -> Personal access
 # tokens -> Fine-grained tokens (repo guide: docs/github-pat.md).
 # Skip this if you only clone public repos / use git over SSH.
@@ -167,7 +167,7 @@ info "Done. If you had other entries in the list, re-add them (rerun this step a
 # sbx settings set clipboard.imagePaste true
 
 # --------------------------------------------------------------------------
-# Done — how to run
+# Done: how to run
 # --------------------------------------------------------------------------
 
 step "All set"

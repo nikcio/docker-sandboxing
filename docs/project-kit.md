@@ -1,15 +1,15 @@
 # Project-specific config (in-project kit)
 
-Two ways to customize the sandbox for your project — pick the lightest one that fits:
+Two ways to customize the sandbox for your project. Pick the lightest one that fits:
 
-1. **OpenCode settings only** → commit an `opencode.jsonc` in your repo root. No kit needed (see below) — this is also where the default model lives.
-2. **Network egress, env vars, files, agent notes** → add a small *in-project kit* to your repo and list it in `sbxenv.yaml`.
+1. **OpenCode settings only.** Commit an `opencode.jsonc` in your repo root. No kit needed (see below), and this is also where the default model lives.
+2. **Network egress, env vars, files, agent notes.** Add a small *in-project kit* to your repo and list it in `sbxenv.yaml`.
 
 ## Project-level OpenCode config (no kit)
 
-OpenCode merges the global config with a project-level config file at the workspace root. Since `workspace.path` points at your repo, just commit an `opencode.jsonc` (or `opencode.json`) in the project root — it is picked up when opencode starts.
+OpenCode merges the global config with a project-level config file at the workspace root. Since `workspace.path` points at your repo, just commit an `opencode.jsonc` (or `opencode.json`) in the project root. It is picked up when opencode starts.
 
-The sandbox's provider mixins do not set a default model, so the project config owns it — point `model` at one of the composed providers:
+The sandbox's provider mixins do not set a default model, so the project config owns it. Point `model` at one of the composed providers:
 
 ```jsonc
 {
@@ -20,13 +20,13 @@ The sandbox's provider mixins do not set a default model, so the project config 
 
 Without a `model` key opencode falls back to its own default; pick a different one any time with `/models` in the TUI.
 
-Do not write `~/.config/opencode/opencode.json` from a kit — the sandbox owns that file (it is rewritten at startup for MCP wiring, and the provider mixins merge their config into it). Do not set `OPENCODE_CONFIG` either — the `opencode` mixin owns it (it points at the combined config that the mixin rebuilds from `~/.config/opencode/mixins.d/`). To contribute extra config from your kit, ship a comment-free JSON fragment at `files/home/.config/opencode/mixins.d/30-<name>.json` — the opencode mixin merges it at every start (see [mixins.md](mixins.md)). Model providers are simpler: add the `opencode-zeldoc`/`opencode-copilot` mixins instead of a fragment.
+Do not write `~/.config/opencode/opencode.json` from a kit; the sandbox owns that file (it is rewritten at startup for MCP wiring, and the provider mixins merge their config into it). Do not set `OPENCODE_CONFIG` either; the `opencode` mixin owns it (it points at the combined config that the mixin rebuilds from `~/.config/opencode/mixins.d/`). To contribute extra config from your kit, ship a comment-free JSON fragment at `files/home/.config/opencode/mixins.d/30-<name>.json`. The opencode mixin merges it at every start (see [mixins.md](mixins.md)). Model providers are simpler: add the `opencode-zeldoc`/`opencode-copilot` mixins instead of a fragment.
 
 ## Add an in-project kit
 
 An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `sbxenv.yaml`. It adds exactly what your project needs on top of the stock mixins.
 
-1. Create `sandbox-kit/spec.yaml` in your project root (any directory name works — it is referenced explicitly):
+1. Create `sandbox-kit/spec.yaml` in your project root (any directory name works, it is referenced explicitly):
 
    ```yaml
    # Project mixin: my-project specifics (feeds, env, agent notes).
@@ -51,7 +51,7 @@ An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `s
        MY_FEATURE_FLAG: "1"
    ```
 
-2. Optional: drop files into the sandbox home — `files/home/...` maps to `/home/agent/...`:
+2. Optional: drop files into the sandbox home. `files/home/...` maps to `/home/agent/...`:
 
    ```text
    sandbox-kit/
@@ -75,7 +75,7 @@ An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `s
       - ./sandbox-kit
     ```
 
-   The `opencode` mixin ships the permissive base config and installs the OpenCode CLI — keep it unless you have your own opencode setup (model provider mixins work without it; they manage their own config). The list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
+   The `opencode` mixin ships the permissive base config and installs the OpenCode CLI. Keep it unless you have your own opencode setup (model provider mixins work without it; they manage their own config). The list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new sandboxes):
 

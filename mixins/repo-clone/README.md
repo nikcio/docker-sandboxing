@@ -25,7 +25,7 @@ kits:
 Run `sbx env run --env-arg repos=owner/other-repo` to override the list
 for one invocation.
 
-**Requires the `github-cli` mixin** in the same sandbox (for the git
+The `github-cli` mixin is required in the same sandbox (for the git
 identity setup and `github.com` egress): the clone authenticates via the
 proxy-managed `github` credential the built-in agent kit declares.
 Public repositories also clone fine as long as `github.com` egress is
@@ -40,24 +40,24 @@ sbx run <agent> . --kit ./mixins/repo-clone --kit-arg repositories="owner/api ow
 
 ## How it works
 
-- Runs once at sandbox **creation** (an `setup.install` step): clones
+- Runs once at sandbox creation (a `setup.install` step). It clones
   each `owner/repo` entry shallow (`--depth 1`) into
   `$WORKSPACE_DIR/<repo-name>`.
-- **Auth**: git-over-HTTPS hits `github.com`, where the proxy injects
-  the real `Authorization: Bearer <token>` from the `github` secret —
-  the token itself never enters the sandbox (see
+- **Auth.** Git-over-HTTPS hits `github.com`, where the proxy injects
+  the real `Authorization: Bearer <token>` from the `github` secret.
+  The token itself never enters the sandbox (see
   [github-pat.md](../../docs/github-pat.md)). Private repositories the
   token can read clone normally; use a fine-grained PAT scoped to
   exactly the repositories you want cloned.
-- **Failure tolerance**: a repository the token cannot access (or that
-  does not exist) is skipped with a warning — one bad entry never fails
+- **Failure tolerance.** A repository the token cannot access (or that
+  does not exist) is skipped with a warning, so one bad entry never fails
   the sandbox. A failed clone leaves nothing behind (the partial target
   directory is removed), and entries that are not `owner/repo` are
   skipped. Check the creation log for `repo-clone:` lines.
-- **Idempotent**: an existing directory (or symlink) with the target
+- **Idempotent.** An existing directory (or symlink) with the target
   name is left untouched, so re-creating the sandbox does not clobber
   anything.
-- Repositories are cloned at creation only — new entries need a sandbox
+- Repositories are cloned at creation only. New entries need a sandbox
   recreate (see "Changing mixins" in [docs/mixins.md](../../docs/mixins.md)).
 
 ## Network domains

@@ -72,7 +72,7 @@ permissions:
       - iojs.org:443
 
       # nvm itself (the check-and-install step clones the nvm repo from
-      # GitHub when the base image lacks node — raw.githubusercontent
+      # GitHub when the base image lacks node. raw.githubusercontent
       # covers the install script variant)
       - github.com:443
       - "*.github.com:443"
@@ -84,7 +84,7 @@ permissions:
       - npmjs.com:443
       - "*.npmjs.com:443"
 
-      # pnpm.io: pnpm docs and settings reference for agent lookups —
+      # pnpm.io: pnpm docs and settings reference for agent lookups;
       # pnpm's own errors point here (e.g. the minimumReleaseAge gate
       # above links pnpm.io/settings#minimumreleaseageexclude)
       - pnpm.io:443

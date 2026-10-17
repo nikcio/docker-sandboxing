@@ -13,15 +13,15 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/uniform <agent> .`
 
-The sandbox network policy is deny-by-default, so API calls fail until the Uniform hosts are allowed.
+The sandbox network policy is deny by default, so API calls fail until the Uniform hosts are allowed.
 
 ## How it works
 
-- **Credential**: declares `UNIFORM_API_KEY` with `proxyManaged: true` — the sandbox only sees a placeholder; the proxy injects the real `x-api-key` header on requests to the Uniform hosts. The key is a service-account key or personal access token for the Management API and Edge Delivery API — create it in Uniform under Security > Service Accounts. Full walkthrough: [docs/uniform-api-key.md](../../docs/uniform-api-key.md).
+- **Credential.** Declares `UNIFORM_API_KEY` with `proxyManaged: true`. The sandbox only sees a placeholder; the proxy injects the real `x-api-key` header on requests to the Uniform hosts. The key is a service-account key or personal access token for the Management API and Edge Delivery API. Create it in Uniform under Security > Service Accounts. Full walkthrough: [docs/uniform-api-key.md](../../docs/uniform-api-key.md).
 
 ## Network domains
 
 | Domain | Why |
 | ------ | --- |
-| `uniform.app`, `*.uniform.app` | Dashboard, Management API, docs (docs.uniform.app), per-team app subdomains — US and EU |
+| `uniform.app`, `*.uniform.app` | Dashboard, Management API, docs (docs.uniform.app), per-team app subdomains, US and EU |
 | `uniform.global`, `*.uniform.global` | Edge Delivery API + image CDN (`img.uniform.global` / `img.eu.uniform.global`), US and EU |

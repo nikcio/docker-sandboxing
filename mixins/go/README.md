@@ -13,13 +13,13 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/go <agent> .`
 
-The install runs at **sandbox creation only** and needs egress — the domains in the table below plus the Ubuntu apt mirrors (`archive.ubuntu.com`/`security.ubuntu.com`) for its `apt-get` calls. On base images that already ship Go the install is a cheap no-op.
+The install runs at sandbox creation only and needs egress. It uses the domains in the table below plus the Ubuntu apt mirrors (`archive.ubuntu.com`/`security.ubuntu.com`) for its `apt-get` calls. On base images that already ship Go the install is a no-op.
 
 ## How it works
 
-- **Check-and-install**: when `go` is missing, installs the official tarball for the running architecture into `/usr/local/go` (the same layout as the base images) and symlinks `go`/`gofmt` onto `PATH`.
+- **Check-and-install.** When `go` is missing, installs the official tarball for the running architecture into `/usr/local/go` (the same layout as the base images) and symlinks `go`/`gofmt` onto `PATH`.
 - `~/go/bin` is added to `PATH` via `/etc/sandbox-persistent.sh` so `go install`ed binaries are picked up in login shells.
-- With `GOTOOLCHAIN=auto` (template default), newer toolchain downloads also flow through the module proxy — covered by the rules below.
+- With `GOTOOLCHAIN=auto` (template default), newer toolchain downloads also flow through the module proxy, covered by the rules below.
 
 ## Version arguments
 

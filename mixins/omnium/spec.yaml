@@ -9,9 +9,8 @@ version: 0.1.0
 credentials:
   - service: omnium
     description: >
-      Omnium API access token (JWT) for the environment you target — mint
-      it host-side by POSTing the API user's ClientId + ClientSecret to
-      /api/token on that environment's API host. Create API users in the
+      Omnium API access token (JWT) for the environment you target. Mint
+      it host-side by POSTing the API user's ClientId + ClientSecret to      /api/token on that environment's API host. Create API users in the
       Omnium GUI under Configuration > Authorization > API Users.
     required: false
     apiKey:
@@ -37,7 +36,7 @@ permissions:
       - apitest.omnium.no:443
       - apidev.omnium.no:443
       
-      # Tech docs (docs.omnium.no), user docs, and system status — all
+      # Tech docs (docs.omnium.no), user docs, and system status, all
       # reachable without a token, for research.
       - docs.omnium.no:443
       - help.omnium.no:443

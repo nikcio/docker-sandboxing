@@ -40,11 +40,11 @@ setup:
 permissions:
   network:
     allow:
-      # Module proxy (`go get`, `go mod download`, `go install`) — also
+      # Module proxy (`go get`, `go mod download`, `go install`), also
       # serves GOTOOLCHAIN=auto toolchain downloads (golang.org/toolchain
       # modules)
       - proxy.golang.org:443
-      # Checksum database (default GOSUMDB) — verifies every module and
+      # Checksum database (default GOSUMDB), verifies every module and
       # toolchain download
       - sum.golang.org:443
       # go.dev: docs lookups, /dl/ download redirects, release info

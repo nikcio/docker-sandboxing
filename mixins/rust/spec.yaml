@@ -37,7 +37,7 @@ setup:
 permissions:
   network:
     allow:
-      # crates.io (index/API queries, `cargo search`/`cargo info`) — the
+      # crates.io (index/API queries, `cargo search`/`cargo info`); the
       # wildcard also covers index.crates.io (the sparse index cargo uses)
       - crates.io:443
       - "*.crates.io:443"
@@ -49,9 +49,8 @@ permissions:
       # `rustup toolchain install`
       - static.rust-lang.org:443
       
-      # rustup installer (`curl -fsSL https://sh.rustup.rs | sh`) — the
-      # short link redirects the installer script to
-      # raw.githubusercontent.com, which is covered by the github-cli mixin
+      # rustup installer (`curl -fsSL https://sh.rustup.rs | sh`); the
+      # short link redirects the installer script to      # raw.githubusercontent.com, which is covered by the github-cli mixin
       # (composed standalone, this mixin allows it itself for the
       # check-and-install step); rustup-init binaries come from
       # static.rust-lang.org above
