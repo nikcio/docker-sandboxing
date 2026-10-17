@@ -1,6 +1,6 @@
 schemaVersion: "2"
 kind: mixin
-name: zeldoc
+name: opencode-zeldoc
 displayName: Zeldoc.ai provider
 description: >
   Zeldoc.ai model provider for OpenCode: proxy-managed API key,

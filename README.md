@@ -66,11 +66,11 @@ Full walkthrough (prerequisites, first run, daily use):
 
 | Mixin | Adds | Required |
 | ----- | ---- | -------- |
-| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`zeldoc`, `copilot`) |
+| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`opencode-zeldoc`, `opencode-copilot`) |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
 | `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress) — add the kit line for fresh opencode on every sandbox | opt-in |
-| `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
-| `copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
+| `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
+| `opencode-copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
 | `github-cli` | GitHub CLI (`gh`) + proxy-managed GitHub auth | — |
 | `uniform` | Uniform DXP egress: docs, dashboard + Management API, Edge Delivery API (incl. EU + image CDN), proxy-managed `x-api-key` | — |
 | `omnium` | Omnium OMS/e-commerce API egress (proxy-managed bearer token) | — |

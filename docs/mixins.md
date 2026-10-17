@@ -36,11 +36,11 @@ Rules of thumb:
 
 | Mixin | Adds |
 | ----- | ---- |
-| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
+| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress). Not in the stock kits — add the line for fresh opencode on every sandbox; runs once at creation, no start cost |
-| `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
-| `copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
+| `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
+| `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `github-cli` | GitHub CLI (`gh`) install + proxy-managed GitHub auth (see [github-pat.md](github-pat.md)) |
 | `uniform` | Uniform DXP egress: docs site, dashboard + Management API (uniform.app), Edge Delivery API (uniform.global, incl. EU + image CDN), proxy-managed `x-api-key` auth (see [uniform-api-key.md](uniform-api-key.md)) |
 | `omnium` | Omnium OMS/e-commerce egress: REST API hosts (production/test/dev, each with Swagger), tech docs, proxy-managed `Authorization: Bearer` auth (see [omnium-api-key.md](omnium-api-key.md)) |
@@ -70,33 +70,33 @@ Network hosts per mixin are listed at the top of each
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node` |
-| .NET only | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `dotnet` |
-| .NET + OpenAPI codegen (C# models) | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
-| Python only | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `python` |
-| Go only | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `go` |
-| Rust only | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `rust` |
-| Node + typed API client (openapi-typescript) | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `docker-hub` |
-| Node frontend with Uniform | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `uniform` |
-| Browser automation | `global-opencode-config`, `env-guard`, `opencode-update`, `zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
+| Node only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node` |
+| .NET only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet` |
+| .NET + OpenAPI codegen (C# models) | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
+| Python only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `python` |
+| Go only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `go` |
+| Rust only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `rust` |
+| Node + typed API client (openapi-typescript) | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
+| Node frontend with Uniform | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
+| Browser automation | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
 
 Notes:
 
 - `global-opencode-config` is the only merge path for model-provider
-  config fragments — required when composing a model provider (`zeldoc`,
-  `copilot`).
+  config fragments — required when composing a model provider (`opencode-zeldoc`,
+  `opencode-copilot`).
   `env-guard` (the no-.env policy) is optional.
 - The `playwright` mixin and `sbx` run `apt` at creation — their install
   steps need the Ubuntu apt mirrors. Compose a registry mixin
   (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker
   engine pulls from.
-- Every set should include at least one model provider (`zeldoc` and/or
-  `copilot`). Add `opencode-update` to keep opencode current: the
+- Every set should include at least one model provider (`opencode-zeldoc` and/or
+  `opencode-copilot`). Add `opencode-update` to keep opencode current: the
   template images bake a fixed opencode version, and this mixin rolls it
   to the newest npm release at creation.
 
-## Model providers (zeldoc / copilot)
+## Model providers (opencode-zeldoc / opencode-copilot)
 
 Provider mixins don't fight over one config file: each ships a
 pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json`
@@ -106,8 +106,8 @@ at every start. Compose `global-opencode-config` with any provider
 mixin — it is required with them (their fragments only merge through
 it):
 
-- `enabled_providers` lists are **unioned** — compose `zeldoc` and
-  `copilot` together and both stay selectable with `/models`.
+- `enabled_providers` lists are **unioned** — compose `opencode-zeldoc` and
+  `opencode-copilot` together and both stay selectable with `/models`.
 - Fragments merge in filename order and later fragments win conflicts,
   but **no fragment sets the default model** — the project-level
   `opencode.jsonc` owns it. Commit one in the repo root (see
