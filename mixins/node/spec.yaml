@@ -39,8 +39,8 @@ setup:
         . "$NVM_DIR/nvm.sh";
         NODE_SPEC="${{ kit.args.nodeVersion }}";
         if [ -z "${NODE_SPEC}" ]; then NODE_SPEC=node; fi;
+        nvm install "${NODE_SPEC}";
         NODE_RESOLVED="$(nvm version "${NODE_SPEC}")";
-        nvm install "${NODE_RESOLVED}";
         nvm alias default "${NODE_RESOLVED}";
         nvm use default;
         NODE_BIN="$(find "$NVM_DIR"/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)";

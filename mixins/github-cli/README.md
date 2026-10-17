@@ -27,7 +27,7 @@ The sandbox network policy is deny-by-default, so `gh` and git-over-HTTPS fail u
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `ghVersion` | *(empty = latest apt package)* | GitHub CLI version to install (`2.102.0`) |
+| `ghVersion` | *(empty = latest apt package)* | GitHub CLI version to install (`2.100.0`) |
 
 Pass values with `--kit-arg github-cli.ghVersion=2.100.0` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 

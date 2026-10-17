@@ -29,7 +29,7 @@ setup:
           case "$(uname -m)" in
             x86_64|amd64) HERDR_ARCH=x86_64 ;;
             aarch64|arm64) HERDR_ARCH=aarch64 ;;
-            *) HERDR_ARCH=x86_64 ;;
+            *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;;
           esac;
           curl -fsSL "https://github.com/herdrdev/herdr/releases/download/v${HERDR_VERSION}/herdr-linux-${HERDR_ARCH}" -o /usr/local/bin/herdr;
           chmod +x /usr/local/bin/herdr;

@@ -1,6 +1,6 @@
 # rust
 
-Rust toolchain egress for the sandbox: a rustup-managed stable toolchain (when the base image lacks one), cargo, crates.io access, and docs hosts.
+Rust toolchain egress for the sandbox: a rustup-managed toolchain (latest stable by default, settable via the `rustVersion` arg — when the base image lacks one), cargo, crates.io access, and docs hosts.
 
 ## Usage
 
@@ -17,7 +17,7 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 ## How it works
 
-- **Check-and-install**: when `cargo` is missing, installs the C build toolchain + OpenSSL dev headers via apt, then runs the rustup installer as the `agent` user with `RUSTUP_HOME`/`CARGO_HOME` in the agent home (stable toolchain, plus `rust-analyzer`), and symlinks the cargo bin directory onto `PATH` — the same agent-owned rustup layout as the base images.
+- **Check-and-install**: when `cargo` is missing, installs the C build toolchain + OpenSSL dev headers via apt, then runs the rustup installer as the `agent` user with `RUSTUP_HOME`/`CARGO_HOME` in the agent home (latest stable toolchain by default, `rust-analyzer` included), and symlinks the cargo bin directory onto `PATH` — the same agent-owned rustup layout as the base images.
 - The env vars are exported via `/etc/sandbox-persistent.sh` so login shells pick them up.
 
 ## Version arguments

@@ -14,6 +14,7 @@ args:
   ohMyZshRef:
     default: ""
     description: Oh My Zsh git ref to clone (empty = master HEAD)
+    pattern: '^$|^[A-Za-z0-9._/-]+$'
 
 setup:
   install:

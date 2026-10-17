@@ -24,9 +24,9 @@ The install runs at **sandbox creation only**. Skipped when the base image alrea
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `sbxVersion` | *(empty = latest apt candidate)* | `docker-sbx` apt package version (`0.23.0-1~ubuntu.24.04~noble`) |
+| `sbxVersion` | *(empty = latest apt candidate)* | `docker-sbx` apt package version — use the full version including the `~ubuntu...` suffix (`0.23.0-1~ubuntu.24.04~noble`); apt rejects prefixes with `=` |
 
-Pass values with `--kit-arg sbx.sbxVersion=0.23.0-1` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+Pass values with `--kit-arg sbx.sbxVersion=0.23.0-1~ubuntu.24.04~noble` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

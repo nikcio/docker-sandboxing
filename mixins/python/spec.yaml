@@ -35,10 +35,7 @@ setup:
           fi;
         fi;
         PY_SPEC="${{ kit.args.pythonVersion }}";
-        if [ -z "${PY_SPEC}" ]; then
-          PY_SPEC="$(uv python list 2>/dev/null | grep -v 'freethreaded' | grep -vE 'a[0-9]+|b[0-9]+|rc[0-9]+' | head -n 1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)";
-        fi;
-        sudo -u agent env UV_PYTHON_INSTALL_DIR=/home/agent/.local/share/uv/python UV_LINK_MODE=copy uv python install "${PY_SPEC}";
+        sudo -u agent env UV_PYTHON_INSTALL_DIR=/home/agent/.local/share/uv/python UV_LINK_MODE=copy uv python install ${PY_SPEC:+"${PY_SPEC}"};
         PY_BIN="$(find /home/agent/.local/share/uv/python -mindepth 2 -maxdepth 2 -name bin -type d -path '*cpython-*' | sort -V | tail -n 1)";
         ln -sf "$PY_BIN/python3" /usr/local/bin/python3;
         ln -sf "$PY_BIN/python3" /usr/local/bin/python;

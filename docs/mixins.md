@@ -53,8 +53,8 @@ Leave the argument out (or empty) and the mixin installs the latest release it r
 | `ghcr` | GitHub Container Registry egress for the in-sandbox Docker engine |
 | `mcr` | Microsoft Container Registry egress for the in-sandbox Docker engine |
 | `playwright` | Playwright + Chromium headless shell (smallest download; `playwrightVersion` arg, empty = latest); installs node via nvm when the base image lacks one (`nodeVersion`/`nvmVersion` args, empty = latest) |
-| `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the base image has it |
-| `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh); check-and-install when the base image lacks it |
+| `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the base image has it; `sbxVersion` arg (empty = latest apt package) |
+| `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh); check-and-install when the base image lacks it; `zshVersion`/`ohMyZshRef` args (empty = latest) |
 | `herdr` | The [Herdr](https://herdr.dev) CLI — the agent runtime: a background server that owns the agents' terminals, so agents keep working when you detach and can be resumed from any machine; check-and-install at creation (`herdrVersion` arg, empty = latest) |
 | `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the examples do not compose it |
 
