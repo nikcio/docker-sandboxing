@@ -30,14 +30,16 @@ Download the installer for your platform from the [releases page](https://github
 
 ## Building from source
 
-Requirements: Node.js 22+, Rust (stable), and the [Tauri system dependencies](https://tauri.app/start/prerequisites/) for your platform.
+Requirements: Node.js 22+, [pnpm](https://pnpm.io) (`corepack enable`), Rust (stable), and the [Tauri system dependencies](https://tauri.app/start/prerequisites/) for your platform.
 
 ```bash
 cd sandy
-npm install
-npm run tauri dev    # run in development
-npm run tauri build  # produce installers
+pnpm install
+pnpm tauri dev    # run in development
+pnpm tauri build  # produce installers
 ```
+
+Packages are pinned exactly and installs reject anything published in the last 24 hours (`.npmrc`) as supply-chain protection.
 
 ## Notes
 

@@ -48,20 +48,25 @@ jobs:
         with:
           workspaces: sandy/src-tauri
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: sandy/package-lock.json
+          cache: pnpm
+          cache-dependency-path: sandy/pnpm-lock.yaml
 
       - name: Install frontend dependencies
         working-directory: sandy
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build Tauri app
         working-directory: sandy
-        run: npm run tauri build -- --target ${{ matrix.target }}
+        run: pnpm tauri build -- --target ${{ matrix.target }}
 
       - name: Prepare artifacts (Linux)
         if: runner.os == 'Linux'
