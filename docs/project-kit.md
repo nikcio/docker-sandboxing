@@ -87,27 +87,26 @@ of the stock mixins.
    A note in `.sbx-agents.d/` is appended to the sandbox `AGENTS.md`
    when the sandbox starts. Keep it short and directive — what the
    agent must know or do for this project (see `mixins/node` in the
-   docker-sandboxing repo for an example). How `AGENTS.md` files are
-   loaded: [agents-md.md](agents-md.md).
+   docker-sandboxing repo for an example). The workspace `AGENTS.md` wins over the runtime-generated sandbox environment file next to the workspace folder (the fallback when your repo has none).
+
 
 3. List it in your `sbxenv.yaml` after the stock kits (local paths are
    relative to the env file):
 
-   ```yaml
-   kits:
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-dotnet&ref=v0.6.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/agents-md&ref=v0.6.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
-     - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0
-     # ...the other stock mixins your project keeps...
-     - ./sandbox-kit
-   ```
+    ```yaml
+    kits:
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-dotnet&ref=v0.6.0
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v0.6.0
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v0.6.0
+      # ...the other stock mixins your project keeps...
+      - ./sandbox-kit
+    ```
 
-   Keep the stock agent kit (`kit-<stack>`) and `agents-md`
-   (required) — the kit defines the image and entrypoint wrapper, the
-   `agents-md` mixin ships the sandbox `AGENTS.md` baseline.
-   Add `global-opencode-config` when composing a model provider; the
-   list above also includes the optional `env-guard` (the no-.env
+   Keep the stock agent kit (`kit-<stack>`) and `global-opencode-config`
+   when composing a model provider — the kit defines the image and
+   entrypoint wrapper, the `global-opencode-config` mixin merges the
+   model-provider config fragments.
+   The list above also includes the optional `env-guard` (the no-.env
    policy). Your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new

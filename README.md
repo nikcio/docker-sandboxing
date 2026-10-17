@@ -58,7 +58,6 @@ Full walkthrough (prerequisites, first run, daily use):
 | [Project-specific config](docs/project-kit.md) | an in-project kit: project feeds, env vars, files, agent notes |
 | [Local overrides](docs/local-overrides.md) | personal settings in a gitignored `local.sbxenv.yaml`, merged over the team's `sbxenv.yaml` |
 | [Agent skills](docs/agent-skills.md) | share your host's global agent skills with the sandboxed agent (`sbx skills import`) |
-| [Agent memory](docs/agents-md.md) | which `AGENTS.md` the agent loads, the sandbox environment file, where to put your rules |
 | [Troubleshooting](docs/troubleshooting.md) | blocked downloads, git auth, the .env guard, stale changes |
 | [GitHub repo setup](docs/repo-setup.md) | maintainer setup: release App, secrets, branch protection, Docker Hub |
 | [Branch policies for AI agents](docs/agent-branch-protection.md) | protect your repo when an autonomous agent works in it: PRs, required checks, no force pushes, release tags, secret scanning |
@@ -67,7 +66,6 @@ Full walkthrough (prerequisites, first run, daily use):
 
 | Mixin | Adds | Required |
 | ----- | ---- | -------- |
-| `agents-md` | sandbox `AGENTS.md` baseline (guidance files + per-mixin notes) | every kit |
 | `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`opencode-zeldoc`, `opencode-copilot`) |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
 | `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress) — add the kit line for fresh opencode on every sandbox | opt-in |
@@ -114,10 +112,6 @@ Everything below is for developing the template, kit, and mixins.
 ├── kit-go/
 ├── kit-rust/
 ├── mixins/
-│   ├── agents-md/                    # the sandbox AGENTS.md baseline: guidance files
-│   │                                 #   (~/.sandbox-agents.md + ~/.sandbox-agents/*.md) and the
-│   │                                 #   startup rebuild of the workspace AGENTS.md from it plus
-│   │                                 #   every composed mixin's note (~/.sbx-agents.d/)
 │   ├── global-opencode-config/       # owns OPENCODE_CONFIG: permissive OpenCode config
 │   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
 │   │                                 #   merge fed by provider mixins' mixins.d/ fragments

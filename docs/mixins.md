@@ -36,7 +36,6 @@ Rules of thumb:
 
 | Mixin | Adds |
 | ----- | ---- |
-| `agents-md` | Replaces the runtime-generated workspace `AGENTS.md` baseline with the sandbox baseline (guidance files + a note from every composed mixin in `~/.sbx-agents.d/`) |
 | `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress). Not in the stock kits — add the line for fresh opencode on every sandbox; runs once at creation, no start cost |
@@ -71,22 +70,22 @@ Network hosts per mixin are listed at the top of each
 | Project | Keep these kit lines |
 | ------- | -------------------- |
 | Full stack (.NET + Node + Docker + browser tests) | all lines in the example |
-| Node only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node` |
-| .NET only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet` |
-| .NET + OpenAPI codegen (C# models) | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
-| Python only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `python` |
-| Go only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `go` |
-| Rust only | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `rust` |
-| Node + typed API client (openapi-typescript) | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
-| Node + in-sandbox Docker | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
-| Node frontend with Uniform | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
-| Browser automation | `agents-md`, `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
+| Node only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node` |
+| .NET only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet` |
+| .NET + OpenAPI codegen (C# models) | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `dotnet`, `nikcio-openapi-codegen` |
+| Python only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `python` |
+| Go only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `go` |
+| Rust only | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `rust` |
+| Node + typed API client (openapi-typescript) | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `openapi-ts` |
+| Node + in-sandbox Docker | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `docker-hub` |
+| Node frontend with Uniform | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `uniform` |
+| Browser automation | `global-opencode-config`, `env-guard`, `opencode-update`, `opencode-zeldoc`, `github-cli`, `node`, `browser`, `playwright` |
 
 Notes:
 
-- `agents-md` (sandbox `AGENTS.md` baseline) is required by every kit.
-  `global-opencode-config` is required when composing a model provider
-  (`opencode-zeldoc`, `opencode-copilot`) — their config fragments only merge through it.
+- `global-opencode-config` is the only merge path for model-provider
+  config fragments — required when composing a model provider (`opencode-zeldoc`,
+  `opencode-copilot`).
   `env-guard` (the no-.env policy) is optional.
 - The `playwright` mixin and `sbx` run `apt` at creation — their install
   steps need the Ubuntu apt mirrors. Compose a registry mixin
