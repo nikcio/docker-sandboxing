@@ -83,7 +83,7 @@ agent-created branches are append-only too.
 Tags and releases sit outside branch protection, and a Contents:write
 token can create both: mint a `v9.9.9` tag on any commit, publish the
 release, and every workflow that runs on releases — deploy pipelines,
-image publishing, package uploads — fires with no human in the loop.
+package uploads — fires with no human in the loop.
 
 Add a **tag ruleset** for `v*`: restrict deletions and updates, and
 restrict creations with your release bot in the bypass list — whatever

@@ -2,7 +2,7 @@
 
 Run [OpenCode](https://opencode.ai) in a sandboxed VM inside your own repo in
 three steps: **install `sbx`**, **copy the example for your stack**, and
-**run one command**. OpenCode starts in a VM with your toolchain preinstalled.
+**run one command**. OpenCode starts in a VM with your stack toolchain installed at creation.
 
 The sandbox is the isolation boundary: outbound network is deny-by-default and
 API keys are injected by a proxy — the sandbox only ever sees placeholders.
@@ -86,8 +86,10 @@ Optional: a GitHub personal access token so the agent can push and open PRs
 — see [github-pat.md](github-pat.md). Cloning public repos (read-only) and
 git over SSH work without one; pushing over HTTPS always needs it.
 
-The kits are fetched from `github.com/nikcio/docker-sandboxing` and the
-template image is pulled from Docker Hub — no builds needed on your machine.
+The kits are fetched from `github.com/nikcio/docker-sandboxing` and run on
+Docker's built-in `docker/sandbox-templates:opencode-docker` image — no
+builds needed on your machine. Stack toolchains install at sandbox creation
+via the stack mixin in the `kits:` list.
 
 ## Host settings
 

@@ -2,7 +2,7 @@
 
 Run [OpenCode](https://opencode.ai) in a sandboxed [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/)
 VM inside your own repo: copy the example for your stack into your project,
-run one command, and OpenCode starts in a VM with your toolchain preinstalled.
+run one command, and OpenCode starts in a VM with your stack toolchain installed at creation.
 
 The sandbox is the isolation boundary: outbound network is deny-by-default and
 API keys are injected by a proxy — the sandbox only ever sees placeholders.
@@ -60,7 +60,7 @@ Full walkthrough (prerequisites, first run, daily use):
 | [Agent skills](docs/agent-skills.md) | share your host's global agent skills with the sandboxed agent (`sbx skills import`) |
 | [Agent memory](docs/agents-md.md) | which `AGENTS.md` the agent loads, the sandbox environment file, where to put your rules |
 | [Troubleshooting](docs/troubleshooting.md) | blocked downloads, git auth, the .env guard, stale changes |
-| [GitHub repo setup](docs/repo-setup.md) | maintainer setup: release App, secrets, branch protection, Docker Hub |
+| [GitHub repo setup](docs/repo-setup.md) | maintainer setup: release App, secrets, branch protection |
 | [Branch policies for AI agents](docs/agent-branch-protection.md) | protect your repo when an autonomous agent works in it: PRs, required checks, no force pushes, release tags, secret scanning |
 
 ## Mixin reference
@@ -95,23 +95,14 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 
 ## Developing this repo
 
-Everything below is for developing the template, kit, and mixins.
+Everything below is for developing the kit and mixins.
 
 ```text
-├── template-dotnet/Dockerfile   # → opencode-dotnet:v1: .NET SDK, Node via NVM, PNPM, Playwright
-├── template-node/Dockerfile          # → opencode-node:v1: Node via NVM, PNPM, Playwright
-├── template-python/Dockerfile        # → opencode-python:v1: uv-managed CPython, uv, Node via NVM, PNPM, Playwright
-├── template-go/Dockerfile            # → opencode-go:v1: official Go toolchain (GO_VERSION build-arg,
-│                                     #   GOTOOLCHAIN=auto for newer toolchains via the module proxy),
-│                                     #   Node via NVM, PNPM, Playwright
-├── template-rust/Dockerfile          # → opencode-rust:v1: rustup-managed stable toolchain
-│                                     #   (clippy + rustfmt + rust-analyzer), cargo, C build toolchain,
-│                                     #   Node via NVM, PNPM, Playwright
-├── kit-<stack>/                      # sandbox kits (kind: sandbox): one per stack template —
-├── kit-node/                         #   same shape as kit/ (image + opencode entrypoint),
-├── kit-dotnet/                  #   with the stack image from Docker Hub
-├── kit-python/
-├── kit-go/
+├── kit-<stack>/                      # thin sandbox kits (kind: sandbox): one per stack —
+├── kit-node/                         #   same shape as kit/: the built-in Docker template
+├── kit-dotnet/                       #   image (docker/sandbox-templates:opencode-docker)
+├── kit-python/                       #   + opencode entrypoint; the stack toolchain comes
+├── kit-go/                           #   from mixins/<stack>
 ├── kit-rust/
 ├── mixins/
 │   ├── agents-md/                    # the sandbox AGENTS.md baseline: guidance files
@@ -132,12 +123,14 @@ Everything below is for developing the template, kit, and mixins.
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
 └── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in opencode kit —
-                                      #   upstream of the template image; nothing loads it
+                                      #   the image the kits run on; nothing loads it
 ```
 
-All five templates extend `docker/sandbox-templates:opencode-docker` and ship
-Git (+ git-lfs), Node.js via NVM + PNPM, and Playwright with the Chromium
-headless shell.
+The kits run on Docker's built-in
+[`docker/sandbox-templates:opencode-docker`](https://docs.docker.com/ai/sandboxes/)
+image — no images are published from this repo. Stack toolchains (Node,
+.NET, Python, Go, Rust) install at sandbox creation via the `mixins/<stack>`
+mixins.
 
 ### Working on the repo
 
@@ -147,7 +140,7 @@ sessions share this checkout concurrently.
 
 ```bash
 sbx kit validate kit-node/             # validate a kit or mixin after edits
-sbx env run                   # dev sandbox: kit/ + mixins/ loaded from the working copy
+sbx env run                            # dev sandbox: kit/ + mixins/ loaded from the working copy
 ```
 
 Kit changes only apply to new sandboxes: `sbx rm <name>` + `sbx env run`
