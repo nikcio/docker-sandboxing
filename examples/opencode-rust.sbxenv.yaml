@@ -22,13 +22,13 @@ agent: opencode
 # release-please bumps them (do not edit by hand).
 # x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=v2.3.0          # OpenCode CLI + config + provider merge
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v2.3.0              # workspace .env guard
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-zeldoc&ref=v2.3.0                 # Zeldoc.ai provider
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/github-cli&ref=v2.3.0             # git push auth (proxy-managed GitHub token)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/rust&ref=v2.3.0                   # Rust toolchain (crates.io egress)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker-hub&ref=v2.3.0             # in-sandbox docker (Docker Hub registry egress)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v2.3.0             # Playwright + Chromium headless shell
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=v3.0.0          # OpenCode CLI + config + provider merge
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v3.0.0              # workspace .env guard
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-zeldoc&ref=v3.0.0                 # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/github-cli&ref=v3.0.0             # git push auth (proxy-managed GitHub token)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/rust&ref=v3.0.0                   # Rust toolchain (crates.io egress)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker-hub&ref=v3.0.0             # in-sandbox docker (Docker Hub registry egress)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v3.0.0             # Playwright + Chromium headless shell
 # x-release-please-end-version
 
 workspace:
