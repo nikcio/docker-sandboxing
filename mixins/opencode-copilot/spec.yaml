@@ -26,7 +26,7 @@ setup:
           fi
           mkdir -p "$__dir"
           if ! command -v jq > /dev/null 2>&1; then
-            echo "ERROR [copilot]: jq is not available — cannot enable the github-copilot provider in the global config (the base image ships jq; install it or report this)" >&2
+            echo "ERROR [copilot]: jq is not available: cannot enable the github-copilot provider in the global config (the base image ships jq; install it or report this)" >&2
             exit 1
           fi
           if [ ! -f "$__file" ]; then
@@ -40,7 +40,7 @@ setup:
             echo "[copilot] enabled provider github-copilot in $__file"
           else
             rm -f "$__tmp"
-            echo "WARNING [copilot]: could not update $__file (invalid JSON?) — leaving it untouched" >&2
+            echo "WARNING [copilot]: could not update $__file (invalid JSON?): leaving it untouched" >&2
           fi
           unset __dir __file __tmp
       user: "agent"

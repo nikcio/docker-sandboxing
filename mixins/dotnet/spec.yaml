@@ -52,7 +52,7 @@ permissions:
       # SDK/workload downloads, MS Build hosts, packages.microsoft.com
       - "*.microsoft.com:443"
 
-      # SDK download CDN — dot.net's install script redirects SDK/workload
+      # SDK download CDN. dot.net's install script redirects SDK/workload
       # downloads here (builds.dotnet.microsoft.com; the single-label rule
       # above doesn't match the sub-subdomain)
       - "*.dotnet.microsoft.com:443"
@@ -61,7 +61,7 @@ permissions:
       - dot.net:443
       - "*.dot.net:443"
 
-      # Microsoft's short-link redirect service — dotnet-install.sh resolves
+      # Microsoft's short-link redirect service. dotnet-install.sh resolves
       # its primary SDK/workload download URL by following aka.ms/dotnet/...
       # short links (it silently falls back to the CDNs above when blocked)
       - aka.ms:443

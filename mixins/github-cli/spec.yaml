@@ -117,7 +117,7 @@ setup:
 # artifacts define the same service. The built-in credential is proxy-managed
 # on the same hosts this mixin needs (github.com, api.github.com,
 # raw.githubusercontent.com), so `gh` and git-over-HTTPS get the real token at
-# the proxy with only the sentinel in the VM — register it host-side with
+# the proxy with only the sentinel in the VM. Register it host-side with
 # `sbx secret set github` (see docs/github-pat.md).
 
 permissions:

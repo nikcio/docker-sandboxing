@@ -2,10 +2,10 @@
 
 ## A download fails inside the sandbox
 
-The network policy is deny-by-default; the host is probably not allowed. Check what was blocked, then allow it in the owning mixin:
+The network policy is deny by default; the host is probably not allowed. Check what was blocked, then allow it in the owning mixin:
 
 ```bash
-sbx policy log          # on your host — shows blocked hosts
+sbx policy log          # on your host, shows blocked hosts
 ```
 
 Add the host to the mixin's `permissions.network.allow` in `mixins/<area>/spec.yaml`, then recreate the sandbox (kit changes never apply to running sandboxes):
@@ -17,15 +17,15 @@ sbx env run
 
 ## Git push fails with auth errors
 
-GitHub auth is not configured for this sandbox — store a fine-grained PAT on your host (see [github-pat.md](github-pat.md)); it takes effect immediately, no restart needed. Cloning public repos (read-only) and git over SSH keep working without a token — pushing over HTTPS never does.
+GitHub auth is not configured for this sandbox. Store a fine-grained PAT on your host (see [github-pat.md](github-pat.md)); it takes effect immediately, no restart needed. Cloning public repos (read-only) and git over SSH keep working without a token, but pushing over HTTPS never does.
 
 ## GitHub Copilot sign-in fails
 
-Copilot signs in with the OAuth device flow (`/connect` in the TUI — see [copilot-setup.md](copilot-setup.md)). If it fails while a GitHub PAT is stored for the sandbox, the PAT injection into `github.com`/`api.github.com` requests can override opencode's own Copilot auth headers — remove the stored PAT (`sbx secret rm github`), sign in again, and re-store the PAT only if git push still works.
+Copilot signs in with the OAuth device flow (`/connect` in the TUI, see [copilot-setup.md](copilot-setup.md)). If it fails while a GitHub PAT is stored for the sandbox, the PAT injection into `github.com`/`api.github.com` requests can override opencode's own Copilot auth headers. Remove the stored PAT (`sbx secret rm github`), sign in again, and re-store the PAT only if git push still works.
 
 ## The agent uses the wrong model
 
-Model providers are mixins (`opencode-zeldoc`, `opencode-copilot`); each merges its provider config into the global opencode config at start — see [mixins.md](mixins.md). The default model comes from your project-level `opencode.jsonc` (`"model": "<provider>/<model>"`) — set it there, or switch per session with `/models`. Provider changes only apply to new sandboxes: recreate with `sbx rm <name>` + `sbx env run`.
+Model providers are mixins (`opencode-zeldoc`, `opencode-copilot`); each merges its provider config into the global opencode config at start, see [mixins.md](mixins.md). The default model comes from your project-level `opencode.jsonc` (`"model": "<provider>/<model>"`). Set it there, or switch per session with `/models`. Provider changes only apply to new sandboxes: recreate with `sbx rm <name>` + `sbx env run`.
 
 ## The sandbox refuses to start (.env files)
 
@@ -36,7 +36,7 @@ The workspace must not contain `.env` files (secrets stay out of the sandbox):
 
 ## My changes to a kit/mixin are not picked up
 
-Kit/mixin spec changes apply only to new sandboxes — recreate with `sbx rm <name>` + `sbx env run`.
+Kit/mixin spec changes apply only to new sandboxes. Recreate with `sbx rm <name>` + `sbx env run`.
 
 ## The agent's dev server is not reachable from my host
 

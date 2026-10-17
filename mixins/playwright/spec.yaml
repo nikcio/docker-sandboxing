@@ -36,13 +36,13 @@ setup:
 permissions:
   network:
     allow:
-      # npm package install (also covered by the node mixin — rules union)
+      # npm package install (also covered by the node mixin; rules union)
       - registry.npmjs.org:443
       - "*.npmjs.org:443"
       
       # Playwright browser downloads. The CDN serves regular builds, and
       # 302-redirects Chrome-for-Testing builds (builds/cft/...) to
-      # storage.googleapis.com — the redirect target must be allowed too
+      # storage.googleapis.com; the redirect target must be allowed too
       # (the sandbox proxy blocks cross-host redirects otherwise).
       - cdn.playwright.dev:443
       - "*.cdn.playwright.dev:443"

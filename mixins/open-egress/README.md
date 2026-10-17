@@ -1,6 +1,6 @@
 # open-egress
 
-Allows all outbound domains (the `**` rule) — replaces the deny-by-default network baseline for the sandbox.
+Allows all outbound domains (the `**` rule) and replaces the deny by default network baseline for the sandbox.
 
 ## Usage
 
@@ -13,4 +13,4 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/open-egress <agent> .`
 
-**Opt-in**: the base kit and examples do not compose it. With it, the agent can reach any host — prefer listing the specific domains a mixin owns. Local deny rules and org policy still take precedence over the allow-all.
+Opt-in: the base kit and examples do not compose it. With it, the agent can reach any host; prefer listing the specific domains a mixin owns. Local deny rules and org policy still take precedence over the allow-all.

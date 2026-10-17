@@ -2,9 +2,9 @@
 
 A single SemVer version for the whole repo, managed by [release-please](https://github.com/googleapis/release-please):
 
-- `.release-please-manifest.json` — current version
-- `.release-please-config.json` — release config (`extra-files` lists everything a release rewrites)
-- `CHANGELOG.md` — generated in the release PR
+- `.release-please-manifest.json`, the current version
+- `.release-please-config.json`, the release config (`extra-files` lists everything a release rewrites)
+- `CHANGELOG.md`, generated in the release PR
 
 ## Release flow
 
@@ -14,7 +14,7 @@ A single SemVer version for the whole repo, managed by [release-please](https://
    - the `&ref=vX.Y.Z` git pins in `examples/*.sbxenv.yaml`
 3. Merging the release PR tags `vX.Y.Z` and publishes the GitHub release.
 
-No images are published from this repo: the kit runs on Docker's built-in
+No images are published from this repo. The kit runs on Docker's built-in
 `docker/sandbox-templates:opencode-docker` image, and stack toolchains are
 installed by the mixins at sandbox creation.
 
@@ -29,12 +29,12 @@ installed by the mixins at sandbox creation.
 
 ## Rules
 
-- Never bump pinned versions by hand — the release PR owns every `x-release-please` block.
+- Never bump pinned versions by hand. The release PR owns every `x-release-please` block.
 - `kit/` (the base kit) and `sbxenv.yaml` (dev env) are never bumped.
 
 ## Adding a stack
 
-No kit needed — stacks are mixins:
+No kit needed, because stacks are mixins:
 
 1. A mixin directory `mixins/<stack>/` with a `spec.yaml` (copy an
    existing stack mixin, e.g. `mixins/node/`).

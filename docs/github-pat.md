@@ -1,6 +1,6 @@
 # Create a GitHub PAT and store it for a sandbox
 
-With a GitHub token the sandboxed agent can push over HTTPS. The token lives only in sbx's secret store (the OS keychain), scoped to one sandbox — it never enters the sandbox VM. A proxy injects it into requests to GitHub hosts.
+With a GitHub token the sandboxed agent can push over HTTPS. The token lives only in sbx's secret store (the OS keychain), scoped to one sandbox, and never enters the sandbox VM. A proxy injects it into requests to GitHub hosts.
 
 Use a **fine-grained PAT scoped to just the repositories the agent should touch** (broad-scope classic tokens carry scopes like `repo`, `workflow`, `read:org`).
 
@@ -8,15 +8,15 @@ Use a **fine-grained PAT scoped to just the repositories the agent should touch*
 
 1. On GitHub: **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
 2. Resource owner: you (or the org that owns the repos). Expiration per your policy (e.g. 90 days).
-3. **Repository access → Only select repositories** — pick the repositories the agent works on. Everything not listed is invisible to the agent.
-4. Repository permissions — this minimum:
+3. **Repository access → Only select repositories**. Pick the repositories the agent works on. Everything not listed is invisible to the agent.
+4. Repository permissions, this minimum:
    - **Metadata: Read** (mandatory, set automatically)
-   - **Contents: Read and write** — clone, commit, push, tags
+   - **Contents: Read and write** for clone, commit, push, tags
    - **Pull requests: Read and write**
    - **Issues: Read and write** *(optional)*
-   - **Actions: Read** *(optional — view CI status)*
+   - **Actions: Read** *(optional, to view CI status)*
 5. Deliberately leave out anything the agent doesn't need:
-   - **Workflows: leave unset** — without it the agent cannot alter your CI.
+   - **Workflows.** Leave unset. Without it the agent cannot alter your CI.
    - No **Administration**, no **Secrets**, no org-wide permissions.
 
 ## 2. Store it for the sandbox
@@ -29,7 +29,7 @@ sbx prompts for the token ("Enter secret:") and stores it in its secret store (t
 
 ## 3. Approve the credential binding
 
-The first time you create a sandbox, sbx asks you to approve that the `github` secret may be injected for the GitHub hosts — approve the prompt and you're done. The credential comes from the built-in agent kit; the `github-cli` mixin only adds the CLI and the git-identity setup, so no per-mixin configuration is needed.
+The first time you create a sandbox, sbx asks you to approve that the `github` secret may be injected for the GitHub hosts. Approve the prompt and you're done. The credential comes from the built-in agent kit; the `github-cli` mixin only adds the CLI and the git-identity setup, so no per-mixin configuration is needed.
 
 ## Rotate / remove
 
@@ -39,7 +39,7 @@ The first time you create a sandbox, sbx asks you to approve that the `github` s
 
 ## Without a token
 
-The sandbox can still **clone and fetch public repositories** and use **git over SSH** (your host SSH agent is forwarded; private keys stay on the host). Pushing over HTTPS always needs a token — even for public repositories.
+The sandbox can still clone and fetch public repositories and use git over SSH (your host SSH agent is forwarded; private keys stay on the host). Pushing over HTTPS always needs a token, even for public repositories.
 
 ## Vault alternative
 
