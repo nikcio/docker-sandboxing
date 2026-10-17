@@ -58,7 +58,6 @@ Full walkthrough (prerequisites, first run, daily use):
 | [Project-specific config](docs/project-kit.md) | an in-project kit: project feeds, env vars, files, agent notes |
 | [Local overrides](docs/local-overrides.md) | personal settings in a gitignored `local.sbxenv.yaml`, merged over the team's `sbxenv.yaml` |
 | [Agent skills](docs/agent-skills.md) | share your host's global agent skills with the sandboxed agent (`sbx skills import`) |
-| [Agent memory](docs/agent-memory.md) | which `AGENTS.md` the agent loads, the sandbox environment file, where to put your rules |
 | [Troubleshooting](docs/troubleshooting.md) | blocked downloads, git auth, the .env guard, stale changes |
 | [GitHub repo setup](docs/repo-setup.md) | maintainer setup: release App, secrets, branch protection, Docker Hub |
 | [Branch policies for AI agents](docs/agent-branch-protection.md) | protect your repo when an autonomous agent works in it: PRs, required checks, no force pushes, release tags, secret scanning |
