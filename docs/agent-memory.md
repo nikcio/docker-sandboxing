@@ -33,16 +33,14 @@ If `AGENTS.md` and `CLAUDE.md` sit at the same level, only the
 
 ## What the sandbox environment file contains
 
-The `global-opencode-config` mixin (`mixins/global-opencode-config/` in
-the docker-sandboxing repo, composed by every kit's `kits:` list)
-rebuilds the file in a startup command before opencode starts, from:
+The runtime generates the file when the sandbox is created (no mixin is
+involved), from:
 
-- the sandbox baseline (`mixins/global-opencode-config/files/home/.sandbox-agents.md`)
-  — environment facts plus an index of guidance files (network blocks,
-  git auth, workspace mode, persistent shell);
+- the sandbox baseline — environment facts (network blocks, git auth,
+  workspace mode, persistent shell);
 - one note per composed mixin (`mixins/<area>/files/home/.sbx-agents.d/<area>.md`
   in the docker-sandboxing repo);
-- the runtime's Kits index section, preserved across rebuilds.
+- the runtime's Kits index section.
 
 Because it is generated:
 

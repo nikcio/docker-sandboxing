@@ -36,7 +36,7 @@ Rules of thumb:
 
 | Mixin | Adds |
 | ----- | ---- |
-| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) and the sandbox `AGENTS.md` baseline (replaces the runtime-generated workspace `AGENTS.md` with the sandbox baseline + a note from every composed mixin in `~/.sbx-agents.d/`). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
+| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress). Not in the stock kits — add the line for fresh opencode on every sandbox; runs once at creation, no start cost |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
@@ -83,8 +83,7 @@ Network hosts per mixin are listed at the top of each
 
 Notes:
 
-- `global-opencode-config` is required by every kit (it ships the sandbox
-  `AGENTS.md` baseline) and is the only merge path for model-provider
+- `global-opencode-config` is the only merge path for model-provider
   config fragments — required when composing a model provider (`zeldoc`,
   `copilot`).
   `env-guard` (the no-.env policy) is optional.

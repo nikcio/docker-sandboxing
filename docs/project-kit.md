@@ -103,9 +103,11 @@ of the stock mixins.
     ```
 
    Keep the stock agent kit (`kit-<stack>`) and `global-opencode-config`
-   (required) — the kit defines the image and entrypoint wrapper, the
-   `global-opencode-config` mixin ships the sandbox `AGENTS.md` baseline
-   (and merges model-provider config fragments).
+   when composing a model provider — the kit defines the image and
+   entrypoint wrapper, the `global-opencode-config` mixin merges the
+   model-provider config fragments.
+   The list above also includes the optional `env-guard` (the no-.env
+   policy). Your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new
    sandboxes):

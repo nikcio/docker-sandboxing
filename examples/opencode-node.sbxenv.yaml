@@ -18,7 +18,7 @@ agent: opencode-node
 # x-release-please-start-version
 kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-node&ref=v2.3.0            # agent definition (published image)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v2.3.0 # permissive OpenCode config + AGENTS.md baseline + provider merge (required by every kit)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v2.3.0 # permissive OpenCode config + provider merge (required with model providers)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v2.3.0              # workspace .env guard
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-update&ref=v2.3.0        # opencode auto-update (latest npm release at creation)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/zeldoc&ref=v2.3.0                 # Zeldoc.ai provider

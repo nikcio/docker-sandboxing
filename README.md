@@ -67,7 +67,7 @@ Full walkthrough (prerequisites, first run, daily use):
 
 | Mixin | Adds | Required |
 | ----- | ---- | -------- |
-| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) and the sandbox `AGENTS.md` baseline (guidance files + per-mixin notes) | every kit; required with a model provider (`zeldoc`, `copilot`) |
+| `global-opencode-config` | permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge) | with a model provider (`zeldoc`, `copilot`) |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
 | `opencode-update` | opencode rolled to the newest npm release at sandbox creation (npm-registry egress) — add the kit line for fresh opencode on every sandbox | opt-in |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
@@ -115,11 +115,7 @@ Everything below is for developing the template, kit, and mixins.
 ├── mixins/
 │   ├── global-opencode-config/       # owns OPENCODE_CONFIG: permissive OpenCode config
 │   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
-│   │                                 #   merge fed by provider mixins' mixins.d/ fragments, plus
-│   │                                 #   the sandbox AGENTS.md baseline: guidance files
-│   │                                 #   (~/.sandbox-agents.md + ~/.sandbox-agents/*.md) and the
-│   │                                 #   startup rebuild of the workspace AGENTS.md from it plus
-│   │                                 #   every composed mixin's note (~/.sbx-agents.d/)
+│   │                                 #   merge fed by provider mixins' mixins.d/ fragments
 │   ├── env-guard/                    # the workspace .env guard (startup command)
 │   └── <area>/                       # one single-purpose mixin per area (kind: mixin): network
 │                                     #   rules, env vars, credentials, install steps, agent

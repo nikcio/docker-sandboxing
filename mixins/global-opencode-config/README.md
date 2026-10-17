@@ -1,11 +1,8 @@
 # global-opencode-config
 
-Permissive OpenCode config dropped into the global config layer, the merge
-step that combines provider config fragments from other mixins into the
-single `OPENCODE_CONFIG` file, and the sandbox `AGENTS.md` baseline
-(`~/.sandbox-agents.md` plus `~/.sandbox-agents/*.md` — git auth, network
-rules, persistent env, workspace mode) rebuilt into the workspace
-`AGENTS.md` together with a note from every other composed mixin.
+Permissive OpenCode config dropped into the global config layer, plus the
+merge step that combines provider config fragments from other mixins into
+the single `OPENCODE_CONFIG` file.
 
 ## Usage
 
@@ -14,16 +11,15 @@ Add the mixin to the `kits:` list in your project's `sbxenv.yaml`
 
 ```yaml
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config   # OpenCode config + provider merge + AGENTS.md baseline
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config   # OpenCode config + provider merge
 ```
 
 For local development, point `--kit` at the directory instead:
 `sbx run --kit ./mixins/global-opencode-config <agent> .`
 
 **Required when composing a model provider** (`zeldoc`, `copilot`) —
-their config fragments only merge through it. Required by every kit for
-the sandbox `AGENTS.md` baseline. The merge and the baseline rebuild run
-at every start; no network rules.
+their config fragments only merge through it. The merge runs at every
+start; no network rules.
 
 ## How it works
 
@@ -43,17 +39,3 @@ at every start; no network rules.
     so `OPENCODE_CONFIG` always points at a loadable file.
   - The output is regenerated at every start — edit the owning mixin in
     this repo (or a `mixins.d/` fragment) and restart the sandbox.
-- **AGENTS.md baseline**: ships the sandbox baseline as `~/.sandbox-agents.md`
-  (environment facts plus an index of guidance files in `~/.sandbox-agents/`).
-  A startup command rebuilds the workspace `AGENTS.md` at every start:
-  - Strips the runtime-generated content from the workspace file, keeping
-    only the runtime-managed Kits section (`<!-- sbx:kits-section -->`).
-  - Writes the sandbox baseline from `~/.sandbox-agents.md`.
-  - Appends every note in `~/.sbx-agents.d/*.md` — one per composed mixin.
-    Notes containing `sbx:kits-section` markers are skipped with a warning
-    (kits-sections are runtime-owned).
-  - Re-appends the preserved Kits section last.
-
-  Without the rebuild the workspace `AGENTS.md` is whatever the runtime
-  generated. Every kit composes this mixin, so the file the agent actually
-  reads gets the full sandbox baseline (and every mixin's agent note).

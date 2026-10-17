@@ -3,8 +3,8 @@ kind: mixin
 name: global-opencode-config
 displayName: Global OpenCode config
 description: >
-  Adds permissive opencode config and the ability to merge configs from other mixins using fragments (enabled_*/disabled_* lists union), plus the sandbox baseline (~/.sandbox-agents.md and ~/.sandbox-agents/) and every composed mixin's note in ~/.sbx-agents.d/ rebuilt into the workspace AGENTS.md.
-version: 0.5.0
+  Adds permissive opencode config and the ability to merge configs from other mixins using fragments (enabled_*/disabled_* lists union).
+version: 0.4.1
 
 environment:
   variables:
@@ -98,29 +98,5 @@ setup:
           mv -f "${tmp}.wrapped" "$OUT"
 
           echo "[mixins-config] merged ${#fragments[@]} mixins fragment(s) ($(basename -a "${fragments[@]}" | paste -sd' ' -)) -> $OUT"
-
-          __agents="$(dirname "${WORKSPACE_DIR:-}")/AGENTS.md"
-          __mine="$HOME/.sandbox-agents.md"
-          if [ -n "${WORKSPACE_DIR:-}" ] && [ -f "$__agents" ] && [ -f "$__mine" ]; then
-            __start_line="$(grep -n '<!-- sbx:kits-section start -->' "$__agents" | tail -n 1 | cut -d: -f1)"
-            __end_line="$(grep -n '<!-- sbx:kits-section end -->' "$__agents" | tail -n 1 | cut -d: -f1)"
-            __kits=""
-            if [ -n "$__start_line" ] && [ -n "$__end_line" ] && [ "$__end_line" -gt "$__start_line" ] 2>/dev/null; then
-              __kits="$(sed -n "${__start_line},${__end_line}p" "$__agents")"
-            fi
-            {
-              sed '/<!-- sbx:kits-section start -->/,/<!-- sbx:kits-section end -->/d' "$__mine"
-              for __note in "$HOME"/.sbx-agents.d/*.md; do
-                [ -f "$__note" ] || continue
-                if grep -q 'sbx:kits-section' "$__note"; then
-                  echo "WARNING [global-opencode-config]: skipping ${__note} — it contains sbx:kits-section markers (kits-sections are runtime-owned)" >&2
-                  continue
-                fi
-                printf '\n'
-                cat "$__note"
-              done
-              if [ -n "$__kits" ]; then printf '\n%s\n' "$__kits"; fi
-            } > "$__agents"
-          fi
       user: "agent"
-      description: Merge mixins fragments into the combined OPENCODE_CONFIG and rebuild the workspace AGENTS.md baseline (sandbox baseline + mixin notes, Kits index preserved)
+      description: Merge mixins fragments into the combined OPENCODE_CONFIG
