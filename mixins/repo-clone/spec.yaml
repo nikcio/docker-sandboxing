@@ -1,0 +1,85 @@
+# Clones extra GitHub repositories into the sandbox workspace at creation.
+#
+# Compose with the github-cli mixin: the clone authenticates through the
+# proxy-managed github credential (the real token is injected by the proxy
+# into requests to github.com — the in-container GH_TOKEN is only a
+# sentinel), so private repositories the token can read clone fine and the
+# token itself never enters the sandbox.
+#
+# The repository list comes from the `repositories` kit argument — one
+# `owner/repo` per line (whitespace-separated also works). In an
+# sbxenv.yaml, pass it from an environment argument:
+#
+#   args:
+#     repos:
+#       default: "owner/repo-a owner/repo-b"
+#   kits:
+#     - source: git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/repo-clone&ref=<tag>
+#       args:
+#         repositories: ${{ env.args.repos }}
+#
+# Repositories the token cannot access (or that do not exist) are skipped
+# with a warning — one bad entry never fails the sandbox. Existing
+# directories are left untouched (idempotent re-creates).
+schemaVersion: "2"
+kind: mixin
+name: repo-clone
+displayName: Repository clone
+description: >
+  Clones extra GitHub repositories (owner/repo list from the
+  `repositories` kit argument) into the workspace at sandbox creation.
+  Auth goes through the proxy-managed github credential from the
+  github-cli mixin; repositories the token cannot access are skipped
+  with a warning.
+version: 0.1.0
+
+args:
+  repositories:
+    default: ""
+    description: >
+      Repositories to clone, one owner/repo per line (whitespace
+      separated also works), e.g. "owner/api owner/docs". Empty = clone
+      nothing.
+
+setup:
+  install:
+    - command: >
+        set -e
+        repos="$(printf '%s' '${{ kit.args.repositories }}' | tr '\n' ' ')"
+        [ -z "$(printf '%s' "$repos" | tr -d '[:space:]')" ] && exit 0
+        target="${WORKSPACE_DIR:-/home/agent/workspace}"
+        mkdir -p "$target"
+        git_path="$(command -v git || true)"
+        [ -z "$git_path" ] && { echo "repo-clone: git not available; skipping" >&2; exit 0; }
+        [ "$git_path" = "/usr/local/bin/git" ] && git_path=/usr/bin/git
+        for repo in $repos; do
+          case "$repo" in
+            */*) name="${repo#*/}"; name="${name%.git}" ;;
+            *) echo "repo-clone: skipping '$repo' (expected owner/repo)" >&2; continue ;;
+          esac
+          if [ -e "$target/$name" ]; then
+            echo "repo-clone: $target/$name already exists; skipping clone of $repo" >&2
+            continue
+          fi
+          if "$git_path" clone --depth 1 "https://github.com/$repo.git" "$target/$name" 2>/tmp/repo-clone-err; then
+            echo "repo-clone: cloned $repo into $target/$name"
+          else
+            echo "repo-clone: WARNING: could not clone $repo (no access with the github token, or the repository does not exist):" >&2
+            sed 's/^/  /' /tmp/repo-clone-err >&2
+          fi
+        done
+        rm -f /tmp/repo-clone-err
+      user: "1000"
+      description: >
+        Clone the repositories listed in the `repositories` kit argument
+        into the workspace (skips ones the github token cannot access)
+
+agentInstructions:
+  content: |
+    ## Extra repositories
+
+    Additional repositories are cloned into the workspace at sandbox
+    creation (see the sibling directories). They are read-only context by
+    convention: do not commit or push in them unless the task explicitly
+    asks for changes there — they usually document or support the primary
+    project.
