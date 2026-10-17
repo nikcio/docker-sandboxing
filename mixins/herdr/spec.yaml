@@ -1,0 +1,34 @@
+schemaVersion: "2"
+kind: mixin
+name: herdr
+displayName: Herdr
+description: >
+  Installs the Herdr CLI (agent runtime — keep coding agents running and
+  resume them from any machine) for the agent user.
+version: 0.1.0
+
+setup:
+  install:
+    - command: >
+        set -e;
+        if command -v herdr >/dev/null 2>&1; then exit 0; fi;
+        install -m 0755 -d /var/lib/apt/sbx-install-lists;
+        export DEBIAN_FRONTEND=noninteractive;
+        { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
+        apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl;
+        rm -rf /var/lib/apt/sbx-install-lists;
+        curl -fsSL https://herdr.dev/install.sh | HERDR_INSTALL_DIR=/usr/local/bin sh;
+        herdr --version
+      description: Install the herdr CLI (skipped when the template image already has it)
+
+permissions:
+  network:
+    allow:
+      # Installer + release manifest (herdr.dev/install.sh, latest.json).
+      - herdr.dev:443
+
+      # Release binaries downloaded from GitHub releases by the installer
+      # and by `herdr update`.
+      - github.com:443
+      - "*.github.com:443"
+      - objects.githubusercontent.com:443
