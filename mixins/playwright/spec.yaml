@@ -4,7 +4,7 @@ name: playwright
 displayName: Playwright
 description: >
   Installs Playwright and the Chromium headless shell for browser automation and testing.
-version: 0.2.0
+version: 0.2.1
 
 args:
   playwrightVersion:
@@ -28,7 +28,7 @@ setup:
           install -m 0755 -d /var/lib/apt/sbx-install-lists;
           export DEBIAN_FRONTEND=noninteractive;
           { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
-          apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+          apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils libatomic1;
           export NVM_DIR=/home/agent/.nvm;
           NVM_REF="${{ kit.args.nvmVersion }}";
           if [ -z "${NVM_REF}" ]; then
