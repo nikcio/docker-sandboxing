@@ -96,12 +96,9 @@ Full mixin details: [docs/mixins.md](docs/mixins.md).
 Everything below is for developing the kit and mixins.
 
 ```text
-├── kit-<stack>/                      # thin sandbox kits (kind: sandbox): one per stack —
-├── kit-node/                         #   same shape as kit/: the built-in Docker template
-├── kit-dotnet/                       #   image (docker/sandbox-templates:opencode-docker)
-├── kit-python/                       #   + opencode entrypoint; the stack toolchain comes
-├── kit-go/                           #   from mixins/<stack>
-├── kit-rust/
+├── kit/                              # the base kit (kind: sandbox): Docker's built-in
+│                                     #   opencode template image + opencode entrypoint;
+│                                     #   the stack toolchains come from mixins/<stack>
 ├── mixins/
 │   ├── global-opencode-config/       # owns OPENCODE_CONFIG: permissive OpenCode config
 │   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
@@ -111,8 +108,6 @@ Everything below is for developing the kit and mixins.
 │                                     #   rules, env vars, credentials, install steps, agent
 │   │                                 #   memory note (.sbx-agents.d/<area>.md) — composed
 │                                     #   explicitly at launch (--kit flags or kits: list)
-├── kit/                              # the base kit (docker/sandbox-templates image), used by
-│                                     #   this repo's own sbxenv.yaml
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack)
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
@@ -120,11 +115,11 @@ Everything below is for developing the kit and mixins.
                                       #   the image the kits run on; nothing loads it
 ```
 
-The kits run on Docker's built-in
+The sandbox runs on Docker's built-in
 [`docker/sandbox-templates:opencode-docker`](https://docs.docker.com/ai/sandboxes/)
-image — no images are published from this repo. Stack toolchains (Node,
-.NET, Python, Go, Rust) install at sandbox creation via the `mixins/<stack>`
-mixins.
+image — no images are published from this repo, and there is one base kit
+(`kit/`). Stack toolchains (Node, .NET, Python, Go, Rust) install at sandbox
+creation via the `mixins/<stack>` mixins.
 
 ### Working on the repo
 
@@ -133,7 +128,7 @@ Work in a git worktree branched from `main`
 sessions share this checkout concurrently.
 
 ```bash
-sbx kit validate kit-node/             # validate a kit or mixin after edits
+sbx kit validate kit/                  # validate a kit or mixin after edits
 sbx env run                            # dev sandbox: kit/ + mixins/ loaded from the working copy
 ```
 

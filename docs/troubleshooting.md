@@ -57,7 +57,7 @@ sandbox):
 
 - **Kit/mixin spec changes** apply only to new sandboxes — recreate with
   `sbx rm <name>` + `sbx env run`. While iterating on a clone, point the
-  `kits:` lines at local directories (e.g. `./kit-dotnet`)
+  `kits:` lines at local directories (e.g. `./kit`)
   instead of git refs.
 
 ## The agent's dev server is not reachable from my host

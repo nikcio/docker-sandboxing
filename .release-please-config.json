@@ -6,26 +6,6 @@
       "extra-files": [
         {
           "type": "generic",
-          "path": "kit-dotnet/spec.yaml"
-        },
-        {
-          "type": "generic",
-          "path": "kit-node/spec.yaml"
-        },
-        {
-          "type": "generic",
-          "path": "kit-python/spec.yaml"
-        },
-        {
-          "type": "generic",
-          "path": "kit-go/spec.yaml"
-        },
-        {
-          "type": "generic",
-          "path": "kit-rust/spec.yaml"
-        },
-        {
-          "type": "generic",
           "path": "examples/opencode-dotnet.sbxenv.yaml"
         },
         {
