@@ -4,6 +4,7 @@ agent: opencode-custom
 
 kits:
   - ./kit
+  - ./kit-opencode
   - ./mixins/global-opencode-config
   - ./mixins/opencode-update
   - ./mixins/opencode-zeldoc

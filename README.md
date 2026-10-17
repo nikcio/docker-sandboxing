@@ -93,8 +93,10 @@ Everything below is for developing the mixins in this repo.
 
 ```text
 ├── kit/                              # the base kit (kind: sandbox): Docker's built-in
-│                                     #   opencode template image + opencode entrypoint;
-│                                     #   the stack toolchains come from mixins/<stack>
+│                                     #   shell template image (shell-docker); the
+│                                     #   stack toolchains come from mixins/<stack>
+├── kit-opencode/                     # the OpenCode kit (kind: sandbox, extends the
+│                                     #   base kit): opencode template image + entrypoint
 ├── mixins/
 │   ├── global-opencode-config/       # owns OPENCODE_CONFIG: permissive OpenCode config
 │   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
@@ -110,13 +112,14 @@ Everything below is for developing the mixins in this repo.
 ├── sbxenv.yaml                       # this repo's dev sandbox: local paths into the working copy
 ├── opencode.jsonc                    # opencode settings for working in this repo
 └── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in opencode kit —
-                                      #   the image the kit runs on; nothing loads it
+                                      #   the image the opencode kit runs on; nothing loads it
 ```
 
-The sandbox runs on Docker's built-in
-[`docker/sandbox-templates:opencode-docker`](https://docs.docker.com/ai/sandboxes/)
-image — no images are published from this repo, and there is one base kit
-(`kit/`). Stack toolchains (Node, .NET, Python, Go, Rust) install at sandbox
+The base kit (`kit/`) runs on Docker's built-in
+[`docker/sandbox-templates:shell-docker`](https://docs.docker.com/ai/sandboxes/)
+image; the OpenCode kit (`kit-opencode/`) extends it and switches to the
+`opencode-docker` image + `opencode` entrypoint — no images are published from
+this repo. Stack toolchains (Node, .NET, Python, Go, Rust) install at sandbox
 creation via the `mixins/<stack>` mixins.
 
 ### Working on the repo

@@ -68,13 +68,14 @@ An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `s
     ```yaml
     kits:
       - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit&ref=<copy the pin from the examples>
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-opencode&ref=<same ref>
       - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=<same ref>
       - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=<same ref>
       # ...the other stock mixins your project keeps...
       - ./sandbox-kit
     ```
 
-   Keep the base agent kit (`kit`) and `global-opencode-config` when composing a model provider — the kit defines the image and entrypoint wrapper, the `global-opencode-config` mixin merges the model-provider config fragments. The list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
+   Keep the base kits (`kit` + `kit-opencode`) and `global-opencode-config` when composing a model provider — the kits define the image and entrypoint, the `global-opencode-config` mixin merges the model-provider config fragments. The list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new sandboxes):
 

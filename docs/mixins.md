@@ -4,7 +4,7 @@ The premade mixins in this repo each add exactly one capability area to the sand
 
 ## Any mixin on the base kit
 
-Every toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins (`playwright`, `sbx`, `nikcio-openapi-codegen`) carry a self-contained check-and-install `setup.install` step: at sandbox creation it verifies the tool is present and installs it when the kit's base image lacks it. The built-in Docker template image (`docker/sandbox-templates:opencode-docker`) ships no stack toolchain, so the stack mixins do the install. Compose, for example, the `python` mixin onto the base kit and the sandbox gets a working `python3` + `uv`; no rebuild needed.
+Every toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins (`playwright`, `sbx`, `nikcio-openapi-codegen`) carry a self-contained check-and-install `setup.install` step: at sandbox creation it verifies the tool is present and installs it when the kit's base image lacks it. The built-in Docker template image (`docker/sandbox-templates:shell-docker`, which the base kit uses) ships no stack toolchain, so the stack mixins do the install. Compose, for example, the `python` mixin onto the base kit and the sandbox gets a working `python3` + `uv`; no rebuild needed.
 
 Rules of thumb:
 

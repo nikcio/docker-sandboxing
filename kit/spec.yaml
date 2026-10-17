@@ -1,12 +1,11 @@
 schemaVersion: "2"
 kind: sandbox
-name: opencode-custom
-displayName: OpenCode (Custom)
-version: 0.5.0
+name: sandbox-base
+displayName: Sandbox Base
+version: 0.6.0
 
 sandbox:
-  image: "docker/sandbox-templates:opencode-docker"
-  entrypoint: [opencode]
+  image: "docker/sandbox-templates:shell-docker"
 
 environment:
   variables:
