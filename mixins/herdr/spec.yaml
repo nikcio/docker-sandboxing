@@ -5,7 +5,13 @@ displayName: Herdr
 description: >
   Installs the Herdr CLI (agent runtime, keeps coding agents running and
   resume them from any machine) for the agent user.
-version: 0.1.1
+version: 0.2.0
+
+args:
+  herdrVersion:
+    default: ""
+    description: Herdr version to install (empty = latest)
+    pattern: '^$|^v?[0-9]+(\.[0-9]+)*$'
 
 setup:
   install:
@@ -17,7 +23,19 @@ setup:
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl;
         rm -rf /var/lib/apt/sbx-install-lists;
-        curl -fsSL https://herdr.dev/install.sh | HERDR_INSTALL_DIR=/usr/local/bin sh;
+        HERDR_VERSION="${{ kit.args.herdrVersion }}";
+        case "${HERDR_VERSION}" in v*) HERDR_VERSION="${HERDR_VERSION#v}";; esac;
+        if [ -n "${HERDR_VERSION}" ]; then
+          case "$(uname -m)" in
+            x86_64|amd64) HERDR_ARCH=x86_64 ;;
+            aarch64|arm64) HERDR_ARCH=aarch64 ;;
+            *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+          esac;
+          curl -fsSL "https://github.com/herdrdev/herdr/releases/download/v${HERDR_VERSION}/herdr-linux-${HERDR_ARCH}" -o /usr/local/bin/herdr;
+          chmod +x /usr/local/bin/herdr;
+        else
+          curl -fsSL https://herdr.dev/install.sh | HERDR_INSTALL_DIR=/usr/local/bin sh;
+        fi;
         herdr --version
       description: Install the herdr CLI (skipped when the base image already has it)
 

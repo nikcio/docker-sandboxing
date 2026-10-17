@@ -32,6 +32,16 @@ ships `herdr`.
 - **Updates.** `herdr update` works inside the sandbox. It downloads
   new releases from GitHub releases (covered by the network rules).
 
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `herdrVersion` | *(empty = latest)* | Herdr release to install, with or without the leading `v` |
+
+Pass values with `--kit-arg herdr.herdrVersion=<version>` (or an `args:`
+entry on the mixin's `kits:` line in `sbxenv.yaml`) — see
+[Version arguments](../../docs/mixins.md#version-arguments).
+
 ## Network domains
 
 | Domain | Why |

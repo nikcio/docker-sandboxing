@@ -4,7 +4,13 @@ name: go
 displayName: Go / Go modules
 description: >
   Add Go toolchain support.
-version: 0.4.1
+version: 0.5.0
+
+args:
+  goVersion:
+    default: ""
+    description: Go version to install (empty = latest)
+    pattern: '^$|^go[0-9]+(\.[0-9]+)*$'
 
 setup:
   install:
@@ -14,10 +20,13 @@ setup:
         export DEBIAN_FRONTEND=noninteractive;
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
-        GO_LATEST="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n 1)";
+        GO_VERSION="${{ kit.args.goVersion }}";
+        if [ -z "${GO_VERSION}" ]; then
+          GO_VERSION="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n 1)";
+        fi;
         GO_CURRENT="$(go version 2>/dev/null | awk '{print $3}' || true)";
-        if [ "${GO_CURRENT}" = "${GO_LATEST}" ]; then exit 0; fi;
-        curl -fsSL "https://go.dev/dl/${GO_LATEST}.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
+        if [ "${GO_CURRENT}" = "${GO_VERSION}" ]; then exit 0; fi;
+        curl -fsSL "https://go.dev/dl/${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz" -o /tmp/sbx-go.tgz;
         rm -rf /usr/local/go;
         tar -C /usr/local -xzf /tmp/sbx-go.tgz;
         rm -f /tmp/sbx-go.tgz;

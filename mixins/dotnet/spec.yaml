@@ -4,7 +4,13 @@ name: dotnet
 displayName: .NET / NuGet
 description: >
   Install .NET and allow network access to needed domains.
-version: 0.5.1
+version: 0.6.1
+
+args:
+  dotnetVersion:
+    default: ""
+    description: .NET SDK version to install (empty = latest)
+    pattern: '^$|^[0-9]+\.[0-9]+\.[0-9]+$'
 
 setup:
   install:
@@ -14,20 +20,36 @@ setup:
         export DEBIAN_FRONTEND=noninteractive;
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
-        export DOTNET_LATEST="$(curl -fsSL 'https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json' | grep -o '"latest-sdk": *"[^"]*"' | head -n 1 | grep -o '[0-9][0-9.]*')";
+        DOTNET_VERSION="${{ kit.args.dotnetVersion }}";
+        if [ -z "${DOTNET_VERSION}" ]; then
+          DOTNET_CHANNEL="$(curl -fsSL 'https://builds.dotnet.microsoft.com/dotnet/release-metadata/releases-index.json' | grep -o '"channel-version": *"[0-9.]*"\|"support-phase": *"[a-z-]*"' | paste - - | grep -v '"go-live"\|"eol"\|"preview"' | head -n 1 | grep -o '[0-9]*\.[0-9]*')";
+          DOTNET_VERSION="$(curl -fsSL "https://builds.dotnet.microsoft.com/dotnet/release-metadata/${DOTNET_CHANNEL}/releases.json" | grep -o '"latest-sdk": *"[^"]*"' | head -n 1 | grep -o '[0-9][0-9.]*')";
+        fi;
         DOTNET_CURRENT="$(dotnet --version 2>/dev/null || true)";
-        if [ "${DOTNET_CURRENT}" = "${DOTNET_LATEST}" ]; then
+        if [ "${DOTNET_CURRENT}" = "${DOTNET_VERSION}" ]; then
           { echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export DOTNET_GENERATE_ASPNET_CERTIFICATE=false'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
           exit 0;
         fi;
-        if [ -z "${DOTNET_CURRENT}" ] && apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends "dotnet-sdk-10.0=${DOTNET_LATEST}-*" 2>/dev/null; then
+        DOTNET_CHANNEL="$(echo "${DOTNET_VERSION}" | cut -d. -f1-2)";
+        if [ -z "${DOTNET_CURRENT}" ] && apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends "dotnet-sdk-${DOTNET_CHANNEL}=${DOTNET_VERSION}-*" 2>/dev/null; then
           { echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1'; echo 'export DOTNET_NOLOGO=1'; echo 'export DOTNET_GENERATE_ASPNET_CERTIFICATE=false'; echo 'export NUGET_XMLDOC_MODE=skip'; } >> /etc/sandbox-persistent.sh;
         else
+          export DOTNET_VERSION;
           DOTNET_ROOT=/usr/share/dotnet sh -c '
             set -e
             curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/sbx-dotnet-install.sh
+            # bash 5.3 (Ubuntu 26.04) + set -u: the installer appends empty values
+            # unquoted, which silently skips array elements, and its verbose
+            # diagnostics then read missing array indexes. Quote the appends and
+            # default the index reads so the script works on every bash.
+            sed -i -e "s/effective_versions+=(\$effective_version)/effective_versions+=(\"\${effective_version-}\")/" \
+                   -e "s/specific_versions+=(\$specific_version)/specific_versions+=(\"\${specific_version-}\")/" \
+                   -e "s/\${link_types\[\$link_index\]}/\${link_types[\$link_index]:-}/g" \
+                   -e "s/\${effective_versions\[\$link_index\]}/\${effective_versions[\$link_index]:-}/g" \
+                   -e "s/\${specific_versions\[\$link_index\]}/\${specific_versions[\$link_index]:-}/g" \
+                   /tmp/sbx-dotnet-install.sh
             chmod +x /tmp/sbx-dotnet-install.sh
-            /tmp/sbx-dotnet-install.sh --version "${DOTNET_LATEST}" --install-dir "$DOTNET_ROOT"
+            /tmp/sbx-dotnet-install.sh --version "${DOTNET_VERSION}" --install-dir "$DOTNET_ROOT"
             rm -f /tmp/sbx-dotnet-install.sh
             ln -sf "$DOTNET_ROOT/dotnet" /usr/local/bin/dotnet
             mkdir -p "$DOTNET_ROOT/tools"';
@@ -35,7 +57,7 @@ setup:
         fi;
         hash -r;
         dotnet --version
-      description: Ensure the latest .NET 10 SDK is available (upgrades a stale distro SDK to the latest upstream release)
+      description: Ensure the latest .NET SDK (or a pinned version) is available (upgrades a stale distro SDK to the requested release)
 
 environment:
   variables:

@@ -17,7 +17,7 @@ Model provider mixins (`opencode-zeldoc`, `opencode-copilot`) work without it, b
 
 ## How it works
 
-- **Install.** When `opencode` is missing from `PATH`, runs the official v2 installer (`curl -fsSL https://opencode.ai/v2/install | env HOME=/home/agent bash`) and symlinks the binary into `/usr/local/bin`. `HOME` is pinned to the agent user so the binary lands where the symlink points (install steps run as root). No Node.js/nvm involved; the installer ships a standalone binary. A no-op on images that already ship opencode.
+- **Install.** When `opencode` is missing from `PATH`, runs the official v2 installer (`curl -fsSL https://opencode.ai/v2/install | env HOME=/home/agent bash`, or a pinned version via `--version`) and symlinks the binary into `/usr/local/bin`. `HOME` is pinned to the agent user so the binary lands where the symlink points (install steps run as root). No Node.js/nvm involved; the installer ships a standalone binary. A no-op on images that already ship opencode.
 - **Base config.** Ships a permissive comment-free `~/.config/opencode/opencode.json` (edit/bash/webfetch allowed, because the sandbox is the isolation boundary; comment-free so the provider mixins' jq merges can parse it) and points `OPENCODE_CONFIG` at the combined file.
 - **Locale env.** Sets `LANG`/`LC_ALL` to `C.UTF-8`. The template images ship no locale env, and without it man-db's profile script prints `manpath: can't set the locale` on every shell start. `C.UTF-8` is always present on glibc, no `locale-gen` needed.
 - **Fragment merge.** A startup command merges every `~/.config/opencode/mixins.d/*.{json,jsonc}` fragment into the combined config with `jq`:
@@ -31,6 +31,14 @@ Model provider mixins (`opencode-zeldoc`, `opencode-copilot`) work without it, b
     so `OPENCODE_CONFIG` always points at a loadable file.
   - The output is regenerated at every start. Edit the owning mixin in
     this repo (or a `mixins.d/` fragment) and restart the sandbox.
+
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `opencodeVersion` | *(empty = latest)* | OpenCode version to install, with or without the leading `v` |
+
+Pass values with `--kit-arg opencode.opencodeVersion=<version>` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

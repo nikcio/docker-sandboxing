@@ -23,6 +23,14 @@ The sandbox network policy is deny by default, so `gh` and git-over-HTTPS fail u
 - **Git identity.** A startup command resolves the GitHub login, name, and email from `GH_TOKEN` (via `gh api user`) and writes them into the sandbox's git config. If the account has no public email set, the GitHub noreply address (`<id>+<login>@users.noreply.github.com`) is used instead. The committer identity is then locked down: a `/usr/local/bin/git` wrapper forces the identity from `/etc/git-identity` and refuses `git config` overrides of `user.name`/`user.email`, and both `/etc/gitconfig` and the agent's `~/.gitconfig` are made read-only (`chattr +i`). The committer on every commit is therefore always the token owner; note this is not bulletproof, because the agent can still set the *author* on individual commits (`git commit --author=...`) or call a git binary directly.
 - **Non-interactive git defaults.** The sandbox has no interactive editor, so the startup command also sets `core.editor` to `true` (a no-op command) and configures merge pulls (`pull.rebase=false`, `merge.ff=false`). This makes `git pull` and `git merge` work from the git CLI without hanging on an editor prompt.
 
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `ghVersion` | *(empty = latest apt package)* | GitHub CLI version to install (`MAJOR[.MINOR[.PATCH]]`) |
+
+Pass values with `--kit-arg github-cli.ghVersion=<version>` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+
 ## Network domains
 
 | Domain | Why |

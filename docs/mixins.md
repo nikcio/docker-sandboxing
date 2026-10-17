@@ -12,11 +12,28 @@ Rules of thumb:
 - Install steps run at creation only (mixin changes never apply to running sandboxes) and need egress: each mixin owns the domains its install touches (download host, the Ubuntu apt mirrors `archive.ubuntu.com`/`security.ubuntu.com`/`ports.ubuntu.com` when the step calls `apt-get`, and the CA revocation endpoints). A blocked download fails the install step, so check `sbx policy log`.
 - When the tool is already present the check is a cheap no-op, so keeping the install steps in every composition is safe.
 
+## Version arguments
+
+Every mixin that installs software declares a version argument in its `spec.yaml` (`args:` block) and defaults to the latest version (upstream release, or the distro's latest apt package for apt installs) when no value is supplied. Pin a version per sandbox with `--kit-arg`, or pin it in `sbxenv.yaml` with an `args:` entry on the mixin's `kits:` item:
+
+```bash
+sbx env run --kit-arg node.pnpmVersion=<version> --kit-arg dotnet.dotnetVersion=<version>
+```
+
+```yaml
+kits:
+  - source: git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=v2.3.0
+    args:
+      pnpmVersion: "10"
+```
+
+Leave the argument out (or empty) and the mixin installs the latest release it resolves at creation time. A `--kit-arg` value overrides a value pinned in `sbxenv.yaml`. Version arguments only apply when the mixin actually installs: when the base image already ships the tool, the check-and-install step is a no-op and the pinned version is unused. Which arguments a mixin takes is listed in its `mixins/<mixin>/spec.yaml` (`args:` block) and README. Version changes only apply to **new** sandboxes.
+
 ## Catalog
 
 | Mixin | Adds |
 | ----- | ---- |
-| `opencode` | OpenCode itself: installs OpenCode 2 via the official curl installer when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed, because the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env. Provider mixins (`opencode-zeldoc`, `opencode-copilot`) also work without it |
+| `opencode` | OpenCode itself: installs OpenCode 2 via the official curl installer when the sandbox lacks it (`opencodeVersion` arg, empty = latest), permissive OpenCode config (edit/bash/webfetch allowed, because the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env. Provider mixins (`opencode-zeldoc`, `opencode-copilot`) also work without it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional, but the examples compose it |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config merged into the global opencode config, Zeldoc hosts) |
 | `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config merged into the global opencode config, GitHub/Copilot API egress; see [copilot-setup.md](copilot-setup.md)) |

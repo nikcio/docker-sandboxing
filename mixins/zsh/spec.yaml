@@ -4,7 +4,17 @@ name: zsh
 displayName: Zsh + Oh My Zsh
 description: >
   Installs zsh with Oh My Zsh for the agent user and makes it the login shell.
-version: 0.1.1
+version: 0.2.0
+
+args:
+  zshVersion:
+    default: ""
+    description: zsh apt package version to install (empty = latest apt candidate)
+    pattern: '^$|^[0-9][0-9A-Za-z.+~:-]*$'
+  ohMyZshRef:
+    default: ""
+    description: Oh My Zsh git ref to clone (empty = master HEAD)
+    pattern: '^$|^[A-Za-z0-9._/-]+$'
 
 setup:
   install:
@@ -13,9 +23,13 @@ setup:
         && export DEBIAN_FRONTEND=noninteractive
         && install -m 0755 -d /var/lib/apt/sbx-lists
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq || true
-        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y -qq --no-install-recommends zsh git curl ca-certificates
+        && ZSH_PKG="zsh"
+        && ZSH_SPEC="${{ kit.args.zshVersion }}"
+        && if [ -n "${ZSH_SPEC}" ]; then ZSH_PKG="zsh=${ZSH_SPEC}"; fi
+        && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y -qq --no-install-recommends ${ZSH_PKG} git curl ca-certificates
         && rm -rf /var/lib/apt/sbx-lists
-        && git clone -q --depth 1 https://github.com/ohmyzsh/ohmyzsh.git /home/agent/.oh-my-zsh
+        && OMZ_REF="${{ kit.args.ohMyZshRef }}"
+        && git clone -q --depth 1 ${OMZ_REF:+--branch "${OMZ_REF}"} https://github.com/ohmyzsh/ohmyzsh.git /home/agent/.oh-my-zsh
         && chown -R agent:agent /home/agent/.oh-my-zsh
         && cp -n /home/agent/.oh-my-zsh/templates/zshrc.zsh-template /home/agent/.zshrc
         && chown agent:agent /home/agent/.zshrc

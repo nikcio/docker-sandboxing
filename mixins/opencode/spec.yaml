@@ -6,7 +6,13 @@ description: >
   Installs OpenCode 2 (official curl installer) when the sandbox lacks it,
   adds the permissive opencode config, and merges configs from other mixins
   using fragments (enabled_*/disabled_* lists union).
-version: 0.7.0
+version: 0.8.1
+
+args:
+  opencodeVersion:
+    default: ""
+    description: OpenCode version to install (empty = latest)
+    pattern: '^$|^v?[0-9]+(\.[0-9]+)*$'
 
 setup:
   install:
@@ -18,7 +24,12 @@ setup:
         { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl;
         rm -rf /var/lib/apt/sbx-install-lists;
-        curl -fsSL https://opencode.ai/v2/install | env HOME=/home/agent bash;
+        install -d -o agent -g agent /home/agent/.opencode /home/agent/.cache;
+        OC_VERSION="${{ kit.args.opencodeVersion }}";
+        OC_INSTALL_ARGS="";
+        if [ -n "${OC_VERSION}" ]; then OC_INSTALL_ARGS="--version ${OC_VERSION}"; fi;
+        curl -fsSL https://opencode.ai/v2/install | env HOME=/home/agent bash -s -- ${OC_INSTALL_ARGS};
+        chown -R agent:agent /home/agent/.opencode;
         ln -sf /home/agent/.opencode/bin/opencode /usr/local/bin/opencode;
         opencode --version
       description: Install OpenCode 2 via the official curl installer (HOME pinned to the agent user so the binary lands where the symlink points; skipped when opencode is already present)

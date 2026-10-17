@@ -21,6 +21,14 @@ The install runs at sandbox creation only and needs egress. It uses the domains 
 - `~/go/bin` is added to `PATH` via `/etc/sandbox-persistent.sh` so `go install`ed binaries are picked up in login shells.
 - With `GOTOOLCHAIN=auto` (template default), newer toolchain downloads also flow through the module proxy, covered by the rules below.
 
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `goVersion` | *(empty = latest)* | Go version to install in the upstream `goMAJOR.MINOR.PATCH` form |
+
+Pass values with `--kit-arg go.goVersion=<version>` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+
 ## Network domains
 
 | Domain | Why |

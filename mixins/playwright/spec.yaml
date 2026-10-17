@@ -4,7 +4,21 @@ name: playwright
 displayName: Playwright
 description: >
   Installs Playwright and the Chromium headless shell for browser automation and testing.
-version: 0.1.2
+version: 0.2.1
+
+args:
+  playwrightVersion:
+    default: ""
+    description: Playwright version to install (empty = latest)
+    pattern: '^$|^[0-9]+(\.[0-9]+)*$'
+  nodeVersion:
+    default: ""
+    description: Node.js version installed via nvm when the base image lacks node (empty = latest)
+    pattern: '^$|^(node/)?v?[0-9]+(\.[0-9]+)*$'
+  nvmVersion:
+    default: ""
+    description: NVM version to clone (empty = latest release)
+    pattern: '^$|^v[0-9]+\.[0-9]+\.[0-9]+$'
 
 setup:
   install:
@@ -14,13 +28,20 @@ setup:
           install -m 0755 -d /var/lib/apt/sbx-install-lists;
           export DEBIAN_FRONTEND=noninteractive;
           { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; };
-          apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils;
+          apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl xz-utils libatomic1;
           export NVM_DIR=/home/agent/.nvm;
-          git clone -q --depth 1 --branch v0.40.7 https://github.com/nvm-sh/nvm.git "$NVM_DIR";
+          NVM_REF="${{ kit.args.nvmVersion }}";
+          if [ -z "${NVM_REF}" ]; then
+            NVM_REF="$(curl -fsSL https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)";
+          fi;
+          git clone -q --depth 1 --branch "${NVM_REF}" https://github.com/nvm-sh/nvm.git "$NVM_DIR";
           unset NPM_CONFIG_PREFIX;
           . "$NVM_DIR/nvm.sh";
-          nvm install 24;
-          nvm alias default 24;
+          NODE_SPEC="${{ kit.args.nodeVersion }}";
+          if [ -z "${NODE_SPEC}" ]; then NODE_SPEC=node; fi;
+          nvm install "${NODE_SPEC}";
+          NODE_RESOLVED="$(nvm version "${NODE_SPEC}")";
+          nvm alias default "${NODE_RESOLVED}";
           nvm use default;
           NODE_BIN="$(find "$NVM_DIR"/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)";
           for b in node npm npx corepack; do if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/usr/local/bin/$b"; fi; done;
@@ -28,7 +49,9 @@ setup:
         fi;
         if command -v playwright >/dev/null 2>&1 && npx playwright install --dry-run chromium-headless-shell 2>/dev/null | grep -q "already installed"; then exit 0; fi;
         unset NPM_CONFIG_PREFIX;
-        npm install -g playwright;
+        PW_SPEC="${{ kit.args.playwrightVersion }}";
+        if [ -n "${PW_SPEC}" ]; then PW_SPEC="@${PW_SPEC}"; fi;
+        npm install -g "playwright${PW_SPEC}";
         PLAYWRIGHT_BROWSERS_PATH=/home/agent/.cache/ms-playwright npx playwright install --with-deps chromium-headless-shell;
         chown -R agent:agent /home/agent/.cache/ms-playwright
       description: Ensure Playwright + Chromium headless shell (skipped when already present)

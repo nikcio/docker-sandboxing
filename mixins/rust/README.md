@@ -1,6 +1,6 @@
 # rust
 
-Rust toolchain egress for the sandbox: a rustup-managed stable toolchain (when the base image lacks one), cargo, crates.io access, and docs hosts.
+Rust toolchain egress for the sandbox: a rustup-managed toolchain (latest stable by default, settable via the `rustVersion` arg — when the base image lacks one), cargo, crates.io access, and docs hosts.
 
 ## Usage
 
@@ -17,8 +17,17 @@ The install runs at sandbox creation only and needs egress. It uses the domains 
 
 ## How it works
 
-- **Check-and-install.** When `cargo` is missing, installs the C build toolchain + OpenSSL dev headers via apt, then runs the rustup installer as the `agent` user with `RUSTUP_HOME`/`CARGO_HOME` in the agent home (stable toolchain, plus `rust-analyzer`), and symlinks the cargo bin directory onto `PATH`, the same agent-owned rustup layout as the base images.
+- **Check-and-install.** When `cargo` is missing, installs the C build toolchain + OpenSSL dev headers via apt, then runs the rustup installer as the `agent` user with `RUSTUP_HOME`/`CARGO_HOME` in the agent home (latest stable toolchain by default, settable via the `rustVersion` arg, plus `rust-analyzer`), and symlinks the cargo bin directory onto `PATH`, the same agent-owned rustup layout as the base images.
 - The env vars are exported via `/etc/sandbox-persistent.sh` so login shells pick them up.
+
+## Version arguments
+
+| Arg | Default | Description |
+| --- | ------- | ----------- |
+| `rustVersion` | *(empty = stable)* | Toolchain for rustup to install. `stable`, `beta`, `nightly`, or a `MAJOR.MINOR.PATCH` version |
+| `profile` | `default` | rustup profile (`minimal`, `default`, `complete`) |
+
+Pass values with `--kit-arg rust.rustVersion=nightly` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`); see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 
