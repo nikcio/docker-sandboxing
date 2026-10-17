@@ -4,7 +4,7 @@ name: opencode-update
 displayName: OpenCode update
 description: >
   Rolls opencode to the newest npm release at sandbox creation (the
-  template images bake a fixed opencode version).
+  base images bake a fixed opencode version).
 version: 0.1.0
 
 setup:

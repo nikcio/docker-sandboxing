@@ -22,7 +22,7 @@ For local development, point `--kit` at the directory instead: `sbx run --kit ./
   - Objects merge recursively; later fragments win scalar conflicts.
   - Array-valued keys whose name starts with `enabled_` or `disabled_`
     (e.g. `enabled_mixins`, `enabled_providers`) are unioned — that is
-    what lets mixins compose (`zeldoc` + `copilot` both stay enabled).
+    what lets mixins compose (`opencode-zeldoc` + `opencode-copilot` both stay enabled).
   - Comment-bearing `.jsonc` fragments are rejected — fragments must be
     comment-free `.json`.
   - No fragments (or a missing directory) yields the minimal valid config,

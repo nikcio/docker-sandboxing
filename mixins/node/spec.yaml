@@ -31,7 +31,7 @@ setup:
         if [ "$(dirname "$PNPM_BIN")" != "/usr/local/bin" ]; then ln -sf "$PNPM_BIN" /usr/local/bin/pnpm; fi;
         node --version;
         pnpm --version
-      description: Ensure node (nvm) + pnpm are available (install when the template image lacks them)
+      description: Ensure node (nvm) + pnpm are available (install when the base image lacks them)
 
 environment:
   variables:
@@ -49,7 +49,7 @@ permissions:
       - iojs.org:443
 
       # nvm itself (the check-and-install step clones the nvm repo from
-      # GitHub when the template image lacks node — raw.githubusercontent
+      # GitHub when the base image lacks node — raw.githubusercontent
       # covers the install script variant)
       - github.com:443
       - "*.github.com:443"

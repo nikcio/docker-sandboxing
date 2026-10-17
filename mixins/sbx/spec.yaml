@@ -17,7 +17,7 @@ setup:
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists update -qq
         && apt-get -o Dir::State::lists=/var/lib/apt/sbx-lists install -y --no-install-recommends docker-sbx
         && rm -rf /var/lib/apt/sbx-lists
-      description: Install the sbx CLI (skipped when the template image already has it)
+      description: Install the sbx CLI (skipped when the base image already has it)
 
 permissions:
   network:

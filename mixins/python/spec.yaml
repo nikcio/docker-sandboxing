@@ -26,7 +26,7 @@ setup:
         { echo 'export UV_PYTHON_INSTALL_DIR=/home/agent/.local/share/uv/python'; echo 'export UV_LINK_MODE=copy'; } >> /etc/sandbox-persistent.sh;
         python3 --version;
         apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends python3-venv >/dev/null 2>&1 || true
-      description: Ensure python3 + uv are available (install when the template image lacks them)
+      description: Ensure python3 + uv are available (install when the base image lacks them)
 
 permissions:
   network:

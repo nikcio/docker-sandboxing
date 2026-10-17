@@ -25,7 +25,7 @@ Copilot signs in with the OAuth device flow (`/connect` in the TUI — see [copi
 
 ## The agent uses the wrong model
 
-Model providers are mixins (`zeldoc`, `copilot`); their configs are merged fragments — see [mixins.md](mixins.md). The default model comes from your project-level `opencode.jsonc` (`"model": "<provider>/<model>"`) — set it there, or switch per session with `/models`. Provider changes only apply to new sandboxes: recreate with `sbx rm <name>` + `sbx env run`.
+Model providers are mixins (`opencode-zeldoc`, `opencode-copilot`); their configs are merged fragments — see [mixins.md](mixins.md). The default model comes from your project-level `opencode.jsonc` (`"model": "<provider>/<model>"`) — set it there, or switch per session with `/models`. Provider changes only apply to new sandboxes: recreate with `sbx rm <name>` + `sbx env run`.
 
 ## The sandbox refuses to start (.env files)
 
@@ -34,10 +34,23 @@ The workspace must not contain `.env` files (secrets stay out of the sandbox):
 - **Direct mode** (default): the sandbox refuses to start. Delete the `.env` file(s) in your project on the host, then recreate.
 - **Clone mode** (`clone: true`): the sandbox deletes them from its local copy and warns after a 5-second pause.
 
-## My changes to a kit/mixin/template are not picked up
+## My sandbox fails to fetch a kit after upgrading (`#dir=kit-<stack>` not found)
 
-- **Kit/mixin spec changes** apply only to new sandboxes — recreate with `sbx rm <name>` + `sbx env run`. While iterating on a clone, point the `kits:` lines at local directories (e.g. `./kit-dotnet`) instead of git refs.
-- **Template (Dockerfile) changes** need a rebuild and reload, then a sandbox recreation — build the template with `docker build` and load it with `sbx template load`.
+The per-stack kits (`kit-node`, `kit-dotnet`, `kit-python`, `kit-go`, `kit-rust`)
+were removed — only the base kit (`kit/`) remains. In your `sbxenv.yaml`:
+
+- Replace the kit ref `#dir=kit-<stack>&ref=...` with `#dir=kit&ref=...`
+  (same pinned version).
+- Remove the `agent: opencode-<stack>` line — the base kit's entrypoint
+  already starts OpenCode.
+- Keep the stack mixin (`mixins/<stack>`) — that is where the toolchain
+  comes from now.
+
+See the [examples](../examples) for the full composition.
+
+## My changes to a kit/mixin are not picked up
+
+- **Kit/mixin spec changes** apply only to new sandboxes — recreate with `sbx rm <name>` + `sbx env run`. While iterating on a clone, point the `kits:` lines at local directories (e.g. `./kit`) instead of git refs.
 
 ## The agent's dev server is not reachable from my host
 

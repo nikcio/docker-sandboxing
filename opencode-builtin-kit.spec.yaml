@@ -1,6 +1,5 @@
-# Reference copy of Docker's built-in `opencode` sandbox kit — the upstream
-# of the template image (docker/sandbox-templates:opencode-docker) that the
-# template-*/Dockerfiles build on.
+# Reference copy of Docker's built-in `opencode` sandbox kit — the image
+# (docker/sandbox-templates:opencode-docker) this repo's kits run on.
 # Documents what the base already wires: builtin provider credentials, MCP
 # gateway registration, apt cache update, AGENTS.md declaration. Nothing in
 # this repo loads it.

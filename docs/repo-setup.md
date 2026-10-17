@@ -1,6 +1,6 @@
 # GitHub repository setup
 
-One-time setup that makes this repo's automations work: CI on every PR, release-please release PRs, and image publishing to Docker Hub. Do this once as a repo admin (Settings are admin-only).
+One-time setup that makes this repo's automations work: CI on every PR and release-please release PRs. Do this once as a repo admin (Settings are admin-only).
 
 ## The workflows
 
@@ -8,9 +8,8 @@ One-time setup that makes this repo's automations work: CI on every PR, release-
 | -------- | ------- | ----- |
 | Validate (`validate.yml`) | every PR, pushes to `main`, manual | nothing — works out of the box |
 | Release Please (`release-please.yml`) | pushes to `main` | a GitHub App (steps 1–2) |
-| Publish images (`publish-image.yml`) | a release is published | Docker Hub secrets (step 2) |
 
-Validate runs `sbx kit validate` on every kit and mixin plus a static BuildKit check on every template Dockerfile. No secrets involved.
+Validate runs the `sbx` spec check on every kit and mixin. No secrets involved.
 
 ## 1. Create the release-please GitHub App
 
@@ -34,10 +33,6 @@ Settings → Secrets and variables → Actions → **New repository secret**:
 | ------ | ----- |
 | `APP_CLIENT_ID` | the GitHub App's Client ID from step 1 |
 | `APP_PRIVATE_KEY` | full contents of the `.pem` from step 1 |
-| `DOCKERHUB_USERNAME` | the Docker Hub account that owns `nikcio/<image>` |
-| `DOCKERHUB_TOKEN` | a Docker Hub **access token** with Read & Write (Docker Hub → Account Settings → Security → New Access Token) — not the account password |
-
-Publishing pushes every image in `images.json` as public `docker.io/nikcio/<name>:vX.Y.Z` + `:latest` on Docker Hub.
 
 ## 3. Protect `main`
 
@@ -47,22 +42,16 @@ Settings → Rules → Rulesets → **New branch ruleset** (or classic branch pr
 
 - **Require a pull request before merging** — work happens in worktrees and lands via PRs (see [agent-guidance/worktrees.md](../agent-guidance/worktrees.md)).
 - **Require status checks to pass**, then select:
-  - `Kits & mixins (sbx kit validate)`
-  - `Dockerfile (buildx check) (template-dotnet)`
-  - `Dockerfile (buildx check) (template-node)`
-  - `Dockerfile (buildx check) (template-python)`
-  - `Dockerfile (buildx check) (template-go)`
-  - `Dockerfile (buildx check) (template-rust)`
+  - `Kits & mixins (sbx kit pack)`
 
-The checks appear after the first PR runs the Validate workflow. Validate runs on every PR (no path filtering) and always produces exactly these six checks, so the fixed required set is safe. Two caveats keep it that way: don't add path filters to `validate.yml` (a filtered-out PR never reports the required checks and can never merge), and after adding or renaming an image in `images.json`, update this required list to match the new check names.
+The checks appear after the first PR runs the Validate workflow. Validate runs on every PR (no path filtering) and always produces exactly this check, so the fixed required set is safe. Two caveats keep it that way: don't add path filters to `validate.yml` (a filtered-out PR never reports the required checks and can never merge).
 
-The release PR is an ordinary PR: it runs the same checks and must pass before you merge it. Don't require checks from workflows that only run on pushes to `main` (release-please, publish-image) — they never appear on PRs and would deadlock every merge.
+The release PR is an ordinary PR: it runs the same checks and must pass before you merge it. Don't require checks from workflows that only run on pushes to `main` (release-please) — they never appear on PRs and would deadlock every merge.
 
 ## How a release flows
 
 1. Conventional Commits (`feat`/`fix`/`deps`) land on `main`.
-2. Release Please opens or updates a release PR (version bump, published kit tags, `&ref=` pins).
+2. Release Please opens or updates a release PR (CHANGELOG entry and the `&ref=` pins in the examples).
 3. You merge the release PR → tag `vX.Y.Z` + GitHub release.
-4. Publish images builds `images.json` and pushes to Docker Hub.
 
 Commit and versioning conventions: [agent-guidance/commit-messages.md](../agent-guidance/commit-messages.md), [agent-guidance/versioning.md](../agent-guidance/versioning.md).

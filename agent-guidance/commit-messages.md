@@ -20,18 +20,17 @@ type(scope): description
 `feat`, `fix`, and `deps` trigger a release-please release; other types land without one. Add `!` after the type (or a `BREAKING CHANGE:` footer in the body) for a major release:
 
 ```
-feat(kit)!: change entrypoint contract
+feat(kit)!: change the base kit entrypoint contract
 ```
 
 ## Scopes
 
-Common scopes: `kit`, `template`, `mixins`, `scripts`, `release`, `docs`, `deps`. Omit the scope when the change doesn't fit one.
+Common scopes: `kit`, `mixins`, `release`, `docs`, `deps`. Omit the scope when the change doesn't fit one.
 
 ## Examples
 
 ```
-feat(kit): auto-bump published image tag with the release
-fix(template): pin NVM install to a verified checksum
+feat(mixins): add git-lfs install to the node mixin
+fix(mixins): pin tool install to a verified checksum
 docs: update README consumption flow
-ci: verify kit references the pushed image tag
 ```
