@@ -18,6 +18,10 @@
 #       args:
 #         repositories: ${{ env.args.repos }}
 #
+# The value is interpolated into a single-quoted shell string, so a `'` in
+# a repository name would break the quoting — stick to owner/repo names
+# (they cannot contain quotes anyway).
+#
 # Repositories the token cannot access (or that do not exist) are skipped
 # with a warning — one bad entry never fails the sandbox. Existing
 # directories are left untouched (idempotent re-creates).
@@ -43,33 +47,44 @@ args:
 
 setup:
   install:
-    - command: >
+    # Literal block (`|`), not folded (`>`): folding joins the top-level
+    # script lines with spaces and breaks the syntax. Install-step
+    # commands must be strings in the v2 mixin schema, so the array form
+    # (["bash", "-c", ...]) is not an option here — a `bash -c` invocation
+    # is implicit for install commands.
+    - command: |
         set -e
         repos="$(printf '%s' '${{ kit.args.repositories }}' | tr '\n' ' ')"
         [ -z "$(printf '%s' "$repos" | tr -d '[:space:]')" ] && exit 0
         target="${WORKSPACE_DIR:-/home/agent/workspace}"
         mkdir -p "$target"
         git_path="$(command -v git || true)"
-        [ -z "$git_path" ] && { echo "repo-clone: git not available; skipping" >&2; exit 0; }
+        if [ -z "$git_path" ]; then
+          echo "repo-clone: git not available; skipping" >&2
+          exit 0
+        fi
         [ "$git_path" = "/usr/local/bin/git" ] && git_path=/usr/bin/git
+        err_file="$(mktemp)"
+        trap 'rm -f "$err_file"' EXIT
         for repo in $repos; do
           case "$repo" in
+            */*/*|/*/*) echo "repo-clone: skipping '$repo' (expected owner/repo)" >&2; continue ;;
             */*) name="${repo#*/}"; name="${name%.git}" ;;
             *) echo "repo-clone: skipping '$repo' (expected owner/repo)" >&2; continue ;;
           esac
-          if [ -e "$target/$name" ]; then
+          if [ -e "$target/$name" ] || [ -L "$target/$name" ]; then
             echo "repo-clone: $target/$name already exists; skipping clone of $repo" >&2
             continue
           fi
-          if "$git_path" clone --depth 1 "https://github.com/$repo.git" "$target/$name" 2>/tmp/repo-clone-err; then
+          if "$git_path" clone --depth 1 "https://github.com/$repo.git" "$target/$name" 2>"$err_file"; then
             echo "repo-clone: cloned $repo into $target/$name"
           else
             echo "repo-clone: WARNING: could not clone $repo (no access with the github token, or the repository does not exist):" >&2
-            sed 's/^/  /' /tmp/repo-clone-err >&2
+            sed 's/^/  /' "$err_file" >&2
+            rm -rf "$target/$name"
           fi
         done
-        rm -f /tmp/repo-clone-err
-      user: "1000"
+      user: "agent"
       description: >
         Clone the repositories listed in the `repositories` kit argument
         into the workspace (skips ones the github token cannot access)

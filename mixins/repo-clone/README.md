@@ -50,9 +50,12 @@ sbx run <agent> . --kit ./mixins/repo-clone --kit-arg repositories="owner/api ow
   exactly the repositories you want cloned.
 - **Failure tolerance**: a repository the token cannot access (or that
   does not exist) is skipped with a warning — one bad entry never fails
-  the sandbox. Check the creation log for `repo-clone:` lines.
-- **Idempotent**: an existing directory with the target name is left
-  untouched, so re-creating the sandbox does not clobber anything.
+  the sandbox. A failed clone leaves nothing behind (the partial target
+  directory is removed), and entries that are not `owner/repo` are
+  skipped. Check the creation log for `repo-clone:` lines.
+- **Idempotent**: an existing directory (or symlink) with the target
+  name is left untouched, so re-creating the sandbox does not clobber
+  anything.
 - Repositories are cloned at creation only — new entries need a sandbox
   recreate (see "Changing mixins" in [docs/mixins.md](../../docs/mixins.md)).
 
