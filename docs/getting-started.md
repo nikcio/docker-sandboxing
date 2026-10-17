@@ -86,7 +86,7 @@ Optional: a GitHub personal access token so the agent can push and open PRs
 — see [github-pat.md](github-pat.md). Cloning public repos (read-only) and
 git over SSH work without one; pushing over HTTPS always needs it.
 
-The kits are fetched from `github.com/nikcio/docker-sandboxing` and run on
+The kit and mixins are fetched from `github.com/nikcio/docker-sandboxing` and run on
 Docker's built-in `docker/sandbox-templates:opencode-docker` image — no
 builds needed on your machine. Stack toolchains install at sandbox creation
 via the stack mixin in the `kits:` list.

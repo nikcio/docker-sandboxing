@@ -15,7 +15,7 @@ A single SemVer version for the whole repo, managed by
    - the `&ref=vX.Y.Z` git pins in `examples/*.sbxenv.yaml`
 3. Merging the release PR tags `vX.Y.Z` and publishes the GitHub release.
 
-No images are published from this repo: the kits run on Docker's built-in
+No images are published from this repo: the kit runs on Docker's built-in
 `docker/sandbox-templates:opencode-docker` image, and stack toolchains are
 installed by the mixins at sandbox creation.
 

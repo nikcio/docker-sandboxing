@@ -112,7 +112,7 @@ Everything below is for developing the kit and mixins.
 ├── docs/                             # user guides (see above)
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
 └── opencode-builtin-kit.spec.yaml    # reference snapshot of Docker's built-in opencode kit —
-                                      #   the image the kits run on; nothing loads it
+                                      #   the image the kit runs on; nothing loads it
 ```
 
 The sandbox runs on Docker's built-in

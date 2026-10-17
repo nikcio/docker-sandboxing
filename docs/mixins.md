@@ -15,7 +15,7 @@ creation it verifies the tool is present and installs it when the kit's
 base image lacks it. The built-in Docker template image
 (`docker/sandbox-templates:opencode-docker`) ships no stack toolchain, so
 the stack mixins do the install. Compose, for example, the `python` mixin
-onto the Go kit and the sandbox gets a working `python3` + `uv`; no
+onto the base kit and the sandbox gets a working `python3` + `uv`; no
 rebuild needed.
 
 Rules of thumb:
@@ -59,7 +59,7 @@ Rules of thumb:
 | `playwright` | Playwright + Chromium headless shell (smallest download); installs node via nvm when the base image lacks one |
 | `sbx` | The `sbx` CLI inside the sandbox for kit authoring (validate/inspect/pack); skipped when the base image has it |
 | `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh); check-and-install when the base image lacks it |
-| `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the stock kits and examples do not compose it |
+| `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the stock kit and examples do not compose it |
 
 Network hosts per mixin are listed at the top of each
 `mixins/<area>/spec.yaml`, and each mixin ships a
