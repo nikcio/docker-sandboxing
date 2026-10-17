@@ -17,7 +17,7 @@ Rules of thumb:
 | Mixin | Adds |
 | ----- | ---- |
 | `agents-md` | Replaces the runtime-generated workspace `AGENTS.md` baseline with the sandbox baseline (guidance files + a note from every composed mixin in `~/.sbx-agents.d/`) |
-| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Required when composing a model provider (`zeldoc`, `copilot`) — their fragments only merge through it |
+| `global-opencode-config` | Permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary), dropped into the global config layer, plus the combined provider config (`OPENCODE_CONFIG` merge). Compose it with a model provider (`zeldoc`, `copilot`) in OpenCode sandboxes — their fragments only merge through it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
 | `opencode-update` | Rolls opencode to the newest npm release at sandbox creation (npm-registry egress). Not in the stock kits — add the line for fresh opencode on every sandbox; runs once at creation, no start cost |
 | `zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
@@ -62,13 +62,13 @@ Network hosts per mixin are listed at the top of each `mixins/<area>/spec.yaml`,
 
 Notes:
 
-- `agents-md` (sandbox `AGENTS.md` baseline) is required by every kit. `global-opencode-config` is required when composing a model provider (`zeldoc`, `copilot`) — their config fragments only merge through it. `env-guard` (the no-.env policy) is optional.
+- `agents-md` (sandbox `AGENTS.md` baseline) is required by every kit. Compose `global-opencode-config` in OpenCode sandboxes that use a model provider (`zeldoc`, `copilot`) — their config fragments only merge through it. `env-guard` (the no-.env policy) is optional.
 - The `playwright` mixin and `sbx` run `apt` at creation — their install steps need the Ubuntu apt mirrors. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker engine pulls from.
 - Every set should include at least one model provider (`zeldoc` and/or `copilot`). Add `opencode-update` to keep opencode current: the template images bake a fixed opencode version, and this mixin rolls it to the newest npm release at creation.
 
 ## Model providers (zeldoc / copilot)
 
-Provider mixins don't fight over one config file: each ships a pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json` inside the sandbox, and the `global-opencode-config` mixin merges all fragments into the single config OpenCode loads via `OPENCODE_CONFIG` at every start. Compose `global-opencode-config` with any provider mixin — it is required with them (their fragments only merge through it):
+Provider mixins don't fight over one config file: each ships a pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json` inside the sandbox, and the `global-opencode-config` mixin merges all fragments into the single config OpenCode loads via `OPENCODE_CONFIG` at every start. Compose `global-opencode-config` with any provider mixin — the provider config fragment merges through it:
 
 - `enabled_providers` lists are **unioned** — compose `zeldoc` and `copilot` together and both stay selectable with `/models`.
 - Fragments merge in filename order and later fragments win conflicts, but **no fragment sets the default model** — the project-level `opencode.jsonc` owns it. Commit one in the repo root (see [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or `"model": "github-copilot/<model-id>"`; without it opencode falls back to its own default, and `/models` always works per session.

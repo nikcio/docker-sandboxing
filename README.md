@@ -1,6 +1,6 @@
 # docker-sandboxing
 
-Run [OpenCode](https://opencode.ai) in a sandboxed [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) VM inside your own repo: copy the example for your stack into your project, run one command, and OpenCode starts in a VM with your toolchain preinstalled.
+Run [OpenCode](https://opencode.ai) in a sandboxed [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) VM inside your own repo: copy the example for your stack into your project, run one command, and OpenCode starts in a VM with your toolchain preinstalled. The sandboxes work with any coding agent — the shipped examples use OpenCode.
 
 The sandbox is the isolation boundary: outbound network is deny-by-default and API keys are injected by a proxy — the sandbox only ever sees placeholders.
 
@@ -23,7 +23,7 @@ Copy the example matching your stack into your project's root and rename it `sbx
 | Setting | What to do |
 | ------- | ---------- |
 | `name:` | Set it to your project's name. |
-| `kits:` | Drop the lines your project doesn't need — the mixin reference below marks which mixins are required. |
+| `kits:` | Drop the lines your project doesn't need — the mixin reference below marks what every kit needs. |
 | `workspace.path: .` | Leave as is — it targets your repo. |
 
 ### 3. Run it

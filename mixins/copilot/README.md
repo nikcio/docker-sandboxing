@@ -11,7 +11,7 @@ kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/copilot   # GitHub Copilot provider
 ```
 
-Requires the `global-opencode-config` mixin — the provider config fragment only merges through it.
+Compose the `global-opencode-config` mixin — the provider config fragment only merges through it.
 
 Full sign-in walkthrough: [docs/copilot-setup.md](../../docs/copilot-setup.md).
 

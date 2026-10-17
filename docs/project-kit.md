@@ -76,7 +76,7 @@ An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `s
      - ./sandbox-kit
    ```
 
-   Keep the stock agent kit (`kit-<stack>`) and `agents-md` (required) — the kit defines the image and entrypoint wrapper, the `agents-md` mixin ships the sandbox `AGENTS.md` baseline. Add `global-opencode-config` when composing a model provider; the list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
+   Keep the stock agent kit (`kit-<stack>`) and `agents-md` (needed by every kit) — the kit defines the image and entrypoint wrapper, the `agents-md` mixin ships the sandbox `AGENTS.md` baseline. Add `global-opencode-config` to OpenCode sandboxes that use a model provider — the provider config fragment merges through it; the list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new sandboxes):
 

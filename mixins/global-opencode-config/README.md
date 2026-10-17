@@ -13,7 +13,7 @@ kits:
 
 For local development, point `--kit` at the directory instead: `sbx run --kit ./mixins/global-opencode-config <agent> .`
 
-**Required when composing a model provider** (`zeldoc`, `copilot`) — their config fragments only merge through it. The merge runs at every start; no network rules.
+**Compose it in OpenCode sandboxes that use a model provider** (`zeldoc`, `copilot`) — the provider config fragment merges through it. The merge runs at every start; no network rules.
 
 ## How it works
 

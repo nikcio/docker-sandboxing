@@ -1,6 +1,6 @@
 # Getting started
 
-Run [OpenCode](https://opencode.ai) in a sandboxed VM inside your own repo in three steps: **install `sbx`**, **copy the example for your stack**, and **run one command**. OpenCode starts in a VM with your toolchain preinstalled.
+Run a coding agent in a sandboxed VM inside your own repo in three steps: **install `sbx`**, **copy the example for your stack**, and **run one command**. The sandboxes work with any coding agent; the shipped examples use OpenCode, which starts in a VM with your toolchain preinstalled.
 
 The sandbox is the isolation boundary: outbound network is deny-by-default and API keys are injected by a proxy — the sandbox only ever sees placeholders.
 
@@ -51,7 +51,7 @@ In `sbxenv.yaml`:
 | Setting | What to do |
 | ------- | ---------- |
 | `name:` | A unique name for this sandbox (used to scope its secrets). |
-| `kits:` | Drop the mixin lines your project doesn't need, but keep `agents-md` (every kit requires it) and add `global-opencode-config` when using a model provider (`zeldoc`, `copilot` — their config fragments only merge through it). See [mixins.md](mixins.md). Need project-specific settings (private feeds, env vars, agent notes)? See [project-kit.md](project-kit.md). |
+| `kits:` | Drop the mixin lines your project doesn't need, but keep `agents-md` (every kit needs it) and add `global-opencode-config` when using OpenCode with a model provider (`zeldoc`, `copilot` — their config fragments only merge through it). See [mixins.md](mixins.md). Need project-specific settings (private feeds, env vars, agent notes)? See [project-kit.md](project-kit.md). |
 | `workspace.path:` | Leave as is — it targets your repo. Point it elsewhere only if the env file sits outside the project. |
 
 ## 5. Run it

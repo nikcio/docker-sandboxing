@@ -1,6 +1,6 @@
 # Docker sandboxing
 
-Docker Sandboxes kits and template images for running OpenCode agents in sandboxed VMs.
+Docker Sandboxes kits and template images for running coding agents in sandboxed VMs. The shipped examples use OpenCode, but the sandboxes work with any coding agent.
 
 ## Documentation
 
