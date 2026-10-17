@@ -28,7 +28,7 @@ No default model is picked for you — set it in a project-level `opencode.jsonc
 
 ## Zeldoc and Copilot together
 
-Compose both mixins and both providers stay enabled (the sandbox merges each provider's config fragment; `enabled_providers` lists are unioned). The default model comes from your project-level `opencode.jsonc` — commit one in the repo root with `"model": "github-copilot/<model-id>"` (or a Zeldoc model), or just switch models per session with `/models`. Details: [mixins.md](mixins.md).
+Compose both mixins and both providers stay enabled (each merges its own provider config into the global opencode config; only its own `enabled_providers` entries are touched). The default model comes from your project-level `opencode.jsonc` — commit one in the repo root with `"model": "github-copilot/<model-id>"` (or a Zeldoc model), or just switch models per session with `/models`. Details: [mixins.md](mixins.md).
 
 ## Good to know
 

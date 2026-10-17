@@ -3,10 +3,11 @@ kind: mixin
 name: opencode-zeldoc
 displayName: Zeldoc.ai provider
 description: >
-  Zeldoc.ai model provider for OpenCode: proxy-managed API key,
-  opencode-zeldoc plugin config, a default "high" model variant (seeded
+  Zeldoc.ai model provider for OpenCode: proxy-managed API key, merges the
+  provider + plugin config into the global opencode config
+  (opencode.json(c)) at startup, a default "high" model variant (seeded
   into the opencode state file), and network rules for the Zeldoc hosts.
-version: 0.5.0
+version: 0.6.0
 
 credentials:
   - service: zeldoc
@@ -22,6 +23,44 @@ credentials:
 
 setup:
   startup:
+    - command:
+        - sh
+        - -c
+        - |
+          # Merge this provider's config into the global opencode config
+          # (~/.config/opencode/opencode.json(c)) so the mixin works both
+          # composed with the `opencode` mixin and standalone (opencode
+          # installed by any other means). Idempotent: re-running keeps a
+          # single "zeldoc" entry / plugin.
+          __dir="$HOME/.config/opencode"
+          __file="$__dir/opencode.json"
+          if [ ! -f "$__file" ] && [ -f "$__dir/opencode.jsonc" ]; then
+            __file="$__dir/opencode.jsonc"
+          fi
+          mkdir -p "$__dir"
+          if ! command -v jq > /dev/null 2>&1; then
+            echo "ERROR [zeldoc]: jq is not available — cannot enable the zeldoc provider in the global config (the base image ships jq; install it or report this)" >&2
+            exit 1
+          fi
+          if [ ! -f "$__file" ]; then
+            printf '{\n  "$schema": "https://opencode.ai/config.json"\n}\n' > "$__file"
+          fi
+          __tmp="$(mktemp "$__dir/.zeldoc.XXXXXX")"
+          if jq --arg p zeldoc --arg pl opencode-zeldoc '
+            .enabled_providers = (((.enabled_providers // []) + [$p]) | unique)
+            | .plugin = (((.plugin // []) + [$pl]) | unique)
+          ' "$__file" > "$__tmp" && jq -e 'type == "object"' "$__tmp" > /dev/null; then
+            mv -f "$__tmp" "$__file"
+            echo "[zeldoc] enabled provider zeldoc + plugin opencode-zeldoc in $__file"
+          else
+            rm -f "$__tmp"
+            echo "WARNING [zeldoc]: could not update $__file (invalid JSON?) — leaving it untouched" >&2
+          fi
+          unset __dir __file __tmp
+      user: "agent"
+      description: >
+        Enable the zeldoc provider + opencode-zeldoc plugin in the global
+        opencode config (opencode.json(c)), creating the file if needed
     - command:
         - sh
         - -c

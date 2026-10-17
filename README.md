@@ -23,7 +23,7 @@ Copy the example matching your stack into your project's root and rename it `sbx
 | Setting | What to do |
 | ------- | ---------- |
 | `name:` | Set it to your project's name. |
-| `kits:` | Drop the lines your project doesn't need — see the mixin reference below; `opencode` is required when you compose a model provider. |
+| `kits:` | Drop the lines your project doesn't need — see the mixin reference below. |
 | `workspace.path: .` | Leave as is — it targets your repo. |
 
 ### 3. Run it
@@ -60,10 +60,10 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 
 | Mixin | Adds | When to compose |
 | ----- | ---- | -------- |
-| `opencode` | OpenCode itself: installs the CLI via npm when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env (`LANG`/`LC_ALL`) | with a model provider (`opencode-zeldoc`, `opencode-copilot`) — the provider fragment merges through it |
+| `opencode` | OpenCode itself: installs OpenCode 2 via the official curl installer when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env (`LANG`/`LC_ALL`) | optional for model providers — `opencode-zeldoc`/`opencode-copilot` manage their own config |
 | `env-guard` | workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode) | optional |
 | `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, config, hosts) | — |
-| `opencode-copilot` | GitHub Copilot model provider (device-flow sign-in, config fragment, hosts) | — |
+| `opencode-copilot` | GitHub Copilot model provider (device-flow sign-in, provider config merged into the global opencode config, hosts) | — |
 | `github-cli` | GitHub CLI (`gh`) + git identity; auth rides the built-in agent's proxy-managed `github` credential | — |
 | `repo-clone` | clones extra GitHub repos (from the `repositories` kit argument) into the workspace at creation, via the built-in `github` credential; inaccessible repos are skipped | needs `github-cli` |
 | `uniform` | Uniform DXP egress: docs, dashboard + Management API, Edge Delivery API (incl. EU + image CDN), proxy-managed `x-api-key` | — |
@@ -92,10 +92,12 @@ Everything below is for developing the mixins in this repo.
 
 ```text
 ├── mixins/
-│   ├── opencode/                     # OpenCode itself: CLI install (npm) + owns
+│   ├── opencode/                     # OpenCode itself: CLI install (curl, v2) + owns
 │   │                                 #   OPENCODE_CONFIG: permissive OpenCode config
-│   │                                 #   (~/.config/opencode/opencode.jsonc) + provider-fragment
-│   │                                 #   merge fed by provider mixins' mixins.d/ fragments
+│   │                                 #   (~/.config/opencode/opencode.json) + mixins.d/
+│   │                                 #   fragment merge (third-party kit fragments;
+│   │                                 #   provider mixins merge their config into the
+│   │                                 #   global config themselves, so they work standalone)
 │   ├── env-guard/                    # the workspace .env guard (startup command)
 │   └── <area>/                       # one single-purpose premade mixin per area (kind: mixin):
 │   │                                 #   network rules, env vars, credentials, install steps —

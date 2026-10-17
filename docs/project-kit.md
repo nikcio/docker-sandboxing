@@ -14,13 +14,13 @@ The sandbox's provider mixins do not set a default model, so the project config 
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "zeldoc/zdev-2"
+  "model": "zeldoc/zdev"
 }
 ```
 
 Without a `model` key opencode falls back to its own default; pick a different one any time with `/models` in the TUI.
 
-Do not write `~/.config/opencode/opencode.json` from a kit — the sandbox owns that file (it is rewritten at startup for MCP wiring). Do not set `OPENCODE_CONFIG` either — the `opencode` mixin owns it (it points at the combined provider config that the mixin rebuilds from `~/.config/opencode/mixins.d/`). To contribute a provider, ship a comment-free JSON fragment at `files/home/.config/opencode/mixins.d/30-<name>.json` in your kit — the opencode mixin merges it with the stock provider fragments (see [mixins.md](mixins.md)).
+Do not write `~/.config/opencode/opencode.json` from a kit — the sandbox owns that file (it is rewritten at startup for MCP wiring, and the provider mixins merge their config into it). Do not set `OPENCODE_CONFIG` either — the `opencode` mixin owns it (it points at the combined config that the mixin rebuilds from `~/.config/opencode/mixins.d/`). To contribute extra config from your kit, ship a comment-free JSON fragment at `files/home/.config/opencode/mixins.d/30-<name>.json` — the opencode mixin merges it at every start (see [mixins.md](mixins.md)). Model providers are simpler: add the `opencode-zeldoc`/`opencode-copilot` mixins instead of a fragment.
 
 ## Add an in-project kit
 
@@ -75,7 +75,7 @@ An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `s
       - ./sandbox-kit
     ```
 
-   Keep the `opencode` mixin when composing a model provider — it merges the model-provider config fragments (and installs the OpenCode CLI). The list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
+   The `opencode` mixin ships the permissive base config and installs the OpenCode CLI — keep it unless you have your own opencode setup (model provider mixins work without it; they manage their own config). The list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new sandboxes):
 
