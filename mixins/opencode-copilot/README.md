@@ -1,6 +1,6 @@
 # opencode-copilot
 
-GitHub Copilot model provider for OpenCode: the network egress the OAuth device-flow sign-in needs, plus a provider config fragment so Copilot models are selectable with `/models`. Runs the agent on your Copilot subscription instead of an API key.
+GitHub Copilot model provider for OpenCode: the network egress the OAuth device-flow sign-in needs, plus a startup command that enables the `github-copilot` provider in the global opencode config so Copilot models are selectable with `/models`. Runs the agent on your Copilot subscription instead of an API key.
 
 ## Usage
 
@@ -11,14 +11,14 @@ kits:
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-copilot   # GitHub Copilot provider
 ```
 
-Compose the `opencode` mixin — the provider config fragment only merges through it.
+Works on its own — the provider config is merged straight into the global `~/.config/opencode/opencode.json(c)` (created if missing) at every start, so it composes with the `opencode` mixin but also works when opencode was installed by any other means. Composing both provider mixins is fine: each only touches its own keys.
 
 Full sign-in walkthrough: [docs/copilot-setup.md](../../docs/copilot-setup.md).
 
 ## How it works
 
 - **Sign-in**: inside the TUI run `/connect`, then complete `github.com/login/device` in your host browser. The token is stored inside the VM at `~/.local/share/opencode/auth.json` — there is no proxy-managed secret (unlike the `opencode-zeldoc` mixin).
-- **Config fragment**: ships a pure-JSON fragment to `~/.config/opencode/mixins.d/10-copilot.json`, merged into the combined `OPENCODE_CONFIG` by `opencode` at every start.
+- **Provider config**: a startup command merges `"enabled_providers": ["github-copilot"]` into the global `~/.config/opencode/opencode.json(c)` (creating it if missing) at every start — idempotent, and it never touches keys owned by other mixins.
 
 ## Network domains
 
