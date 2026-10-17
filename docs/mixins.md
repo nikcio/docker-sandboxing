@@ -16,10 +16,10 @@ Rules of thumb:
 
 | Mixin | Adds |
 | ----- | ---- |
-| `opencode` | OpenCode itself: installs the CLI via npm when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env. Required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`) — their fragments only merge through it |
+| `opencode` | OpenCode itself: installs OpenCode 2 via the official curl installer when the sandbox lacks it, permissive OpenCode config (edit/bash/webfetch allowed — the sandbox is the isolation boundary) dropped into the global config layer, the combined provider config (`OPENCODE_CONFIG` merge), and the locale env. Provider mixins (`opencode-zeldoc`, `opencode-copilot`) also work without it |
 | `env-guard` | Workspace `.env` guard: removes `.env` files (clone mode) or refuses to start (direct mode). Optional — the examples compose it |
-| `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config fragment, Zeldoc hosts) |
-| `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config fragment, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
+| `opencode-zeldoc` | Zeldoc.ai model provider (proxy-managed key, provider config merged into the global opencode config, Zeldoc hosts) |
+| `opencode-copilot` | GitHub Copilot model provider (OAuth device-flow sign-in via `/connect`, provider config merged into the global opencode config, GitHub/Copilot API egress — see [copilot-setup.md](copilot-setup.md)) |
 | `github-cli` | GitHub CLI (`gh`) install + git-identity setup; GitHub auth rides the built-in agent's proxy-managed `github` credential (see [github-pat.md](github-pat.md)) |
 | `repo-clone` | Clones extra GitHub repositories (from the `repositories` kit argument) into the workspace at creation, via the built-in proxy-managed `github` credential; repos the token cannot access are skipped with a warning (see the mixin's README) |
 | `uniform` | Uniform DXP egress: docs site, dashboard + Management API (uniform.app), Edge Delivery API (uniform.global, incl. EU + image CDN), proxy-managed `x-api-key` auth (see [uniform-api-key.md](uniform-api-key.md)) |
@@ -61,16 +61,16 @@ Network hosts per mixin are listed at the top of each `mixins/<area>/spec.yaml`,
 
 Notes:
 
-- `opencode` is the only merge path for model-provider config fragments — required when composing a model provider (`opencode-zeldoc`, `opencode-copilot`). `env-guard` (the no-.env policy) is optional.
+- Model providers (`opencode-zeldoc`, `opencode-copilot`) manage their own config — the `opencode` mixin is not required for them. `env-guard` (the no-.env policy) is optional.
 - The `playwright` mixin and `sbx` run `apt` at creation — their install steps need the Ubuntu apt mirrors. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker engine pulls from.
 - Every set should include at least one model provider (`opencode-zeldoc` and/or `opencode-copilot`).
 
 ## Model providers (opencode-zeldoc / opencode-copilot)
 
-Provider mixins don't fight over one config file: each ships a pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json` inside the sandbox, and the `opencode` mixin merges all fragments into the single config OpenCode loads via `OPENCODE_CONFIG` at every start. Compose `opencode` with any provider mixin — the provider config fragment merges through it:
+Provider mixins manage their own config: each runs a startup command that merges its keys (`enabled_providers`, and for Zeldoc the `plugin` list) straight into the global `~/.config/opencode/opencode.json(c)` — creating the file if it does not exist. That means they work standalone (opencode installed by any means), no `opencode` mixin required:
 
-- `enabled_providers` lists are **unioned** — compose `opencode-zeldoc` and `opencode-copilot` together and both stay selectable with `/models`.
-- Fragments merge in filename order and later fragments win conflicts, but **no fragment sets the default model** — the project-level `opencode.jsonc` owns it. Commit one in the repo root (see [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or `"model": "github-copilot/<model-id>"`; without it opencode falls back to its own default, and `/models` always works per session.
+- `enabled_providers` entries are **unioned** — compose `opencode-zeldoc` and `opencode-copilot` together and both stay selectable with `/models` (each startup command only touches its own keys).
+- **No provider mixin sets the default model** — the project-level `opencode.jsonc` owns it. Commit one in the repo root (see [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or `"model": "github-copilot/<model-id>"`; without it opencode falls back to its own default, and `/models` always works per session.
 
 Swapping providers (or changing any mixin) only applies to **new** sandboxes — see "Changing mixins" below.
 

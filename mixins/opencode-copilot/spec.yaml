@@ -3,8 +3,46 @@ kind: mixin
 name: opencode-copilot
 displayName: GitHub Copilot provider
 description: >
-  GitHub Copilot model provider for OpenCode.
-version: 0.2.0
+  GitHub Copilot model provider for OpenCode: merges the provider config
+  into the global opencode config (opencode.json(c)) at startup and allows
+  the network egress the OAuth device-flow sign-in needs.
+version: 0.3.0
+
+setup:
+  startup:
+    - command:
+        - sh
+        - -c
+        - |
+          # Merge this provider's config into the global opencode config
+          # (~/.config/opencode/opencode.json(c)) so the mixin works both
+          # composed with the `opencode` mixin and standalone (opencode
+          # installed by any other means). Idempotent: re-running keeps a
+          # single "github-copilot" entry.
+          __dir="$HOME/.config/opencode"
+          __file="$__dir/opencode.json"
+          if [ ! -f "$__file" ] && [ -f "$__dir/opencode.jsonc" ]; then
+            __file="$__dir/opencode.jsonc"
+          fi
+          mkdir -p "$__dir"
+          if [ ! -f "$__file" ]; then
+            printf '{\n  "$schema": "https://opencode.ai/config.json"\n}\n' > "$__file"
+          fi
+          __tmp="$(mktemp "$__dir/.copilot.XXXXXX")"
+          if jq --arg p github-copilot '
+            .enabled_providers = (((.enabled_providers // []) + [$p]) | unique)
+          ' "$__file" > "$__tmp" && jq -e 'type == "object"' "$__tmp" > /dev/null; then
+            mv -f "$__tmp" "$__file"
+            echo "[copilot] enabled provider github-copilot in $__file"
+          else
+            rm -f "$__tmp"
+            echo "WARNING [copilot]: could not update $__file (invalid JSON?) — leaving it untouched" >&2
+          fi
+          unset __dir __file __tmp
+      user: "agent"
+      description: >
+        Enable the github-copilot provider in the global opencode config
+        (opencode.json(c)), creating the file if needed
 
 permissions:
   network:
@@ -12,10 +50,10 @@ permissions:
       # OAuth device flow: device code, access token exchange, and token
       # refresh (github.com/login/oauth/*).
       - github.com:443
-      
+
       # Copilot session token mint (api.github.com/copilot_internal).
       - api.github.com:443
-      
+
       # Copilot API: models list + inference. The wildcard covers the
       # business/enterprise plan endpoints (api.business./api.enterprise.
       # githubcopilot.com).

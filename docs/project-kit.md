@@ -20,7 +20,7 @@ The sandbox's provider mixins do not set a default model, so the project config 
 
 Without a `model` key opencode falls back to its own default; pick a different one any time with `/models` in the TUI.
 
-Do not write `~/.config/opencode/opencode.json` from a kit — the sandbox owns that file (it is rewritten at startup for MCP wiring). Do not set `OPENCODE_CONFIG` either — the `opencode` mixin owns it (it points at the combined provider config that the mixin rebuilds from `~/.config/opencode/mixins.d/`). To contribute a provider, ship a comment-free JSON fragment at `files/home/.config/opencode/mixins.d/30-<name>.json` in your kit — the opencode mixin merges it with the stock provider fragments (see [mixins.md](mixins.md)).
+Do not write `~/.config/opencode/opencode.json` from a kit — the sandbox owns that file (it is rewritten at startup for MCP wiring, and the provider mixins merge their config into it). Do not set `OPENCODE_CONFIG` either — the `opencode` mixin owns it (it points at the combined provider config that the mixin rebuilds from `~/.config/opencode/mixins.d/`). To contribute a provider, ship a comment-free JSON fragment at `files/home/.config/opencode/mixins.d/30-<name>.json` in your kit — the opencode mixin merges it with the stock provider fragments (see [mixins.md](mixins.md)).
 
 ## Add an in-project kit
 

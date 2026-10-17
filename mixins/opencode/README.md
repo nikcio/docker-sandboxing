@@ -1,6 +1,6 @@
 # opencode
 
-OpenCode itself: installs the CLI (via npm) when the sandbox lacks it, ships the permissive OpenCode config dropped into the global config layer, and merges provider config fragments from other mixins into the single `OPENCODE_CONFIG` file. Also carries the locale env the template images ship none of.
+OpenCode itself: installs OpenCode 2 via the official curl installer when the sandbox lacks it, ships the permissive OpenCode config dropped into the global config layer, and merges provider config fragments from other mixins into the single `OPENCODE_CONFIG` file. Also carries the locale env the template images ship none of.
 
 ## Usage
 
@@ -17,7 +17,7 @@ For local development, point `--kit` at the directory instead: `sbx run --kit ./
 
 ## How it works
 
-- **Install**: when `opencode` is missing from `PATH`, installs Node via nvm (when npm is missing too) and then `npm install -g opencode-ai@latest`. A no-op on images that already ship opencode.
+- **Install**: when `opencode` is missing from `PATH`, runs the official v2 installer (`curl -fsSL https://opencode.ai/v2/install | bash`) and symlinks the binary into `/usr/local/bin`. No Node.js/nvm involved — the installer ships a standalone binary. A no-op on images that already ship opencode.
 - **Base config**: ships a permissive `~/.config/opencode/opencode.jsonc` (edit/bash/webfetch allowed — the sandbox is the isolation boundary) and points `OPENCODE_CONFIG` at the combined file.
 - **Locale env**: sets `LANG`/`LC_ALL` to `C.UTF-8` — the template images ship no locale env, and without it man-db's profile script prints `manpath: can't set the locale` on every shell start. `C.UTF-8` is always present on glibc, no `locale-gen` needed.
 - **Fragment merge**: a startup command merges every `~/.config/opencode/mixins.d/*.{json,jsonc}` fragment into the combined config with `jq`:
@@ -36,8 +36,7 @@ For local development, point `--kit` at the directory instead: `sbx run --kit ./
 
 | Domain | Why |
 | ------ | --- |
-| `registry.npmjs.org`, `*.npmjs.org` | the `opencode-ai` npm package (install) |
-| `nodejs.org`, `*.nodejs.org`, `iojs.org` | Node distribution via nvm (only when npm is missing) |
-| `github.com`, `*.github.com`, `raw.githubusercontent.com` | nvm itself (repo clone when the install runs) |
-| `archive.ubuntu.com`, `security.ubuntu.com`, `ports.ubuntu.com` | apt installs in the install step (ports.ubuntu.com carries arm64 packages) |
+| `opencode.ai`, `*.opencode.ai` | the v2 installer script + latest-version metadata (`update.api.opencode.ai`) |
+| `registry.npmjs.org`, `*.npmjs.org` | platform tarball download (installer pulls it from the npm registry) |
+| `archive.ubuntu.com`, `security.ubuntu.com`, `ports.ubuntu.com` | apt installs in the install step (curl + ca-certificates; ports.ubuntu.com carries arm64 packages) |
 | `*.digicert.com`, `*.symcd.com`, `*.symcb.com`, `*.ws.symantec.com`, `*.sectigo.com`, `*.usertrust.com`, `*.globalsign.com` | certificate revocation (OCSP/CRL) + timestamp endpoints hit during HTTPS installs |
