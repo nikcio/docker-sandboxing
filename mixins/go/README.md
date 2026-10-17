@@ -25,9 +25,9 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `goVersion` | *(empty = latest)* | Go version to install (`go1.27.2`) |
+| `goVersion` | *(empty = latest)* | Go version to install in the upstream `goMAJOR.MINOR.PATCH` form |
 
-Pass values with `--kit-arg go.goVersion=go1.26.0` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+Pass values with `--kit-arg go.goVersion=<version>` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

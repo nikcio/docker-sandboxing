@@ -26,11 +26,11 @@ The install runs at **sandbox creation only**.
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `playwrightVersion` | *(empty = latest)* | Playwright version to install (`1.60.0`) |
-| `nodeVersion` | *(empty = latest)* | Node.js version installed via nvm when the base image lacks node (`24`) |
-| `nvmVersion` | *(empty = latest release)* | NVM version to clone (`v0.40.8`) |
+| `playwrightVersion` | *(empty = latest)* | Playwright version to install in `MAJOR[.MINOR[.PATCH]]` form |
+| `nodeVersion` | *(empty = latest)* | Node.js version installed via nvm when the base image lacks node — a major or a full version |
+| `nvmVersion` | *(empty = latest release)* | NVM version to clone in the upstream `vMAJOR.MINOR.PATCH` form |
 
-Pass values with `--kit-arg playwright.playwrightVersion=1.60.0` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+Pass values with `--kit-arg playwright.playwrightVersion=<version>` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

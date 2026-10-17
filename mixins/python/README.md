@@ -25,10 +25,10 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `pythonVersion` | *(empty = latest stable)* | CPython version for uv to install (`3.13`, `3.12.7`, …) |
-| `uvVersion` | *(empty = latest)* | uv version to install (`0.12.0`) |
+| `pythonVersion` | *(empty = latest stable)* | CPython version for uv to install — a major-minor (`MAJOR.MINOR`) or a full (`MAJOR.MINOR.PATCH`) |
+| `uvVersion` | *(empty = latest)* | uv version to install in `MAJOR[.MINOR[.PATCH]]` form |
 
-Pass values with `--kit-arg python.pythonVersion=3.13` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+Pass values with `--kit-arg python.pythonVersion=<version>` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

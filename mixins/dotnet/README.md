@@ -25,9 +25,9 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `dotnetVersion` | *(empty = latest SDK)* | .NET SDK version to install (`9.0.100`) |
+| `dotnetVersion` | *(empty = latest SDK)* | .NET SDK version to install in `MAJOR.MINOR.PATCH` form — the first two segments select the apt channel |
 
-Pass values with `--kit-arg dotnet.dotnetVersion=9.0.100` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+Pass values with `--kit-arg dotnet.dotnetVersion=<version>` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

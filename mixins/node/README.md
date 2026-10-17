@@ -24,11 +24,11 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `nodeVersion` | *(empty = latest)* | Node.js version to install (`24`, `22.11.0`, …) |
-| `pnpmVersion` | *(empty = latest)* | PNPM version to install (`10`, `12.14.0`, …) |
-| `nvmVersion` | *(empty = latest release)* | NVM version to clone (`v0.40.8`) |
+| `nodeVersion` | *(empty = latest)* | Node.js version to install — a major (`MAJOR`), a partial (`MAJOR.MINOR`), or a full (`MAJOR.MINOR.PATCH`) |
+| `pnpmVersion` | *(empty = latest)* | PNPM version to install — a major or a full version |
+| `nvmVersion` | *(empty = latest release)* | NVM version to clone in the upstream `vMAJOR.MINOR.PATCH` form |
 
-Pass values with `--kit-arg node.nodeVersion=22` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+Pass values with `--kit-arg node.nodeVersion=<version>` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

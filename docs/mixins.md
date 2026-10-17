@@ -12,6 +12,23 @@ Rules of thumb:
 - Install steps run at **creation only** (mixin changes never apply to running sandboxes) and need egress: each mixin owns the domains its install touches (download host, the Ubuntu apt mirrors `archive.ubuntu.com`/`security.ubuntu.com`/`ports.ubuntu.com` when the step calls `apt-get`, and the CA revocation endpoints). A blocked download fails the install step — check `sbx policy log`.
 - When the tool is already present the check is a cheap no-op, so keeping the install steps in every composition is safe.
 
+## Version arguments
+
+Every mixin that installs software declares a version argument in its `spec.yaml` (`args:` block) and defaults to the latest version (upstream release, or the distro's latest apt package for apt installs) when no value is supplied. Pin a version per sandbox with `--kit-arg`, or pin it in `sbxenv.yaml` with an `args:` entry on the mixin's `kits:` item:
+
+```bash
+sbx env run --kit-arg node.pnpmVersion=<version> --kit-arg dotnet.dotnetVersion=<version>
+```
+
+```yaml
+kits:
+  - source: git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=v2.3.0
+    args:
+      pnpmVersion: "10"
+```
+
+Leave the argument out (or empty) and the mixin installs the latest release it resolves at creation time. A `--kit-arg` value overrides a value pinned in `sbxenv.yaml`. Version arguments only apply when the mixin actually installs: when the base image already ships the tool, the check-and-install step is a no-op and the pinned version is unused. Which arguments a mixin takes is listed in its `mixins/<mixin>/spec.yaml` (`args:` block) and README. Version changes only apply to **new** sandboxes.
+
 ## Catalog
 
 | Mixin | Adds |

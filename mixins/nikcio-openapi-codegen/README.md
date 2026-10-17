@@ -24,10 +24,10 @@ Needs the `dotnet` mixin — the install ensures the SDK first when it is missin
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `codegenVersion` | *(empty = latest)* | Nikcio.OpenApiCodeGen version to install (`1.6.2`) |
-| `dotnetVersion` | *(empty = latest SDK)* | .NET SDK version installed when missing (`9.0.100`) |
+| `codegenVersion` | *(empty = latest)* | Nikcio.OpenApiCodeGen version to install in `MAJOR[.MINOR[.PATCH]]` form |
+| `dotnetVersion` | *(empty = latest SDK)* | .NET SDK version installed when missing in `MAJOR.MINOR.PATCH` form — the first two segments select the apt channel |
 
-Pass values with `--kit-arg nikcio-openapi-codegen.codegenVersion=1.6.2` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
+Pass values with `--kit-arg nikcio-openapi-codegen.codegenVersion=<version>` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
 
 ## Network domains
 

@@ -24,7 +24,7 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `rustVersion` | *(empty = stable)* | Toolchain for rustup to install (`stable`, `nightly`, `1.99.1`) |
+| `rustVersion` | *(empty = stable)* | Toolchain for rustup to install — `stable`, `beta`, `nightly`, or a `MAJOR.MINOR.PATCH` version |
 | `profile` | `default` | rustup profile (`minimal`, `default`, `complete`) |
 
 Pass values with `--kit-arg rust.rustVersion=nightly` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).

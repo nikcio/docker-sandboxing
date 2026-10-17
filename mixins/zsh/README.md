@@ -25,7 +25,7 @@ The install runs at **sandbox creation only** and needs egress — the domains i
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `zshVersion` | *(empty = latest apt candidate)* | zsh apt package version — full version string including the distro revision (`5.9-8ubuntu3` on noble; codename-specific) |
+| `zshVersion` | *(empty = latest apt candidate)* | zsh apt package version — the full version string including the distro revision (codename-specific) |
 | `ohMyZshRef` | *(empty = master HEAD)* | Oh My Zsh git ref to clone (`master`, a tag, …) |
 
 Pass values with `--kit-arg zsh.ohMyZshRef=master` (or an `args:` entry on the mixin's `kits:` line in `sbxenv.yaml`) — see [Version arguments](../../docs/mixins.md#version-arguments).
