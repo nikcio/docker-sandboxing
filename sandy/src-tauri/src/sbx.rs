@@ -273,29 +273,30 @@ fn tail(s: &str, max: usize) -> String {
 
 /// List local sandboxes. Prefers `sbx ls --json` (stable, machine-readable)
 /// and falls back to parsing the human table if JSON is unavailable or
-/// unparseable (older CLI versions).
+/// entirely unparseable (older CLI versions).
 pub fn list_sandboxes() -> Result<Vec<SandboxInfo>, String> {
     let json_result = run_capture(&["ls", "--json"]).and_then(|out| {
-        serde_json::from_str::<Vec<SandboxJson>>(&out)
-            .map(|parsed| {
-                parsed
-                    .into_iter()
-                    .map(|s| SandboxInfo {
-                        name: s.name,
-                        state: s.status.unwrap_or_default(),
-                        agent: s.agent.unwrap_or_default(),
-                        workspace: s.workspaces.unwrap_or_default().join(", "),
-                        raw: s.id.unwrap_or_default(),
-                    })
-                    .collect()
+        // Tolerate individual bad entries instead of discarding the whole
+        // payload: parse as raw values, keep the ones that deserialize.
+        let values: Vec<serde_json::Value> = serde_json::from_str(&out)
+            .map_err(|e| format!("could not parse sbx ls --json output: {}", e))?;
+        Ok(values
+            .into_iter()
+            .filter_map(|v| serde_json::from_value::<SandboxJson>(v).ok())
+            .map(|s| SandboxInfo {
+                name: s.name,
+                state: s.status.unwrap_or_default(),
+                agent: s.agent.unwrap_or_default(),
+                workspace: s.workspaces.unwrap_or_default().join(", "),
+                raw: s.id.unwrap_or_default(),
             })
-            .map_err(|e| format!("could not parse sbx ls --json output: {}", e))
+            .collect())
     });
     match json_result {
         Ok(rows) => Ok(rows),
         Err(json_err) => match run_capture(&["ls"]) {
             Ok(out) if !out.is_empty() => Ok(parse_ls(&out)),
-            Ok(_) => Ok(vec![]),
+            Ok(_) => Err(json_err),
             Err(_) => Err(json_err),
         },
     }
@@ -675,6 +676,57 @@ weird  paused  /home/name/state
         let rows = list_sandboxes().expect("empty ls should succeed");
         std::env::remove_var("SBX_MOCK_LS_EMPTY");
         assert!(rows.is_empty());
+
+        // JSON with only "name": optional fields degrade to empty strings.
+        std::env::set_var("SBX_MOCK_JSON", "sparse");
+        let rows = list_sandboxes().expect("sparse JSON should parse");
+        std::env::remove_var("SBX_MOCK_JSON");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].name, "bare");
+        assert_eq!(rows[0].state, "");
+        assert_eq!(rows[0].agent, "");
+        assert_eq!(rows[0].workspace, "");
+        assert_eq!(rows[0].raw, "");
+
+        // Unknown JSON fields are ignored by serde.
+        std::env::set_var("SBX_MOCK_JSON", "extra");
+        let rows = list_sandboxes().expect("unknown fields should be ignored");
+        std::env::remove_var("SBX_MOCK_JSON");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].name, "with-unknown");
+        assert_eq!(rows[0].state, "running");
+
+        // Unicode in names/workspaces survives the JSON round-trip.
+        std::env::set_var("SBX_MOCK_JSON", "unicode");
+        let rows = list_sandboxes().expect("unicode JSON should parse");
+        std::env::remove_var("SBX_MOCK_JSON");
+        assert_eq!(rows[0].name, "ünïcødé-サンドボックス");
+        assert_eq!(rows[0].workspace, "/home/ünïcødé/プロジェクト");
+
+        // Multiple workspaces are joined with ", ".
+        std::env::set_var("SBX_MOCK_JSON", "multi");
+        let rows = list_sandboxes().expect("multi-workspace JSON should parse");
+        std::env::remove_var("SBX_MOCK_JSON");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].workspace, "/home/me/first, /home/me/second");
+    }
+
+    /// JSON-schema edge cases that fall back to the table: a malformed entry
+    /// (missing "name") makes the whole --json parse fail, so list_sandboxes
+    /// must recover via the human table. Sequential + env-locked.
+    #[test]
+    fn cli_mock_json_malformed_falls_back_to_table() {
+        let _guard = env_lock();
+        set_mock_path();
+
+        // Per-entry tolerance: the valid entry survives, the invalid one
+        // (missing "name") is dropped — no silent fallback to other data.
+        std::env::set_var("SBX_MOCK_JSON", "mixed");
+        let rows = list_sandboxes().expect("malformed entry should be tolerated");
+        std::env::remove_var("SBX_MOCK_JSON");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].name, "ok");
+        assert_eq!(rows[0].state, "running");
     }
 
     /// Failure-path CLI scenarios (SBX_MOCK_FAIL=1), sequential and isolated

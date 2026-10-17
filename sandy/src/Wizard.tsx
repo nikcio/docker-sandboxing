@@ -90,10 +90,9 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
   };
 
   const runCurrent = async () => {
-    const ok = await runStep(step.id, runners[step.id]);
-    if (ok && current < STEPS.length - 1) {
-      setCurrent(current + 1);
-    }
+    await runStep(step.id, runners[step.id]);
+    // Stay on the step after success so the output is visible; the user
+    // advances with Next (or jumps via the step dots).
   };
 
   const skip = () => {
@@ -153,12 +152,22 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
               Back
             </button>
           )}
+          {/* Pending or failed: the primary action runs the step. After an
+              error the label becomes Retry so the affordance is obvious. */}
           {!autoDone && state !== "done" && (
             <button className="primary" onClick={runCurrent} disabled={busy}>
-              {busy ? "Working…" : current === STEPS.length - 1 ? "Finish setup" : "Continue"}
+              {busy
+                ? "Working…"
+                : state === "error"
+                  ? "Retry"
+                  : current === STEPS.length - 1
+                    ? "Finish setup"
+                    : "Continue"}
             </button>
           )}
-          {!autoDone && state !== "done" && current < STEPS.length - 1 && (
+          {/* Exactly one skip: offered for any step that isn't done —
+              pending or failed — except the last step. */}
+          {state !== "done" && !autoDone && current < STEPS.length - 1 && (
             <button className="ghost" onClick={skip} disabled={busy}>
               Skip for now
             </button>
@@ -180,13 +189,6 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
               disabled={busy}
             >
               Re-run
-            </button>
-          )}
-          {/* One skip button: pending steps can be skipped forward; after an
-              error, skip is the way to move past the failed step. */}
-          {state === "error" && current < STEPS.length - 1 && (
-            <button className="ghost" onClick={skip} disabled={busy}>
-              Skip for now
             </button>
           )}
         </div>
