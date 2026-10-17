@@ -1,36 +1,16 @@
 # Mixins
 
-A mixin adds exactly one capability area to the sandbox: network egress
-rules, environment settings, install steps, and a note for the agent. The
-sandbox network policy is deny-by-default — the union of the composed
-mixins' rules is the only outbound traffic. Drop the mixin lines your
-project doesn't need from the `kits:` list in your `sbxenv.yaml`.
+A mixin adds exactly one capability area to the sandbox: network egress rules, environment settings, install steps, and a note for the agent. The sandbox network policy is deny-by-default — the union of the composed mixins' rules is the only outbound traffic. Drop the mixin lines your project doesn't need from the `kits:` list in your `sbxenv.yaml`.
 
 ## Any mixin on any template
 
-Stack mixins don't have to match the kit's template image. Every toolchain
-mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins
-(`browser`, `playwright`, `sbx`, `nikcio-openapi-codegen`) carry a
-self-contained check-and-install `setup.install` step: at sandbox creation
-it verifies the tool is present and installs it when the template image
-lacks it. Compose, for example, the `python` mixin onto the Go kit and the
-sandbox gets a working `python3` + `uv`; no rebuild needed.
+Stack mixins don't have to match the kit's template image. Every toolchain mixin (`node`, `dotnet`, `python`, `go`, `rust`) and the tool mixins (`browser`, `playwright`, `sbx`, `nikcio-openapi-codegen`) carry a self-contained check-and-install `setup.install` step: at sandbox creation it verifies the tool is present and installs it when the template image lacks it. Compose, for example, the `python` mixin onto the Go kit and the sandbox gets a working `python3` + `uv`; no rebuild needed.
 
 Rules of thumb:
 
-- Install paths and env match the template images (same `DOTNET_ROOT`,
-  nvm in the agent home, uv-managed CPython, `/usr/local/go`,
-  agent-owned rustup) — a later image rebuild converges to the same
-  layout.
-- Install steps run at **creation only** (kit changes never apply to
-  running sandboxes) and need egress: the mixin owning the download host
-  (e.g. `node` for npm installs, `dotnet` for the .NET SDK feed) plus the
-  Ubuntu apt mirrors (`archive.ubuntu.com`/`security.ubuntu.com`) when the
-  step calls `apt-get`. A blocked download fails the install step — check
-  `sbx policy log`.
-- On the matching template image the check is a cheap no-op (the tool is
-  already there), so keeping the install steps in every composition is
-  safe.
+- Install paths and env match the template images (same `DOTNET_ROOT`, nvm in the agent home, uv-managed CPython, `/usr/local/go`, agent-owned rustup) — a later image rebuild converges to the same layout.
+- Install steps run at **creation only** (kit changes never apply to running sandboxes) and need egress: the mixin owning the download host (e.g. `node` for npm installs, `dotnet` for the .NET SDK feed) plus the Ubuntu apt mirrors (`archive.ubuntu.com`/`security.ubuntu.com`) when the step calls `apt-get`. A blocked download fails the install step — check `sbx policy log`.
+- On the matching template image the check is a cheap no-op (the tool is already there), so keeping the install steps in every composition is safe.
 
 ## Catalog
 
@@ -62,9 +42,7 @@ Rules of thumb:
 | `zsh` | zsh + Oh My Zsh for the agent user (login shell set to zsh); check-and-install for templates without it |
 | `open-egress` | Allows all outbound domains (the `**` rule) — replaces the deny-by-default baseline; local deny rules and org policy still take precedence. Opt-in: the stock kits and examples do not compose it |
 
-Network hosts per mixin are listed at the top of each
-`mixins/<area>/spec.yaml`, and each mixin ships a
-`mixins/<area>/README.md` with usage and details.
+Network hosts per mixin are listed at the top of each `mixins/<area>/spec.yaml`, and each mixin ships a `mixins/<area>/README.md` with usage and details.
 
 ## Common sets
 
@@ -84,40 +62,18 @@ Network hosts per mixin are listed at the top of each
 
 Notes:
 
-- `agents-md` (sandbox `AGENTS.md` baseline) is required by every kit.
-  `global-opencode-config` is required when composing a model provider
-  (`zeldoc`, `copilot`) — their config fragments only merge through it.
-  `env-guard` (the no-.env policy) is optional.
-- The `playwright` mixin and `sbx` run `apt` at creation — their install
-  steps need the Ubuntu apt mirrors. Compose a registry mixin
-  (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker
-  engine pulls from.
-- Every set should include at least one model provider (`zeldoc` and/or
-  `copilot`). Add `opencode-update` to keep opencode current: the
-  template images bake a fixed opencode version, and this mixin rolls it
-  to the newest npm release at creation.
+- `agents-md` (sandbox `AGENTS.md` baseline) is required by every kit. `global-opencode-config` is required when composing a model provider (`zeldoc`, `copilot`) — their config fragments only merge through it. `env-guard` (the no-.env policy) is optional.
+- The `playwright` mixin and `sbx` run `apt` at creation — their install steps need the Ubuntu apt mirrors. Compose a registry mixin (`docker-hub`, `gcr`, `ghcr`, `mcr`) per registry the in-sandbox Docker engine pulls from.
+- Every set should include at least one model provider (`zeldoc` and/or `copilot`). Add `opencode-update` to keep opencode current: the template images bake a fixed opencode version, and this mixin rolls it to the newest npm release at creation.
 
 ## Model providers (zeldoc / copilot)
 
-Provider mixins don't fight over one config file: each ships a
-pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json`
-inside the sandbox, and the `global-opencode-config` mixin merges all
-fragments into the single config OpenCode loads via `OPENCODE_CONFIG`
-at every start. Compose `global-opencode-config` with any provider
-mixin — it is required with them (their fragments only merge through
-it):
+Provider mixins don't fight over one config file: each ships a pure-JSON fragment to `~/.config/opencode/mixins.d/NN-<provider>.json` inside the sandbox, and the `global-opencode-config` mixin merges all fragments into the single config OpenCode loads via `OPENCODE_CONFIG` at every start. Compose `global-opencode-config` with any provider mixin — it is required with them (their fragments only merge through it):
 
-- `enabled_providers` lists are **unioned** — compose `zeldoc` and
-  `copilot` together and both stay selectable with `/models`.
-- Fragments merge in filename order and later fragments win conflicts,
-  but **no fragment sets the default model** — the project-level
-  `opencode.jsonc` owns it. Commit one in the repo root (see
-  [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or
-  `"model": "github-copilot/<model-id>"`; without it opencode falls back
-  to its own default, and `/models` always works per session.
+- `enabled_providers` lists are **unioned** — compose `zeldoc` and `copilot` together and both stay selectable with `/models`.
+- Fragments merge in filename order and later fragments win conflicts, but **no fragment sets the default model** — the project-level `opencode.jsonc` owns it. Commit one in the repo root (see [project-kit.md](project-kit.md)), e.g. `"model": "zeldoc/zdev-2"` or `"model": "github-copilot/<model-id>"`; without it opencode falls back to its own default, and `/models` always works per session.
 
-Swapping providers (or changing any mixin) only applies to **new**
-sandboxes — see "Changing mixins" below.
+Swapping providers (or changing any mixin) only applies to **new** sandboxes — see "Changing mixins" below.
 
 ## Changing mixins
 
@@ -128,6 +84,4 @@ sbx rm <sandbox-name>
 sbx env run
 ```
 
-Need something specific to your project (a private feed, env vars, an
-agent note)? Add an in-project kit — see
-[project-kit.md](project-kit.md).
+Need something specific to your project (a private feed, env vars, an agent note)? Add an in-project kit — see [project-kit.md](project-kit.md).
