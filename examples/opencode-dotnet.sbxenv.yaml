@@ -11,17 +11,15 @@
 
 schemaVersion: "1"
 name: my-project
+agent: opencode
 
-# The base agent kit plus the mixins your project needs. The kit runs on
-# Docker's built-in shell template image (docker/sandbox-templates:
-# shell-docker) and the opencode kit switches to the opencode template image
-# and launch command; the stack mixin installs the toolchain. Refs are pinned
-# to the latest release; release-please bumps them (do not edit by hand).
+# The built-in opencode agent plus the mixins your project needs. Each
+# mixin brings its own locale env and network rules; the stack mixin
+# installs the toolchain. Refs are pinned to the latest release;
+# release-please bumps them (do not edit by hand).
 # x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit&ref=v2.3.0                 # base sandbox (shell template image)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-opencode&ref=v2.3.0        # OpenCode agent on the opencode template image
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=v2.3.0 # permissive OpenCode config + provider merge (required with model providers)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=v2.3.0          # OpenCode CLI + config + provider merge (required with model providers)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v2.3.0              # workspace .env guard
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-update&ref=v2.3.0        # opencode auto-update (latest npm release at creation)
   - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-zeldoc&ref=v2.3.0                 # Zeldoc.ai provider

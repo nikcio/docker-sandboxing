@@ -4,7 +4,7 @@ name: go
 displayName: Go / Go modules
 description: >
   Add Go toolchain support.
-version: 0.4.0
+version: 0.4.1
 
 setup:
   install:
@@ -49,3 +49,20 @@ permissions:
       # wrapper SDK downloads: `go install golang.org/dl/go1.x@latest`
       # then `go1.x download`)
       - dl.google.com:443
+
+      # Ubuntu apt mirrors: the install step calls apt-get when the
+      # base image lacks the tool. ports.ubuntu.com carries arm64 packages.
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      - ports.ubuntu.com
+
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
+      # common public CAs. Hit by curl/git/node when they do HTTPS
+      # revocation checks during the install.
+      - "*.digicert.com"
+      - "*.symcd.com"
+      - "*.symcb.com"
+      - "*.ws.symantec.com"
+      - "*.sectigo.com"
+      - "*.usertrust.com"
+      - "*.globalsign.com"

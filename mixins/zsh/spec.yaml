@@ -4,7 +4,7 @@ name: zsh
 displayName: Zsh + Oh My Zsh
 description: >
   Installs zsh with Oh My Zsh for the agent user and makes it the login shell.
-version: 0.1.0
+version: 0.1.1
 
 setup:
   install:
@@ -32,3 +32,20 @@ permissions:
       - raw.githubusercontent.com:443
       # ohmyz.sh: docs and wiki referenced by the framework itself
       - ohmyz.sh:443
+
+      # Ubuntu apt mirrors: the install step calls apt-get when the
+      # base image lacks the tool. ports.ubuntu.com carries arm64 packages.
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      - ports.ubuntu.com
+
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
+      # common public CAs. Hit by curl/git/node when they do HTTPS
+      # revocation checks during the install.
+      - "*.digicert.com"
+      - "*.symcd.com"
+      - "*.symcb.com"
+      - "*.ws.symantec.com"
+      - "*.sectigo.com"
+      - "*.usertrust.com"
+      - "*.globalsign.com"

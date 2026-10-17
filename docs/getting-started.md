@@ -51,7 +51,7 @@ In `sbxenv.yaml`:
 | Setting | What to do |
 | ------- | ---------- |
 | `name:` | A unique name for this sandbox (used to scope its secrets). |
-| `kits:` | Drop the mixin lines your project doesn't need, and add `global-opencode-config` when using a model provider (`opencode-zeldoc`, `opencode-copilot` — their config fragments only merge through it). See [mixins.md](mixins.md). Need project-specific settings (private feeds, env vars, agent notes)? See [project-kit.md](project-kit.md). |
+| `kits:` | Drop the mixin lines your project doesn't need, and add `opencode` when using a model provider (`opencode-zeldoc`, `opencode-copilot` — their config fragments only merge through it). See [mixins.md](mixins.md). Need project-specific settings (private feeds, env vars, agent notes)? See [project-kit.md](project-kit.md). |
 | `workspace.path:` | Leave as is — it targets your repo. Point it elsewhere only if the env file sits outside the project. |
 
 ## 5. Run it
@@ -73,7 +73,7 @@ The agent needs a model provider:
 
 Optional: a GitHub personal access token so the agent can push and open PRs — see [github-pat.md](github-pat.md). Cloning public repos (read-only) and git over SSH work without one; pushing over HTTPS always needs it.
 
-The kit and mixins are fetched from `github.com/nikcio/docker-sandboxing` and run on Docker's built-in `docker/sandbox-templates:shell-docker` image — the OpenCode kit extends it and switches to the `opencode-docker` image + `opencode` entrypoint. No builds are needed on your machine. Stack toolchains install at sandbox creation via the stack mixin in the `kits:` list.
+The mixins are fetched from `github.com/nikcio/docker-sandboxing` and composed onto Docker's built-in `opencode` agent (the `docker/sandbox-templates:opencode-docker` image) — no builds needed on your machine. The `opencode` mixin brings the OpenCode config layer and the locale env; stack toolchains install at sandbox creation via the stack mixin in the `kits:` list.
 
 ## Host settings
 

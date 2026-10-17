@@ -4,7 +4,7 @@ name: github-cli
 displayName: GitHub CLI
 description: >
   Installs Github CLI
-version: 0.5.0
+version: 0.5.1
 
 setup:
   install:
@@ -145,3 +145,20 @@ permissions:
       - github.com
       - "*.github.com"
       - "*.githubusercontent.com"
+
+      # Ubuntu apt mirrors: the install step calls apt-get when the
+      # base image lacks the tool. ports.ubuntu.com carries arm64 packages.
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      - ports.ubuntu.com
+
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
+      # common public CAs. Hit by curl/git/node when they do HTTPS
+      # revocation checks during the install.
+      - "*.digicert.com"
+      - "*.symcd.com"
+      - "*.symcb.com"
+      - "*.ws.symantec.com"
+      - "*.sectigo.com"
+      - "*.usertrust.com"
+      - "*.globalsign.com"

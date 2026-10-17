@@ -33,7 +33,7 @@ The command scans these directories (when two contain a skill with the same name
 - Sandboxes mount the shared store read-write by default, and the mount refreshes on every start — so you can import before or after creating the sandbox.
 - OpenCode loads global skills from `~/.config/opencode/skills/`, `~/.claude/skills/`, and `~/.agents/skills/` — skills imported from the Claude-compatible and agent-compatible sources are the ones it picks up.
 - Skills load per session: after importing, quit opencode and start it again to pick up new skills.
-- Project skills need no import: an `.opencode/skills/<name>/SKILL.md` folder in your repo arrives with the workspace, and the global config layer (from the `global-opencode-config` mixin) already allows the `skill` tool.
+- Project skills need no import: an `.opencode/skills/<name>/SKILL.md` folder in your repo arrives with the workspace, and the global config layer (from the `opencode` mixin) already allows the `skill` tool.
 
 Quick check from your project root that the store is mounted:
 

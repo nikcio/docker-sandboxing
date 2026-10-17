@@ -4,7 +4,7 @@ name: playwright
 displayName: Playwright
 description: >
   Installs Playwright and the Chromium headless shell for browser automation and testing.
-version: 0.1.1
+version: 0.1.2
 
 setup:
   install:
@@ -49,3 +49,20 @@ permissions:
       - playwright.azureedge.net:443
       - playwright.download.prss.microsoft.com:443
       - storage.googleapis.com:443
+
+      # Ubuntu apt mirrors: the install step calls apt-get when the
+      # base image lacks the tool. ports.ubuntu.com carries arm64 packages.
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      - ports.ubuntu.com
+
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
+      # common public CAs. Hit by curl/git/node when they do HTTPS
+      # revocation checks during the install.
+      - "*.digicert.com"
+      - "*.symcd.com"
+      - "*.symcb.com"
+      - "*.ws.symantec.com"
+      - "*.sectigo.com"
+      - "*.usertrust.com"
+      - "*.globalsign.com"

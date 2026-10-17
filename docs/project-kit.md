@@ -20,7 +20,7 @@ The sandbox's provider mixins do not set a default model, so the project config 
 
 Without a `model` key opencode falls back to its own default; pick a different one any time with `/models` in the TUI.
 
-Do not write `~/.config/opencode/opencode.json` from a kit — the sandbox owns that file (it is rewritten at startup for MCP wiring). Do not set `OPENCODE_CONFIG` either — the `global-opencode-config` mixin owns it (it points at the combined provider config that the mixin rebuilds from `~/.config/opencode/mixins.d/`). To contribute a provider, ship a comment-free JSON fragment at `files/home/.config/opencode/mixins.d/30-<name>.json` in your kit — the global-opencode-config mixin merges it with the stock provider fragments (see [mixins.md](mixins.md)).
+Do not write `~/.config/opencode/opencode.json` from a kit — the sandbox owns that file (it is rewritten at startup for MCP wiring). Do not set `OPENCODE_CONFIG` either — the `opencode` mixin owns it (it points at the combined provider config that the mixin rebuilds from `~/.config/opencode/mixins.d/`). To contribute a provider, ship a comment-free JSON fragment at `files/home/.config/opencode/mixins.d/30-<name>.json` in your kit — the opencode mixin merges it with the stock provider fragments (see [mixins.md](mixins.md)).
 
 ## Add an in-project kit
 
@@ -66,16 +66,16 @@ An in-project kit is a mixin (`kind: mixin`) that lives in your repo, next to `s
 3. List it in your `sbxenv.yaml` after the stock kits (local paths are relative to the env file):
 
     ```yaml
+    agent: opencode
+
     kits:
-      - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit&ref=<copy the pin from the examples>
-      - git+https://github.com/nikcio/docker-sandboxing.git#dir=kit-opencode&ref=<same ref>
-      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/global-opencode-config&ref=<same ref>
+      - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=<copy the pin from the examples>
       - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=<same ref>
       # ...the other stock mixins your project keeps...
       - ./sandbox-kit
     ```
 
-   Keep the base kits (`kit` + `kit-opencode`) and `global-opencode-config` when composing a model provider — the kits define the image and entrypoint, the `global-opencode-config` mixin merges the model-provider config fragments. The list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
+   Keep the `opencode` mixin when composing a model provider — it merges the model-provider config fragments (and installs the OpenCode CLI). The list above also includes the optional `env-guard` (the no-.env policy). Your kit only adds capabilities.
 
 4. Validate and recreate the sandbox (kit changes only apply to new sandboxes):
 

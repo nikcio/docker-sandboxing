@@ -9,7 +9,7 @@ One-time setup that makes this repo's automations work: CI on every PR and relea
 | Validate (`validate.yml`) | every PR, pushes to `main`, manual | nothing — works out of the box |
 | Release Please (`release-please.yml`) | pushes to `main` | a GitHub App (steps 1–2) |
 
-Validate runs `sbx kit pack` on every kit and mixin (the offline equivalent of `sbx kit validate`). No secrets involved.
+Validate runs `sbx kit pack` on every mixin (the offline equivalent of `sbx kit validate`). No secrets involved.
 
 ## 1. Create the release-please GitHub App
 
@@ -42,7 +42,7 @@ Settings → Rules → Rulesets → **New branch ruleset** (or classic branch pr
 
 - **Require a pull request before merging** — work happens in worktrees and lands via PRs (see [agent-guidance/worktrees.md](../agent-guidance/worktrees.md)).
 - **Require status checks to pass**, then select:
-  - `Kits & mixins (sbx kit pack)`
+  - `Mixins (sbx kit pack)`
 
 The checks appear after the first PR runs the Validate workflow. Validate runs on every PR (no path filtering) and always produces exactly this check, so the fixed required set is safe. Two caveats keep it that way: don't add path filters to `validate.yml` (a filtered-out PR never reports the required checks and can never merge).
 

@@ -4,7 +4,7 @@ name: rust
 displayName: Rust / cargo
 description: >
   Adds a Rust toolchain to the sandbox, with cargo for building and managing Rust packages.
-version: 0.3.0
+version: 0.3.1
 
 setup:
   install:
@@ -51,3 +51,20 @@ permissions:
       - rust-lang.org:443
       - "*.rust-lang.org:443"
       - docs.rs:443
+
+      # Ubuntu apt mirrors: the install step calls apt-get when the
+      # base image lacks the tool. ports.ubuntu.com carries arm64 packages.
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      - ports.ubuntu.com
+
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
+      # common public CAs. Hit by curl/git/node when they do HTTPS
+      # revocation checks during the install.
+      - "*.digicert.com"
+      - "*.symcd.com"
+      - "*.symcb.com"
+      - "*.ws.symantec.com"
+      - "*.sectigo.com"
+      - "*.usertrust.com"
+      - "*.globalsign.com"

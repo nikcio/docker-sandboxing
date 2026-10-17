@@ -4,7 +4,7 @@ name: nikcio-openapi-codegen
 displayName: OpenAPI Code Generator (C#)
 description: >
   Installs the openapi-code-generator .NET global tool Nikcio.OpenApiCodeGen.
-version: 0.4.0
+version: 0.4.1
 
 setup:
   install:
@@ -43,3 +43,20 @@ permissions:
     allow:
       # Docs site (openapi.nikcio.com)
       - openapi.nikcio.com:443
+
+      # Ubuntu apt mirrors: the install step calls apt-get when the
+      # base image lacks the tool. ports.ubuntu.com carries arm64 packages.
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      - ports.ubuntu.com
+
+      # Certificate revocation (OCSP/CRL) + timestamp endpoints for the
+      # common public CAs. Hit by curl/git/node when they do HTTPS
+      # revocation checks during the install.
+      - "*.digicert.com"
+      - "*.symcd.com"
+      - "*.symcb.com"
+      - "*.ws.symantec.com"
+      - "*.sectigo.com"
+      - "*.usertrust.com"
+      - "*.globalsign.com"
