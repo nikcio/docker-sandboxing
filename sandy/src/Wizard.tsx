@@ -13,6 +13,7 @@ interface Props {
   onRefresh: () => Promise<SetupStatus | null>;
   onDone: () => void;
   onBusyChange: (busy: boolean) => void;
+  onStepDone?: (step: string) => void;
 }
 
 interface StepDef {
@@ -82,7 +83,13 @@ export function isSetupComplete(status: SetupStatus | null) {
   return STEPS.every((step) => step.isDone(status));
 }
 
-export default function Wizard({ status, onRefresh, onDone, onBusyChange }: Props) {
+export default function Wizard({
+  status,
+  onRefresh,
+  onDone,
+  onBusyChange,
+  onStepDone,
+}: Props) {
   const [current, setCurrent] = useState(() =>
     Math.max(
       0,
@@ -116,6 +123,7 @@ export default function Wizard({ status, onRefresh, onDone, onBusyChange }: Prop
         [step.id]: typeof output === "string" ? output : "",
       }));
       await onRefresh();
+      onStepDone?.(step.id);
       setStates((previous) => ({ ...previous, [step.id]: "done" }));
     } catch (error) {
       setStates((previous) => ({ ...previous, [step.id]: "error" }));
@@ -150,7 +158,9 @@ export default function Wizard({ status, onRefresh, onDone, onBusyChange }: Prop
               : "A few simple steps, and you’ll be right at home. We’ve checked what’s already configured."}
           </p>
         </div>
-        <span className="setup-progress-label">{completed} of 4 ready</span>
+        <span className="setup-progress-label">
+          {completed} of 4 ready
+        </span>
       </div>
       <div
         className="progress-track"

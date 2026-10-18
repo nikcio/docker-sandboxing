@@ -1,16 +1,45 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SetupStatus, SandboxInfo, listSandboxes } from "./api";
+import {
+  SetupStatus,
+  SandboxInfo,
+  listSandboxes,
+  startSandbox,
+  stopSandbox,
+  restartSandbox,
+  openTerminal,
+} from "./api";
+import ConnectSandbox from "./ConnectSandbox";
 import Icon from "./Icon";
-import { isSetupComplete } from "./Wizard";
 
-interface Props {
+export interface CommandCenterProps {
   home: boolean;
   status: SetupStatus | null;
   onGoSettings: () => void;
   onGoTemplates: () => void;
-  onStub: (feature: string) => void;
+  onCreate: () => void;
+  onRefreshStatus: () => Promise<SetupStatus | null>;
   onCount: (count: number) => void;
 }
+
+type SandboxAction = "start" | "stop" | "restart" | "terminal";
+const actions = {
+  start: startSandbox,
+  stop: stopSandbox,
+  restart: restartSandbox,
+  terminal: openTerminal,
+};
+const actionLabels: Record<SandboxAction, string> = {
+  start: "Starting…",
+  stop: "Stopping…",
+  restart: "Restarting…",
+  terminal: "Opening terminal…",
+};
+const successLabels: Record<SandboxAction, string> = {
+  start: "Started",
+  stop: "Stopped",
+  restart: "Restarted",
+  terminal: "Opened a terminal for",
+};
 
 function stateKind(state: string) {
   const normalized = state
@@ -49,58 +78,128 @@ export default function CommandCenter({
   status,
   onGoSettings,
   onGoTemplates,
-  onStub,
+  onCreate,
+  onRefreshStatus,
   onCount,
-}: Props) {
+}: CommandCenterProps) {
   const [sandboxes, setSandboxes] = useState<SandboxInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState<SandboxInfo | null>(null);
+  const [pending, setPending] = useState(() => new Map<string, SandboxAction>());
+  const [notice, setNotice] = useState<{
+    kind: "success" | "error";
+    text: string;
+  } | null>(null);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("default");
-  const inFlight = useRef(false);
+  const busySandboxes = useRef(new Set<string>());
+  const inFlight = useRef<{
+    generation: number;
+    promise: Promise<void>;
+  } | null>(null);
   const generation = useRef(0);
 
-  const refresh = useCallback(async () => {
-    if (inFlight.current) return;
-    inFlight.current = true;
+  const refresh = useCallback(async (afterAction = false): Promise<void> => {
     const requestGeneration = generation.current;
-    setRefreshing(true);
-    try {
-      const list = await listSandboxes();
-      if (requestGeneration !== generation.current) return;
-      setSandboxes(list);
-      onCount(list.length);
-      setError(null);
-      setSelected((current) =>
-        list.some((item) => item.name === current)
-          ? current
-          : (list[0]?.name ?? null),
-      );
-    } catch (failure) {
-      if (requestGeneration === generation.current) setError(String(failure));
-    } finally {
-      inFlight.current = false;
-      if (requestGeneration === generation.current) setRefreshing(false);
+    const existing = inFlight.current;
+    if (existing?.generation === requestGeneration) {
+      await existing.promise;
+      // A poll started before an action finished can contain stale state.
+      if (!afterAction || requestGeneration !== generation.current) return;
+      // Another completed action may already have queued the fresh request.
+      if (inFlight.current?.generation === requestGeneration) {
+        return inFlight.current.promise;
+      }
     }
+    if (requestGeneration !== generation.current) return;
+    const request = { generation: requestGeneration, promise: Promise.resolve() };
+    inFlight.current = request;
+    setRefreshing(true);
+    request.promise = (async () => {
+      try {
+        const list = await listSandboxes();
+        if (requestGeneration !== generation.current) return;
+        setSandboxes(list);
+        onCount(list.length);
+        setError(null);
+        setSelected((current) =>
+          list.some((item) => item.name === current)
+            ? current
+            : (list[0]?.name ?? null),
+        );
+      } catch (failure) {
+        if (requestGeneration === generation.current) setError(String(failure));
+      } finally {
+        if (inFlight.current === request) {
+          inFlight.current = null;
+          if (requestGeneration === generation.current) setRefreshing(false);
+        }
+      }
+    })();
+    await request.promise;
   }, [onCount]);
 
   useEffect(() => {
     // A generation also protects against stale responses during StrictMode remounts.
     generation.current += 1;
-    inFlight.current = false;
-    if (status?.sbx_installed) refresh();
+    if (status?.sbx_installed) void refresh();
     return () => {
       generation.current += 1;
     };
   }, [refresh, status?.sbx_installed]);
 
   useEffect(() => {
-    if (!autoRefresh || !status?.sbx_installed) return;
-    const timer = setInterval(refresh, 5000);
-    return () => clearInterval(timer);
-  }, [autoRefresh, refresh, status?.sbx_installed]);
+    if (!status?.sbx_installed) return;
+    const timer = setInterval(() => void refresh(), 5000);
+    const onFocus = () => void refresh(true);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [refresh, status?.sbx_installed]);
+
+  const runAction = async (name: string, action: SandboxAction) => {
+    if (busySandboxes.current.has(name)) {
+      throw new Error(`An action is already in progress for ${name}.`);
+    }
+    const actionGeneration = generation.current;
+    busySandboxes.current.add(name);
+    setPending((current) => new Map(current).set(name, action));
+    setNotice(null);
+    try {
+      await actions[action](name);
+      if (actionGeneration === generation.current) {
+        setNotice({ kind: "success", text: `${successLabels[action]} ${name}.` });
+      }
+    } catch (failure) {
+      if (actionGeneration === generation.current) {
+        setNotice({
+          kind: "error",
+          text: `Couldn’t ${action === "terminal" ? "open a terminal for" : action} ${name}: ${String(failure)}`,
+        });
+      }
+      throw failure;
+    } finally {
+      if (actionGeneration === generation.current) await refresh(true);
+      busySandboxes.current.delete(name);
+      if (actionGeneration === generation.current) {
+        setPending((current) => {
+          const next = new Map(current);
+          next.delete(name);
+          return next;
+        });
+      }
+    }
+  };
+
+  const openConnection = (sandbox: SandboxInfo) => {
+    if (busySandboxes.current.has(sandbox.name)) return;
+    setSelected(sandbox.name);
+    setConnecting(sandbox);
+  };
 
   const all = sandboxes ?? [];
   const visible = all.filter((sandbox) =>
@@ -118,41 +217,55 @@ export default function CommandCenter({
   ).length;
   const inactive = all.length - running - stopped;
   const detail = all.find((sandbox) => sandbox.name === selected) ?? null;
+  const detailPending = detail ? pending.get(detail.name) : undefined;
+  const detailRunning = detail !== null && stateKind(detail.state) === "running";
+  const needsSetup =
+    status !== null &&
+    [
+      status.sbx_installed,
+      status.signed_in,
+      status.image_paste_on,
+      status.ssh_set_up,
+    ].some((value) => value === false);
 
   return (
     <div className="dashboard">
       <div className="dashboard-main">
-        <div className="page-head">
-          <h1>
-            {home ? (
-              <>
-                <span className="wave" aria-hidden="true">
-                  <Icon name="wave" size={36} />
-                </span>{" "}
-                Welcome to Sandy
-              </>
-            ) : (
-              "Your Sandboxes"
-            )}
-          </h1>
-          <p className="page-sub">
-            {home
-              ? "Run and manage your Docker sandboxes — safely, easily, and without the command line."
-              : "Your local environments. One comfortable place to keep track of them."}
-          </p>
+        <div className="page-head dashboard-page-head">
+          <div>
+            <h1>
+              {home ? (
+                <>
+                  <span className="wave" aria-hidden="true">
+                    <Icon name="wave" size={36} />
+                  </span>{" "}
+                  Welcome to Sandy
+                </>
+              ) : (
+                "Your Sandboxes"
+              )}
+            </h1>
+            <p className="page-sub">
+              {home
+                ? "Run and manage your Docker sandboxes."
+                : "Your local environments. One comfortable place to keep track of them."}
+            </p>
+          </div>
+          {!home && (
+            <button className="primary" onClick={onCreate}>
+              <Icon name="create" size={19} /> Create sandbox
+            </button>
+          )}
         </div>
         {home && (
           <div className="action-cards">
-            <button
-              className="action-card featured"
-              onClick={() => onStub("Create new sandbox")}
-            >
+            <button className="action-card featured" onClick={onCreate}>
               <span className="action-icon">
                 <Icon name="create" size={32} />
               </span>
-              <span className="action-title">Create new sandbox</span>
+              <span className="action-title">Create sandbox</span>
               <span className="action-desc">
-                Start with a template or choose your own image.
+                Start with a project and template.
               </span>
               <span className="action-arrow">
                 <Icon name="arrow" size={19} />
@@ -165,21 +278,6 @@ export default function CommandCenter({
               <span className="action-title">From template</span>
               <span className="action-desc">
                 Use a pre-configured environment.
-              </span>
-              <span className="action-arrow">
-                <Icon name="arrow" size={18} />
-              </span>
-            </button>
-            <button
-              className="action-card"
-              onClick={() => onStub("Create from image")}
-            >
-              <span className="action-icon green">
-                <Icon name="box" size={27} />
-              </span>
-              <span className="action-title">From image</span>
-              <span className="action-desc">
-                Run any Docker image you like.
               </span>
               <span className="action-arrow">
                 <Icon name="arrow" size={18} />
@@ -204,7 +302,7 @@ export default function CommandCenter({
             </a>
           </div>
         )}
-        {!isSetupComplete(status) && (
+        {needsSetup && (
           <div className="setup-banner">
             <Icon name="shield" size={20} />
             <span>A few setup steps still need your attention.</span>
@@ -253,7 +351,7 @@ export default function CommandCenter({
                 title="Refresh sandboxes"
                 aria-label="Refresh sandboxes"
                 disabled={refreshing || !status?.sbx_installed}
-                onClick={refresh}
+                onClick={() => void refresh()}
               >
                 <Icon name="refresh" size={18} />
               </button>
@@ -263,7 +361,11 @@ export default function CommandCenter({
             <div className="error-banner" role="alert">
               <strong>Couldn’t refresh your sandboxes.</strong>
               <p>{error}</p>
-              <button className="ghost" disabled={refreshing} onClick={refresh}>
+              <button
+                className="ghost"
+                disabled={refreshing}
+                onClick={() => void refresh()}
+              >
                 Try again
               </button>
             </div>
@@ -287,11 +389,16 @@ export default function CommandCenter({
                 <p>
                   {search
                     ? "Try a different name, agent, or workspace."
-                    : "Your local sandboxes will appear here. Start one from a project with sbx env run."}
+                      : "Create a sandbox from a template and a project. Your local environments will appear here."}
                 </p>
                 {search && (
                   <button className="ghost" onClick={() => setSearch("")}>
                     Clear search
+                  </button>
+                )}
+                {!search && (
+                  <button className="primary" onClick={onCreate}>
+                    Create sandbox
                   </button>
                 )}
               </div>
@@ -301,6 +408,7 @@ export default function CommandCenter({
               <div
                 key={sandbox.name}
                 className={`sbx-row ${selected === sandbox.name ? "selected" : ""}`}
+                aria-busy={pending.has(sandbox.name)}
               >
                 <button
                   className="sandbox-select"
@@ -323,31 +431,16 @@ export default function CommandCenter({
                   <StatePill state={sandbox.state} />
                 </button>
                 <button
-                  className={
-                    stateKind(sandbox.state) === "running"
-                      ? "primary row-action"
-                      : "ghost row-action"
-                  }
-                  onClick={() => {
-                    setSelected(sandbox.name);
-                    onStub(
-                      stateKind(sandbox.state) === "running"
-                        ? "Open sandbox"
-                        : "Start sandbox",
-                    );
-                  }}
+                  className="primary row-action"
+                  disabled={pending.has(sandbox.name) || !status?.sbx_installed}
+                  aria-label={`Open ${sandbox.name}`}
+                  onClick={() => openConnection(sandbox)}
                 >
-                  {stateKind(sandbox.state) === "running" ? "Open" : "Start"}
-                </button>
-                <button
-                  className="icon-button row-more"
-                  aria-label={`More actions for ${sandbox.name}`}
-                  onClick={() => {
-                    setSelected(sandbox.name);
-                    onStub("More sandbox actions");
-                  }}
-                >
-                  <Icon name="more" size={19} />
+                  {pending.has(sandbox.name) ? (
+                    <span className="spinner" aria-hidden="true" />
+                  ) : (
+                    "Open"
+                  )}
                 </button>
               </div>
             ))}
@@ -370,55 +463,62 @@ export default function CommandCenter({
                     <h2>{detail.name}</h2>
                     <StatePill state={detail.state} />
                   </div>
-                  <button
-                    className="icon-button"
-                    aria-label="More actions for selected sandbox"
-                    onClick={() => onStub("More sandbox actions")}
-                  >
-                    <Icon name="more" size={20} />
-                  </button>
                 </div>
                 <p className="local-label">
                   Local sandbox <span>·</span>{" "}
                   {detail.agent || "No agent reported"}
                 </p>
-                <div className="sandbox-actions">
+                <div className="sandbox-actions" aria-busy={!!detailPending}>
                   <button
-                    className="primary"
-                    onClick={() =>
-                      onStub(
-                        stateKind(detail.state) === "running"
-                          ? "Open sandbox"
-                          : "Start sandbox",
-                      )
-                    }
+                    className="primary connect-action"
+                    disabled={!!detailPending || !status?.sbx_installed}
+                    onClick={() => openConnection(detail)}
                   >
                     <Icon name="monitor" size={20} />
-                    {stateKind(detail.state) === "running"
-                      ? "Open sandbox"
-                      : "Start sandbox"}
+                    Open sandbox
+                  </button>
+                  <button
+                    className="ghost start-action"
+                    disabled={
+                      !!detailPending || detailRunning || !status?.sbx_installed
+                    }
+                    onClick={() =>
+                      void runAction(detail.name, "start").catch(() => {})
+                    }
+                  >
+                    <Icon name="terminal" size={19} />
+                    Start
                   </button>
                   <button
                     className="ghost"
-                    onClick={() => onStub("Stop sandbox")}
+                    disabled={
+                      !!detailPending || !detailRunning || !status?.sbx_installed
+                    }
+                    onClick={() =>
+                      void runAction(detail.name, "stop").catch(() => {})
+                    }
                   >
                     <Icon name="stop" size={19} />
                     Stop
                   </button>
                   <button
                     className="ghost"
-                    onClick={() => onStub("Restart sandbox")}
+                    disabled={
+                      !!detailPending || !detailRunning || !status?.sbx_installed
+                    }
+                    onClick={() =>
+                      void runAction(detail.name, "restart").catch(() => {})
+                    }
                   >
                     <Icon name="refresh" size={19} />
                     Restart
                   </button>
-                  <button
-                    className="ghost"
-                    onClick={() => onStub("More sandbox actions")}
-                  >
-                    More actions <Icon name="chevron" size={16} />
-                  </button>
                 </div>
+                {detailPending && (
+                  <p className="sandbox-pending" role="status">
+                    <span className="spinner" /> {actionLabels[detailPending]}
+                  </p>
+                )}
               </div>
               <div className="details-body">
                 <h3>Details</h3>
@@ -434,32 +534,15 @@ export default function CommandCenter({
                     <StatePill state={detail.state} />
                   </dd>
                 </dl>
-                <label className="toggle-row">
-                  <span>Auto-refresh</span>
-                  <span className="toggle-control">
-                    <input
-                      type="checkbox"
-                      role="switch"
-                      checked={autoRefresh}
-                      onChange={(event) => setAutoRefresh(event.target.checked)}
-                    />
-                    <span className="switch-track" />
-                    <span>{autoRefresh ? "On" : "Off"}</span>
-                  </span>
-                </label>
                 <div className="tip">
                   <h4>
                     <Icon name="sparkles" size={20} /> Tip
                   </h4>
                   <p>
-                    Have a favorite environment? Turn it into a starting point
-                    for your next idea.
+                    Templates give your next project a ready-to-use environment.
                   </p>
-                  <button
-                    className="text-button"
-                    onClick={() => onStub("Create from this sandbox")}
-                  >
-                    Create from this sandbox <Icon name="arrow" size={15} />
+                  <button className="text-button" onClick={onCreate}>
+                    Create another sandbox <Icon name="arrow" size={15} />
                   </button>
                 </div>
               </div>
@@ -471,23 +554,47 @@ export default function CommandCenter({
               </span>
               <h2>A closer look</h2>
               <p>Select a sandbox to see its details and available actions.</p>
-              <label className="toggle-row">
-                <span>Auto-refresh</span>
-                <span className="toggle-control">
-                  <input
-                    type="checkbox"
-                    role="switch"
-                    checked={autoRefresh}
-                    onChange={(event) => setAutoRefresh(event.target.checked)}
-                  />
-                  <span className="switch-track" />
-                  <span>{autoRefresh ? "On" : "Off"}</span>
-                </span>
-              </label>
             </div>
           )}
         </section>
       </aside>
+      <div
+        className="dashboard-notifications"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {notice && (
+          <div
+            className={`dashboard-toast ${notice.kind}`}
+            role={notice.kind === "error" ? "alert" : "status"}
+          >
+            <Icon
+              name={notice.kind === "success" ? "check" : "help"}
+              size={20}
+            />
+            <span>{notice.text}</span>
+            <button
+              className="icon-button"
+              aria-label="Dismiss notification"
+              onClick={() => setNotice(null)}
+            >
+              <Icon name="close" size={17} />
+            </button>
+          </div>
+        )}
+      </div>
+      {connecting && (
+        <ConnectSandbox
+          key={connecting.name}
+          sandbox={
+            all.find((sandbox) => sandbox.name === connecting.name) ?? connecting
+          }
+          status={status}
+          onRefreshStatus={onRefreshStatus}
+          onOpenTerminal={() => runAction(connecting.name, "terminal")}
+          onClose={() => setConnecting(null)}
+        />
+      )}
     </div>
   );
 }

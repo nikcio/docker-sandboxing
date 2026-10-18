@@ -4,9 +4,16 @@ import Wizard, { isSetupComplete } from "./Wizard";
 import CommandCenter from "./CommandCenter";
 import Icon, { IconName } from "./Icon";
 import logo from "./assets/logo.png";
+import CreateSandbox from "./CreateSandbox";
+import Templates from "./Templates";
+import Providers from "./Providers";
 
-type View = "home" | "sandboxes" | "templates" | "settings";
-const navigation: { id: View; icon: IconName; label: string }[] = [
+type View = "home" | "sandboxes" | "templates" | "settings" | "create";
+const navigation: {
+  id: Exclude<View, "create">;
+  icon: IconName;
+  label: string;
+}[] = [
   { id: "home", icon: "home", label: "Home" },
   { id: "sandboxes", icon: "box", label: "Sandboxes" },
   { id: "templates", icon: "template", label: "Templates" },
@@ -23,14 +30,38 @@ export default function App() {
   const [checkingSetup, setCheckingSetup] = useState(false);
   const [busy, setBusy] = useState(false);
   const [count, setCount] = useState<number | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
   const openingSetup = useRef(false);
+  const completedSteps = useRef(
+    new Map<
+      "sbx_installed" | "signed_in" | "image_paste_on" | "ssh_set_up",
+      number
+    >(),
+  );
 
   const refreshStatus = useCallback(async () => {
     try {
       const next = await getStatus();
-      setStatus(next);
+      // Successful commands are authoritative while the daemon's checks settle.
+      // Drop each confirmation once observed, or after a short grace period, so
+      // later logout/configuration changes still appear accurately.
+      for (const [key, expires] of completedSteps.current) {
+        if (next[key] === true || Date.now() >= expires) {
+          completedSteps.current.delete(key);
+        } else {
+          next[key] = true;
+        }
+      }
+      // A temporarily unavailable check must not erase a previously verified result.
+      setStatus((previous) =>
+        previous && next.sbx_installed
+          ? {
+              ...next,
+              signed_in: next.signed_in ?? previous.signed_in,
+              image_paste_on: next.image_paste_on ?? previous.image_paste_on,
+              ssh_set_up: next.ssh_set_up ?? previous.ssh_set_up,
+            }
+          : next,
+      );
       setStatusError(null);
       return next;
     } catch (error) {
@@ -43,7 +74,16 @@ export default function App() {
     let active = true;
     refreshStatus().then((next) => {
       if (!active) return;
-      if (!isSetupComplete(next)) {
+      if (!next) {
+        setView("settings");
+      } else if (
+        [
+          next.sbx_installed,
+          next.signed_in,
+          next.image_paste_on,
+          next.ssh_set_up,
+        ].some((value) => value === false)
+      ) {
         setView("settings");
         setSetupOpen(true);
       }
@@ -55,8 +95,13 @@ export default function App() {
   }, [refreshStatus]);
 
   useEffect(() => {
-    if (notice && !dialog.current?.open) dialog.current?.showModal();
-  }, [notice]);
+    if (busy) return;
+    const onFocus = () => {
+      void refreshStatus();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [busy, refreshStatus]);
 
   const openSetup = async () => {
     if (openingSetup.current || busy) return;
@@ -76,6 +121,21 @@ export default function App() {
   const finishSetup = () => {
     setSetupOpen(false);
     setView("home");
+  };
+
+  const onStepDone = (step: string) => {
+    const key = ({
+      install: "sbx_installed",
+      login: "signed_in",
+      imagepaste: "image_paste_on",
+      ssh: "ssh_set_up",
+    } as const)[step as "install" | "login" | "imagepaste" | "ssh"];
+    if (key) {
+      completedSteps.current.set(key, Date.now() + 30_000);
+      setStatus((previous) =>
+        previous ? { ...previous, [key]: true } : previous,
+      );
+    }
   };
 
   if (loading) {
@@ -106,7 +166,11 @@ export default function App() {
           </a>
           <button
             className="account-button"
-            onClick={() => setNotice("Account settings")}
+            disabled={busy || checkingSetup}
+            onClick={() => {
+              setView("settings");
+              void refreshStatus();
+            }}
             aria-label="Account settings"
           >
             <span className="avatar-chip">
@@ -122,10 +186,21 @@ export default function App() {
             {navigation.map((item) => (
               <button
                 key={item.id}
-                className={`nav-item ${view === item.id ? "active" : ""}`}
-                aria-current={view === item.id ? "page" : undefined}
+                className={`nav-item ${
+                  view === item.id || (view === "create" && item.id === "home")
+                    ? "active"
+                    : ""
+                }`}
+                aria-current={
+                  view === item.id || (view === "create" && item.id === "home")
+                    ? "page"
+                    : undefined
+                }
                 disabled={busy || checkingSetup}
-                onClick={() => setView(item.id)}
+                onClick={() => {
+                  setView(item.id);
+                  if (item.id === "settings") void refreshStatus();
+                }}
               >
                 <Icon name={item.icon} />
                 <span>{item.label}</span>
@@ -156,36 +231,29 @@ export default function App() {
               status={status}
               onGoSettings={() => setView("settings")}
               onGoTemplates={() => setView("templates")}
-              onStub={setNotice}
+              onCreate={() => setView("create")}
+              onRefreshStatus={refreshStatus}
               onCount={setCount}
             />
           )}
           {view === "templates" && (
-            <div className="page standalone-page">
-              <div className="page-head">
-                <h1>Templates</h1>
-                <p className="page-sub">A head start for your next idea.</p>
-              </div>
-              <section className="card template-empty">
-                <span className="empty-icon">
-                  <Icon name="template" size={32} />
-                </span>
-                <span className="eyebrow">COMING SOON</span>
-                <h2>Your next sandbox, ready to go</h2>
-                <p>
-                  Browse pre-configured environments and make them your own.
-                  The template library is on its way.
-                </p>
-                <a
-                  className="button ghost"
-                  href="https://github.com/nikcio/docker-sandboxing/tree/main/examples"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Explore environment examples <Icon name="arrow" size={17} />
-                </a>
-              </section>
-            </div>
+            <Templates
+              onCreate={() => setView("create")}
+              onLaunched={() => {
+                void refreshStatus();
+              }}
+              onBusyChange={setBusy}
+            />
+          )}
+          {view === "create" && (
+            <CreateSandbox
+              onClose={() => setView("home")}
+              onCreated={() => {
+                void refreshStatus();
+              }}
+              onTemplates={() => setView("templates")}
+              onBusyChange={setBusy}
+            />
           )}
           <div hidden={view !== "settings"}>
             <div className="page standalone-page settings-page">
@@ -208,6 +276,19 @@ export default function App() {
                   </button>
                 </div>
               )}
+              {!!status?.issues?.length && (
+                <div className="error-banner" role="status">
+                  <strong>Some setup checks are temporarily unavailable.</strong>
+                  <p>{status.issues.join("\n")}</p>
+                  <button
+                    className="ghost"
+                    disabled={busy || checkingSetup}
+                    onClick={refreshStatus}
+                  >
+                    Check again
+                  </button>
+                </div>
+              )}
               {setupOpen ? (
                 <Wizard
                   key={setupSession}
@@ -215,6 +296,7 @@ export default function App() {
                   onRefresh={refreshStatus}
                   onDone={finishSetup}
                   onBusyChange={setBusy}
+                  onStepDone={onStepDone}
                 />
               ) : (
                 <section
@@ -226,9 +308,16 @@ export default function App() {
                   </span>
                   <div>
                     <h2>
-                      {isSetupComplete(status)
-                        ? "You’re all set"
-                        : "Let’s get you set up"}
+                      {status &&
+                      [
+                        status.signed_in,
+                        status.image_paste_on,
+                        status.ssh_set_up,
+                      ].some((value) => value === null)
+                        ? "Setup status is temporarily unavailable"
+                        : isSetupComplete(status)
+                          ? "You’re all set"
+                          : "Let’s get you set up"}
                     </h2>
                     <p>
                       {isSetupComplete(status)
@@ -274,40 +363,15 @@ export default function App() {
                   </a>
                 </section>
               )}
+              {view === "settings" && (
+                <div className="card settings-info">
+                  <Providers disabled={busy || checkingSetup} />
+                </div>
+              )}
             </div>
           </div>
         </main>
       </div>
-      <dialog
-        ref={dialog}
-        className="feature-dialog"
-        onClose={() => setNotice(null)}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) dialog.current?.close();
-        }}
-        aria-labelledby="feature-title"
-        aria-describedby="feature-description"
-      >
-        <button
-          className="icon-button dialog-close"
-          aria-label="Close"
-          onClick={() => dialog.current?.close()}
-        >
-          <Icon name="close" />
-        </button>
-        <span className="empty-icon">
-          <Icon name="sparkles" size={30} />
-        </span>
-        <span className="eyebrow">COMING SOON</span>
-        <h2 id="feature-title">{notice}</h2>
-        <p id="feature-description">
-          This feature isn’t available in Sandy yet. For now, you can manage
-          your sandboxes with the sbx CLI.
-        </p>
-        <button className="primary" onClick={() => dialog.current?.close()}>
-          Got it
-        </button>
-      </dialog>
     </div>
   );
 }

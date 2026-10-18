@@ -4,7 +4,10 @@
 //! SSH setup, login, and listing local sandboxes.
 
 use serde::Serialize;
+use std::path::PathBuf;
 use std::process::Command;
+#[cfg(target_os = "linux")]
+use std::process::Stdio;
 
 pub const SBX_COMMAND: &str = "sbx";
 pub const SSH_SETUP_COMMAND: &str = "ssh";
@@ -18,35 +21,85 @@ pub struct SandboxInfo {
     pub raw: String,
 }
 
-fn is_windows() -> bool {
-    cfg!(windows)
+fn sbx_executable() -> Result<PathBuf, String> {
+    // Prefer the native executable over a PATH shim. Never send CLI arguments
+    // through cmd /C: workspace paths and environment values can contain shell
+    // metacharacters even when sandbox names have been validated.
+    let mut candidates = Vec::new();
+    #[cfg(windows)]
+    if let Ok(path) = which::which("sbx.exe") {
+        candidates.push(path);
+    }
+    if let Ok(path) = which::which(SBX_COMMAND) {
+        #[cfg(windows)]
+        let path = if path
+            .extension()
+            .and_then(|e| e.to_str())
+            .is_some_and(|e| e.eq_ignore_ascii_case("cmd") || e.eq_ignore_ascii_case("bat"))
+        {
+            path.with_extension("exe")
+        } else {
+            path
+        };
+        candidates.push(path);
+    }
+    candidates.extend(standard_sbx_locations());
+    first_executable(&candidates).ok_or_else(|| {
+        "Native sbx executable not found. Install sbx in its standard location or add it to PATH (Windows requires sbx.exe, not a shell shim).".to_string()
+    })
 }
 
-/// On Windows, `sbx` is `sbx.cmd`/`sbx.exe` resolved through PATH; `.cmd`
-/// shims need a shell, so route through cmd.exe there.
-fn sbx_command(args: &[&str]) -> Command {
-    if is_windows() {
-        let mut cmd = Command::new("cmd");
-        cmd.arg("/C").arg(SBX_COMMAND);
-        for a in args {
-            cmd.arg(a);
-        }
-        cmd
-    } else {
-        let mut cmd = Command::new(SBX_COMMAND);
-        cmd.args(args);
-        cmd
+fn first_executable(candidates: &[PathBuf]) -> Option<PathBuf> {
+    candidates.iter().find_map(|path| which::which(path).ok())
+}
+
+fn standard_sbx_locations() -> Vec<PathBuf> {
+    // Finder apps do not inherit a shell's Homebrew PATH. Do not launch a
+    // login shell or mutate the application's global environment to find sbx.
+    #[cfg(target_os = "macos")]
+    {
+        vec!["/opt/homebrew/bin/sbx".into(), "/usr/local/bin/sbx".into()]
+    }
+    #[cfg(windows)]
+    {
+        // Documented per-user and machine MSI locations; this also finds a
+        // just-installed CLI before Sandy has inherited an updated PATH.
+        ["LOCALAPPDATA", "ProgramFiles"]
+            .into_iter()
+            .filter_map(std::env::var_os)
+            .map(|root| PathBuf::from(root).join("DockerSandboxes/bin/sbx.exe"))
+            .collect()
+    }
+    #[cfg(not(any(target_os = "macos", windows)))]
+    {
+        Vec::new()
     }
 }
 
+#[cfg(target_os = "macos")]
+fn homebrew_executable() -> Result<PathBuf, String> {
+    which::which("brew").ok().or_else(|| {
+        first_executable(&["/opt/homebrew/bin/brew".into(), "/usr/local/bin/brew".into()])
+    }).ok_or_else(|| {
+        "Homebrew is required to install sbx on macOS.\nInstall it from https://brew.sh and try again.".to_string()
+    })
+}
+
+/// Construct a direct CLI invocation; callers can also set `current_dir`.
+pub(crate) fn sbx_command(args: &[&str]) -> Result<Command, String> {
+    let mut cmd = Command::new(sbx_executable()?);
+    cmd.args(args);
+    Ok(cmd)
+}
+
 pub fn is_sbx_installed() -> bool {
-    which::which(SBX_COMMAND).is_ok()
+    sbx_executable().is_ok()
 }
 
 /// Run `sbx` with args, capturing stdout (stderr is merged into the error
 /// path only, so progress noise never pollutes parsed output).
 pub fn run_capture(args: &[&str]) -> Result<String, String> {
-    let output = sbx_command(args)
+    let output = sbx_command(args)?
         .output()
         .map_err(|e| format!("failed to run {}: {}", SBX_COMMAND, e))?;
     let text = String::from_utf8_lossy(&output.stdout).to_string();
@@ -67,23 +120,20 @@ pub fn run_capture(args: &[&str]) -> Result<String, String> {
 }
 
 /// Machine-readable health/auth report from `sbx diagnose --format json`.
-/// Returns None when the CLI or daemon can't produce a report.
-fn diagnose_report() -> Option<std::collections::HashMap<String, DiagnoseCheck>> {
-    let out = sbx_command(&["diagnose", "--format", "json"])
+/// A nonzero exit can describe an unrelated failed check (e.g. missing KVM),
+/// while Authentication and SSH client config are still authoritative.
+fn diagnose_report() -> Result<Vec<DiagnoseCheck>, String> {
+    let out = sbx_command(&["diagnose", "--format", "json"])?
         .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    let text = String::from_utf8_lossy(&out.stdout);
-    let report: DiagnoseReport = serde_json::from_str(&text).ok()?;
-    Some(
-        report
-            .checks
-            .into_iter()
-            .map(|c| (c.name.clone(), c))
-            .collect(),
-    )
+        .map_err(|e| format!("could not run sbx diagnose: {e}"))?;
+    let report: DiagnoseReport = serde_json::from_slice(&out.stdout).map_err(|e| {
+        format!(
+            "sbx diagnose did not return a usable JSON report (exit {}): {e}\n{}",
+            out.status.code().unwrap_or(-1),
+            String::from_utf8_lossy(&out.stderr).trim()
+        )
+    })?;
+    Ok(report.checks)
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -101,90 +151,148 @@ struct DiagnoseCheck {
 /// Whether the user is signed in to Docker, via the `Authentication` check
 /// in `sbx diagnose`. The CLI has no `whoami` command; exit-code probing of
 /// `login` would block on the browser flow, so diagnose is the only
-/// non-interactive detector. Falls back to false when diagnose can't run
-/// (CLI missing, daemon down) — callers treat false as "not signed in".
+/// non-interactive detector. Unknown status is an error, never an explicit
+/// sign-out. Every call refreshes the report, including after login/logout.
 pub fn is_signed_in() -> Result<bool, String> {
-    if !is_sbx_installed() {
-        return Ok(false);
-    }
-    Ok(diagnose_report()
-        .and_then(|r| r.get("Authentication").cloned())
-        .map(|c| c.status == "pass" && c.message.eq_ignore_ascii_case("authenticated"))
-        .unwrap_or(false))
+    ensure_daemon()?;
+    check_configured(
+        &diagnose_report()?,
+        "Authentication",
+        &["authenticated", "signed in"],
+        &[
+            "not signed in",
+            "not authenticated",
+            "unauthenticated",
+            "signed out",
+        ],
+    )
 }
 
-/// Best-effort daemon start for checks that need it (settings, diagnose's
-/// Authentication check). Returns when the daemon is up or the attempt
-/// failed; a stopped daemon is not an error — later steps report it.
+fn check_configured(
+    checks: &[DiagnoseCheck],
+    name: &str,
+    positive: &[&str],
+    negative: &[&str],
+) -> Result<bool, String> {
+    let check = checks
+        .iter()
+        .find(|c| c.name.eq_ignore_ascii_case(name))
+        .ok_or_else(|| format!("sbx diagnose did not include the {name} check"))?;
+    let message = check.message.trim().to_ascii_lowercase();
+    let status = check.status.to_ascii_lowercase();
+    if matches!(status.as_str(), "pass" | "warn" | "fail") && negative.contains(&message.as_str()) {
+        return Ok(false);
+    }
+    if check.status.eq_ignore_ascii_case("pass") && positive.contains(&message.as_str()) {
+        return Ok(true);
+    }
+    Err(format!(
+        "Could not determine {name}: {} ({})",
+        check.message, check.status
+    ))
+}
+
+fn daemon_running() -> Result<bool, String> {
+    let out = sbx_command(&["daemon", "status", "--format", "json"])?
+        .output()
+        .map_err(|e| format!("could not check sbx daemon: {e}"))?;
+    if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&out.stdout) {
+        if let Some(status) = value.get("status").and_then(|v| v.as_str()) {
+            return Ok(out.status.success() && status.eq_ignore_ascii_case("running"));
+        }
+    }
+    // Older CLIs may ignore --format. Match the complete status value, not
+    // the substring "running" (which also matches "not running").
+    let text = String::from_utf8_lossy(&out.stdout);
+    Ok(out.status.success()
+        && text.lines().any(|line| {
+            let value = line.trim().strip_prefix("Status:").unwrap_or(line).trim();
+            value.eq_ignore_ascii_case("running")
+        }))
+}
+
+/// Bring up the daemon before authentication/settings checks on every OS.
+/// `--detach` is provided by sbx itself, so no unreaped foreground child is
+/// left behind. Calls are serialized to avoid racing daemon startups.
 pub fn ensure_daemon() -> Result<(), String> {
-    if !is_sbx_installed() {
+    static START_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let _guard = START_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    if daemon_running()? {
         return Ok(());
     }
-    let status = sbx_command(&["daemon", "status"]).output();
-    if let Ok(o) = &status {
-        let text = format!(
-            "{}{}",
-            String::from_utf8_lossy(&o.stdout),
-            String::from_utf8_lossy(&o.stderr)
-        );
-        if text.contains("running") {
+    let start = run_capture(&["daemon", "start", "--detach"]);
+    // Another process may have started it while our start command failed.
+    for attempt in 0..10 {
+        if daemon_running()? {
             return Ok(());
         }
-    }
-    // `daemon start` tails the daemon in the foreground; detach it and give
-    // the socket a moment to come up.
-    let spawned = sbx_command(&["daemon", "start"]).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null()).spawn();
-    if spawned.is_err() {
-        return Ok(());
-    }
-    for _ in 0..6 {
-        std::thread::sleep(std::time::Duration::from_millis(500));
-        if let Ok(o) = sbx_command(&["daemon", "status"]).output() {
-            let text = format!(
-                "{}{}",
-                String::from_utf8_lossy(&o.stdout),
-                String::from_utf8_lossy(&o.stderr)
-            );
-            if text.contains("running") {
-                return Ok(());
-            }
+        if start.is_err() {
+            break;
+        }
+        if attempt < 9 {
+            std::thread::sleep(std::time::Duration::from_millis(300));
         }
     }
-    Ok(())
+    Err(start
+        .err()
+        .unwrap_or_else(|| "sbx daemon did not become ready after starting".to_string()))
 }
 
 /// Read a single sbx setting value (empty string if unset).
 pub fn get_setting(key: &str) -> Result<String, String> {
     ensure_daemon()?;
     let out = run_capture(&["settings", "get", key])?;
-    Ok(out.trim().to_string())
+    normalize_setting(key, &out)
+}
+
+fn normalize_setting(key: &str, out: &str) -> Result<String, String> {
+    let text = out.trim();
+    // Normal output is a scalar; --json/older versions may emit a setting
+    // record. Normalize both so existing boolean callers can compare "true".
+    if let Ok(value) = serde_json::from_str::<serde_json::Value>(text) {
+        let value = if value.is_object() {
+            if let Some(actual_key) = value.get("key").and_then(|v| v.as_str()) {
+                if actual_key != key {
+                    return Err(format!(
+                        "sbx returned setting {actual_key} instead of {key}"
+                    ));
+                }
+            }
+            value
+                .get("value")
+                .or_else(|| value.get(key))
+                .ok_or_else(|| format!("sbx returned no value for setting {key}"))?
+        } else {
+            &value
+        };
+        return match value {
+            serde_json::Value::String(s) => Ok(s.clone()),
+            serde_json::Value::Bool(_) | serde_json::Value::Number(_) => Ok(value.to_string()),
+            serde_json::Value::Null => Ok(String::new()),
+            _ => Err(format!("sbx returned a non-scalar value for setting {key}")),
+        };
+    }
+    Ok(text.to_string())
 }
 
 /// `sbx settings set clipboard.imagePaste true`
 pub fn set_clipboard_image_paste() -> Result<(), String> {
-    ensure_daemon()?;
-    run_capture(&["settings", "set", "clipboard.imagePaste", "true"])
+    ensure_daemon()
+        .and_then(|_| run_capture(&["settings", "set", "clipboard.imagePaste", "true"]))
         .map(|_| ())
         .map_err(|e| format!("could not enable image paste:\n{}", e))
 }
 
-/// Whether `sbx setup ssh` has been applied, detected by the managed block
-/// in the user's SSH config. Matched loosely so small wording or
-/// capitalization changes in the managed block don't break detection.
+/// Ask the CLI instead of matching a comment in ~/.ssh/config: setup may
+/// use an Include, platform-specific paths, or a generated managed block.
 pub fn is_ssh_set_up() -> Result<bool, String> {
-    let config_path = if is_windows() {
-        std::env::var("USERPROFILE")
-            .map(|p| format!("{}\\.ssh\\config", p))
-            .map_err(|_| "USERPROFILE not set".to_string())?
-    } else {
-        std::env::var("HOME")
-            .map(|p| format!("{}/.ssh/config", p))
-            .map_err(|_| "HOME not set".to_string())?
-    };
-    match std::fs::read_to_string(&config_path) {
-        Ok(content) => Ok(content.to_lowercase().contains("docker sandboxes")),
-        Err(_) => Ok(false),
-    }
+    ensure_daemon()?;
+    check_configured(
+        &diagnose_report()?,
+        "SSH client config",
+        &["configured"],
+        &["not configured"],
+    )
 }
 
 /// Open the browser for Docker OAuth and wait for completion. `sbx login`
@@ -192,7 +300,218 @@ pub fn is_ssh_set_up() -> Result<bool, String> {
 /// signed in (printing "You are signed in [username: …]") — so a zero exit
 /// is success, and anything else is reported with the CLI's own output.
 pub fn run_login() -> Result<String, String> {
+    ensure_daemon()?;
     run_capture(&["login"])
+}
+
+/// Local names must remain safe CLI operands, SSH hosts, and terminal titles.
+/// In particular, flags, control characters and shell syntax are never names.
+pub(crate) fn validate_sandbox_name(name: &str) -> Result<(), String> {
+    if !name
+        .as_bytes()
+        .first()
+        .is_some_and(u8::is_ascii_alphanumeric)
+        || !name
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'_' | b'.'))
+    {
+        return Err("Invalid sandbox name: start with a letter or digit and use only letters, digits, '.', '_' and '-'.".to_string());
+    }
+    Ok(())
+}
+
+/// Resume an existing sandbox with its saved agent, kit and workspace data.
+/// sbx has no `start` command. Do not supply an agent or workspace to `run`.
+pub fn start_sandbox(name: &str) -> Result<String, String> {
+    validate_sandbox_name(name)?;
+    if !list_sandboxes()?.iter().any(|s| s.name == name) {
+        return Err(format!("Local sandbox {name} does not exist"));
+    }
+    run_capture(&["run", "--detach", "--name", name])
+}
+
+pub fn stop_sandbox(name: &str) -> Result<String, String> {
+    validate_sandbox_name(name)?;
+    run_capture(&["stop", name])
+}
+
+pub fn restart_sandbox(name: &str) -> Result<String, String> {
+    validate_sandbox_name(name)?;
+    stop_sandbox(name)?;
+    start_sandbox(name)
+        .map_err(|e| format!("Sandbox {name} was stopped but could not be started:\n{e}"))
+}
+
+/// Remove just the requested sandbox, without an interactive CLI prompt.
+pub fn remove_sandbox(name: &str) -> Result<String, String> {
+    validate_sandbox_name(name)?;
+    run_capture(&["rm", "--force", name])
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct ConnectionInfo {
+    pub host: String,
+    pub user: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
+    pub command: String,
+}
+
+/// SSH is proxied over the daemon's local socket/named pipe, not TCP port 22.
+/// `_default_user_` lets the image choose its user (not the host's username).
+/// The host alias requires `sbx setup ssh`; connecting also resumes a stopped
+/// sandbox. See https://docs.docker.com/ai/sandboxes/integrations/.
+pub fn connection_info(name: &str) -> Result<ConnectionInfo, String> {
+    validate_sandbox_name(name)?;
+    let host = format!("{name}.sbx");
+    Ok(ConnectionInfo {
+        command: format!("ssh {host}"),
+        host,
+        user: "_default_user_".to_string(),
+        port: None,
+    })
+}
+
+#[cfg(any(test, target_os = "macos"))]
+fn shell_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "'\\''"))
+}
+
+#[cfg(any(test, target_os = "macos"))]
+fn applescript_quote(value: &str) -> String {
+    format!("\"{}\"", value.replace('\\', "\\\\").replace('"', "\\\""))
+}
+
+#[cfg(any(test, target_os = "windows"))]
+fn powershell_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "''"))
+}
+
+/// Wait briefly for launch failures, then transfer ownership to a waiter.
+/// Terminal sessions may last hours; dropping Child without waiting leaks
+/// zombies on Unix. No pipes are held open by the long-lived terminal.
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+fn spawn_terminal(mut command: Command) -> Result<(), String> {
+    // A Windows CREATE_NEW_CONSOLE must get real console handles, rather
+    // than explicitly redirecting its interactive PowerShell to NUL.
+    #[cfg(not(windows))]
+    command
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    let mut child = command
+        .spawn()
+        .map_err(|e| format!("could not launch terminal: {e}"))?;
+    std::thread::sleep(std::time::Duration::from_millis(100));
+    match child.try_wait() {
+        Ok(Some(status)) if status.success() => Ok(()),
+        Ok(Some(status)) => Err(format!(
+            "terminal launcher failed (exit {})",
+            status.code().unwrap_or(-1)
+        )),
+        result => {
+            std::thread::spawn(move || {
+                let _ = child.wait();
+            });
+            result
+                .map(|_| ())
+                .map_err(|e| format!("could not check terminal launcher: {e}"))
+        }
+    }
+}
+
+/// Open a native interactive terminal, using the absolute CLI path so GUI
+/// applications on macOS/Windows need not share Sandy's PATH. `sbx exec`
+/// resumes stopped sandboxes and does not require SSH setup.
+pub fn open_terminal(name: &str) -> Result<(), String> {
+    validate_sandbox_name(name)?;
+    let executable = sbx_executable()?;
+    #[cfg(target_os = "linux")]
+    {
+        let mut failures = Vec::new();
+        // Each of these accepts a program and argv, rather than a shell
+        // command string. Avoid terminal flags such as `--command` that
+        // concatenate/reparse arguments.
+        for (terminal, separator) in [
+            ("x-terminal-emulator", "-e"),
+            ("gnome-terminal", "--"),
+            ("konsole", "-e"),
+            ("xfce4-terminal", "-x"),
+            ("xterm", "-e"),
+        ] {
+            if let Ok(program) = which::which(terminal) {
+                let mut command = Command::new(program);
+                command
+                    .arg(separator)
+                    .arg(&executable)
+                    .args(["exec", "-it", name, "/bin/bash"]);
+                match spawn_terminal(command) {
+                    Ok(()) => return Ok(()),
+                    Err(e) => failures.push(format!("{terminal}: {e}")),
+                }
+            }
+        }
+        Err(format!("Could not open a terminal. Install a supported terminal (x-terminal-emulator, GNOME Terminal, Konsole, XFCE Terminal, or xterm).\n{}", failures.join("\n")))
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let executable = executable.to_str().ok_or("sbx path is not valid UTF-8")?;
+        let shell_command = [executable, "exec", "-it", name, "/bin/bash"]
+            .map(shell_quote)
+            .join(" ");
+        let script = format!(
+            "tell application \"Terminal\"\nactivate\ndo script {}\nend tell",
+            applescript_quote(&format!("exec {shell_command}"))
+        );
+        let mut command = Command::new("/usr/bin/osascript");
+        command.args(["-e", &script]);
+        // osascript exits after the Apple event; report automation permission
+        // failures synchronously rather than silently swallowing them.
+        let output = command
+            .output()
+            .map_err(|e| format!("could not open Terminal: {e}"))?;
+        if output.status.success() {
+            Ok(())
+        } else {
+            Err(format!(
+                "could not open Terminal: {}",
+                String::from_utf8_lossy(&output.stderr).trim()
+            ))
+        }
+    }
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(program) = which::which("wt.exe") {
+            let mut command = Command::new(program);
+            command.args(["new-tab", "--"]).arg(&executable).args([
+                "exec",
+                "-it",
+                name,
+                "/bin/bash",
+            ]);
+            if spawn_terminal(command).is_ok() {
+                return Ok(());
+            }
+        }
+        use std::os::windows::process::CommandExt;
+        let executable = executable.to_str().ok_or("sbx path is not valid UTF-8")?;
+        let script = format!(
+            "& {}",
+            [executable, "exec", "-it", name, "/bin/bash"]
+                .map(powershell_quote)
+                .join(" ")
+        );
+        let mut command = Command::new("powershell.exe");
+        command
+            .args(["-NoProfile", "-NoExit", "-Command", &script])
+            .creation_flags(0x00000010); // CREATE_NEW_CONSOLE
+        spawn_terminal(command)
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+    {
+        let _ = executable;
+        Err("Opening a terminal is not supported on this platform".to_string())
+    }
 }
 
 /// Install the sbx CLI for the current platform. Returns combined command
@@ -206,13 +525,9 @@ pub fn ensure_sbx_installed() -> Result<String, String> {
     #[cfg(target_os = "macos")]
     {
         // Homebrew is the documented install path on macOS.
-        if which::which("brew").is_err() {
-            return Err(
-                "Homebrew is required to install sbx on macOS.\nInstall it from https://brew.sh and try again."
-                    .to_string(),
-            );
-        }
-        log.push_str(&run_via("brew", &["install", "docker/tap/sbx"])?);
+        let brew = homebrew_executable()?;
+        let brew = brew.to_str().ok_or("Homebrew path is not valid UTF-8")?;
+        log.push_str(&run_via(brew, &["install", "docker/tap/sbx"])?);
         if !is_sbx_installed() {
             return Err(format!(
                 "Installation finished but sbx was not found on PATH.\nOutput:\n{}",
@@ -319,8 +634,12 @@ fn run_via(program: &str, args: &[&str]) -> Result<String, String> {
     let status = child
         .wait()
         .map_err(|e| format!("failed to wait for {}: {}", program, e))?;
-    let stdout_text = t1.join().map_err(|_| "stdout thread panicked".to_string())?;
-    let stderr_text = t2.join().map_err(|_| "stderr thread panicked".to_string())?;
+    let stdout_text = t1
+        .join()
+        .map_err(|_| "stdout thread panicked".to_string())?;
+    let stderr_text = t2
+        .join()
+        .map_err(|_| "stderr thread panicked".to_string())?;
     let combined = format!("{}{}", stdout_text, stderr_text);
     if !status.success() {
         return Err(format!(
@@ -433,12 +752,16 @@ fn parse_ls(out: &str) -> Vec<SandboxInfo> {
         };
         let col = |name: &str| -> String {
             match column_map.as_ref().and_then(|m| m.get(name).copied()) {
-                Some(i) => cols.get(i).map(|s| s.trim().to_string()).unwrap_or_default(),
+                Some(i) => cols
+                    .get(i)
+                    .map(|s| s.trim().to_string())
+                    .unwrap_or_default(),
                 // No recognized header: treat the whole line as the name so
                 // single-line output still shows something sensible.
-                None if name == "name" => {
-                    cols.first().map(|s| s.trim().to_string()).unwrap_or_default()
-                }
+                None if name == "name" => cols
+                    .first()
+                    .map(|s| s.trim().to_string())
+                    .unwrap_or_default(),
                 None => String::new(),
             }
         };
@@ -509,7 +832,21 @@ fn is_separator_line(line: &str) -> bool {
         }
         if matches!(
             c,
-            '─' | '━' | '-' | '=' | '+' | '┌' | '┐' | '└' | '┘' | '├' | '┤' | '┬' | '┴' | '┼' | '│' | '|'
+            '─' | '━'
+                | '-'
+                | '='
+                | '+'
+                | '┌'
+                | '┐'
+                | '└'
+                | '┘'
+                | '├'
+                | '┤'
+                | '┬'
+                | '┴'
+                | '┼'
+                | '│'
+                | '|'
         ) {
             has_separator = true;
         } else {
@@ -559,6 +896,10 @@ fn split_by_spans(line: &str, spans: &[(usize, usize)]) -> Vec<String> {
     }
     out
 }
+
+// Shared by every test module that mutates the CLI environment.
+#[cfg(test)]
+pub(crate) static CLI_TEST_ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 #[cfg(test)]
 mod tests {
@@ -659,46 +1000,181 @@ weird  paused  /home/name/state
 
     // ---- Integration tests against a mock `sbx` executable ----
     //
-    // These spawn a mock `sbx` shell script (/tmp/opencode/mockbin/sbx) by
-    // putting its directory first on PATH. Because env vars are process-wide
-    // and cargo runs tests in parallel threads, every env-dependent scenario
-    // lives in a small number of sequential test functions (and PATH is set
-    // exactly once via a `Once`, always to the same value).
+    // Each fixture owns its HOME, state, executable and entire PATH. Nothing
+    // falls back to a real sbx, terminal emulator or user configuration.
 
-    const MOCK_BIN_DIR: &str = "/tmp/opencode/mockbin";
-
-    fn set_mock_path() {
-        use std::sync::Once;
-        static SET_PATH: Once = Once::new();
-        SET_PATH.call_once(|| {
-            let orig = std::env::var("PATH").unwrap_or_default();
-            std::env::set_var("PATH", format!("{}:{}", MOCK_BIN_DIR, orig));
-        });
+    #[cfg(unix)]
+    struct MockCli {
+        root: PathBuf,
+        environment: Vec<(&'static str, Option<std::ffi::OsString>)>,
     }
+
+    #[cfg(unix)]
+    impl MockCli {
+        fn new() -> Self {
+            use std::os::unix::fs::PermissionsExt;
+            static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+            let root = std::env::temp_dir().join(format!(
+                "sandy cli fixture-{}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+            ));
+            std::fs::create_dir(&root).expect("create isolated CLI fixture");
+            let path = root.join("sbx");
+            std::fs::write(&path, MOCK_CLI).expect("write fake CLI");
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+            let keys = [
+                "PATH",
+                "HOME",
+                "USERPROFILE",
+                "XDG_STATE_HOME",
+                "SBX_TEST_ROOT",
+                "SBX_MOCK_FAIL",
+                "SBX_MOCK_SIGNED_IN",
+                "SBX_MOCK_DAEMON",
+                "SBX_MOCK_PASTE",
+                "SBX_MOCK_FAIL_JSON",
+                "SBX_MOCK_LS_EMPTY",
+                "SBX_MOCK_JSON",
+                "SBX_MOCK_DIAGNOSE",
+                "SBX_MOCK_DIAGNOSE_EXIT",
+                "SBX_MOCK_AUTH_MESSAGE",
+                "SBX_MOCK_AUTH_STATUS",
+                "SBX_MOCK_SSH",
+                "SBX_MOCK_STOP_FAIL",
+                "SBX_MOCK_RUN_FAIL",
+                "SBX_MOCK_START_FAIL",
+            ];
+            let environment = keys
+                .into_iter()
+                .map(|key| {
+                    let original = std::env::var_os(key);
+                    std::env::remove_var(key);
+                    (key, original)
+                })
+                .collect();
+            for key in [
+                "PATH",
+                "HOME",
+                "USERPROFILE",
+                "XDG_STATE_HOME",
+                "SBX_TEST_ROOT",
+            ] {
+                std::env::set_var(key, &root);
+            }
+            Self { root, environment }
+        }
+
+        fn commands(&self) -> String {
+            std::fs::read_to_string(self.root.join("commands")).unwrap_or_default()
+        }
+
+        fn clear_commands(&self) {
+            std::fs::write(self.root.join("commands"), "").unwrap();
+        }
+    }
+
+    #[cfg(unix)]
+    impl Drop for MockCli {
+        fn drop(&mut self) {
+            for (key, value) in &self.environment {
+                match value {
+                    Some(value) => std::env::set_var(key, value),
+                    None => std::env::remove_var(key),
+                }
+            }
+            let _ = std::fs::remove_dir_all(&self.root);
+        }
+    }
+
+    #[cfg(unix)]
+    const MOCK_CLI: &str = r##"#!/bin/sh
+printf '%s\n' "$*" >> "$SBX_TEST_ROOT/commands"
+if [ "$SBX_MOCK_FAIL" = 1 ]; then
+    printf '%s\n' 'sbx mock: simulated failure' >&2
+    exit 1
+fi
+case "$1" in
+daemon)
+    if [ "$2" = start ]; then
+        [ "$SBX_MOCK_START_FAIL" = 1 ] && exit 1
+        printf ready > "$SBX_TEST_ROOT/daemon-ready"
+    else
+        if [ "$SBX_MOCK_DAEMON" = running ] || [ -f "$SBX_TEST_ROOT/daemon-ready" ]; then
+            printf '%s\n' '{"status":"running"}'
+        else
+            printf '%s\n' '{"status":"not running"}'
+        fi
+    fi
+    ;;
+diagnose)
+    case "$SBX_MOCK_DIAGNOSE" in
+    invalid) printf '%s\n' 'not a report'; exit 1 ;;
+    missing) printf '%s\n' '{"checks":[]}'; exit 0 ;;
+    esac
+    if [ "$SBX_MOCK_SIGNED_IN" = 1 ]; then auth=authenticated; else auth='not signed in'; fi
+    printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"%s"},{"name":"SSH client config","status":"pass","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-pass}" "${SBX_MOCK_AUTH_MESSAGE:-$auth}" "${SBX_MOCK_SSH:-not configured}"
+    exit "${SBX_MOCK_DIAGNOSE_EXIT:-0}"
+    ;;
+settings)
+    if [ "$2" = get ]; then printf '%s\n' "${SBX_MOCK_PASTE:-false}"; fi
+    ;;
+ls)
+    if [ "$SBX_MOCK_LS_EMPTY" = 1 ]; then printf '%s\n' '[]'; exit 0; fi
+    if [ "$2" = --json ]; then
+        if [ "$SBX_MOCK_FAIL_JSON" = 1 ]; then printf '%s\n' 'bad json'; exit 0; fi
+        case "$SBX_MOCK_JSON" in
+        sparse) printf '%s\n' '[{"name":"bare"}]' ;;
+        extra) printf '%s\n' '[{"name":"with-unknown","status":"running","future_field":123}]' ;;
+        unicode) printf '%s\n' '[{"name":"ünïcødé-サンドボックス","workspaces":["/home/ünïcødé/プロジェクト"]}]' ;;
+        mixed) printf '%s\n' '[{"name":"ok","status":"running"},{"status":"running"}]' ;;
+        multi) printf '%s\n' '[{"name":"multi-ws","workspaces":["/home/me/first","/home/me/second"]}]' ;;
+        *) printf '%s\n' '[{"name":"test","status":"stopped","agent":"shell","workspaces":["C:\\Dev\\MyProject"],"id":"11111111-2222-3333-4444-555555555555"},{"name":"demo","status":"running","agent":"my-agent"}]' ;;
+        esac
+    else
+        printf '%s\n' 'NAME      STATE     AGENT     WORKSPACE' 'demo      running   opencode  /workspace/project' 'build     stopped   claude    /workspace/api'
+    fi
+    ;;
+run)
+    [ "$SBX_MOCK_RUN_FAIL" = 1 ] && exit 1
+    printf '%s\n' sandbox-id
+    ;;
+stop) [ "$SBX_MOCK_STOP_FAIL" = 1 ] && exit 1; exit 0 ;;
+rm|setup) exit 0 ;;
+login) printf '%s\n' 'You are signed in [username: fixture]' ;;
+*) printf '%s\n' 'sbx mock: unknown command' >&2; exit 1 ;;
+esac
+"##;
 
     /// Env vars are process-wide but cargo runs tests in parallel threads,
     /// so every test that mutates (or whose children read) mock-behavior env
     /// vars must hold this lock for its whole body.
+    #[cfg(unix)]
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
-        use std::sync::{Mutex, OnceLock};
-        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap_or_else(|e| e.into_inner())
+        CLI_TEST_ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner())
     }
 
     /// All success-path CLI scenarios, run sequentially so the mock's
     /// behavior env vars never race with each other.
     #[test]
+    #[cfg(unix)]
     fn cli_mock_success_paths() {
         let _guard = env_lock();
-        set_mock_path();
+        let _mock = MockCli::new();
         std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
         std::env::set_var("SBX_MOCK_DAEMON", "running");
 
         // Unknown subcommand exits 1 in the mock -> Err (the real CLI also
         // has no whoami; sign-in detection uses diagnose instead).
         let err = run_capture(&["definitely-not-a-command"]).unwrap_err();
-        assert!(err.contains("sbx definitely-not-a-command failed (exit 1)"), "got: {err}");
-        assert!(err.contains("unknown command"), "stderr should be included, got: {err}");
+        assert!(
+            err.contains("sbx definitely-not-a-command failed (exit 1)"),
+            "got: {err}"
+        );
+        assert!(
+            err.contains("unknown command"),
+            "stderr should be included, got: {err}"
+        );
 
         // is_signed_in: diagnose's Authentication check says authenticated.
         assert_eq!(is_signed_in(), Ok(true));
@@ -718,7 +1194,10 @@ weird  paused  /home/name/state
         assert_eq!(set_clipboard_image_paste(), Ok(()));
 
         // setup ssh: exit 0, no output.
-        assert_eq!(run_capture(&["setup", SSH_SETUP_COMMAND]), Ok(String::new()));
+        assert_eq!(
+            run_capture(&["setup", SSH_SETUP_COMMAND]),
+            Ok(String::new())
+        );
 
         // login with the mock (whoami exits 0, so "already signed in"
         // reports from the real CLI are treated as success, not failure).
@@ -796,9 +1275,10 @@ weird  paused  /home/name/state
     /// (missing "name") makes the whole --json parse fail, so list_sandboxes
     /// must recover via the human table. Sequential + env-locked.
     #[test]
+    #[cfg(unix)]
     fn cli_mock_json_malformed_falls_back_to_table() {
         let _guard = env_lock();
-        set_mock_path();
+        let _mock = MockCli::new();
 
         // Per-entry tolerance: the valid entry survives, the invalid one
         // (missing "name") is dropped — no silent fallback to other data.
@@ -813,16 +1293,20 @@ weird  paused  /home/name/state
     /// Failure-path CLI scenarios (SBX_MOCK_FAIL=1), sequential and isolated
     /// from the success test so the env flag never leaks across threads.
     #[test]
+    #[cfg(unix)]
     fn cli_mock_failure_paths() {
         let _guard = env_lock();
-        set_mock_path();
+        let _mock = MockCli::new();
 
         std::env::set_var("SBX_MOCK_FAIL", "1");
 
         // run_capture: exit 1 -> Err with command, exit code and stderr.
         let err = run_capture(&["ls"]).unwrap_err();
         assert!(err.contains("sbx ls failed (exit 1)"), "got: {err}");
-        assert!(err.contains("simulated failure"), "stderr body expected, got: {err}");
+        assert!(
+            err.contains("simulated failure"),
+            "stderr body expected, got: {err}"
+        );
 
         // list_sandboxes propagates the error instead of inventing rows:
         // both the --json attempt and the table fallback fail.
@@ -832,22 +1316,27 @@ weird  paused  /home/name/state
 
         // set_clipboard_image_paste wraps the failure.
         let err = set_clipboard_image_paste().unwrap_err();
-        assert!(err.starts_with("could not enable image paste:"), "got: {err}");
+        assert!(
+            err.starts_with("could not enable image paste:"),
+            "got: {err}"
+        );
         assert!(err.contains("simulated failure"), "got: {err}");
 
         // get_setting propagates the failure.
         assert!(get_setting("clipboard.imagePaste").is_err());
 
-        // is_signed_in maps a failing diagnose to Ok(false), not Err.
-        assert_eq!(is_signed_in(), Ok(false));
+        // An unavailable check is unknown, not an explicit sign-out.
+        assert!(is_signed_in().is_err());
 
         std::env::remove_var("SBX_MOCK_FAIL");
     }
 
     /// Installation checks against the mock on PATH.
     #[test]
+    #[cfg(unix)]
     fn sbx_installed_checks_with_mock() {
-        set_mock_path();
+        let _guard = env_lock();
+        let _mock = MockCli::new();
         assert!(is_sbx_installed());
         assert_eq!(
             ensure_sbx_installed(),
@@ -855,47 +1344,301 @@ weird  paused  /home/name/state
         );
     }
 
-    /// SSH-config detection: HOME-dependent, so scenarios run sequentially
-    /// in one test to avoid racing other tests' HOME reads.
     #[test]
+    #[cfg(unix)]
     fn ssh_config_detection_scenarios() {
         let _guard = env_lock();
-        let tmp = std::env::temp_dir().join(format!("sandy-ssh-test-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(tmp.join(".ssh")).expect("create temp HOME");
-
-        let orig_home = std::env::var("HOME").ok();
-
-        // Empty HOME: not set up, and a missing config file is not an error.
-        std::env::set_var("HOME", &tmp);
+        let mock = MockCli::new();
         assert_eq!(is_ssh_set_up(), Ok(false));
-
-        // Managed block present (case-insensitive match on "docker sandboxes").
-        let config = tmp.join(".ssh/config");
+        std::fs::create_dir(mock.root.join(".ssh")).unwrap();
+        // Merely mentioning Docker Sandboxes in a comment is not setup.
         std::fs::write(
-            &config,
-            "# >>> docker sandboxes (managed) >>>\nHost sbx*\n  IdentityFile ~/.ssh/sbx\n",
+            mock.root.join(".ssh/config"),
+            "# Docker Sandboxes setup was removed\n",
         )
-        .expect("write ssh config");
-        assert_eq!(is_ssh_set_up(), Ok(true));
-
-        // Uppercase variant also matches (detection is case-insensitive).
-        std::fs::write(&config, "# DOCKER SANDBOXES MANAGED BLOCK\n").expect("rewrite ssh config");
-        assert_eq!(is_ssh_set_up(), Ok(true));
-
-        // Unrelated config content: false.
-        std::fs::write(&config, "Host github.com\n  User git\n").expect("rewrite ssh config");
+        .unwrap();
         assert_eq!(is_ssh_set_up(), Ok(false));
-
-        // HOME unset: explicit error.
+        // CLI-managed Includes and OS-specific paths are understood by sbx,
+        // without Sandy needing to read HOME or USERPROFILE itself.
+        std::fs::write(
+            mock.root.join(".ssh/config"),
+            "Include generated/sbx.conf\n",
+        )
+        .unwrap();
+        std::env::set_var("SBX_MOCK_SSH", "configured");
+        std::env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
         std::env::remove_var("HOME");
-        assert_eq!(is_ssh_set_up(), Err("HOME not set".to_string()));
+        std::env::remove_var("USERPROFILE");
+        assert_eq!(is_ssh_set_up(), Ok(true));
+        std::env::set_var("SBX_MOCK_SSH", "unavailable");
+        assert!(is_ssh_set_up().is_err());
+    }
 
-        // Restore the caller's environment.
-        match orig_home {
-            Some(h) => std::env::set_var("HOME", h),
-            None => std::env::remove_var("HOME"),
+    #[test]
+    #[cfg(unix)]
+    fn authentication_starts_daemon_before_check_and_parses_failed_report() {
+        let _guard = env_lock();
+        let mock = MockCli::new();
+        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        std::env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
+        assert_eq!(is_signed_in(), Ok(true));
+        assert_eq!(mock.commands(), "daemon status --format json\ndaemon start --detach\ndaemon status --format json\ndiagnose --format json\n");
+        // Neither login nor a previous pass is cached. Logout is visible on
+        // the very next refresh, even if diagnose still exits nonzero.
+        std::env::remove_var("SBX_MOCK_SIGNED_IN");
+        assert_eq!(is_signed_in(), Ok(false));
+        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        assert_eq!(is_signed_in(), Ok(true));
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn whole_status_cold_start_keeps_successful_checks_from_nonzero_diagnose() {
+        let _guard = env_lock();
+        let mock = MockCli::new();
+        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        std::env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
+        std::env::set_var(
+            "SBX_MOCK_PASTE",
+            "{\"key\":\"clipboard.imagePaste\",\"value\":true}",
+        );
+        std::env::set_var("SBX_MOCK_SSH", "configured");
+        let status = crate::read_status().unwrap();
+        assert!(status.sbx_installed);
+        assert_eq!(status.signed_in, Some(true));
+        assert_eq!(status.image_paste_on, Some(true));
+        assert_eq!(status.ssh_set_up, Some(true));
+        assert!(status.issues.is_empty(), "{:?}", status.issues);
+        let commands = mock.commands();
+        assert!(commands.starts_with("daemon status --format json\ndaemon start --detach\ndaemon status --format json\ndiagnose --format json\n"));
+        assert_eq!(commands.matches("daemon start --detach\n").count(), 1);
+        assert!(commands.find("diagnose").unwrap() < commands.find("settings get").unwrap());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn whole_status_refresh_distinguishes_sign_out_from_unknown_checks() {
+        let _guard = env_lock();
+        let _mock = MockCli::new();
+        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        std::env::set_var("SBX_MOCK_PASTE", "true");
+        std::env::set_var("SBX_MOCK_SSH", "configured");
+        assert_eq!(crate::read_status().unwrap().signed_in, Some(true));
+        std::env::remove_var("SBX_MOCK_SIGNED_IN");
+        assert_eq!(crate::read_status().unwrap().signed_in, Some(false));
+        std::env::set_var("SBX_MOCK_DIAGNOSE", "invalid");
+        let status = crate::read_status().unwrap();
+        assert_eq!(status.signed_in, None);
+        assert_eq!(status.ssh_set_up, None);
+        assert_eq!(status.image_paste_on, Some(true));
+        assert_eq!(status.issues.len(), 2);
+        let serialized = serde_json::to_value(&status).unwrap();
+        assert!(serialized["signed_in"].is_null());
+        assert!(serialized["ssh_set_up"].is_null());
+        std::env::set_var("SBX_MOCK_FAIL", "1");
+        let status = crate::read_status().unwrap();
+        assert!(status.sbx_installed);
+        assert_eq!(status.signed_in, None);
+        assert_eq!(status.image_paste_on, None);
+        assert_eq!(status.ssh_set_up, None);
+        assert_eq!(status.issues.len(), 3);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn install_location_fallback_checks_executable_files_without_a_shell() {
+        let _guard = env_lock();
+        let mock = MockCli::new();
+        let not_executable = mock.root.join("not-executable");
+        std::fs::write(&not_executable, "not an executable").unwrap();
+        assert!(first_executable(&[mock.root.join("missing"), not_executable.clone()]).is_none());
+        assert_eq!(
+            first_executable(&[not_executable, mock.root.join("sbx")]),
+            Some(mock.root.join("sbx"))
+        );
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn authentication_unknown_is_never_explicit_sign_out() {
+        let _guard = env_lock();
+        let _mock = MockCli::new();
+        for mode in ["invalid", "missing"] {
+            std::env::set_var("SBX_MOCK_DIAGNOSE", mode);
+            assert!(is_signed_in().is_err(), "mode: {mode}");
         }
-        let _ = std::fs::remove_dir_all(&tmp);
+        std::env::remove_var("SBX_MOCK_DIAGNOSE");
+        std::env::set_var("SBX_MOCK_AUTH_STATUS", "skip");
+        std::env::set_var("SBX_MOCK_AUTH_MESSAGE", "daemon unavailable");
+        assert!(is_signed_in().is_err());
+        std::env::set_var("SBX_MOCK_AUTH_MESSAGE", "not signed in");
+        assert!(is_signed_in().is_err(), "a skipped check is not a sign-out");
+        std::env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
+        assert_eq!(is_signed_in(), Ok(false));
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn failed_daemon_start_is_unknown_and_does_not_run_authentication() {
+        let _guard = env_lock();
+        let mock = MockCli::new();
+        std::env::set_var("SBX_MOCK_START_FAIL", "1");
+        assert!(is_signed_in().is_err());
+        assert!(!mock.commands().contains("diagnose"));
+        assert!(mock.commands().contains("daemon start --detach"));
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn image_paste_normalizes_scalar_and_setting_record_outputs() {
+        let _guard = env_lock();
+        let _mock = MockCli::new();
+        for output in [
+            "true",
+            "\"true\"",
+            "{\"key\":\"clipboard.imagePaste\",\"value\":true,\"source\":\"user\"}",
+            "{\"value\":\"true\"}",
+            "{\"clipboard.imagePaste\":true}",
+        ] {
+            std::env::set_var("SBX_MOCK_PASTE", output);
+            assert_eq!(get_setting("clipboard.imagePaste"), Ok("true".to_string()));
+        }
+        std::env::set_var(
+            "SBX_MOCK_PASTE",
+            "{\"key\":\"another.setting\",\"value\":true}",
+        );
+        assert!(get_setting("clipboard.imagePaste").is_err());
+        std::env::set_var("SBX_MOCK_PASTE", "{\"default\":true}");
+        assert!(
+            get_setting("clipboard.imagePaste").is_err(),
+            "never substitute the default for the evaluated value"
+        );
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn lifecycle_reuses_existing_sandbox_and_stops_before_restart() {
+        let _guard = env_lock();
+        let mock = MockCli::new();
+        assert_eq!(start_sandbox("demo"), Ok("sandbox-id".to_string()));
+        assert_eq!(mock.commands(), "ls --json\nrun --detach --name demo\n");
+        mock.clear_commands();
+        assert_eq!(restart_sandbox("demo"), Ok("sandbox-id".to_string()));
+        assert_eq!(
+            mock.commands(),
+            "stop demo\nls --json\nrun --detach --name demo\n"
+        );
+        mock.clear_commands();
+        assert!(start_sandbox("missing")
+            .unwrap_err()
+            .contains("does not exist"));
+        assert_eq!(mock.commands(), "ls --json\n");
+        mock.clear_commands();
+        assert!(remove_sandbox("demo").is_ok());
+        assert_eq!(mock.commands(), "rm --force demo\n");
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn restart_does_not_start_after_failed_stop_and_reports_failed_resume() {
+        let _guard = env_lock();
+        let mock = MockCli::new();
+        std::env::set_var("SBX_MOCK_STOP_FAIL", "1");
+        assert!(restart_sandbox("demo").is_err());
+        assert_eq!(mock.commands(), "stop demo\n");
+        std::env::remove_var("SBX_MOCK_STOP_FAIL");
+        std::env::set_var("SBX_MOCK_RUN_FAIL", "1");
+        let error = restart_sandbox("demo").unwrap_err();
+        assert!(error.contains("was stopped but could not be started"));
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn untrusted_names_never_reach_cli_or_terminal() {
+        let _guard = env_lock();
+        let mock = MockCli::new();
+        for name in [
+            "",
+            "--all",
+            "-demo",
+            "demo\nother",
+            "demo\r",
+            "demo\0",
+            "demo;touch",
+            "demo&calc",
+            "demo|cmd",
+            "demo%PATH%",
+            "demo$(id)",
+            "demo`id`",
+            "demo\"",
+            "demo'",
+            "demo/name",
+            "demo name",
+        ] {
+            assert!(start_sandbox(name).is_err(), "{name:?}");
+            assert!(stop_sandbox(name).is_err(), "{name:?}");
+            assert!(restart_sandbox(name).is_err(), "{name:?}");
+            assert!(remove_sandbox(name).is_err(), "{name:?}");
+            assert!(open_terminal(name).is_err(), "{name:?}");
+            assert!(connection_info(name).is_err(), "{name:?}");
+        }
+        assert!(mock.commands().is_empty());
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn opens_terminal_with_direct_arguments_and_absolute_cli_path() {
+        use std::os::unix::fs::PermissionsExt;
+        let _guard = env_lock();
+        let mock = MockCli::new();
+        let terminal = mock.root.join("x-terminal-emulator");
+        std::fs::write(
+            &terminal,
+            "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$SBX_TEST_ROOT/terminal-args\"\n",
+        )
+        .unwrap();
+        std::fs::set_permissions(&terminal, std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert_eq!(open_terminal("demo"), Ok(()));
+        let args = std::fs::read_to_string(mock.root.join("terminal-args")).unwrap();
+        assert_eq!(
+            args,
+            format!(
+                "-e\n{}\nexec\n-it\ndemo\n/bin/bash\n",
+                mock.root.join("sbx").display()
+            )
+        );
+        assert!(
+            mock.commands().is_empty(),
+            "the fake terminal must not run a real exec"
+        );
+        std::fs::remove_file(&terminal).unwrap();
+        assert!(open_terminal("demo")
+            .unwrap_err()
+            .contains("Install a supported terminal"));
+    }
+
+    #[test]
+    fn connection_info_uses_managed_ssh_alias_and_default_image_user() {
+        let info = connection_info("my-project_1").unwrap();
+        assert_eq!(info.host, "my-project_1.sbx");
+        assert_eq!(info.user, "_default_user_");
+        assert_eq!(info.port, None);
+        assert_eq!(info.command, "ssh my-project_1.sbx");
+    }
+
+    #[test]
+    fn platform_terminal_string_escaping_covers_path_metacharacters() {
+        assert_eq!(
+            shell_quote("/Applications/Agent's tools/sbx"),
+            "'/Applications/Agent'\\''s tools/sbx'"
+        );
+        assert_eq!(
+            applescript_quote("exec '/path/with\\slash' \"quoted\""),
+            "\"exec '/path/with\\\\slash' \\\"quoted\\\"\""
+        );
+        assert_eq!(
+            powershell_quote("C:\\Tools & SDK's\\sbx.exe"),
+            "'C:\\Tools & SDK''s\\sbx.exe'"
+        );
     }
 }

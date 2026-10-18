@@ -40,7 +40,7 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 
 ## Prefer a GUI?
 
-[Sandy](docs/sandy.md) is a desktop app with guided setup — install `sbx`, sign in, enable image pasting and SSH — and a live dashboard of your local sandboxes. Review setup anytime in Settings. Grab an installer from the [releases page](https://github.com/nikcio/docker-sandboxing/releases).
+[Sandy](docs/sandy.md) is a desktop app with guided `sbx` setup and an always-refreshing local sandbox dashboard. Create environments from GitHub and Docker Hub providers using compatible v2 agents/mixins or v3 workloads/mixins, and save reusable YAML templates outside your workspace. Launch or resume sandboxes, start/stop/restart them, open a native terminal, or follow the OpenCode Desktop and VS Code SSH connection guides. Review setup anytime in Settings. Grab an installer from the [releases page](https://github.com/nikcio/docker-sandboxing/releases).
 
 ## Guides
 
