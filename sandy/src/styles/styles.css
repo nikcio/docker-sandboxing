@@ -1394,12 +1394,10 @@ pre {
   height: 65px;
 }
 
-/* Dedicated splash window: a rounded, app-colored card centered in the small
-   frameless frame — the window itself stays transparent, so only the card's
-   corners are see-through. */
+/* Dedicated splash window: the card fills the frameless frame edge-to-edge
+   with the app background color; the window itself stays transparent. */
 .loading-splash {
   height: 100vh;
-  padding: 12px;
   background: transparent;
   user-select: none;
 }
@@ -1415,8 +1413,6 @@ pre {
   flex: 1;
   color: var(--muted);
   background: #f8faff;
-  border: 1px solid var(--border);
-  border-radius: 18px;
 }
 
 .loading-label {
