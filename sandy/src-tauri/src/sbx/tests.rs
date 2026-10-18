@@ -141,6 +141,7 @@ impl MockCli {
             "SBX_MOCK_FAIL",
             "SBX_MOCK_SIGNED_IN",
             "SBX_MOCK_DAEMON",
+            "SBX_MOCK_DAEMON_TEXT",
             "SBX_MOCK_PASTE",
             "SBX_MOCK_FAIL_JSON",
             "SBX_MOCK_LS_EMPTY",
@@ -209,6 +210,14 @@ if [ "$2" = start ]; then
     [ "$SBX_MOCK_START_FAIL" = 1 ] && exit 1
     printf ready > "$SBX_TEST_ROOT/daemon-ready"
 else
+    if [ "$SBX_MOCK_DAEMON_TEXT" = 1 ]; then
+        printf '%s\n' 'Status:  ● running'
+        exit 0
+    fi
+    if [ "$SBX_MOCK_DAEMON_TEXT" = 2 ]; then
+        printf '%s\n' '{}'
+        exit 0
+    fi
     if [ "$SBX_MOCK_DAEMON" = running ] || [ -f "$SBX_TEST_ROOT/daemon-ready" ]; then
         printf '%s\n' '{"status":"running"}'
     else
@@ -598,6 +607,37 @@ fn failed_daemon_start_is_unknown_and_does_not_run_authentication() {
     assert!(is_signed_in().is_err());
     assert!(!mock.commands().contains("diagnose"));
     assert!(mock.commands().contains("daemon start --detach"));
+}
+
+/// A daemon status that is not usable JSON (e.g. an old CLI that ignores
+/// --format) is an explicit upgrade hint, not a trigger to start a daemon
+/// we cannot observe. Sequential + env-locked.
+#[test]
+#[cfg(unix)]
+fn unusable_daemon_status_json_is_an_error_and_does_not_start_daemon() {
+    let _guard = env_lock();
+    let mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_DAEMON_TEXT", "1");
+    let err = is_signed_in().unwrap_err();
+    crate::sbx::test_env::remove_var("SBX_MOCK_DAEMON_TEXT");
+    assert!(
+        err.contains("did not return a usable JSON report"),
+        "got: {err}"
+    );
+    assert!(err.contains("upgrade sbx"), "got: {err}");
+    assert_eq!(mock.commands(), "daemon status --format json\n");
+
+    // Valid JSON that lacks a "status" string field is equally unusable.
+    mock.clear_commands();
+    crate::sbx::test_env::set_var("SBX_MOCK_DAEMON_TEXT", "2");
+    let err = is_signed_in().unwrap_err();
+    crate::sbx::test_env::remove_var("SBX_MOCK_DAEMON_TEXT");
+    assert!(
+        err.contains("without a \"status\" string field"),
+        "got: {err}"
+    );
+    assert!(err.contains("upgrade sbx"), "got: {err}");
+    assert_eq!(mock.commands(), "daemon status --format json\n");
 }
 
 #[test]
