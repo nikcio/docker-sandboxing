@@ -63,8 +63,8 @@ const paths = {
   stop: <circle cx="12" cy="12" r="7" />,
   refresh: (
     <>
-      <path d="M20 7v5h-5M4 17v-5h5" />
-      <path d="M5.2 8a7 7 0 0 1 11.5-3L20 8M4 16l3.3 3A7 7 0 0 0 18.8 16" />
+      <path d="M21 12a9 9 0 1 1-2.64-6.36L21 8" />
+      <path d="M21 3v5h-5" />
     </>
   ),
   code: <path d="m7 7-5 5 5 5m10-10 5 5-5 5M14 4l-4 16" />,
