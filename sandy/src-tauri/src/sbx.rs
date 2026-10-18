@@ -66,25 +66,105 @@ pub fn run_capture(args: &[&str]) -> Result<String, String> {
     Ok(text.trim().to_string())
 }
 
-/// Whether the user is signed in to Docker (`sbx whoami` succeeds).
+/// Machine-readable health/auth report from `sbx diagnose --format json`.
+/// Returns None when the CLI or daemon can't produce a report.
+fn diagnose_report() -> Option<std::collections::HashMap<String, DiagnoseCheck>> {
+    let out = sbx_command(&["diagnose", "--format", "json"])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let text = String::from_utf8_lossy(&out.stdout);
+    let report: DiagnoseReport = serde_json::from_str(&text).ok()?;
+    Some(
+        report
+            .checks
+            .into_iter()
+            .map(|c| (c.name.clone(), c))
+            .collect(),
+    )
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct DiagnoseReport {
+    checks: Vec<DiagnoseCheck>,
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+struct DiagnoseCheck {
+    name: String,
+    status: String,
+    message: String,
+    #[serde(default)]
+    detail: String,
+}
+
+/// Whether the user is signed in to Docker, via the `Authentication` check
+/// in `sbx diagnose`. The CLI has no `whoami` command; exit-code probing of
+/// `login` would block on the browser flow, so diagnose is the only
+/// non-interactive detector. Falls back to false when diagnose can't run
+/// (CLI missing, daemon down) — callers treat false as "not signed in".
 pub fn is_signed_in() -> Result<bool, String> {
     if !is_sbx_installed() {
         return Ok(false);
     }
-    Ok(sbx_command(&["whoami"])
-        .output()
-        .map(|o| o.status.success())
+    Ok(diagnose_report()
+        .and_then(|r| r.get("Authentication").cloned())
+        .map(|c| c.status == "pass" && c.message.eq_ignore_ascii_case("authenticated"))
         .unwrap_or(false))
+}
+
+/// Best-effort daemon start for checks that need it (settings, diagnose's
+/// Authentication check). Returns when the daemon is up or the attempt
+/// failed; a stopped daemon is not an error — later steps report it.
+pub fn ensure_daemon() -> Result<(), String> {
+    if !is_sbx_installed() {
+        return Ok(());
+    }
+    let status = sbx_command(&["daemon", "status"]).output();
+    if let Ok(o) = &status {
+        let text = format!(
+            "{}{}",
+            String::from_utf8_lossy(&o.stdout),
+            String::from_utf8_lossy(&o.stderr)
+        );
+        if text.contains("running") {
+            return Ok(());
+        }
+    }
+    // `daemon start` tails the daemon in the foreground; detach it and give
+    // the socket a moment to come up.
+    let spawned = sbx_command(&["daemon", "start"]).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null()).spawn();
+    if spawned.is_err() {
+        return Ok(());
+    }
+    for _ in 0..6 {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        if let Ok(o) = sbx_command(&["daemon", "status"]).output() {
+            let text = format!(
+                "{}{}",
+                String::from_utf8_lossy(&o.stdout),
+                String::from_utf8_lossy(&o.stderr)
+            );
+            if text.contains("running") {
+                return Ok(());
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Read a single sbx setting value (empty string if unset).
 pub fn get_setting(key: &str) -> Result<String, String> {
+    ensure_daemon()?;
     let out = run_capture(&["settings", "get", key])?;
     Ok(out.trim().to_string())
 }
 
 /// `sbx settings set clipboard.imagePaste true`
 pub fn set_clipboard_image_paste() -> Result<(), String> {
+    ensure_daemon()?;
     run_capture(&["settings", "set", "clipboard.imagePaste", "true"])
         .map(|_| ())
         .map_err(|e| format!("could not enable image paste:\n{}", e))
@@ -109,16 +189,12 @@ pub fn is_ssh_set_up() -> Result<bool, String> {
     }
 }
 
-/// Open the browser for Docker OAuth and wait for completion. If the user
-/// is already signed in, `sbx login` reports that and exits 0 — treat it as
-/// success instead of a failure.
+/// Open the browser for Docker OAuth and wait for completion. `sbx login`
+/// exits 0 both when the flow completes and when the user is already
+/// signed in (printing "You are signed in [username: …]") — so a zero exit
+/// is success, and anything else is reported with the CLI's own output.
 pub fn run_login() -> Result<String, String> {
-    let out = run_capture(&["login"])?;
-    if is_signed_in()? {
-        Ok(out)
-    } else {
-        Err(format!("login did not complete:\n{}", out))
-    }
+    run_capture(&["login"])
 }
 
 /// Install the sbx CLI for the current platform. Returns combined command
@@ -617,19 +693,20 @@ weird  paused  /home/name/state
     fn cli_mock_success_paths() {
         let _guard = env_lock();
         set_mock_path();
+        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        std::env::set_var("SBX_MOCK_DAEMON", "running");
 
-        // run_capture: plain table, trimmed output.
-        let out = run_capture(&["whoami"]).expect("whoami should succeed");
-        assert_eq!(out, "testuser");
-
-        // Unknown subcommand still exits 1 in the mock -> Err even on the
-        // "success" side of the fixture.
+        // Unknown subcommand exits 1 in the mock -> Err (the real CLI also
+        // has no whoami; sign-in detection uses diagnose instead).
         let err = run_capture(&["definitely-not-a-command"]).unwrap_err();
         assert!(err.contains("sbx definitely-not-a-command failed (exit 1)"), "got: {err}");
         assert!(err.contains("unknown command"), "stderr should be included, got: {err}");
 
-        // is_signed_in: mock whoami exits 0.
+        // is_signed_in: diagnose's Authentication check says authenticated.
         assert_eq!(is_signed_in(), Ok(true));
+
+        // login: already-signed-in reports are success, not failure.
+        assert!(run_login().is_ok());
 
         // get_setting default: clipboard.imagePaste prints "false".
         assert_eq!(get_setting("clipboard.imagePaste"), Ok("false".to_string()));
@@ -709,6 +786,12 @@ weird  paused  /home/name/state
         std::env::remove_var("SBX_MOCK_JSON");
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].workspace, "/home/me/first, /home/me/second");
+
+        // login after explicit sign-out flow: not signed in and login
+        // output claims success — still Ok (login itself is authoritative).
+        std::env::remove_var("SBX_MOCK_SIGNED_IN");
+        std::env::remove_var("SBX_MOCK_DAEMON");
+        assert!(run_login().is_ok());
     }
 
     /// JSON-schema edge cases that fall back to the table: a malformed entry
@@ -757,7 +840,7 @@ weird  paused  /home/name/state
         // get_setting propagates the failure.
         assert!(get_setting("clipboard.imagePaste").is_err());
 
-        // is_signed_in maps a failing whoami to Ok(false), not Err.
+        // is_signed_in maps a failing diagnose to Ok(false), not Err.
         assert_eq!(is_signed_in(), Ok(false));
 
         std::env::remove_var("SBX_MOCK_FAIL");

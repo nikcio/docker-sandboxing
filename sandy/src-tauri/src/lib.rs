@@ -1,7 +1,9 @@
 mod sbx;
 
 use serde::Serialize;
-use sbx::{ensure_sbx_installed, get_setting, is_sbx_installed, list_sandboxes, run_login, set_clipboard_image_paste};
+use sbx::{
+    ensure_sbx_installed, is_sbx_installed, list_sandboxes, run_login, set_clipboard_image_paste,
+};
 
 #[derive(Serialize)]
 pub struct SetupStatus {
@@ -23,7 +25,9 @@ fn status() -> Result<SetupStatus, String> {
         });
     }
     let signed_in = sbx::is_signed_in()?;
-    let image_paste_on = get_setting("clipboard.imagePaste")
+    // Settings live behind the daemon; don't fail the whole status read
+    // when it's down — report the setting as off instead.
+    let image_paste_on = sbx::get_setting("clipboard.imagePaste")
         .map(|v| v == "true")
         .unwrap_or(false);
     let ssh_set_up = sbx::is_ssh_set_up()?;
