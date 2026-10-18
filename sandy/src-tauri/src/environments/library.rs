@@ -12,8 +12,8 @@ use crate::catalog::{KitOption, unique_id, write_json};
 use super::LIBRARY;
 use super::schema::{Environment, KitEntry, Workspace, escape};
 use super::validation::{
-    builtin, ensure_outside, path_string, selected, validate_arguments, validate_name,
-    validate_selection, workspace_path,
+    builtin, canonicalize, ensure_outside, path_string, selected, validate_arguments,
+    validate_name, validate_selection, workspace_path,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,7 +79,7 @@ pub fn save_template(root: &Path, request: SaveTemplateRequest) -> Result<SavedT
             .parent()
             .ok_or("Template path has no parent directory")?;
         // Custom locations must exist; canonicalize the parent before checking symlink escapes.
-        let parent = std::fs::canonicalize(parent)
+        let parent = canonicalize(parent)
             .map_err(|e| format!("Template directory {}: {e}", parent.display()))?;
         parent.join(path.file_name().ok_or("Choose a template filename")?)
     } else {
@@ -91,14 +91,9 @@ pub fn save_template(root: &Path, request: SaveTemplateRequest) -> Result<SavedT
                 .parent()
                 .ok_or("Template directory has no existing parent")?;
         }
-        ensure_outside(
-            &std::fs::canonicalize(ancestor).map_err(|e| e.to_string())?,
-            &workspace,
-        )?;
+        ensure_outside(&canonicalize(ancestor)?, &workspace)?;
         std::fs::create_dir_all(&directory).map_err(|e| format!("{}: {e}", directory.display()))?;
-        std::fs::canonicalize(directory)
-            .map_err(|e| e.to_string())?
-            .join("sbxenv.yaml")
+        canonicalize(directory)?.join("sbxenv.yaml")
     };
     ensure_outside(&path, &workspace)?;
     // Even a library-owned path isn't overwritten: each Save creates a new reusable template.
