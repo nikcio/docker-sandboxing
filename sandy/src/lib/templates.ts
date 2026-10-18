@@ -30,5 +30,6 @@ export const saveTemplate = (request: SaveTemplateRequest) =>
   invoke<SavedTemplate>("save_template", { request });
 export const listTemplates = () => invoke<SavedTemplate[]>("list_templates");
 export const templateWarnings = () => invoke<string[]>("template_warnings");
+export const deleteTemplate = (id: string) => invoke<void>("delete_template", { id });
 export const launchTemplate = (request: LaunchTemplateRequest) =>
   invoke<string>("launch_template", { ...request });

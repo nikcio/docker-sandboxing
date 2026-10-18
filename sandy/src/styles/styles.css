@@ -339,6 +339,7 @@ h4 {
 
 .primary,
 .ghost,
+.danger,
 .button {
   display: inline-flex;
   align-items: center;
@@ -372,6 +373,18 @@ h4 {
 .ghost:hover:not(:disabled) {
   background: #f4f3ff;
   border-color: #c5bcff;
+}
+
+.danger {
+  background: linear-gradient(115deg, #e5484d, #d9373f);
+  border: 1px solid #e5484d;
+  color: white;
+  box-shadow: 0 2px 4px #e5484d0c;
+}
+
+.danger:hover:not(:disabled) {
+  background: #d13438;
+  box-shadow: 0 4px 12px #e5484d25;
 }
 
 .button:hover {

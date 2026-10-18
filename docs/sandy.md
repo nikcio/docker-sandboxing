@@ -19,7 +19,7 @@ A desktop app (experimental) for [Docker Sandboxes](https://docs.docker.com/ai/s
 3. Complete kit inputs, choose an existing workspace folder, and name the sandbox. Review the selected references and YAML preview.
 4. Choose **Save template** or **Save & launch**. Templates are real `sbxenv.yaml` files in Sandy's per-user application-data directory by default, or at a file location you choose **outside the workspace**. Both kit generations use environment schema v1. The saved file path and YAML are shown after saving.
 
-Open **Templates** to review saved YAML and launch it with a different name or workspace. Each new launch keeps the saved template intact and creates a separate launch file outside the workspace. Reusing an existing sandbox name resumes that sandbox's saved configuration; use a new name to create a sandbox with different tools or a different workspace.
+Open **Templates** to review saved YAML and launch it with a different name or workspace. Each new launch keeps the saved template intact and creates a separate launch file outside the workspace. Reusing an existing sandbox name resumes that sandbox's saved configuration; use a new name to create a sandbox with different tools or a different workspace. **Delete** on a saved template asks for confirmation, then permanently removes the saved `sbxenv.yaml` file and its library entry. Sandboxes already launched from the template are unaffected.
 
 ### Connect your terminal or editor
 

@@ -6,6 +6,7 @@ import { ErrorBanner } from "../../../common/components/ErrorBanner";
 import { useMountedRef } from "../../../common/hooks/useMountedRef";
 import { useBusyReporting } from "../../../common/hooks/useBusyReporting";
 import { LaunchDialog } from "./LaunchDialog";
+import { DeleteTemplateDialog } from "./DeleteTemplateDialog";
 
 export interface TemplatesPageProps {
   onCreate: () => void;
@@ -23,6 +24,9 @@ export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: Te
   const [warningsError, setWarningsError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<SavedTemplate | null>(null);
+  const [deleting, setDeleting] = useState<SavedTemplate | null>(null);
+  /** The card's Delete button: focus returns there when the dialog closes. */
+  const returnFocus = useRef<HTMLButtonElement | null>(null);
   const loadingLock = useRef(false);
   const generation = useRef(0);
 
@@ -173,14 +177,27 @@ export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: Te
                         {template.agent} <span className="catalog-badge">Kit v{template.kit_version}</span>
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      className="primary"
-                      aria-label={`Launch ${template.name}`}
-                      onClick={() => setSelected(template)}
-                    >
-                      Launch <Icon name="arrow" size={16} />
-                    </button>
+                    <div className="catalog-template-actions">
+                      <button
+                        type="button"
+                        className="ghost"
+                        aria-label={`Delete ${template.name}`}
+                        onClick={(event) => {
+                          returnFocus.current = event.currentTarget;
+                          setDeleting(template);
+                        }}
+                      >
+                        <Icon name="trash" size={16} /> Delete
+                      </button>
+                      <button
+                        type="button"
+                        className="primary"
+                        aria-label={`Launch ${template.name}`}
+                        onClick={() => setSelected(template)}
+                      >
+                        Launch <Icon name="arrow" size={16} />
+                      </button>
+                    </div>
                   </div>
                   <dl className="catalog-review-grid">
                     <dt>Workspace</dt>
@@ -216,6 +233,17 @@ export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: Te
           template={selected}
           onLaunched={onLaunched}
           onClose={() => setSelected(null)}
+        />
+      )}
+      {deleting && (
+        <DeleteTemplateDialog
+          key={deleting.id}
+          template={deleting}
+          onDeleted={() => void refresh()}
+          onClose={() => {
+            setDeleting(null);
+            returnFocus.current?.focus();
+          }}
         />
       )}
     </section>
