@@ -1,0 +1,143 @@
+name: Sandy build
+
+# Reusable build + publish pipeline for Sandy, shared by the stable and
+# preview release flows (release-please.yml / preview-release.yml).
+#
+# Inputs:
+# - tag:        the release tag to build at and upload artifacts to
+# - sha:        the commit to build
+# - prerelease: publish with `gh release edit --prerelease` (no --latest)
+#               instead of the default `--latest`
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      sha:
+        required: true
+        type: string
+      prerelease:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  sandy:
+    name: Build Sandy — ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            label: macOS (Apple silicon)
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            label: Windows
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            label: Linux
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev libxdo-dev file
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy --component rustfmt
+          rustup default stable
+          rustup target add ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            sandy/src-tauri/target
+          key: rust-${{ matrix.os }}-${{ matrix.target }}-${{ hashFiles('sandy/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            rust-${{ matrix.os }}-${{ matrix.target }}-
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 12.14.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: sandy/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: sandy
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Tauri app
+        working-directory: sandy
+        run: pnpm tauri build -- --target ${{ matrix.target }}
+
+      - name: Prepare artifacts (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p artifacts
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.AppImage' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.deb' -exec cp {} artifacts/ \;
+
+      - name: Prepare artifacts (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p artifacts
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.dmg' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.app' -maxdepth 0 -exec cp -R {} artifacts/ \;
+
+      - name: Prepare artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/msi/*.msi' | Copy-Item -Destination artifacts
+          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/nsis/*-setup.exe' | Copy-Item -Destination artifacts
+
+      - name: Upload artifacts to draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ inputs.tag }}
+        shell: bash
+        run: gh release upload "${TAG_NAME}" --clobber artifacts/*
+
+  publish:
+    name: Publish release
+    needs: sandy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          if [ "${{ inputs.prerelease }}" = "true" ]; then
+            gh release edit "${TAG_NAME}" --draft=false --prerelease
+          else
+            gh release edit "${TAG_NAME}" --draft=false --latest
+          fi
