@@ -11,6 +11,10 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      sha: ${{ steps.release.outputs.sha }}
     steps:
       - name: Mint GitHub App token
         id: app-token
@@ -80,7 +84,7 @@ jobs:
             rust-${{ matrix.os }}-${{ matrix.target }}-
 
       - name: Install pnpm
-        uses: pnpm/action-setup@d9184bf108216479bc5a137cc391f4d7b14c870b # v6.1.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         # version comes from package.json's packageManager field
 
       - name: Install Node.js
@@ -110,7 +114,7 @@ jobs:
         run: |
           mkdir -p artifacts
           find sandy/src-tauri/target -path '*release/bundle*' -name '*.dmg' -exec cp {} artifacts/ \;
-          find sandy/src-tauri/target -path '*release/bundle*' -name '*.app' -maxdepth 0 -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.app' -maxdepth 0 -exec cp -R {} artifacts/ \;
 
       - name: Prepare artifacts (Windows)
         if: runner.os == 'Windows'
