@@ -233,19 +233,6 @@
   gap: 12px 10px;
 }
 
-.dashboard .tip {
-  margin-top: 20px;
-  padding: 13px;
-}
-
-.dashboard .tip h4 {
-  margin-bottom: 8px;
-}
-
-.dashboard .tip p {
-  line-height: 1.6;
-}
-
 .dashboard .empty,
 .dashboard .inspector-empty {
   padding: 26px 15px;
@@ -593,11 +580,6 @@
   .dashboard .details-overview,
   .dashboard .details-body {
     padding: 13px;
-  }
-
-  .dashboard .tip {
-    margin-top: 12px;
-    padding: 10px;
   }
 
   .dashboard .local-label {

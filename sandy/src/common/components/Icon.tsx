@@ -68,7 +68,6 @@ const paths = {
     </>
   ),
   code: <path d="m7 7-5 5 5 5m10-10 5 5-5 5M14 4l-4 16" />,
-  sparkles: <path d="m10 3 2.5 6.5L19 12l-6.5 2.5L10 21l-2.5-6.5L1 12l6.5-2.5ZM20 2v6m-3-3h6" />,
   bulb: <path d="M8 16a7 7 0 1 1 8 0v3H8Zm1 6h6M12 1V0M3 5 1 3m20 2 2-2" />,
   check: <path d="m5 12 4 4L19 6" />,
   close: <path d="m6 6 12 12M6 18 18 6" />,

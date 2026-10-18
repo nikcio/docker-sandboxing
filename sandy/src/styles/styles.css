@@ -946,34 +946,6 @@ select {
   outline-offset: 4px;
 }
 
-.tip {
-  margin-top: 42px;
-  padding: 19px 17px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #f6f3ff, #f2f1ff);
-}
-
-.tip h4 {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--primary);
-  font-size: 13px;
-  margin-bottom: 15px;
-}
-
-.tip p {
-  font-size: 12px;
-  line-height: 1.8;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-
-.tip .text-button {
-  font-size: 12px;
-  text-align: left;
-}
-
 .empty,
 .inspector-empty {
   text-align: center;
@@ -1566,10 +1538,6 @@ pre {
   .details-body {
     border-top: 0;
     border-left: 1px solid var(--border);
-  }
-
-  .tip {
-    margin-top: 25px;
   }
 
   .details-head .sbx-avatar {
