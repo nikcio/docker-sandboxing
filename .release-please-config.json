@@ -25,6 +25,10 @@
         {
           "type": "generic",
           "path": "examples/opencode-rust.sbxenv.yaml"
+        },
+        {
+          "type": "generic",
+          "path": "sandy/src-tauri/Cargo.toml"
         }
       ]
     }

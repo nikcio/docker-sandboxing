@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Sandy",
-  "version": "0.1.0",
   "identifier": "dev.sandy.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -39,6 +38,17 @@
     "linux": {
       "deb": {
         "depends": []
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFBRDY2RjkwQjNENjY2RTcKUldUblp0YXprRy9XR2tzZVVjV3dWcEViQUxWT3o0T2VoaDI0VkcwNnpLbU42Mnd1TXJhSVRtd0kK",
+      "endpoints": [
+        "https://github.com/nikcio/docker-sandboxing/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
       }
     }
   }

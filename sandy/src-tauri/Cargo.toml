@@ -1,6 +1,7 @@
 [package]
 name = "sandy"
-version = "0.1.0"
+# The version release-please bumps; Tauri reads it for the updater's version check.
+version = "0.1.0" # x-release-please-version
 description = "Sandy — a friendly command center for Docker Sandboxes"
 authors = ["nikcio"]
 edition = "2024"
