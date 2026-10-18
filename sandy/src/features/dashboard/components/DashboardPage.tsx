@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { SandboxInfo, SetupStatus } from "../../../lib/sandbox";
 import Icon from "../../../common/components/Icon";
 import { Toast } from "../../../common/components/Toast";
+import UpdateBanner from "../../../common/components/UpdateBanner";
+import type { AppUpdatesState } from "../../../common/hooks/useAppUpdates";
 import { SandboxList } from "./SandboxList";
 import { HomeActions } from "./HomeActions";
 import { SandboxInspector } from "./SandboxInspector";
@@ -14,6 +16,7 @@ import { ComingSoonDialog } from "../../../common/components/ComingSoonDialog";
 export interface DashboardPageProps {
   home: boolean;
   status: SetupStatus | null;
+  updates: AppUpdatesState;
   onGoSettings: () => void;
   onGoTemplates: () => void;
   onCreate: () => void;
@@ -31,6 +34,7 @@ const actionLabels: Record<SandboxAction, string> = {
 export default function DashboardPage({
   home,
   status,
+  updates,
   onGoSettings,
   onGoTemplates,
   onCreate,
@@ -129,6 +133,7 @@ export default function DashboardPage({
             </button>
           </div>
         )}
+        <UpdateBanner updates={updates} />
         <SandboxList
           sandboxes={sandboxes}
           visible={visible}

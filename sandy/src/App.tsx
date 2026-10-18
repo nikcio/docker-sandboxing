@@ -5,6 +5,7 @@ import type { View } from "./common/components/AppShell";
 import BootSplash from "./common/components/BootSplash";
 import { ComingSoonDialog } from "./common/components/ComingSoonDialog";
 import { useSetupStatus } from "./common/hooks/useSetupStatus";
+import { useAppUpdates } from "./common/hooks/useAppUpdates";
 import DashboardPage from "./features/dashboard/components/DashboardPage";
 import TemplatesPage from "./features/templates/components/TemplatesPage";
 import CreatePage from "./features/create/components/CreatePage";
@@ -25,6 +26,7 @@ export default function App() {
   const [setupSession, setSetupSession] = useState(0);
   const [count, setCount] = useState<number | null>(null);
   const setup = useSetupStatus();
+  const updates = useAppUpdates();
   const {
     status,
     statusError,
@@ -89,6 +91,7 @@ export default function App() {
             <DashboardPage
               home={view === "home"}
               status={status}
+              updates={updates}
               onGoSettings={() => setView("settings")}
               onGoTemplates={() => setView("templates")}
               onCreate={() => setView("create")}
@@ -124,6 +127,7 @@ export default function App() {
               setupOpen={setupOpen}
               setupSession={setupSession}
               active={view === "settings"}
+              updates={updates}
               onRefreshStatus={refreshStatus}
               onOpenSetup={() => {
                 void openSetup().then((next) => {

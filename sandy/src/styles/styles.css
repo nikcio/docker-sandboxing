@@ -501,6 +501,17 @@ h4 {
   margin-left: auto;
 }
 
+/* Update banner: "Later" sits next to the action, both pushed to the right. */
+.update-banner .text-button {
+  margin-left: auto;
+}
+
+.update-banner .primary {
+  margin-left: 0;
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
 .sandbox-card {
   padding: 20px;
 }
@@ -1043,6 +1054,15 @@ select {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.8;
+}
+
+.settings-info a {
+  font-size: 13px;
+}
+
+.update-error {
+  color: #b3403a;
+  word-break: break-word;
 }
 
 .setup-flow {

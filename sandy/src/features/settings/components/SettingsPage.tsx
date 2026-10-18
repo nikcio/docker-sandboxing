@@ -1,8 +1,10 @@
 import type { SetupStatus } from "../../../lib/sandbox";
 import Icon from "../../../common/components/Icon";
 import Providers from "./Providers";
+import UpdatesCard from "./UpdatesCard";
 import SetupWizard from "../../setup/components/SetupWizard";
 import { isSetupComplete } from "../../setup/setupSteps";
+import type { AppUpdatesState } from "../../../common/hooks/useAppUpdates";
 export interface SettingsPageProps {
   status: SetupStatus | null;
   statusError: string | null;
@@ -14,6 +16,7 @@ export interface SettingsPageProps {
   setupSession: number;
   /** Whether Settings is the visible page (providers only load when active). */
   active: boolean;
+  updates: AppUpdatesState;
   onRefreshStatus: () => Promise<SetupStatus | null>;
   onOpenSetup: () => void;
   onFinishSetup: () => void;
@@ -34,6 +37,7 @@ export default function SettingsPage({
   setupOpen,
   setupSession,
   active,
+  updates,
   onRefreshStatus,
   onOpenSetup,
   onFinishSetup,
@@ -108,6 +112,21 @@ export default function SettingsPage({
             )}
           </button>
         </section>
+      )}
+      {!setupOpen && (
+        <>
+          <UpdatesCard updates={updates} />
+          <section className="card settings-info">
+            <h2>About your workspace</h2>
+            <p>
+              Sandy connects to Docker Sandboxes on this computer. Your sandbox data comes
+              directly from the local <code>sbx</code> CLI.
+            </p>
+            <a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noreferrer">
+              Docker Sandboxes documentation <Icon name="arrow" size={15} />
+            </a>
+          </section>
+        </>
       )}
       {active && (
         <div className="card settings-info">
