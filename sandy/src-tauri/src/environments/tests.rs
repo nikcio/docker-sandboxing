@@ -459,3 +459,31 @@ fn source_authorization_merges_and_rejects_managed_policy() {
         "github.com/team/kits-evil"
     ));
 }
+
+
+#[test]
+fn canonicalized_paths_simplify_windows_verbatim_prefixes() {
+    // Windows file pickers and std::fs::canonicalize produce verbatim paths
+    // like \\?\C:\Users\name, which the sbx CLI rejects. Saving and launching
+    // must convert them back to ordinary paths.
+    let fixture = Fixture::new();
+    let canonical = super::validation::canonicalize(&fixture.workspace).unwrap();
+    assert!(!canonical.to_string_lossy().contains(r"\\?\"));
+    assert!(canonical.is_dir());
+    // A saved template's recorded workspace uses the simplified form too.
+    let saved = save_template(&fixture.root, fixture.request()).unwrap();
+    assert!(
+        !saved.workspace.contains(r"\\?\"),
+        "workspace was recorded verbatim: {}",
+        saved.workspace
+    );
+    // Picker results are stripped even when the OS dialog returns verbatim
+    // paths directly.
+    let stripped = super::validation::strip_verbatim(std::path::Path::new(r"\\?\C:\Users\nikol"));
+    assert_eq!(stripped, std::path::Path::new(r"C:\Users\nikol"));
+    // Ordinary paths pass through unchanged.
+    assert_eq!(
+        super::validation::strip_verbatim(&fixture.workspace),
+        fixture.workspace
+    );
+}

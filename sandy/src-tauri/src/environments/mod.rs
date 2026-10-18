@@ -27,7 +27,7 @@ pub use source_policy::allow_source;
 
 use std::sync::Mutex;
 
-use self::validation::path_string;
+use self::validation::{path_string, strip_verbatim};
 
 static LIBRARY: Mutex<()> = Mutex::new(());
 static SOURCE_POLICY: Mutex<()> = Mutex::new(());
@@ -36,7 +36,7 @@ pub fn pick_workspace() -> Result<Option<String>, String> {
     rfd::FileDialog::new()
         .set_title("Choose the sandbox workspace")
         .pick_folder()
-        .map(|path| path_string(&path))
+        .map(|path| path_string(&strip_verbatim(&path)))
         .transpose()
 }
 
@@ -46,6 +46,6 @@ pub fn pick_template_path() -> Result<Option<String>, String> {
         .set_file_name("sbxenv.yaml")
         .add_filter("Environment YAML", &["yaml", "yml"])
         .save_file()
-        .map(|path| path_string(&path))
+        .map(|path| path_string(&strip_verbatim(&path)))
         .transpose()
 }

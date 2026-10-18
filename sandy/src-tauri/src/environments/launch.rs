@@ -11,7 +11,9 @@ use super::LIBRARY;
 use super::library::{read_template, records};
 use super::schema::{Workspace, escape};
 use super::source_policy::allow_source_with;
-use super::validation::{ensure_outside, path_string, selected, validate_name, workspace_path};
+use super::validation::{
+    canonicalize, ensure_outside, path_string, selected, validate_name, workspace_path,
+};
 
 pub fn launch_template(
     root: &Path,
@@ -78,8 +80,7 @@ pub(super) fn launch_with(
         ));
     }
     let workspace = workspace_path(workspace.as_deref().unwrap_or(&saved.workspace))?;
-    let original =
-        std::fs::canonicalize(&record.path).map_err(|e| format!("{}: {e}", record.path))?;
+    let original = canonicalize(&record.path).map_err(|e| format!("{}: {e}", record.path))?;
     ensure_outside(&original, &workspace)?;
     let providers = get_providers(root)?;
     let mut authorized = HashSet::new();
@@ -121,14 +122,9 @@ pub(super) fn launch_with(
             .parent()
             .ok_or("Launch directory has no existing parent")?;
     }
-    ensure_outside(
-        &std::fs::canonicalize(ancestor).map_err(|e| e.to_string())?,
-        &workspace,
-    )?;
+    ensure_outside(&canonicalize(ancestor)?, &workspace)?;
     std::fs::create_dir_all(&directory).map_err(|e| e.to_string())?;
-    let path = std::fs::canonicalize(directory)
-        .map_err(|e| e.to_string())?
-        .join("sbxenv.yaml");
+    let path = canonicalize(directory)?.join("sbxenv.yaml");
     ensure_outside(&path, &workspace)?;
     // Edit the decoded document so manually added environment settings survive.
     let mut document: serde_yaml_ng::Value =

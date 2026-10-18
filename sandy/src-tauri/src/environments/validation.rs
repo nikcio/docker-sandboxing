@@ -22,17 +22,34 @@ pub(super) fn workspace_path(path: &str) -> Result<PathBuf, String> {
     if !Path::new(path).is_absolute() {
         return Err("Choose an absolute workspace directory".into());
     }
-    let canonical = std::fs::canonicalize(path).map_err(|e| format!("Workspace {path}: {e}"))?;
+    let canonical = canonicalize(path).map_err(|e| format!("Workspace {path}: {e}"))?;
     if !canonical.is_dir() {
         return Err(format!("Workspace {path} is not a directory"));
     }
     Ok(canonical)
 }
 
+/// `std::fs::canonicalize` returns Windows verbatim paths (`\\?\C:\...`).
+/// The `sbx` CLI and ordinary users cannot use those, so simplify them back to
+/// regular paths (a no-op on other platforms).
+pub(super) fn canonicalize(path: impl AsRef<Path>) -> Result<PathBuf, String> {
+    dunce::canonicalize(path).map_err(|e| e.to_string())
+}
+
 pub(super) fn path_string(path: &Path) -> Result<String, String> {
     path.to_str()
         .map(String::from)
         .ok_or_else(|| format!("Path is not valid Unicode: {}", path.display()))
+}
+
+/// Strip the Windows verbatim prefix (`\\?\C:\...`) that some sources return.
+/// The `sbx` CLI and ordinary users cannot use verbatim paths.
+pub(super) fn strip_verbatim(path: &Path) -> PathBuf {
+    const PREFIX: &str = r"\\?\";
+    path.to_string_lossy()
+        .strip_prefix(PREFIX)
+        .map(PathBuf::from)
+        .unwrap_or_else(|| path.to_path_buf())
 }
 
 pub(super) fn ensure_outside(path: &Path, workspace: &Path) -> Result<(), String> {
