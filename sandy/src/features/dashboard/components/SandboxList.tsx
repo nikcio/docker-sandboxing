@@ -2,6 +2,7 @@ import type { SandboxInfo } from "../../../lib/sandbox";
 import Icon from "../../../common/components/Icon";
 import { Avatar } from "../../../common/components/Avatar";
 import { StatePill } from "../../../common/components/StatePill";
+import { stateKind } from "../../../common/lib/sandboxState";
 import type { SandboxAction } from "../sandboxActions";
 
 export function SandboxList({
@@ -136,13 +137,21 @@ export function SandboxList({
             <button
               className="primary row-action"
               disabled={pending.has(sandbox.name) || !installed}
-              aria-label={`Open ${sandbox.name}`}
+              aria-label={
+                pending.has(sandbox.name)
+                  ? undefined
+                  : stateKind(sandbox.state) === "running"
+                    ? `Open ${sandbox.name}`
+                    : `Start ${sandbox.name}`
+              }
               onClick={() => onOpen(sandbox)}
             >
               {pending.has(sandbox.name) ? (
                 <span className="spinner" aria-hidden="true" />
-              ) : (
+              ) : stateKind(sandbox.state) === "running" ? (
                 "Open"
+              ) : (
+                "Start"
               )}
             </button>
           </div>
