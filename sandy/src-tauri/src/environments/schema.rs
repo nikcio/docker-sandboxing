@@ -65,6 +65,6 @@ pub(super) fn escape(value: &str) -> String {
     value.replace("${{", "$${{")
 }
 
-pub(super) fn unescape(value: &str) -> String {
+fn unescape(value: &str) -> String {
     value.replace("$${{", "${{")
 }

@@ -1,3 +1,4 @@
+// Tests may unwrap/expect freely — a panic is exactly the failure mode we want.
 use std::path::PathBuf;
 
 use crate::read_status;

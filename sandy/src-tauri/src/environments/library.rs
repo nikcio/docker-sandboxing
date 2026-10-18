@@ -134,11 +134,7 @@ pub fn save_template(root: &Path, request: SaveTemplateRequest) -> Result<SavedT
     Ok(summary(&record, &environment, content))
 }
 
-pub(super) fn summary(
-    record: &TemplateRecord,
-    environment: &Environment,
-    content: String,
-) -> SavedTemplate {
+fn summary(record: &TemplateRecord, environment: &Environment, content: String) -> SavedTemplate {
     SavedTemplate {
         id: record.id.clone(),
         name: environment.name.clone(),
@@ -209,7 +205,7 @@ fn read_library(root: &Path) -> Result<(Vec<SavedTemplate>, Vec<String>), String
     Ok((templates, warnings))
 }
 
-pub(super) fn build_environment(
+fn build_environment(
     request: &SaveTemplateRequest,
     workspace: &Path,
 ) -> Result<Environment, String> {

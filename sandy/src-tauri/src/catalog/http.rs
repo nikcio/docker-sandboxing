@@ -12,17 +12,17 @@ use reqwest::blocking::Client;
 use serde_json::Value;
 
 #[derive(Clone)]
-pub(crate) struct Api {
-    pub(crate) client: Client,
-    pub(crate) github: String,
-    pub(crate) raw: String,
-    pub(crate) hub: String,
-    pub(crate) registry: String,
-    pub(crate) auth: String,
+pub(super) struct Api {
+    pub(super) client: Client,
+    pub(super) github: String,
+    pub(super) raw: String,
+    pub(super) hub: String,
+    pub(super) registry: String,
+    pub(super) auth: String,
 }
 
 impl Api {
-    pub(crate) fn public() -> Result<Self, String> {
+    pub(super) fn public() -> Result<Self, String> {
         Ok(Self {
             client: Client::builder()
                 .user_agent("Sandy/0.1 (public sandbox-kit discovery)")
@@ -38,15 +38,15 @@ impl Api {
         })
     }
 
-    pub(crate) fn text(&self, url: &str) -> Result<String, String> {
+    pub(super) fn text(&self, url: &str) -> Result<String, String> {
         self.request(url, None).map(|(text, _)| text)
     }
 
-    pub(crate) fn json(&self, url: &str) -> Result<Value, String> {
+    pub(super) fn json(&self, url: &str) -> Result<Value, String> {
         serde_json::from_str(&self.text(url)?).map_err(|e| format!("Invalid JSON from {url}: {e}"))
     }
 
-    pub(crate) fn request(
+    pub(super) fn request(
         &self,
         url: &str,
         token: Option<&str>,
@@ -106,7 +106,7 @@ impl Api {
         Ok((body, digest))
     }
 
-    pub(crate) fn github_tags(&self, repository: &str) -> Result<Vec<Value>, String> {
+    pub(super) fn github_tags(&self, repository: &str) -> Result<Vec<Value>, String> {
         let mut tags = Vec::new();
         for page in 1..=100 {
             let value = self.json(&format!(
@@ -124,7 +124,7 @@ impl Api {
         Err("GitHub repository has over 10,000 tags; choose a reference directly".into())
     }
 
-    pub(crate) fn hub_tags(&self, repository: &str) -> Result<Vec<Value>, String> {
+    pub(super) fn hub_tags(&self, repository: &str) -> Result<Vec<Value>, String> {
         let mut tags = Vec::new();
         for page in 1..=100 {
             let value = self.json(&format!(

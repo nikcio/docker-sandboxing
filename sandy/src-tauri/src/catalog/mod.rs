@@ -14,18 +14,20 @@
 //! - sbx kit inspect REFERENCE --json currently normalizes v3 workload to
 //!   kind=sandbox; raw authored v3 descriptors have kind=workload and no name.
 
-pub(super) mod descriptor;
+mod descriptor;
 mod github;
 mod http;
 mod hub;
 mod store;
 mod types;
 
+// Tests may unwrap/expect freely — a panic is exactly the failure mode we want.
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 mod tests;
 
-pub use store::{get_providers, github_repository, save_providers, unique_id, write_json};
+pub use store::{get_providers, save_providers};
+pub(crate) use store::{github_repository, unique_id, write_json};
 #[cfg(test)]
 pub use types::KitArgument;
 pub use types::{Catalog, KitOption, Provider};
@@ -39,7 +41,7 @@ pub fn provider_versions(provider: Provider) -> Result<Vec<String>, String> {
     versions_with(&Api::public()?, &provider)
 }
 
-pub(crate) fn versions_with(api: &Api, provider: &Provider) -> Result<Vec<String>, String> {
+fn versions_with(api: &Api, provider: &Provider) -> Result<Vec<String>, String> {
     validate_provider(provider)?;
     let values = if provider.kind == "github" {
         api.github_tags(&github_repository(&provider.repository)?)?
@@ -96,11 +98,7 @@ pub fn discover_kits(providers: Vec<Provider>, query: Option<String>) -> Result<
     Ok(catalog)
 }
 
-pub(crate) fn discover_with(
-    api: &Api,
-    providers: &[Provider],
-    query: &str,
-) -> Result<Catalog, String> {
+fn discover_with(api: &Api, providers: &[Provider], query: &str) -> Result<Catalog, String> {
     let mut catalog = Catalog::default();
     for provider in providers.iter().filter(|p| p.enabled) {
         let result = validate_provider(provider).and_then(|_| match provider.kind.as_str() {
@@ -128,14 +126,14 @@ pub(crate) fn discover_with(
 /// Last `/`-separated segment of a repository path (the whole string when it
 /// contains no `/`). `rsplit` always yields at least one item, so this only
 /// returns `None` for an empty repository string.
-pub(super) fn repository_name(repository: &str) -> Option<&str> {
+fn repository_name(repository: &str) -> Option<&str> {
     repository.rsplit('/').next().filter(|s| !s.is_empty())
 }
 
-/// Form encoding is also the documented encoding of the Git fragment's ref/dir pairs.
-/// The URL is a compile-time constant, so parse/query can't actually fail;
-/// fall back to the raw value (safe, just unencoded) if it somehow did.
-pub(super) fn encoded(value: &str) -> String {
+fn encoded(value: &str) -> String {
+    // Form encoding is also the documented encoding of the Git fragment's ref/dir pairs.
+    // The URL is a compile-time constant, so parse/query can't actually fail;
+    // fall back to the raw value (safe, just unencoded) if it somehow did.
     reqwest::Url::parse_with_params("https://sandy.invalid", &[("v", value)])
         .map(|url| {
             url.query()
@@ -146,11 +144,11 @@ pub(super) fn encoded(value: &str) -> String {
         .unwrap_or_else(|_| value.to_string())
 }
 
-pub(super) fn encoded_path(value: &str) -> String {
+fn encoded_path(value: &str) -> String {
     encoded(value).replace('+', "%20")
 }
 
-pub(super) const DESCRIPTOR: &str = "vnd.docker.sandbox.kit.descriptor";
+const DESCRIPTOR: &str = "vnd.docker.sandbox.kit.descriptor";
 
 const MAX_BODY: u64 = 12 * 1024 * 1024;
 const METADATA_BATCH: usize = 4;

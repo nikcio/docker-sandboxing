@@ -28,8 +28,8 @@ use std::sync::Mutex;
 
 use self::validation::path_string;
 
-pub(super) static LIBRARY: Mutex<()> = Mutex::new(());
-pub(super) static SOURCE_POLICY: Mutex<()> = Mutex::new(());
+static LIBRARY: Mutex<()> = Mutex::new(());
+static SOURCE_POLICY: Mutex<()> = Mutex::new(());
 
 pub fn pick_workspace() -> Result<Option<String>, String> {
     rfd::FileDialog::new()

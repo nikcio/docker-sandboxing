@@ -68,7 +68,7 @@ pub(super) fn validate_provider(provider: &Provider) -> Result<(), String> {
     }
 }
 
-pub fn github_repository(repository: &str) -> Result<String, String> {
+pub(crate) fn github_repository(repository: &str) -> Result<String, String> {
     let repository = repository.trim().trim_end_matches('/');
     let repository = repository
         .strip_prefix("https://github.com/")
@@ -111,7 +111,7 @@ pub(super) fn hub_repository(repository: &str) -> Result<Option<String>, String>
     }
 }
 
-pub fn unique_id() -> String {
+pub(crate) fn unique_id() -> String {
     static SEQUENCE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     format!(
         "{:x}-{:x}-{:x}",
@@ -124,7 +124,7 @@ pub fn unique_id() -> String {
     )
 }
 
-pub fn write_json(path: &Path, value: &impl Serialize) -> Result<(), String> {
+pub(crate) fn write_json(path: &Path, value: &impl Serialize) -> Result<(), String> {
     let parent = path.parent().ok_or("Missing data directory")?;
     std::fs::create_dir_all(parent).map_err(|e| format!("{}: {e}", parent.display()))?;
     let temporary = parent.join(format!(".{}.tmp", unique_id()));
