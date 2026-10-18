@@ -1394,12 +1394,27 @@ pre {
   height: 65px;
 }
 
-/* Dedicated splash window: transparent background, no app chrome, content
-   centered in the small frameless frame. */
+/* Dedicated splash window: a rounded, app-colored card centered in the small
+   frameless frame — the window itself stays transparent, so only the card's
+   corners are see-through. */
 .loading-splash {
   min-height: 100vh;
+  padding: 12px;
   background: transparent;
   user-select: none;
+}
+
+.loading-splash .loading-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  color: var(--muted);
+  background: #f8faff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
 }
 
 .loading-label {
