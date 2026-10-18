@@ -109,18 +109,6 @@ export default function SettingsPage({
           </button>
         </section>
       )}
-      {!setupOpen && (
-        <section className="card settings-info">
-          <h2>About your workspace</h2>
-          <p>
-            Sandy connects to Docker Sandboxes on this computer. Your sandbox data comes directly
-            from the local <code>sbx</code> CLI.
-          </p>
-          <a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noreferrer">
-            Docker Sandboxes documentation <Icon name="arrow" size={15} />
-          </a>
-        </section>
-      )}
       {active && (
         <div className="card settings-info">
           <Providers disabled={busy || checkingSetup} />

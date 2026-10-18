@@ -14,42 +14,12 @@ const navigation: {
   { id: "settings", icon: "settings", label: "Settings" },
 ];
 
-export function Topbar({
-  busy,
-  checkingSetup,
-  onAccount,
-}: {
-  busy: boolean;
-  checkingSetup: boolean;
-  onAccount: () => void;
-}) {
+export function Topbar() {
   return (
     <header className="topbar">
       <div className="brand">
         <img src={logo} alt="" />
         <span>Sandy</span>
-      </div>
-      <div className="topbar-right">
-        <a
-          className="icon-button"
-          href="https://docs.docker.com/ai/sandboxes/"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Docker Sandboxes help"
-        >
-          <Icon name="help" />
-        </a>
-        <button
-          className="account-button"
-          disabled={busy || checkingSetup}
-          onClick={onAccount}
-          aria-label="Account settings"
-        >
-          <span className="avatar-chip">
-            <Icon name="user" size={18} />
-          </span>
-          <Icon name="chevron" size={16} />
-        </button>
       </div>
     </header>
   );
