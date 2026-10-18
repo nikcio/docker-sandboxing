@@ -72,14 +72,7 @@ export default function App() {
 
   return (
     <div className="shell">
-      <Topbar
-        busy={busy}
-        checkingSetup={checkingSetup}
-        onAccount={() => {
-          setView("settings");
-          void refreshStatus();
-        }}
-      />
+      <Topbar />
       <div className="body">
         <Sidebar
           view={view}
