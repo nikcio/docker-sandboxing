@@ -106,11 +106,6 @@ export default function DashboardPage({
         <div className="page-head dashboard-page-head">
           <div>
             <h1>{home ? "Welcome to Sandy" : "Your Sandboxes"}</h1>
-            {!home && (
-              <p className="page-sub">
-                Your local environments. One comfortable place to keep track of them.
-              </p>
-            )}
           </div>
           {!home && (
             <button className="primary" onClick={onCreate}>
