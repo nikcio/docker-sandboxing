@@ -45,9 +45,13 @@ When a setup check reports an incomplete step, Sandy automatically opens **Setti
 
 Use **Skip for now** to skip a step or **Set up later** to defer setup and browse Home. Errors show details and a **Try again** action. The finish summary shows what is ready and what remains for later. Return to **Settings** to continue incomplete setup or **Review setup**; completed steps can be selected and explicitly run again.
 
+### Updating Sandy
+
+Sandy checks for updates after it starts and whenever you open **Settings**. When a newer release exists, Home and Sandboxes show a banner offering **Update now**; **Later** hides it for a day. The same action lives in **Settings → An update is available**, next to a **Check for updates** button. The download is verified against Sandy's release signature before anything is installed, and Sandy restarts itself when the update is done — sandboxes, templates, and settings are untouched. Development builds (`tauri dev`) never check for updates.
+
 ## Installing Sandy
 
-Download the installer for your platform from the [releases page](https://github.com/nikcio/docker-sandboxing/releases) — Sandy is built and attached automatically whenever a release is published:
+Download the installer for your platform from the [releases page](https://github.com/nikcio/docker-sandboxing/releases) — Sandy is built and attached automatically whenever a release is published. Once installed, Sandy offers in-app updates (see [Updating Sandy](#updating-sandy)); the download page remains available if you prefer installing manually:
 
 | Platform | File |
 | -------- | ---- |
