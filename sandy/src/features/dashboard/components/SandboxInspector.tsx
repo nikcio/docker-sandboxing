@@ -11,7 +11,6 @@ export function SandboxInspector({
   installed,
   onAction,
   onOpen,
-  onCreate,
   actionLabels,
 }: {
   detail: SandboxInfo | null;
@@ -20,7 +19,6 @@ export function SandboxInspector({
   installed: boolean;
   onAction: (action: SandboxAction) => void;
   onOpen: () => void;
-  onCreate: () => void;
   actionLabels: Record<SandboxAction, string>;
 }) {
   return (
@@ -89,15 +87,6 @@ export function SandboxInspector({
                   <StatePill state={detail.state} />
                 </dd>
               </dl>
-              <div className="tip">
-                <h4>
-                  <Icon name="sparkles" size={20} /> Tip
-                </h4>
-                <p>Templates give your next project a ready-to-use environment.</p>
-                <button className="text-button" onClick={onCreate}>
-                  Create another sandbox <Icon name="arrow" size={15} />
-                </button>
-              </div>
             </div>
           </>
         ) : (
