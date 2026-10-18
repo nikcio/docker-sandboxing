@@ -117,11 +117,9 @@ export default function DashboardPage({
                 "Your Sandboxes"
               )}
             </h1>
-            <p className="page-sub">
-              {home
-                ? "Run and manage your Docker sandboxes."
-                : "Your local environments. One comfortable place to keep track of them."}
-            </p>
+            {home && (
+              <p className="page-sub">Run and manage your Docker sandboxes.</p>
+            )}
           </div>
           {!home && (
             <button className="primary" onClick={onCreate}>
