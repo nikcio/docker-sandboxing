@@ -305,12 +305,6 @@ h4 {
   line-height: 1.25;
 }
 
-.wave {
-  display: inline-block;
-  margin-right: 4px;
-  font-size: 0.95em;
-}
-
 .page-sub {
   font-size: 17px;
   color: #5870a6;
@@ -406,13 +400,13 @@ h4 {
   text-align: left;
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: center;
+  gap: 13px;
   background: #ffffffd9;
   border: 1px solid var(--border);
   border-radius: 11px;
-  padding: 19px;
-  min-height: 198px;
+  padding: 15px 19px;
   color: var(--text);
   box-shadow: 0 4px 12px #7399e005;
 }
@@ -431,12 +425,12 @@ h4 {
 }
 
 .action-icon {
-  width: 49px;
-  height: 49px;
+  width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
-  border-radius: 15px;
-  margin-bottom: 16px;
+  border-radius: 13px;
+  flex: none;
   color: var(--primary);
   background: #eeeaff;
   border: 1px solid #dbd4ff;
@@ -446,9 +440,6 @@ h4 {
   background: #ffffff20;
   color: white;
   border-color: transparent;
-  width: 53px;
-  height: 53px;
-  margin-bottom: 10px;
 }
 
 .blue {
@@ -472,31 +463,17 @@ h4 {
 .action-title {
   font-weight: 650;
   font-size: 15px;
-  margin-bottom: 7px;
   line-height: 1.4;
-}
-
-.action-desc {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
-  max-width: 190px;
-  padding-bottom: 23px;
-}
-
-.featured .action-desc {
-  color: #f3f1ff;
+  flex: 1;
 }
 
 .action-arrow {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
   display: grid;
   place-items: center;
-  width: 31px;
-  height: 31px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
+  flex: none;
   background: linear-gradient(135deg, #fff, #eeebff);
   color: var(--primary);
 }
@@ -1422,8 +1399,7 @@ pre {
   }
 
   .action-card {
-    min-height: 198px;
-    padding: 19px 21px;
+    padding: 14px 17px;
   }
 
   .inspector {
@@ -1437,15 +1413,11 @@ pre {
 
 @media (min-width: 1271px) and (max-width: 1399px) {
   .action-card {
-    padding: 17px 12px;
+    padding: 13px 12px;
   }
 
   .action-title {
     font-size: 13px;
-  }
-
-  .action-desc {
-    font-size: 12px;
   }
 }
 
@@ -1474,10 +1446,6 @@ pre {
 
   .action-cards {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .action-card {
-    min-height: 175px;
   }
 
   .page-sub {

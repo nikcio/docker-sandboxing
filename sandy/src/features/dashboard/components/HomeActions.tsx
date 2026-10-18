@@ -17,7 +17,6 @@ export function HomeActions({
           <Icon name="create" size={32} />
         </span>
         <span className="action-title">Create sandbox</span>
-        <span className="action-desc">Start with a project and template.</span>
         <span className="action-arrow">
           <Icon name="arrow" size={19} />
         </span>
@@ -27,7 +26,6 @@ export function HomeActions({
           <Icon name="template" size={27} />
         </span>
         <span className="action-title">From template</span>
-        <span className="action-desc">Use a pre-configured environment.</span>
         <span className="action-arrow">
           <Icon name="arrow" size={18} />
         </span>
@@ -37,7 +35,6 @@ export function HomeActions({
           <Icon name="book" size={27} />
         </span>
         <span className="action-title">Learn more</span>
-        <span className="action-desc">View quick start guide and tips.</span>
         <span className="action-arrow">
           <Icon name="arrow" size={18} />
         </span>

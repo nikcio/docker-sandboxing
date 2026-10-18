@@ -105,23 +105,12 @@ export default function DashboardPage({
       <div className="dashboard-main">
         <div className="page-head dashboard-page-head">
           <div>
-            <h1>
-              {home ? (
-                <>
-                  <span className="wave" aria-hidden="true">
-                    <Icon name="wave" size={36} />
-                  </span>{" "}
-                  Welcome to Sandy
-                </>
-              ) : (
-                "Your Sandboxes"
-              )}
-            </h1>
-            <p className="page-sub">
-              {home
-                ? "Run and manage your Docker sandboxes."
-                : "Your local environments. One comfortable place to keep track of them."}
-            </p>
+            <h1>{home ? "Welcome to Sandy" : "Your Sandboxes"}</h1>
+            {!home && (
+              <p className="page-sub">
+                Your local environments. One comfortable place to keep track of them.
+              </p>
+            )}
           </div>
           {!home && (
             <button className="primary" onClick={onCreate}>
