@@ -14,42 +14,12 @@ const navigation: {
   { id: "settings", icon: "settings", label: "Settings" },
 ];
 
-export function Topbar({
-  busy,
-  checkingSetup,
-  onAccount,
-}: {
-  busy: boolean;
-  checkingSetup: boolean;
-  onAccount: () => void;
-}) {
+export function Topbar() {
   return (
     <header className="topbar">
       <div className="brand">
         <img src={logo} alt="" />
         <span>Sandy</span>
-      </div>
-      <div className="topbar-right">
-        <a
-          className="icon-button"
-          href="https://docs.docker.com/ai/sandboxes/"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Docker Sandboxes help"
-        >
-          <Icon name="help" />
-        </a>
-        <button
-          className="account-button"
-          disabled={busy || checkingSetup}
-          onClick={onAccount}
-          aria-label="Account settings"
-        >
-          <span className="avatar-chip">
-            <Icon name="user" size={18} />
-          </span>
-          <Icon name="chevron" size={16} />
-        </button>
       </div>
     </header>
   );
@@ -61,12 +31,15 @@ export function Sidebar({
   checkingSetup,
   count,
   onNavigate,
+  onViewGuide,
 }: {
   view: View;
   busy: boolean;
   checkingSetup: boolean;
   count: number | null;
   onNavigate: (view: Exclude<View, "create">) => void;
+  /** Replaces the guide link while the guide view is not built yet. */
+  onViewGuide: () => void;
 }) {
   return (
     <aside className="sidebar">
@@ -94,9 +67,9 @@ export function Sidebar({
           <Icon name="bulb" size={19} /> Need help?
         </div>
         <p>Check out our guide on how to use sandboxes.</p>
-        <a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noreferrer">
+        <button type="button" className="link-button" onClick={onViewGuide}>
           View guide <Icon name="arrow" size={15} />
-        </a>
+        </button>
       </div>
     </aside>
   );

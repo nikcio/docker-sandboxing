@@ -92,7 +92,7 @@ export function SandboxInspector({
                 <dt>Agent</dt>
                 <dd>{detail.agent || "Not reported"}</dd>
                 <dt>Workspace</dt>
-                <dd>{detail.workspace || "Not reported"}</dd>
+                <dd>{detail.workspace || "No workspace"}</dd>
                 <dt>Status</dt>
                 <dd>
                   <StatePill state={detail.state} />
