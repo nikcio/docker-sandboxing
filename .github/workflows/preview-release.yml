@@ -9,6 +9,10 @@ name: Preview Release
 # 2. The merge triggers this workflow's push job, which tags the prerelease,
 #    builds Sandy, and publishes the GitHub release marked as a prerelease.
 #
+# Preview release PRs are only ever opened by manual dispatch: push runs pass
+# skip-github-pull-request, so landing regular commits on main never opens
+# one.
+#
 # The next stable release PR supersedes any previews: it releases the same
 # commits again as a full version (see agent-guidance/versioning.md).
 
@@ -49,14 +53,16 @@ jobs:
           config-file: .release-please-preview-config.json
           manifest-file: .release-please-preview-manifest.json
           token: ${{ steps.app-token.outputs.token }}
+          # push runs only tag a merged preview release PR; opening preview
+          # release PRs happens exclusively on manual dispatch
+          skip-github-pull-request: ${{ github.event_name != 'workflow_dispatch' }}
 
       - name: Auto-merge preview release PR
-        # On manual dispatch the job above opens (or updates) the preview
-        # release PR; queue it for auto-merge (requires the repo setting
-        # "Allow auto-merge"). The PR is created by the GitHub App, so the
-        # required checks run on it and GitHub merges when they pass. The
-        # merge commit then triggers the push run of this workflow, which
-        # tags the prerelease.
+        # The job above opens (or updates) the preview release PR; queue it
+        # for auto-merge (requires the repo setting "Allow auto-merge"). The
+        # PR is created by the GitHub App, so the required checks run on it
+        # and GitHub merges when they pass. The merge commit then triggers
+        # the push run of this workflow, which tags the prerelease.
         if: github.event_name == 'workflow_dispatch' && steps.release.outputs.prs_created == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
