@@ -37,6 +37,7 @@ export default function DashboardPage({
   onCount,
 }: DashboardPageProps) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const [connecting, setConnecting] = useState<SandboxInfo | null>(null);
   const [search, setSearch] = useState("");
   const installed = !!status?.sbx_installed;
@@ -61,9 +62,14 @@ export default function DashboardPage({
     );
   }, [sandboxes]);
 
+  const selectSandbox = (name: string) => {
+    setSelected(name);
+    setInspectorOpen(true);
+  };
+
   const openConnection = (sandbox: SandboxInfo) => {
     if (isActionInFlight(sandbox.name)) return;
-    setSelected(sandbox.name);
+    selectSandbox(sandbox.name);
     setConnecting(sandbox);
   };
 
@@ -84,7 +90,7 @@ export default function DashboardPage({
     );
 
   return (
-    <div className="dashboard">
+    <div className={`dashboard ${inspectorOpen ? "" : "inspector-closed"}`}>
       <div className="dashboard-main">
         <div className="page-head dashboard-page-head">
           <div>
@@ -133,21 +139,24 @@ export default function DashboardPage({
           search={search}
           onSearch={setSearch}
           onRefresh={() => void refresh()}
-          onSelect={setSelected}
+          onSelect={selectSandbox}
           onOpen={openConnection}
           onCreate={onCreate}
           summary={summary}
         />
       </div>
-      <SandboxInspector
-        detail={detail}
-        pending={detailPending}
-        running={detailRunning}
-        installed={installed}
-        onAction={(action) => detail && void runAction(detail.name, action).catch(() => {})}
-        onOpen={() => detail && openConnection(detail)}
-        actionLabels={actionLabels}
-      />
+      {inspectorOpen && (
+        <SandboxInspector
+          detail={detail}
+          pending={detailPending}
+          running={detailRunning}
+          installed={installed}
+          onAction={(action) => detail && void runAction(detail.name, action).catch(() => {})}
+          onOpen={() => detail && openConnection(detail)}
+          onClose={() => setInspectorOpen(false)}
+          actionLabels={actionLabels}
+        />
+      )}
       <div className="dashboard-notifications" aria-live="polite" aria-atomic="true">
         {notice && <Toast notice={notice} onDismiss={dismissNotice} />}
       </div>

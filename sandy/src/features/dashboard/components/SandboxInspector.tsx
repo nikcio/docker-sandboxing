@@ -11,6 +11,7 @@ export function SandboxInspector({
   installed,
   onAction,
   onOpen,
+  onClose,
   actionLabels,
 }: {
   detail: SandboxInfo | null;
@@ -19,6 +20,7 @@ export function SandboxInspector({
   installed: boolean;
   onAction: (action: SandboxAction) => void;
   onOpen: () => void;
+  onClose: () => void;
   actionLabels: Record<SandboxAction, string>;
 }) {
   return (
@@ -33,6 +35,14 @@ export function SandboxInspector({
                   <h2>{detail.name}</h2>
                   <StatePill state={detail.state} />
                 </div>
+                <button
+                  className="icon-button inspector-close"
+                  aria-label="Close sandbox details"
+                  title="Close sandbox details"
+                  onClick={onClose}
+                >
+                  <Icon name="close" size={18} />
+                </button>
               </div>
               <p className="local-label">
                 Local sandbox <span>·</span> {detail.agent || "No agent reported"}
