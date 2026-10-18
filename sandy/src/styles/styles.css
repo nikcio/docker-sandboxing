@@ -1398,7 +1398,7 @@ pre {
    frameless frame — the window itself stays transparent, so only the card's
    corners are see-through. */
 .loading-splash {
-  min-height: 100vh;
+  height: 100vh;
   padding: 12px;
   background: transparent;
   user-select: none;
@@ -1410,7 +1410,9 @@ pre {
   justify-content: center;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
   height: 100%;
+  flex: 1;
   color: var(--muted);
   background: #f8faff;
   border: 1px solid var(--border);
