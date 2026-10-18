@@ -34,6 +34,13 @@ export function ProviderEditor({
   const currentKey = useRef(repositoryKey);
   currentKey.current = repositoryKey;
   const inFlight = useRef(false);
+  // Latest values for the async version fetch, without making it a render effect.
+  const providerRef = useRef(provider);
+  providerRef.current = provider;
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
+  const manualRef = useRef(manual);
+  manualRef.current = manual;
   const searchProvider = isHubSearchProvider(provider);
 
   useEffect(() => {
@@ -45,7 +52,19 @@ export function ProviderEditor({
       },
     );
     setManual(false);
-  }, [repositoryKey]);
+    // Auto-fetch the version list for enabled, valid providers with no chosen
+    // reference so the latest release can be selected without extra clicks.
+    if (
+      !disabled &&
+      provider.enabled &&
+      !isHubSearchProvider(provider) &&
+      repositoryIsValid(provider.repository, provider.kind) &&
+      !provider.reference.trim() &&
+      !inFlight.current
+    ) {
+      void loadVersions();
+    }
+  }, [repositoryKey, provider.id, disabled]);
 
   const loadVersions = async () => {
     if (inFlight.current) return;
@@ -72,6 +91,12 @@ export function ProviderEditor({
       if (currentKey.current === key) {
         setVersions(next);
         if (!values.length) setManual(true);
+        // With nothing chosen yet, default to the newest release. Discovery
+        // treats an empty reference as "latest", so only fill a concrete
+        // selection while the user has not started typing a manual reference.
+        if (values.length && !manualRef.current && !providerRef.current.reference.trim()) {
+          onUpdateRef.current({ ...providerRef.current, reference: values[0] });
+        }
       }
     } catch (failure) {
       if (currentKey.current === key) {
@@ -155,7 +180,11 @@ export function ProviderEditor({
                 onChange={(event) => onUpdate({ ...provider, reference: event.target.value })}
               >
                 <option value="" disabled>
-                  {provider.reference ? `Current: ${provider.reference}` : "Choose a version"}
+                  {provider.reference
+                    ? `Current: ${provider.reference}`
+                    : versions.loading
+                      ? "Fetching versions…"
+                      : "Latest release"}
                 </option>
                 {versions.values.map((reference) => (
                   <option key={reference} value={reference}>
@@ -188,7 +217,7 @@ export function ProviderEditor({
               </label>
             </div>
           </div>
-          {(manual || !versions.values.length) && (
+          {(manual || (!versions.values.length && !versions.loading)) && (
             <label className="catalog-field catalog-reference" htmlFor={`${id}-reference`}>
               {provider.kind === "github" ? "Tag, branch, or commit" : "Tag or digest"}
               <input
@@ -201,10 +230,15 @@ export function ProviderEditor({
             </label>
           )}
           <p className="catalog-help">
-            Selected reference: <code>{provider.reference || "None"}</code>
+            Selected reference:{" "}
+            <code>
+              {provider.reference || (versions.loading ? "Fetching latest…" : "Latest release")}
+            </code>
             {versions.fetchedAt
               ? ` · Version list cached in this view at ${versions.fetchedAt}`
-              : " · Remote versions have not been loaded for this repository."}
+              : versions.loading
+                ? " · Loading remote versions…"
+                : " · Remote versions have not been loaded for this repository."}
           </p>
           {versions.error && (
             <div className="catalog-inline-error" role="alert">

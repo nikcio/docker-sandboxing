@@ -28,8 +28,6 @@ export default function CreatePage({ onClose, onCreated, onTemplates, onBusyChan
     busy,
     error,
     providers,
-    providersDirty,
-    setProvidersDirty,
     hubQuery,
     setHubQuery,
     catalog,
@@ -111,10 +109,8 @@ export default function CreatePage({ onClose, onCreated, onTemplates, onBusyChan
       {error && (
         <ErrorBanner
           title={saved ? "Launch needs attention." : "We couldn’t complete that step."}
-          actionLabel={
-            step === 0 && !saved ? "Retry discovery" : undefined
-          }
-          disabled={busy !== null || providersDirty || !providers}
+          actionLabel={step === 0 && !saved ? "Retry discovery" : undefined}
+          disabled={busy !== null || !providers}
           onAction={step === 0 && !saved ? () => void discover() : undefined}
         >
           <p>{error}</p>
@@ -135,7 +131,7 @@ export default function CreatePage({ onClose, onCreated, onTemplates, onBusyChan
         />
       ) : (
         <>
-          {step === 0 && providers && (
+          {step === 0 && (
             <div className="card catalog-panel">
               <h2>Start with your kit sources</h2>
               <p className="catalog-muted">
@@ -145,16 +141,31 @@ export default function CreatePage({ onClose, onCreated, onTemplates, onBusyChan
               <Providers
                 disabled={busy !== null}
                 onChange={onProvidersChange}
-                onDirtyChange={setProvidersDirty}
               />
-              <DiscoveryStep
-                providers={providers}
-                providersDirty={providersDirty}
-                hubQuery={hubQuery}
-                onHubQuery={setHubQuery}
-                busy={busy !== null}
-                onDiscover={() => void discover()}
-              />
+              {providers && (
+                <DiscoveryStep
+                  providers={providers}
+                  hubQuery={hubQuery}
+                  onHubQuery={setHubQuery}
+                  busy={busy !== null}
+                  onDiscover={() => void discover()}
+                />
+              )}
+            </div>
+          )}
+          {step > 0 && !catalog && (
+            <div className="card catalog-panel">
+              <p className="catalog-muted">
+                No discovery results. Review your kit sources and discover kits again.
+              </p>
+              <button
+                type="button"
+                className="primary"
+                disabled={busy !== null}
+                onClick={() => moveTo(0)}
+              >
+                Review kit sources
+              </button>
             </div>
           )}
           {step > 0 && catalog && (
