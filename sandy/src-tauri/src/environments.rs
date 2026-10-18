@@ -1027,7 +1027,7 @@ mod tests {
             }
         }
 
-        let _guard = crate::sbx::CLI_TEST_ENV_LOCK
+        let _guard = crate::sbx::test_env::CLI_TEST_ENV_LOCK
             .lock()
             .unwrap_or_else(|error| error.into_inner());
         let fixture = Fixture::new();

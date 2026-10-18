@@ -16,7 +16,7 @@ pub struct SetupStatus {
     pub issues: Vec<String>,
 }
 
-fn read_status() -> Result<SetupStatus, String> {
+pub(crate) fn read_status() -> Result<SetupStatus, String> {
     let sbx_installed = sbx::is_sbx_installed();
     if !sbx_installed {
         return Ok(SetupStatus {
