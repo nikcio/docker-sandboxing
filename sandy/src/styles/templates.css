@@ -568,7 +568,11 @@ pre.catalog-yaml {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  flex-shrink: 0;
+  /* Beats .catalog-section-heading > div { flex: 1; ... }: actions hug the
+     right edge instead of stretching like the heading text block. */
+  flex: 0 0 auto;
+  margin-left: auto;
+  justify-content: flex-end;
 }
 
 .catalog-launch-dialog {
