@@ -23,7 +23,7 @@
 
 .dashboard .page-head h1 {
   font-size: clamp(26px, 2.5vw, 34px);
-  letter-spacing: -.8px;
+  letter-spacing: -0.8px;
 }
 
 .dashboard .page-sub {
@@ -290,7 +290,7 @@
 
 .connect-dialog h2 {
   font-size: 24px;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
   margin: 0 30px 8px 0;
   overflow-wrap: anywhere;
 }

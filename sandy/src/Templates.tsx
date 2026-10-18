@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import {
-  launchTemplate,
-  listTemplates,
-  pickWorkspace,
-  templateWarnings,
-} from "./catalog-api";
+import { launchTemplate, listTemplates, pickWorkspace, templateWarnings } from "./catalog-api";
 import type { SavedTemplate } from "./catalog-api";
 import Icon from "./Icon";
 
@@ -15,11 +10,7 @@ export interface TemplatesProps {
   onBusyChange?: (busy: boolean) => void;
 }
 
-export default function Templates({
-  onCreate,
-  onLaunched,
-  onBusyChange,
-}: TemplatesProps) {
+export default function Templates({ onCreate, onLaunched, onBusyChange }: TemplatesProps) {
   const id = useId();
   const [templates, setTemplates] = useState<SavedTemplate[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,7 +79,7 @@ export default function Templates({
     mounted.current = true;
     generation.current += 1;
     loadingLock.current = false;
-    refresh();
+    void refresh();
     return () => {
       mounted.current = false;
       generation.current += 1;
@@ -161,23 +152,13 @@ export default function Templates({
   );
 
   return (
-    <section
-      className="standalone-page catalog-page"
-      aria-labelledby={`${id}-title`}
-    >
+    <section className="standalone-page catalog-page" aria-labelledby={`${id}-title`}>
       <header className="page-head catalog-page-heading">
         <div>
           <h1 id={`${id}-title`}>Templates</h1>
-          <p className="page-sub">
-            Your saved environments, ready for the next project.
-          </p>
+          <p className="page-sub">Your saved environments, ready for the next project.</p>
         </div>
-        <button
-          type="button"
-          className="primary"
-          disabled={busy !== null}
-          onClick={onCreate}
-        >
+        <button type="button" className="primary" disabled={busy !== null} onClick={onCreate}>
           <Icon name="create" size={18} /> Create template
         </button>
       </header>
@@ -186,8 +167,8 @@ export default function Templates({
           <div>
             <h2>Saved on this computer</h2>
             <p className="catalog-muted">
-              Reuse the same tools with a different sandbox name or workspace.
-              Your saved template stays the same.
+              Reuse the same tools with a different sandbox name or workspace. Your saved template
+              stays the same.
             </p>
           </div>
           <button
@@ -204,12 +185,7 @@ export default function Templates({
           <div className="error-banner" role="alert">
             <strong>Couldn’t load saved templates.</strong>
             <p>{error}</p>
-            <button
-              type="button"
-              className="ghost"
-              disabled={loading}
-              onClick={refresh}
-            >
+            <button type="button" className="ghost" disabled={loading} onClick={refresh}>
               Try again
             </button>
           </div>
@@ -218,12 +194,7 @@ export default function Templates({
           <div className="error-banner" role="alert">
             <strong>Couldn’t check template file warnings.</strong>
             <p>{warningsError}</p>
-            <button
-              type="button"
-              className="ghost"
-              disabled={loading}
-              onClick={refresh}
-            >
+            <button type="button" className="ghost" disabled={loading} onClick={refresh}>
               Retry file check
             </button>
           </div>
@@ -231,10 +202,7 @@ export default function Templates({
         {warnings.length > 0 && (
           <details className="catalog-warnings" open>
             <summary>Template file warnings ({warnings.length})</summary>
-            <p>
-              Some saved files could not be read. Readable templates are still
-              available below.
-            </p>
+            <p>Some saved files could not be read. Readable templates are still available below.</p>
             <ul>
               {warnings.map((warning, index) => (
                 <li key={index}>{warning}</li>
@@ -265,10 +233,7 @@ export default function Templates({
               <Icon name="template" size={32} />
             </span>
             <h2>A starting point worth keeping</h2>
-            <p>
-              Create an environment with your agent and mixins, then save it here
-              to use again.
-            </p>
+            <p>Create an environment with your agent and mixins, then save it here to use again.</p>
             <button type="button" className="primary" onClick={onCreate}>
               Create your first template <Icon name="arrow" size={16} />
             </button>
@@ -276,10 +241,7 @@ export default function Templates({
         )}
         {!!templates?.length && (
           <>
-            <label
-              className="catalog-field catalog-search"
-              htmlFor={`${id}-search`}
-            >
+            <label className="catalog-field catalog-search" htmlFor={`${id}-search`}>
               Search saved templates
               <input
                 id={`${id}-search`}
@@ -301,9 +263,7 @@ export default function Templates({
                       <h3>{template.name}</h3>
                       <p className="catalog-template-meta">
                         {template.agent}{" "}
-                        <span className="catalog-badge">
-                          Kit v{template.kit_version}
-                        </span>
+                        <span className="catalog-badge">Kit v{template.kit_version}</span>
                       </p>
                     </div>
                     <button
@@ -332,10 +292,7 @@ export default function Templates({
                   </dl>
                   <details className="catalog-output">
                     <summary>Preview saved YAML</summary>
-                    <pre
-                      className="catalog-yaml"
-                      aria-label={`Saved YAML for ${template.name}`}
-                    >
+                    <pre className="catalog-yaml" aria-label={`Saved YAML for ${template.name}`}>
                       <code>{template.content}</code>
                     </pre>
                   </details>
@@ -345,11 +302,7 @@ export default function Templates({
             {!visible.length && (
               <div className="catalog-empty-note">
                 <p>No templates match this search.</p>
-                <button
-                  type="button"
-                  className="ghost"
-                  onClick={() => setSearch("")}
-                >
+                <button type="button" className="ghost" onClick={() => setSearch("")}>
                   Clear search
                 </button>
               </div>
@@ -385,8 +338,8 @@ export default function Templates({
             </button>
           </div>
           <p className="catalog-muted" id={`${id}-launch-description`}>
-            Choose a new name or workspace to reuse this environment. These
-            choices apply to this launch.
+            Choose a new name or workspace to reuse this environment. These choices apply to this
+            launch.
           </p>
           {launchError && (
             <div className="error-banner" role="alert">
@@ -410,8 +363,8 @@ export default function Templates({
                 onChange={(event) => setName(event.target.value)}
               />
               <span className="catalog-help">
-                Use a new name to create a separate sandbox. Start with a letter
-                or number; use letters, numbers, dots, underscores, or hyphens.
+                Use a new name to create a separate sandbox. Start with a letter or number; use
+                letters, numbers, dots, underscores, or hyphens.
               </span>
             </label>
             <label className="catalog-field" htmlFor={`${id}-launch-workspace`}>

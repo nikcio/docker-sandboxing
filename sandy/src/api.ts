@@ -30,13 +30,8 @@ export interface ConnectionInfo {
   command: string;
 }
 
-export const startSandbox = (name: string) =>
-  invoke<string>("start_sandbox", { name });
-export const stopSandbox = (name: string) =>
-  invoke<string>("stop_sandbox", { name });
-export const restartSandbox = (name: string) =>
-  invoke<string>("restart_sandbox", { name });
-export const openTerminal = (name: string) =>
-  invoke<void>("open_terminal", { name });
-export const connectionInfo = (name: string) =>
-  invoke<ConnectionInfo>("connection_info", { name });
+export const startSandbox = (name: string) => invoke<string>("start_sandbox", { name });
+export const stopSandbox = (name: string) => invoke<string>("stop_sandbox", { name });
+export const restartSandbox = (name: string) => invoke<string>("restart_sandbox", { name });
+export const openTerminal = (name: string) => invoke<void>("open_terminal", { name });
+export const connectionInfo = (name: string) => invoke<ConnectionInfo>("connection_info", { name });

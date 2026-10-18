@@ -29,7 +29,8 @@ async function copyText(text: string) {
   (modal ?? document.body).append(field);
   field.select();
   try {
-    if (!document.execCommand("copy")) throw new Error("Clipboard access is unavailable. Select and copy the text below.");
+    if (!document.execCommand("copy"))
+      throw new Error("Clipboard access is unavailable. Select and copy the text below.");
   } finally {
     field.remove();
     if (previous instanceof HTMLElement) previous.focus();
@@ -54,7 +55,11 @@ export default function ConnectSandbox({
   const [busy, setBusy] = useState<"terminal" | "setup" | "check" | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [sshReady, setSshReady] = useState<boolean | null>(status?.ssh_set_up ?? null);
-  const running = sandbox.state.replace(/^[•○]\s*/, "").trim().toLowerCase() === "running";
+  const running =
+    sandbox.state
+      .replace(/^[•○]\s*/, "")
+      .trim()
+      .toLowerCase() === "running";
 
   useEffect(() => {
     const node = dialog.current;
@@ -82,7 +87,9 @@ export default function ConnectSandbox({
 
   useEffect(() => {
     void loadInfo();
-    return () => { infoRequest.current += 1; };
+    return () => {
+      infoRequest.current += 1;
+    };
   }, [loadInfo]);
 
   const close = () => {
@@ -96,7 +103,10 @@ export default function ConnectSandbox({
     setFeedback(null);
     try {
       await onOpenTerminal();
-      setFeedback({ kind: "success", text: `Opened your computer’s terminal for ${sandbox.name}.` });
+      setFeedback({
+        kind: "success",
+        text: `Opened your computer’s terminal for ${sandbox.name}.`,
+      });
     } catch (failure) {
       setFeedback({ kind: "error", text: `Couldn’t open a terminal: ${String(failure)}` });
     } finally {
@@ -117,18 +127,25 @@ export default function ConnectSandbox({
       const ready = next?.ssh_set_up ?? null;
       setSshReady(ready);
       if (ready === true) {
-        setFeedback({ kind: "success", text: "SSH is ready. Follow the editor’s connection steps below." });
+        setFeedback({
+          kind: "success",
+          text: "SSH is ready. Follow the editor’s connection steps below.",
+        });
         await loadInfo();
       } else {
         setFeedback({
           kind: "error",
-          text: ready === false
-            ? "SSH setup is still reported as incomplete. Set up SSH and check again."
-            : "Sandy couldn’t verify SSH setup. Check setup again to confirm it is ready.",
+          text:
+            ready === false
+              ? "SSH setup is still reported as incomplete. Set up SSH and check again."
+              : "Sandy couldn’t verify SSH setup. Check setup again to confirm it is ready.",
         });
       }
     } catch (failure) {
-      setFeedback({ kind: "error", text: `Couldn’t ${configure ? "set up" : "check"} SSH: ${String(failure)}` });
+      setFeedback({
+        kind: "error",
+        text: `Couldn’t ${configure ? "set up" : "check"} SSH: ${String(failure)}`,
+      });
     } finally {
       operation.current = false;
       setBusy(null);
@@ -158,14 +175,28 @@ export default function ConnectSandbox({
         // StrictMode can reopen the dialog before an earlier close event arrives.
         if (!event.currentTarget.open) onClose();
       }}
-      onCancel={(event) => { event.preventDefault(); close(); }}
+      onCancel={(event) => {
+        event.preventDefault();
+        close();
+      }}
       onClick={(event) => {
         if (event.target !== event.currentTarget) return;
         const bounds = event.currentTarget.getBoundingClientRect();
-        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) close();
+        if (
+          event.clientX < bounds.left ||
+          event.clientX > bounds.right ||
+          event.clientY < bounds.top ||
+          event.clientY > bounds.bottom
+        )
+          close();
       }}
     >
-      <button className="icon-button dialog-close" aria-label="Close connection dialog" disabled={!!busy} onClick={close}>
+      <button
+        className="icon-button dialog-close"
+        aria-label="Close connection dialog"
+        disabled={!!busy}
+        onClick={close}
+      >
         <Icon name="close" />
       </button>
       <span className="eyebrow">CONNECT TO SANDBOX</span>
@@ -173,50 +204,120 @@ export default function ConnectSandbox({
       <p id="connect-description">Use your native terminal or connect your editor over SSH.</p>
 
       <div className="connection-options" role="group" aria-label="Connection options">
-        <button className={method === "terminal" ? "active" : ""} aria-pressed={method === "terminal"} aria-controls="connection-method" disabled={!!busy} onClick={() => { setMethod("terminal"); setFeedback(null); }}>
-          <Icon name="terminal" size={23} /><span>Terminal</span><small>Native terminal</small>
+        <button
+          className={method === "terminal" ? "active" : ""}
+          aria-pressed={method === "terminal"}
+          aria-controls="connection-method"
+          disabled={!!busy}
+          onClick={() => {
+            setMethod("terminal");
+            setFeedback(null);
+          }}
+        >
+          <Icon name="terminal" size={23} />
+          <span>Terminal</span>
+          <small>Native terminal</small>
         </button>
-        <button className={method === "opencode" ? "active" : ""} aria-pressed={method === "opencode"} aria-controls="connection-method" disabled={!!busy} onClick={() => { setMethod("opencode"); setFeedback(null); }}>
-          <Icon name="monitor" size={23} /><span>OpenCode Desktop</span><small>SSH connection guide</small>
+        <button
+          className={method === "opencode" ? "active" : ""}
+          aria-pressed={method === "opencode"}
+          aria-controls="connection-method"
+          disabled={!!busy}
+          onClick={() => {
+            setMethod("opencode");
+            setFeedback(null);
+          }}
+        >
+          <Icon name="monitor" size={23} />
+          <span>OpenCode Desktop</span>
+          <small>SSH connection guide</small>
         </button>
-        <button className={method === "vscode" ? "active" : ""} aria-pressed={method === "vscode"} aria-controls="connection-method" disabled={!!busy} onClick={() => { setMethod("vscode"); setFeedback(null); }}>
-          <Icon name="code" size={23} /><span>VS Code</span><small>Remote – SSH guide</small>
+        <button
+          className={method === "vscode" ? "active" : ""}
+          aria-pressed={method === "vscode"}
+          aria-controls="connection-method"
+          disabled={!!busy}
+          onClick={() => {
+            setMethod("vscode");
+            setFeedback(null);
+          }}
+        >
+          <Icon name="code" size={23} />
+          <span>VS Code</span>
+          <small>Remote – SSH guide</small>
         </button>
       </div>
 
       {!running && (
-        <p className="connection-note">This sandbox is not running. Close this dialog and use <strong>Start</strong> in its details before connecting.</p>
+        <p className="connection-note">
+          This sandbox is not running. Close this dialog and use <strong>Start</strong> in its
+          details before connecting.
+        </p>
       )}
 
-      <section id="connection-method" className="connection-method" aria-labelledby="connection-method-title">
+      <section
+        id="connection-method"
+        className="connection-method"
+        aria-labelledby="connection-method-title"
+      >
         {method === "terminal" ? (
           <>
             <h3 id="connection-method-title">Your sandbox, in a terminal</h3>
-            <p>Open a Bash session in your computer’s terminal. This uses the sandbox CLI and does not require SSH setup.</p>
-            <button ref={terminalButton} className="primary" disabled={!!busy || !running} onClick={() => void launchTerminal()}>
-              {busy === "terminal" ? <span className="spinner" aria-hidden="true" /> : <Icon name="terminal" size={19} />}
+            <p>
+              Open a Bash session in your computer’s terminal. This uses the sandbox CLI and does
+              not require SSH setup.
+            </p>
+            <button
+              ref={terminalButton}
+              className="primary"
+              disabled={!!busy || !running}
+              onClick={() => void launchTerminal()}
+            >
+              {busy === "terminal" ? (
+                <span className="spinner" aria-hidden="true" />
+              ) : (
+                <Icon name="terminal" size={19} />
+              )}
               {busy === "terminal" ? "Opening terminal…" : "Open Terminal"}
             </button>
           </>
         ) : (
           <>
-            <h3 id="connection-method-title">Connect with {method === "opencode" ? "OpenCode Desktop" : "VS Code"}</h3>
+            <h3 id="connection-method-title">
+              Connect with {method === "opencode" ? "OpenCode Desktop" : "VS Code"}
+            </h3>
             <div className={`connection-ssh ${sshReady === true ? "ready" : ""}`}>
               <Icon name={sshReady === true ? "check" : "key"} size={20} />
               <div>
-                <strong>{sshReady === true ? "SSH configuration is ready" : sshReady === false ? "Set up SSH before connecting" : "Check your SSH configuration"}</strong>
-                <p>{sshReady === true
-                  ? "Your SSH configuration handles sandbox routing. Use the host and user below."
-                  : sshReady === false
-                    ? "Run Set up SSH to add sandbox routing to your local SSH configuration (sbx setup ssh). Then follow the editor steps."
-                    : "SSH setup hasn’t been verified. Check setup, or run Set up SSH to configure sandbox routing."}</p>
+                <strong>
+                  {sshReady === true
+                    ? "SSH configuration is ready"
+                    : sshReady === false
+                      ? "Set up SSH before connecting"
+                      : "Check your SSH configuration"}
+                </strong>
+                <p>
+                  {sshReady === true
+                    ? "Your SSH configuration handles sandbox routing. Use the host and user below."
+                    : sshReady === false
+                      ? "Run Set up SSH to add sandbox routing to your local SSH configuration (sbx setup ssh). Then follow the editor steps."
+                      : "SSH setup hasn’t been verified. Check setup, or run Set up SSH to configure sandbox routing."}
+                </p>
                 {sshReady !== true && (
                   <div className="connection-setup-actions">
-                    <button className="primary" disabled={!!busy || !status?.sbx_installed} onClick={() => void checkSsh(true)}>
+                    <button
+                      className="primary"
+                      disabled={!!busy || !status?.sbx_installed}
+                      onClick={() => void checkSsh(true)}
+                    >
                       {busy === "setup" && <span className="spinner" aria-hidden="true" />}
                       {busy === "setup" ? "Setting up SSH…" : "Set up SSH"}
                     </button>
-                    <button className="ghost" disabled={!!busy} onClick={() => void checkSsh(false)}>
+                    <button
+                      className="ghost"
+                      disabled={!!busy}
+                      onClick={() => void checkSsh(false)}
+                    >
                       {busy === "check" ? "Checking…" : "Check SSH setup"}
                     </button>
                   </div>
@@ -225,51 +326,130 @@ export default function ConnectSandbox({
             </div>
             {method === "opencode" ? (
               <ol className="connection-steps">
-                <li>Open <strong>OpenCode Desktop</strong> on your computer.</li>
-                <li>Go to <strong>Settings → Server → Add SSH Server</strong>.</li>
-                <li>Enter host <code>{info?.host ?? `${sandbox.name}.sbx`}</code> and SSH user <code>{info?.user ?? "_default_user_"}</code>.{info?.port != null ? <> Set the port to <code>{info.port}</code>.</> : <> Leave the port unset to use your SSH configuration.</>}</li>
+                <li>
+                  Open <strong>OpenCode Desktop</strong> on your computer.
+                </li>
+                <li>
+                  Go to <strong>Settings → Server → Add SSH Server</strong>.
+                </li>
+                <li>
+                  Enter host <code>{info?.host ?? `${sandbox.name}.sbx`}</code> and SSH user{" "}
+                  <code>{info?.user ?? "_default_user_"}</code>.
+                  {info?.port != null ? (
+                    <>
+                      {" "}
+                      Set the port to <code>{info.port}</code>.
+                    </>
+                  ) : (
+                    <> Leave the port unset to use your SSH configuration.</>
+                  )}
+                </li>
                 <li>Save the server and select it to connect to the sandbox.</li>
               </ol>
             ) : (
               <ol className="connection-steps">
-                <li>Install the <strong>Remote – SSH</strong> extension in VS Code.</li>
-                <li>Click the <strong>&gt;&lt; remote connection button</strong> in the bottom-left corner.</li>
-                <li>Choose <strong>Connect to Host…</strong> and enter <code>{info ? `${info.user}@${info.host}` : `_default_user_@${sandbox.name}.sbx`}</code>.{info?.port != null && <> Use the SSH command below with <strong>Add New SSH Host…</strong> to include port <code>{info.port}</code>.</>}</li>
-                <li>Connect, then use <strong>Open Folder</strong> to choose your project inside the sandbox.</li>
+                <li>
+                  Install the <strong>Remote – SSH</strong> extension in VS Code.
+                </li>
+                <li>
+                  Click the <strong>&gt;&lt; remote connection button</strong> in the bottom-left
+                  corner.
+                </li>
+                <li>
+                  Choose <strong>Connect to Host…</strong> and enter{" "}
+                  <code>
+                    {info ? `${info.user}@${info.host}` : `_default_user_@${sandbox.name}.sbx`}
+                  </code>
+                  .
+                  {info?.port != null && (
+                    <>
+                      {" "}
+                      Use the SSH command below with <strong>Add New SSH Host…</strong> to include
+                      port <code>{info.port}</code>.
+                    </>
+                  )}
+                </li>
+                <li>
+                  Connect, then use <strong>Open Folder</strong> to choose your project inside the
+                  sandbox.
+                </li>
               </ol>
             )}
           </>
         )}
       </section>
 
-      <section className="connection-server" aria-labelledby="connection-server-title" aria-busy={loadingInfo}>
+      <section
+        className="connection-server"
+        aria-labelledby="connection-server-title"
+        aria-busy={loadingInfo}
+      >
         <div className="connection-server-head">
           <h3 id="connection-server-title">SSH server information</h3>
-          {info && <button className="text-button" disabled={!!busy} onClick={() => void copy(serverInfo, "Server information")}><Icon name="clipboard" size={16} /> Copy server info</button>}
+          {info && (
+            <button
+              className="text-button"
+              disabled={!!busy}
+              onClick={() => void copy(serverInfo, "Server information")}
+            >
+              <Icon name="clipboard" size={16} /> Copy server info
+            </button>
+          )}
         </div>
-        {loadingInfo && <p className="connection-loading" role="status"><span className="spinner" /> Reading connection information…</p>}
+        {loadingInfo && (
+          <p className="connection-loading" role="status">
+            <span className="spinner" /> Reading connection information…
+          </p>
+        )}
         {infoError && (
           <div className="error-banner" role="alert">
-            <strong>Couldn’t read SSH connection information.</strong><p>{infoError}</p>
-            <button className="ghost" disabled={loadingInfo || !!busy} onClick={() => void loadInfo()}>Try again</button>
+            <strong>Couldn’t read SSH connection information.</strong>
+            <p>{infoError}</p>
+            <button
+              className="ghost"
+              disabled={loadingInfo || !!busy}
+              onClick={() => void loadInfo()}
+            >
+              Try again
+            </button>
           </div>
         )}
         {info && (
           <>
             <dl className="connection-info">
-              <dt>Host</dt><dd><code>{info.host}</code></dd>
-              <dt>SSH user</dt><dd><code>{info.user}</code></dd>
-              <dt>Port</dt><dd>{info.port == null ? "From your SSH configuration" : info.port}</dd>
+              <dt>Host</dt>
+              <dd>
+                <code>{info.host}</code>
+              </dd>
+              <dt>SSH user</dt>
+              <dd>
+                <code>{info.user}</code>
+              </dd>
+              <dt>Port</dt>
+              <dd>{info.port == null ? "From your SSH configuration" : info.port}</dd>
             </dl>
             <div className="connection-command">
               <code>{info.command}</code>
-              <button className="icon-button" aria-label="Copy SSH command" title="Copy SSH command" disabled={!!busy} onClick={() => void copy(info.command, "SSH command")}><Icon name="clipboard" size={19} /></button>
+              <button
+                className="icon-button"
+                aria-label="Copy SSH command"
+                title="Copy SSH command"
+                disabled={!!busy}
+                onClick={() => void copy(info.command, "SSH command")}
+              >
+                <Icon name="clipboard" size={19} />
+              </button>
             </div>
           </>
         )}
       </section>
       <div className="connection-feedback" aria-live="polite" aria-atomic="true">
-        {feedback && <p className={feedback.kind} role={feedback.kind === "error" ? "alert" : "status"}><Icon name={feedback.kind === "success" ? "check" : "help"} size={19} />{feedback.text}</p>}
+        {feedback && (
+          <p className={feedback.kind} role={feedback.kind === "error" ? "alert" : "status"}>
+            <Icon name={feedback.kind === "success" ? "check" : "help"} size={19} />
+            {feedback.text}
+          </p>
+        )}
       </div>
     </dialog>
   );

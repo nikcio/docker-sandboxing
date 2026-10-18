@@ -1,11 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import {
-  getProviders,
-  isHubSearchProvider,
-  providerVersions,
-  saveProviders,
-} from "./catalog-api";
+import { getProviders, isHubSearchProvider, providerVersions, saveProviders } from "./catalog-api";
 import type { Provider } from "./catalog-api";
 import Icon from "./Icon";
 
@@ -26,9 +21,7 @@ type VersionState = {
 function normalizeRepository(value: string, kind: Provider["kind"]): string {
   let repository = value.trim().replace(/\/+$/, "");
   if (kind === "github") {
-    repository = repository
-      .replace(/^https?:\/\/github\.com\//i, "")
-      .replace(/\.git$/, "");
+    repository = repository.replace(/^https?:\/\/github\.com\//i, "").replace(/\.git$/, "");
   } else {
     repository = repository
       .replace(/^https?:\/\/hub\.docker\.com\/r\//i, "")
@@ -92,9 +85,7 @@ function ProviderEditor({
         repository: normalizeRepository(provider.repository, provider.kind),
       });
       const values = [
-        ...new Set(
-          result.filter((value) => typeof value === "string" && value.trim()),
-        ),
+        ...new Set(result.filter((value) => typeof value === "string" && value.trim())),
       ];
       const next: VersionState = {
         values,
@@ -133,9 +124,7 @@ function ProviderEditor({
           <input
             type="checkbox"
             checked={provider.enabled}
-            onChange={(event) =>
-              onUpdate({ ...provider, enabled: event.target.checked })
-            }
+            onChange={(event) => onUpdate({ ...provider, enabled: event.target.checked })}
           />
           Enabled for discovery
         </label>
@@ -159,9 +148,7 @@ function ProviderEditor({
             required
             value={provider.label}
             placeholder="Provider name"
-            onChange={(event) =>
-              onUpdate({ ...provider, label: event.target.value })
-            }
+            onChange={(event) => onUpdate({ ...provider, label: event.target.value })}
           />
         </label>
         <label className="catalog-field" htmlFor={`${id}-repository`}>
@@ -173,14 +160,10 @@ function ProviderEditor({
             required={provider.kind === "github"}
             value={provider.repository}
             placeholder={
-              provider.kind === "github"
-                ? "owner/repository"
-                : "Search URL or namespace/repository"
+              provider.kind === "github" ? "owner/repository" : "Search URL or namespace/repository"
             }
             aria-describedby={`${id}-repository-help`}
-            onChange={(event) =>
-              onUpdate({ ...provider, repository: event.target.value })
-            }
+            onChange={(event) => onUpdate({ ...provider, repository: event.target.value })}
           />
           <span className="catalog-help" id={`${id}-repository-help`}>
             {provider.kind === "github"
@@ -198,14 +181,10 @@ function ProviderEditor({
                 id={`${id}-version`}
                 value={hasCurrentReference ? provider.reference : ""}
                 disabled={!versions.values.length || versions.loading || manual}
-                onChange={(event) =>
-                  onUpdate({ ...provider, reference: event.target.value })
-                }
+                onChange={(event) => onUpdate({ ...provider, reference: event.target.value })}
               >
                 <option value="" disabled>
-                  {provider.reference
-                    ? `Current: ${provider.reference}`
-                    : "Choose a version"}
+                  {provider.reference ? `Current: ${provider.reference}` : "Choose a version"}
                 </option>
                 {versions.values.map((reference) => (
                   <option key={reference} value={reference}>
@@ -219,8 +198,7 @@ function ProviderEditor({
                 type="button"
                 className="ghost"
                 disabled={
-                  versions.loading ||
-                  !repositoryIsValid(provider.repository, provider.kind)
+                  versions.loading || !repositoryIsValid(provider.repository, provider.kind)
                 }
                 onClick={loadVersions}
               >
@@ -246,21 +224,14 @@ function ProviderEditor({
             </div>
           </div>
           {(manual || !versions.values.length) && (
-            <label
-              className="catalog-field catalog-reference"
-              htmlFor={`${id}-reference`}
-            >
-              {provider.kind === "github"
-                ? "Tag, branch, or commit"
-                : "Tag or digest"}
+            <label className="catalog-field catalog-reference" htmlFor={`${id}-reference`}>
+              {provider.kind === "github" ? "Tag, branch, or commit" : "Tag or digest"}
               <input
                 id={`${id}-reference`}
                 value={provider.reference}
                 required={provider.enabled}
                 placeholder="Reference"
-                onChange={(event) =>
-                  onUpdate({ ...provider, reference: event.target.value })
-                }
+                onChange={(event) => onUpdate({ ...provider, reference: event.target.value })}
               />
             </label>
           )}
@@ -274,8 +245,8 @@ function ProviderEditor({
             <div className="catalog-inline-error" role="alert">
               <strong>Couldn’t load remote versions.</strong> {versions.error}
               <span>
-                {" "}Your selected reference is kept. You can enter one manually
-                or fetch again.
+                {" "}
+                Your selected reference is kept. You can enter one manually or fetch again.
               </span>
             </div>
           )}
@@ -283,24 +254,19 @@ function ProviderEditor({
       )}
       {searchProvider && (
         <>
-          <label
-            className="catalog-field catalog-reference"
-            htmlFor={`${id}-tag-filter`}
-          >
+          <label className="catalog-field catalog-reference" htmlFor={`${id}-tag-filter`}>
             Repository tag filter (optional)
             <input
               id={`${id}-tag-filter`}
               value={provider.reference}
               placeholder="Newest kit tag per repository"
-              onChange={(event) =>
-                onUpdate({ ...provider, reference: event.target.value })
-              }
+              onChange={(event) => onUpdate({ ...provider, reference: event.target.value })}
             />
           </label>
           <p className="catalog-help">
-            Docker Hub search has no global version. Leave the filter blank to
-            discover each repository’s newest sandbox-kit tag. Add a specific
-            repository provider to fetch and choose its versions before discovery.
+            Docker Hub search has no global version. Leave the filter blank to discover each
+            repository’s newest sandbox-kit tag. Add a specific repository provider to fetch and
+            choose its versions before discovery.
           </p>
         </>
       )}
@@ -308,11 +274,7 @@ function ProviderEditor({
   );
 }
 
-export default function Providers({
-  onChange,
-  onDirtyChange,
-  disabled = false,
-}: ProvidersProps) {
+export default function Providers({ onChange, onDirtyChange, disabled = false }: ProvidersProps) {
   const [providers, setProviders] = useState<Provider[] | null>(null);
   const [saved, setSaved] = useState("");
   const [loading, setLoading] = useState(true);
@@ -357,9 +319,7 @@ export default function Providers({
   }, [reload]);
 
   useEffect(() => {
-    callbacks.current.onDirtyChange?.(
-      loading || providers === null || dirty || incomplete,
-    );
+    callbacks.current.onDirtyChange?.(loading || providers === null || dirty || incomplete);
   }, [dirty, loading, providers, incomplete]);
 
   const update = (next: Provider[]) => {
@@ -375,15 +335,11 @@ export default function Providers({
       providers.some(
         (provider) =>
           !provider.label.trim() ||
-          (!isHubSearchProvider(provider) &&
-            provider.enabled &&
-            !provider.reference.trim()) ||
+          (!isHubSearchProvider(provider) && provider.enabled && !provider.reference.trim()) ||
           !repositoryIsValid(provider.repository, provider.kind),
       )
     ) {
-      setError(
-        "Give each provider a name, a valid repository, and a reference before saving.",
-      );
+      setError("Give each provider a name, a valid repository, and a reference before saving.");
       return;
     }
     lock.current = true;
@@ -421,8 +377,8 @@ export default function Providers({
         <div>
           <h2 id={`${id}-title`}>Kit providers</h2>
           <p className="catalog-muted">
-            Choose where Sandy finds agents, workloads, and mixins. Save your
-            references before discovering kits.
+            Choose where Sandy finds agents, workloads, and mixins. Save your references before
+            discovering kits.
           </p>
         </div>
         {providers !== null && (
@@ -432,10 +388,9 @@ export default function Providers({
         )}
       </div>
       <p className="catalog-help">
-        Enabling a GitHub repository authorizes Sandy to add a repository-scoped
-        entry to <code>sbx kit.allowedSources</code> when you launch its kits.
-        Existing policy entries are preserved. Managed policy restrictions are
-        reported rather than overridden.
+        Enabling a GitHub repository authorizes Sandy to add a repository-scoped entry to{" "}
+        <code>sbx kit.allowedSources</code> when you launch its kits. Existing policy entries are
+        preserved. Managed policy restrictions are reported rather than overridden.
       </p>
       {loading && (
         <p className="catalog-status" role="status">
@@ -468,21 +423,15 @@ export default function Providers({
                 provider={provider}
                 disabled={disabled || saving}
                 onUpdate={(next) =>
-                  update(
-                    providers.map((item) =>
-                      item.id === provider.id ? next : item,
-                    ),
-                  )
+                  update(providers.map((item) => (item.id === provider.id ? next : item)))
                 }
-                onRemove={() =>
-                  update(providers.filter((item) => item.id !== provider.id))
-                }
+                onRemove={() => update(providers.filter((item) => item.id !== provider.id))}
               />
             ))}
             {!providers.length && (
               <p className="catalog-empty-note">
-                No providers configured. Add a GitHub repository or a Docker Hub
-                provider to get started.
+                No providers configured. Add a GitHub repository or a Docker Hub provider to get
+                started.
               </p>
             )}
             <div className="catalog-provider-add">
@@ -491,9 +440,7 @@ export default function Providers({
                 <select
                   id={`${id}-kind`}
                   value={newKind}
-                  onChange={(event) =>
-                    setNewKind(event.target.value as Provider["kind"])
-                  }
+                  onChange={(event) => setNewKind(event.target.value as Provider["kind"])}
                 >
                   <option value="github">GitHub</option>
                   <option value="dockerhub">Docker Hub</option>
@@ -545,11 +492,7 @@ export default function Providers({
               )}
             </div>
             <div className="catalog-actions">
-              <button
-                type="submit"
-                className="primary"
-                disabled={!dirty || saving}
-              >
+              <button type="submit" className="primary" disabled={!dirty || saving}>
                 {saving ? "Saving providers…" : "Save providers"}
               </button>
               <span className="catalog-help" role="status">

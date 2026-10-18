@@ -34,7 +34,7 @@
 .catalog-panel h2,
 .catalog-providers h2 {
   font-size: 22px;
-  letter-spacing: -.45px;
+  letter-spacing: -0.45px;
   margin-bottom: 10px;
 }
 
@@ -355,7 +355,9 @@
   border-radius: 10px;
   background: #fff;
   cursor: pointer;
-  transition: background .16s, border-color .16s;
+  transition:
+    background 0.16s,
+    border-color 0.16s;
 }
 
 .catalog-kit:hover {
@@ -583,7 +585,7 @@ pre.catalog-yaml {
   min-width: 0;
   margin: 0;
   font-size: 22px;
-  letter-spacing: -.4px;
+  letter-spacing: -0.4px;
   overflow-wrap: anywhere;
 }
 
