@@ -76,23 +76,31 @@ fn check_configured(
     ))
 }
 
+/// JSON-only: a human-text fallback would guess at CLI wording that can
+/// change between versions, so an unreadable report is an explicit error
+/// pointing at an upgrade instead of a silent misclassification.
 fn daemon_running() -> Result<bool, String> {
     let out = sbx_command(&["daemon", "status", "--format", "json"])?
         .output()
         .map_err(|e| format!("could not check sbx daemon: {e}"))?;
-    if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&out.stdout)
-        && let Some(status) = value.get("status").and_then(|v| v.as_str())
-    {
-        return Ok(out.status.success() && status.eq_ignore_ascii_case("running"));
-    }
-    // Older CLIs may ignore --format. Match the complete status value, not
-    // the substring "running" (which also matches "not running").
-    let text = String::from_utf8_lossy(&out.stdout);
-    Ok(out.status.success()
-        && text.lines().any(|line| {
-            let value = line.trim().strip_prefix("Status:").unwrap_or(line).trim();
-            value.eq_ignore_ascii_case("running")
-        }))
+    let value: serde_json::Value = serde_json::from_slice(&out.stdout).map_err(|e| {
+        format!(
+            "sbx daemon status did not return a usable JSON report (the CLI may be too old — please upgrade sbx) (exit {}): {e}\n{}",
+            out.status.code().unwrap_or(-1),
+            String::from_utf8_lossy(&out.stderr).trim()
+        )
+    })?;
+    let status = value
+        .get("status")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| {
+            format!(
+                "sbx daemon status returned JSON without a \"status\" string field (the CLI may be too old — please upgrade sbx) (exit {}): {}",
+                out.status.code().unwrap_or(-1),
+                String::from_utf8_lossy(&out.stderr).trim()
+            )
+        })?;
+    Ok(out.status.success() && status.eq_ignore_ascii_case("running"))
 }
 
 /// Bring up the daemon before authentication/settings checks on every OS.
