@@ -12,7 +12,7 @@
       "include-component-in-tag": false,
       "versioning": "prerelease",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "beta001",
       "pull-request-title-pattern": "chore(preview): release v${version}",
       "extra-files": [
         {

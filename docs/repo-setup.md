@@ -58,7 +58,7 @@ The release PR is an ordinary PR: it runs the same checks and must pass before y
 ## Preview releases
 
 Run the Preview Release workflow (Actions → Preview Release → Run workflow) to
-cut a prerelease (`v3.1.0-beta.1`) from current `main`. It opens and queues its
+cut a prerelease (`v3.1.0-beta001`) from current `main`. It opens and queues its
 own release PR for auto-merge, then tags and publishes the Sandy builds as a
 GitHub prerelease. Previews never run on their own — only manual dispatches
 open preview release PRs. No extra setup beyond the stable flow — same GitHub
