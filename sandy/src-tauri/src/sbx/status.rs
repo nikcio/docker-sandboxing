@@ -7,17 +7,21 @@ use super::cli::{run_capture, sbx_command};
 /// A nonzero exit can describe an unrelated failed check (e.g. missing KVM),
 /// while Authentication and SSH client config are still authoritative.
 fn diagnose_report() -> Result<Vec<DiagnoseCheck>, String> {
-    let out = sbx_command(&["diagnose", "--format", "json"])?
-        .output()
-        .map_err(|e| format!("could not run sbx diagnose: {e}"))?;
-    let report: DiagnoseReport = serde_json::from_slice(&out.stdout).map_err(|e| {
-        format!(
-            "sbx diagnose did not return a usable JSON report (exit {}): {e}\n{}",
-            out.status.code().unwrap_or(-1),
-            String::from_utf8_lossy(&out.stderr).trim()
-        )
-    })?;
-    Ok(report.checks)
+    let result = (|| {
+        let out = sbx_command(&["diagnose", "--format", "json"])?
+            .output()
+            .map_err(|e| format!("could not run sbx diagnose: {e}"))?;
+        let report: DiagnoseReport = serde_json::from_slice(&out.stdout).map_err(|e| {
+            format!(
+                "sbx diagnose did not return a usable JSON report (exit {}): {e}\n{}",
+                out.status.code().unwrap_or(-1),
+                String::from_utf8_lossy(&out.stderr).trim()
+            )
+        })?;
+        Ok(report.checks)
+    })();
+    crate::diaglog::cli_call_with(&["diagnose", "--format", "json"], &result);
+    result
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -80,27 +84,31 @@ fn check_configured(
 /// change between versions, so an unreadable report is an explicit error
 /// pointing at an upgrade instead of a silent misclassification.
 fn daemon_running() -> Result<bool, String> {
-    let out = sbx_command(&["daemon", "status", "--format", "json"])?
-        .output()
-        .map_err(|e| format!("could not check sbx daemon: {e}"))?;
-    let value: serde_json::Value = serde_json::from_slice(&out.stdout).map_err(|e| {
-        format!(
-            "sbx daemon status did not return a usable JSON report (the CLI may be too old — please upgrade sbx) (exit {}): {e}\n{}",
-            out.status.code().unwrap_or(-1),
-            String::from_utf8_lossy(&out.stderr).trim()
-        )
-    })?;
-    let status = value
-        .get("status")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| {
+    let result = (|| {
+        let out = sbx_command(&["daemon", "status", "--format", "json"])?
+            .output()
+            .map_err(|e| format!("could not check sbx daemon: {e}"))?;
+        let value: serde_json::Value = serde_json::from_slice(&out.stdout).map_err(|e| {
             format!(
-                "sbx daemon status returned JSON without a \"status\" string field (the CLI may be too old — please upgrade sbx) (exit {}): {}",
+                "sbx daemon status did not return a usable JSON report (the CLI may be too old — please upgrade sbx) (exit {}): {e}\n{}",
                 out.status.code().unwrap_or(-1),
                 String::from_utf8_lossy(&out.stderr).trim()
             )
         })?;
-    Ok(out.status.success() && status.eq_ignore_ascii_case("running"))
+        let status = value
+            .get("status")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| {
+                format!(
+                    "sbx daemon status returned JSON without a \"status\" string field (the CLI may be too old — please upgrade sbx) (exit {}): {}",
+                    out.status.code().unwrap_or(-1),
+                    String::from_utf8_lossy(&out.stderr).trim()
+                )
+            })?;
+        Ok(out.status.success() && status.eq_ignore_ascii_case("running"))
+    })();
+    crate::diaglog::cli_call_with(&["daemon", "status", "--format", "json"], &result);
+    result
 }
 
 /// Bring up the daemon before authentication/settings checks on every OS.

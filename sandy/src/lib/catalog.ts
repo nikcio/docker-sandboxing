@@ -49,6 +49,19 @@ export const discoverKits = (providers: Provider[], query?: string) =>
 export const pickWorkspace = () => invoke<string | null>("pick_workspace");
 export const pickTemplatePath = () => invoke<string | null>("pick_template_path");
 
+/** One structured entry from the Sandy diagnostic log (JSON Lines on disk). */
+export interface DebugLogEntry {
+  timestamp: string;
+  kind: "cli" | "http" | "command" | "error" | "info";
+  summary: string;
+  detail?: string;
+  outcome?: "ok" | "error";
+}
+
+/** The whole diagnostic log file. Empty when nothing has been logged yet. */
+export const readDebugLog = () => invoke<string>("read_debug_log");
+export const clearDebugLog = () => invoke<void>("clear_debug_log");
+
 export function isHubSearchProvider(provider: Provider): boolean {
   const repository = provider.repository.trim().replace(/\/+$/, "");
   return (

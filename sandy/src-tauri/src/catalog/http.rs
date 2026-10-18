@@ -60,6 +60,25 @@ impl Api {
         {
             return Ok((body.clone(), digest.clone()));
         }
+        let result = self.request_uncached(url, token);
+        crate::diaglog::http_call("GET", url, &result);
+        let (body, digest) = result?;
+        let mut entries = cache.lock().map_err(|e| e.to_string())?;
+        if entries.len() > 1024 {
+            entries.retain(|_, (at, _, _)| at.elapsed() < Duration::from_secs(300));
+        }
+        if entries.len() > 1024 {
+            entries.clear();
+        }
+        entries.insert(url.into(), (Instant::now(), body.clone(), digest.clone()));
+        Ok((body, digest))
+    }
+
+    fn request_uncached(
+        &self,
+        url: &str,
+        token: Option<&str>,
+    ) -> Result<(String, Option<String>), String> {
         let mut request = self.client.get(url);
         if let Some(token) = token {
             request = request.bearer_auth(token).header(
@@ -95,14 +114,6 @@ impl Api {
         if body.len() as u64 > MAX_BODY {
             return Err(format!("Metadata from {url} exceeds 12 MiB"));
         }
-        let mut entries = cache.lock().map_err(|e| e.to_string())?;
-        if entries.len() > 1024 {
-            entries.retain(|_, (at, _, _)| at.elapsed() < Duration::from_secs(300));
-        }
-        if entries.len() > 1024 {
-            entries.clear();
-        }
-        entries.insert(url.into(), (Instant::now(), body.clone(), digest.clone()));
         Ok((body, digest))
     }
 
