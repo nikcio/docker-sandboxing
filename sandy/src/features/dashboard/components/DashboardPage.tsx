@@ -73,6 +73,15 @@ export default function DashboardPage({
     setConnecting(sandbox);
   };
 
+  /** The row/inspector primary action: start a stopped sandbox, or open a running one. */
+  const runPrimaryAction = (sandbox: SandboxInfo) => {
+    if (stateKind(sandbox.state) === "running") {
+      openConnection(sandbox);
+    } else {
+      void runAction(sandbox.name, "start").catch(() => {});
+    }
+  };
+
   const all = sandboxes ?? [];
   const visible = all.filter((sandbox) =>
     `${sandbox.name} ${sandbox.agent} ${sandbox.workspace}`
@@ -140,7 +149,7 @@ export default function DashboardPage({
           onSearch={setSearch}
           onRefresh={() => void refresh()}
           onSelect={selectSandbox}
-          onOpen={openConnection}
+          onOpen={runPrimaryAction}
           onCreate={onCreate}
           summary={summary}
         />
@@ -152,7 +161,7 @@ export default function DashboardPage({
           running={detailRunning}
           installed={installed}
           onAction={(action) => detail && void runAction(detail.name, action).catch(() => {})}
-          onOpen={() => detail && openConnection(detail)}
+          onOpen={() => detail && runPrimaryAction(detail)}
           onClose={() => setInspectorOpen(false)}
           actionLabels={actionLabels}
         />

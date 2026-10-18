@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ConnectionInfo, SandboxInfo, SetupStatus } from "../../../lib/sandbox";
 import { connectionInfo, setupSsh } from "../../../lib/sandbox";
+import { stateKind } from "../../../common/lib/sandboxState";
 import Icon from "../../../common/components/Icon";
 import { copyText } from "../../../common/lib/clipboard";
 import { ConnectionMethods } from "./ConnectionMethods";
@@ -36,11 +37,7 @@ export default function ConnectDialog({
   const [busy, setBusy] = useState<"terminal" | "setup" | "check" | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [sshReady, setSshReady] = useState<boolean | null>(status?.ssh_set_up ?? null);
-  const running =
-    sandbox.state
-      .replace(/^[•○]\s*/, "")
-      .trim()
-      .toLowerCase() === "running";
+  const running = stateKind(sandbox.state) === "running";
 
   useEffect(() => {
     const node = dialog.current;
