@@ -49,16 +49,17 @@ export function SandboxInspector({
               </p>
               <div className="sandbox-actions" aria-busy={!!pending}>
                 <button className="primary connect-action" disabled={!!pending || !installed} onClick={onOpen}>
-                  <Icon name="monitor" size={20} />
-                  Open sandbox
-                </button>
-                <button
-                  className="ghost start-action"
-                  disabled={!!pending || running || !installed}
-                  onClick={() => onAction("start")}
-                >
-                  <Icon name="terminal" size={19} />
-                  Start
+                  {running ? (
+                    <>
+                      <Icon name="monitor" size={20} />
+                      Open sandbox
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="terminal" size={19} />
+                      Start
+                    </>
+                  )}
                 </button>
                 <button
                   className="ghost"
