@@ -191,8 +191,8 @@ export default function ConnectDialog({
 
       {!running && (
         <p className="connection-note">
-          This sandbox is not running. Close this dialog and use <strong>Start</strong> in its
-          details before connecting.
+          This sandbox is not running. Close this dialog and use <strong>Open sandbox</strong> in
+          its details to start it before connecting.
         </p>
       )}
 

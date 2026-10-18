@@ -53,14 +53,6 @@ export function SandboxInspector({
                   Open sandbox
                 </button>
                 <button
-                  className="ghost start-action"
-                  disabled={!!pending || running || !installed}
-                  onClick={() => onAction("start")}
-                >
-                  <Icon name="terminal" size={19} />
-                  Start
-                </button>
-                <button
                   className="ghost"
                   disabled={!!pending || !running || !installed}
                   onClick={() => onAction("stop")}

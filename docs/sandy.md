@@ -9,7 +9,7 @@ A desktop app (experimental) for [Docker Sandboxes](https://docs.docker.com/ai/s
 ### Browsing sandboxes
 
 - **Home** and **Sandboxes** show local sandbox state, agent, workspace, and an inspector. Search by name, agent, or workspace; the list keeps the CLI order.
-- Start, stop, or restart a selected sandbox. Starting resumes its existing agent, kits, files, and workspace; restarting stops it first, then resumes it.
+- **Open** starts a stopped sandbox and connects to it in one step. Stop or restart a selected sandbox from its details. Starting resumes its existing agent, kits, files, and workspace; restarting stops it first, then resumes it.
 - The list always refreshes every 5 seconds while the dashboard is open, when Sandy regains focus, and after actions. **Refresh** is also available; refresh errors keep the last successful list visible.
 
 ### Create and save an environment

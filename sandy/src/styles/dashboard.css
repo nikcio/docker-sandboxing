@@ -205,8 +205,7 @@
   gap: 6px;
 }
 
-.dashboard .connect-action,
-.dashboard .start-action {
+.dashboard .connect-action {
   grid-column: 1 / -1;
 }
 

@@ -67,9 +67,17 @@ export default function DashboardPage({
     setInspectorOpen(true);
   };
 
-  const openConnection = (sandbox: SandboxInfo) => {
+  const openConnection = async (sandbox: SandboxInfo) => {
     if (isActionInFlight(sandbox.name)) return;
     selectSandbox(sandbox.name);
+    if (stateKind(sandbox.state) !== "running") {
+      try {
+        await runAction(sandbox.name, "start");
+      } catch {
+        // The toast already reports the failed start.
+        return;
+      }
+    }
     setConnecting(sandbox);
   };
 
@@ -140,7 +148,7 @@ export default function DashboardPage({
           onSearch={setSearch}
           onRefresh={() => void refresh()}
           onSelect={selectSandbox}
-          onOpen={openConnection}
+          onOpen={(sandbox) => void openConnection(sandbox)}
           onCreate={onCreate}
           summary={summary}
         />
@@ -152,7 +160,7 @@ export default function DashboardPage({
           running={detailRunning}
           installed={installed}
           onAction={(action) => detail && void runAction(detail.name, action).catch(() => {})}
-          onOpen={() => detail && openConnection(detail)}
+          onOpen={() => detail && void openConnection(detail)}
           onClose={() => setInspectorOpen(false)}
           actionLabels={actionLabels}
         />
