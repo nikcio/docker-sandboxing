@@ -142,6 +142,7 @@ impl MockCli {
             "SBX_MOCK_SIGNED_IN",
             "SBX_MOCK_DAEMON",
             "SBX_MOCK_PASTE",
+            "SBX_MOCK_GET_REJECTS_JSON",
             "SBX_MOCK_FAIL_JSON",
             "SBX_MOCK_LS_EMPTY",
             "SBX_MOCK_JSON",
@@ -226,7 +227,13 @@ printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hyperv
 exit "${SBX_MOCK_DIAGNOSE_EXIT:-0}"
 ;;
 settings)
-if [ "$2" = get ]; then printf '%s\n' "${SBX_MOCK_PASTE:-false}"; fi
+if [ "$2" = get ]; then
+    if [ "$3" = --json ] && [ "$SBX_MOCK_GET_REJECTS_JSON" = 1 ]; then
+        printf '%s\n' 'unknown flag: --json' >&2
+        exit 1
+    fi
+    printf '%s\n' "${SBX_MOCK_PASTE:-false}"
+fi
 ;;
 ls)
 if [ "$SBX_MOCK_LS_EMPTY" = 1 ]; then printf '%s\n' '[]'; exit 0; fi
@@ -604,7 +611,7 @@ fn failed_daemon_start_is_unknown_and_does_not_run_authentication() {
 #[cfg(unix)]
 fn image_paste_normalizes_scalar_and_setting_record_outputs() {
     let _guard = env_lock();
-    let _mock = MockCli::new();
+    let mock = MockCli::new();
     for output in [
         "true",
         "\"true\"",
@@ -624,6 +631,77 @@ fn image_paste_normalizes_scalar_and_setting_record_outputs() {
     assert!(
         get_setting("clipboard.imagePaste").is_err(),
         "never substitute the default for the evaluated value"
+    );
+    // A mismatching record is a real error, not a trigger for a plain-text
+    // retry: the failed --json read must stay the only settings invocation.
+    mock.clear_commands();
+    crate::sbx::test_env::set_var(
+        "SBX_MOCK_PASTE",
+        "{\"key\":\"another.setting\",\"value\":true}",
+    );
+    assert!(get_setting("clipboard.imagePaste").is_err());
+    assert!(
+        mock.commands()
+            .ends_with("settings get clipboard.imagePaste --json\n")
+    );
+    assert!(
+        !mock
+            .commands()
+            .contains("settings get clipboard.imagePaste\n")
+    );
+}
+
+/// get_setting must request the structured record and parse it through the
+/// same normalization as plain output. Sequential + env-locked.
+#[test]
+#[cfg(unix)]
+fn get_setting_requests_json_records_from_the_cli() {
+    let _guard = env_lock();
+    let mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_DAEMON", "running");
+    crate::sbx::test_env::set_var(
+        "SBX_MOCK_PASTE",
+        "{\"key\":\"clipboard.imagePaste\",\"value\":true,\"source\":\"user\"}",
+    );
+    assert_eq!(get_setting("clipboard.imagePaste"), Ok("true".to_string()));
+    assert_eq!(
+        mock.commands(),
+        "daemon status --format json\nsettings get clipboard.imagePaste --json\n"
+    );
+}
+
+/// Older CLIs may reject --json (flag parse failure) or ignore it (plain
+/// scalar output); both must fall back to a plain read. Sequential +
+/// env-locked.
+#[test]
+#[cfg(unix)]
+fn get_setting_falls_back_to_plain_text_for_older_clis() {
+    let _guard = env_lock();
+    let mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_DAEMON", "running");
+
+    // Rejected --json: the retry runs the same key without the flag.
+    crate::sbx::test_env::set_var("SBX_MOCK_GET_REJECTS_JSON", "1");
+    crate::sbx::test_env::set_var("SBX_MOCK_PASTE", "enabled");
+    assert_eq!(
+        get_setting("clipboard.imagePaste"),
+        Ok("enabled".to_string())
+    );
+    assert_eq!(
+        mock.commands(),
+        "daemon status --format json\nsettings get clipboard.imagePaste --json\nsettings get clipboard.imagePaste\n"
+    );
+
+    // Ignored --json: the first read succeeds but emits non-JSON text.
+    mock.clear_commands();
+    crate::sbx::test_env::remove_var("SBX_MOCK_GET_REJECTS_JSON");
+    assert_eq!(
+        get_setting("clipboard.imagePaste"),
+        Ok("enabled".to_string())
+    );
+    assert_eq!(
+        mock.commands(),
+        "daemon status --format json\nsettings get clipboard.imagePaste --json\nsettings get clipboard.imagePaste\n"
     );
 }
 

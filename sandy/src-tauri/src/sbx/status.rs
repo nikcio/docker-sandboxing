@@ -125,8 +125,18 @@ pub fn ensure_daemon() -> Result<(), String> {
 /// Read a single sbx setting value (empty string if unset).
 pub fn get_setting(key: &str) -> Result<String, String> {
     ensure_daemon()?;
-    let out = run_capture(&["settings", "get", key])?;
-    normalize_setting(key, &out)
+    // Request the structured record first: decorated plain-text output
+    // (banners, warnings) must never leak into the parsed value. Older
+    // CLIs may reject or ignore --json, so retry without it — but only
+    // when the --json attempt produced no JSON at all, so record-level
+    // errors (key mismatch, non-scalar values) stay real errors instead
+    // of triggering a second invocation.
+    match run_capture(&["settings", "get", key, "--json"]) {
+        Ok(out) if serde_json::from_str::<serde_json::Value>(&out).is_ok() => {
+            normalize_setting(key, &out)
+        }
+        _ => run_capture(&["settings", "get", key]).and_then(|out| normalize_setting(key, &out)),
+    }
 }
 
 fn normalize_setting(key: &str, out: &str) -> Result<String, String> {
