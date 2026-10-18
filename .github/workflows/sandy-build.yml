@@ -2,7 +2,7 @@ name: Sandy build
 
 # Reusable build + publish pipeline for Sandy, shared by the stable and
 # preview release flows (release-please.yml / preview-release.yml).
-#
+# 
 # Inputs:
 # - tag:        the release tag to build at and upload artifacts to
 # - sha:        the commit to build
