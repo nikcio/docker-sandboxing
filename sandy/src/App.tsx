@@ -3,6 +3,7 @@ import { getCurrentWindow, Window } from "@tauri-apps/api/window";
 import { Sidebar, Topbar } from "./common/components/AppShell";
 import type { View } from "./common/components/AppShell";
 import BootSplash from "./common/components/BootSplash";
+import { ComingSoonDialog } from "./common/components/ComingSoonDialog";
 import { useSetupStatus } from "./common/hooks/useSetupStatus";
 import DashboardPage from "./features/dashboard/components/DashboardPage";
 import TemplatesPage from "./features/templates/components/TemplatesPage";
@@ -19,6 +20,7 @@ const revealMainWindow = async () => {
 
 export default function App() {
   const [view, setView] = useState<View>("home");
+  const [guideDialogOpen, setGuideDialogOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const [setupSession, setSetupSession] = useState(0);
   const [count, setCount] = useState<number | null>(null);
@@ -80,6 +82,7 @@ export default function App() {
           checkingSetup={checkingSetup}
           count={count}
           onNavigate={navigate}
+          onViewGuide={() => setGuideDialogOpen(true)}
         />
         <main className="content" id="main-content">
           {(view === "home" || view === "sandboxes") && (
@@ -136,6 +139,9 @@ export default function App() {
           </div>
         </main>
       </div>
+      {guideDialogOpen && (
+        <ComingSoonDialog feature="View guide" onClose={() => setGuideDialogOpen(false)} />
+      )}
     </div>
   );
 }
