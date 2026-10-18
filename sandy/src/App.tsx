@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getCurrentWindow, Window } from "@tauri-apps/api/window";
 import { Sidebar, Topbar } from "./common/components/AppShell";
 import type { View } from "./common/components/AppShell";
 import BootSplash from "./common/components/BootSplash";
@@ -7,6 +8,14 @@ import DashboardPage from "./features/dashboard/components/DashboardPage";
 import TemplatesPage from "./features/templates/components/TemplatesPage";
 import CreatePage from "./features/create/components/CreatePage";
 import SettingsPage from "./features/settings/components/SettingsPage";
+
+/** Reveal the main window and close the boot splash window, if any. */
+const revealMainWindow = async () => {
+  const splash = (await Window.getAll()).find((window) => window.label === "splash");
+  await getCurrentWindow().show();
+  // The splash may already be gone (e.g. the user closed it); ignore failures.
+  await splash?.close().catch(() => {});
+};
 
 export default function App() {
   const [view, setView] = useState<View>("home");
@@ -29,6 +38,8 @@ export default function App() {
   // Route to setup when the first status check finds incomplete configuration.
   useEffect(() => {
     if (loading) return;
+    // The main window is ready: reveal it and drop the boot splash.
+    void revealMainWindow();
     if (statusError && !status) {
       setView("settings");
       return;

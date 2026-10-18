@@ -20,6 +20,7 @@ tauri = { version = "2", default-features = false, features = [
   "compression",
   "common-controls-v6",
   "dynamic-acl",
+  "macos-private-api",
   "x11",
 ] }
 serde = { version = "1", features = ["derive"] }

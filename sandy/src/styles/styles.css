@@ -1394,6 +1394,14 @@ pre {
   height: 65px;
 }
 
+/* Dedicated splash window: transparent background, no app chrome, content
+   centered in the small frameless frame. */
+.loading-splash {
+  min-height: 100vh;
+  background: transparent;
+  user-select: none;
+}
+
 .loading-label {
   display: flex;
   align-items: center;
