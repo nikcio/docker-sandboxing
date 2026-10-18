@@ -2,6 +2,14 @@
 
 A repository of premade mixins for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/): reusable building blocks (toolchains, tools, network egress, model providers) that compose with Docker's built-in agents into sandboxed VMs for coding agents.
 
+## Before you start
+
+Always pull the latest version of `main` before starting any work, and base your changes on it:
+
+```bash
+git fetch origin main
+```
+
 ## Documentation
 
 Use based on your task:

@@ -1,9 +1,7 @@
 import type { ReactNode } from "react";
 
 const paths = {
-  home: (
-    <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" />
-  ),
+  home: <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" />,
   box: (
     <>
       <path d="m12 3 9 5v9l-9 5-9-5V8Z" />
@@ -40,9 +38,7 @@ const paths = {
       <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
     </>
   ),
-  book: (
-    <path d="M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15" />
-  ),
+  book: <path d="M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15" />,
   arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
   chevron: <path d="m7 10 5 5 5-5" />,
   search: (
@@ -72,12 +68,8 @@ const paths = {
     </>
   ),
   code: <path d="m7 7-5 5 5 5m10-10 5 5-5 5M14 4l-4 16" />,
-  sparkles: (
-    <path d="m10 3 2.5 6.5L19 12l-6.5 2.5L10 21l-2.5-6.5L1 12l6.5-2.5ZM20 2v6m-3-3h6" />
-  ),
-  bulb: (
-    <path d="M8 16a7 7 0 1 1 8 0v3H8Zm1 6h6M12 1V0M3 5 1 3m20 2 2-2" />
-  ),
+  sparkles: <path d="m10 3 2.5 6.5L19 12l-6.5 2.5L10 21l-2.5-6.5L1 12l6.5-2.5ZM20 2v6m-3-3h6" />,
+  bulb: <path d="M8 16a7 7 0 1 1 8 0v3H8Zm1 6h6M12 1V0M3 5 1 3m20 2 2-2" />,
   check: <path d="m5 12 4 4L19 6" />,
   close: <path d="m6 6 12 12M6 18 18 6" />,
   terminal: (
@@ -113,10 +105,7 @@ const paths = {
           fill="#ffc857"
           stroke="#d8871c"
         />
-        <path
-          d="M7.6 14.5c.5-1.8 2.2-2.7 4-2.4M13 15.2c.6 1.2.4 2.6-.3 3.5"
-          stroke="#e79b2a"
-        />
+        <path d="M7.6 14.5c.5-1.8 2.2-2.7 4-2.4M13 15.2c.6 1.2.4 2.6-.3 3.5" stroke="#e79b2a" />
       </g>
       <path
         d="M18.5 2.8c1.6.8 2.7 2.1 3.1 3.8M20 10l2 .5M3.4 5.8 2.2 4.5M2.5 8.5.8 8"
@@ -129,13 +118,7 @@ const paths = {
 
 export type IconName = keyof typeof paths;
 
-export default function Icon({
-  name,
-  size = 22,
-}: {
-  name: IconName;
-  size?: number;
-}) {
+export default function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
   return (
     <svg
       width={size}

@@ -34,12 +34,7 @@ export interface CreateSandboxProps {
   onBusyChange?: (busy: boolean) => void;
 }
 
-const STEPS = [
-  "Providers",
-  "Agent or workload",
-  "Mixins & inputs",
-  "Project & review",
-];
+const STEPS = ["Providers", "Agent or workload", "Mixins & inputs", "Project & review"];
 
 function KitDetails({ kit }: { kit: KitOption }) {
   return (
@@ -48,21 +43,13 @@ function KitDetails({ kit }: { kit: KitOption }) {
         {kit.name}
         <span className="catalog-badge">
           Kit v{kit.schema_version} ·{" "}
-          {kit.kind === "workload"
-            ? "Workload"
-            : kit.kind === "agent"
-              ? "Agent"
-              : "Mixin"}
+          {kit.kind === "workload" ? "Workload" : kit.kind === "agent" ? "Agent" : "Mixin"}
         </span>
       </span>
-      <span className="catalog-muted">
-        {kit.description || "No description provided."}
-      </span>
+      <span className="catalog-muted">{kit.description || "No description provided."}</span>
       <code className="catalog-source">{kit.source}</code>
       {kit.required_agent && (
-        <span className="catalog-help">
-          Requires agent: {kit.required_agent}
-        </span>
+        <span className="catalog-help">Requires agent: {kit.required_agent}</span>
       )}
     </span>
   );
@@ -82,11 +69,7 @@ function KitInputs({
   const id = useId();
   const configurable = kits.filter((kit) => kit.arguments.length > 0);
   if (!configurable.length) {
-    return (
-      <p className="catalog-help">
-        The selected kits don’t require any inputs.
-      </p>
-    );
+    return <p className="catalog-help">The selected kits don’t require any inputs.</p>;
   }
   return (
     <div className="catalog-kit-inputs">
@@ -95,22 +78,14 @@ function KitInputs({
         Required inputs are marked. Defaults come from each kit’s metadata.
       </p>
       {configurable.map((kit, kitIndex) => (
-        <fieldset
-          className="catalog-input-group"
-          key={kit.id}
-          disabled={disabled}
-        >
+        <fieldset className="catalog-input-group" key={kit.id} disabled={disabled}>
           <legend>{kit.name}</legend>
           <div className="catalog-fields">
             {kit.arguments.map((argument, argumentIndex) => {
               const inputId = `${id}-${kitIndex}-${argumentIndex}`;
               const value = argumentValue(values, kit, argument);
               return (
-                <label
-                  className="catalog-field"
-                  key={argument.name}
-                  htmlFor={inputId}
-                >
+                <label className="catalog-field" key={argument.name} htmlFor={inputId}>
                   <span>
                     {argument.name}{" "}
                     {argument.required ? (
@@ -125,9 +100,7 @@ function KitInputs({
                       value={value}
                       required={argument.required}
                       aria-describedby={`${inputId}-help`}
-                      onChange={(event) =>
-                        onChange(kit.id, argument.name, event.target.value)
-                      }
+                      onChange={(event) => onChange(kit.id, argument.name, event.target.value)}
                     >
                       {!argument.choices.includes("") && (
                         <option value="">
@@ -147,20 +120,16 @@ function KitInputs({
                       required={argument.required}
                       placeholder="Value"
                       aria-describedby={`${inputId}-help`}
-                      onChange={(event) =>
-                        onChange(kit.id, argument.name, event.target.value)
-                      }
+                      onChange={(event) => onChange(kit.id, argument.name, event.target.value)}
                     />
                   )}
                   <span className="catalog-help" id={`${inputId}-help`}>
                     {argument.description}
                     {argument.default !== null && (
                       <>
-                        {" "}Default:{" "}
-                        <code>
-                          {argument.default === "" ? "(empty)" : argument.default}
-                        </code>
-                        .
+                        {" "}
+                        Default:{" "}
+                        <code>{argument.default === "" ? "(empty)" : argument.default}</code>.
                       </>
                     )}
                   </span>
@@ -195,9 +164,9 @@ export default function CreateSandbox({
   const [name, setName] = useState("");
   const [workspace, setWorkspace] = useState("");
   const [savePath, setSavePath] = useState("");
-  const [busy, setBusy] = useState<
-    "discover" | "save" | "launch" | "workspace" | "path" | null
-  >(null);
+  const [busy, setBusy] = useState<"discover" | "save" | "launch" | "workspace" | "path" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<SavedTemplate | null>(null);
   const [launched, setLaunched] = useState(false);
@@ -232,9 +201,7 @@ export default function CreateSandbox({
 
   const kits = catalog?.kits ?? [];
   const selectedKits = agent ? [agent, ...mixins] : [];
-  const compatible = agent
-    ? kits.filter((kit) => isCompatibleMixin(kit, agent))
-    : [];
+  const compatible = agent ? kits.filter((kit) => isCompatibleMixin(kit, agent)) : [];
   const matchingMixins = compatible.filter(
     (kit) =>
       (!providerFilter || kit.provider_id === providerFilter) &&
@@ -329,9 +296,7 @@ export default function CreateSandbox({
     setBusy(target);
     setError(null);
     try {
-      const path = await (
-        target === "workspace" ? pickWorkspace() : pickTemplatePath()
-      );
+      const path = await (target === "workspace" ? pickWorkspace() : pickTemplatePath());
       if (path && mounted.current) {
         if (target === "workspace") {
           setWorkspace(path);
@@ -375,8 +340,7 @@ export default function CreateSandbox({
       return;
     }
     const shouldLaunch =
-      (event.nativeEvent as SubmitEvent).submitter?.getAttribute("value") ===
-      "launch";
+      (event.nativeEvent as SubmitEvent).submitter?.getAttribute("value") === "launch";
     lock.current = true;
     setBusy("save");
     setError(null);
@@ -438,29 +402,19 @@ export default function CreateSandbox({
       <header className="page-head catalog-page-heading">
         <div>
           <span className="eyebrow">YOUR NEXT WORKSPACE</span>
-          <h1 id={`${id}-title`}>
-            {saved ? "Your template is ready" : "Create a sandbox"}
-          </h1>
+          <h1 id={`${id}-title`}>{saved ? "Your template is ready" : "Create a sandbox"}</h1>
           <p className="page-sub">
             {saved
               ? "A reusable starting point, saved on your computer."
               : "Choose your tools. Bring your project. Make it yours."}
           </p>
         </div>
-        <button
-          type="button"
-          className="ghost"
-          disabled={busy !== null}
-          onClick={onClose}
-        >
+        <button type="button" className="ghost" disabled={busy !== null} onClick={onClose}>
           <Icon name="close" size={16} /> {saved ? "Close" : "Cancel"}
         </button>
       </header>
       {!saved && (
-        <ol
-          className="setup-steps catalog-steps"
-          aria-label="Sandbox creation steps"
-        >
+        <ol className="setup-steps catalog-steps" aria-label="Sandbox creation steps">
           {STEPS.map((label, index) => (
             <li key={label}>
               <button
@@ -481,9 +435,7 @@ export default function CreateSandbox({
       )}
       {error && (
         <div className="error-banner" role="alert">
-          <strong>
-            {saved ? "Launch needs attention." : "We couldn’t complete that step."}
-          </strong>
+          <strong>{saved ? "Launch needs attention." : "We couldn’t complete that step."}</strong>
           <p>{error}</p>
           {step === 0 && !saved && (
             <button
@@ -528,12 +480,7 @@ export default function CreateSandbox({
           </dl>
           <div className="catalog-section-heading">
             <h3>Saved YAML</h3>
-            <button
-              type="button"
-              className="ghost"
-              disabled={busy !== null}
-              onClick={copy}
-            >
+            <button type="button" className="ghost" disabled={busy !== null} onClick={copy}>
               <Icon name="clipboard" size={16} /> Copy YAML
             </button>
           </div>
@@ -580,12 +527,7 @@ export default function CreateSandbox({
                 View saved templates
               </button>
             )}
-            <button
-              type="button"
-              className="ghost"
-              disabled={busy !== null}
-              onClick={onClose}
-            >
+            <button type="button" className="ghost" disabled={busy !== null} onClick={onClose}>
               Done
             </button>
           </div>
@@ -597,8 +539,8 @@ export default function CreateSandbox({
               Start with your kit sources
             </h2>
             <p className="catalog-muted">
-              Enable the providers you want to use and choose their versions.
-              Discovery reads kit descriptors from those saved references.
+              Enable the providers you want to use and choose their versions. Discovery reads kit
+              descriptors from those saved references.
             </p>
             <Providers
               disabled={busy !== null}
@@ -608,13 +550,8 @@ export default function CreateSandbox({
               }}
               onDirtyChange={setProvidersDirty}
             />
-            {providers?.some(
-              (provider) => provider.kind === "dockerhub" && provider.enabled,
-            ) && (
-              <label
-                className="catalog-field catalog-hub-query"
-                htmlFor={`${id}-hub-query`}
-              >
+            {providers?.some((provider) => provider.kind === "dockerhub" && provider.enabled) && (
+              <label className="catalog-field catalog-hub-query" htmlFor={`${id}-hub-query`}>
                 Docker Hub search (optional)
                 <input
                   id={`${id}-hub-query`}
@@ -624,9 +561,8 @@ export default function CreateSandbox({
                   onChange={(event) => setHubQuery(event.target.value)}
                 />
                 <span className="catalog-help">
-                  Narrows discovery results, including Docker Hub. Search runs
-                  only when you choose Discover kits. Specific repositories use
-                  their selected reference.
+                  Narrows discovery results, including Docker Hub. Search runs only when you choose
+                  Discover kits. Specific repositories use their selected reference.
                 </span>
               </label>
             )}
@@ -685,14 +621,10 @@ export default function CreateSandbox({
                     Choose an agent or workload
                   </h2>
                   <p className="catalog-muted">
-                    Built-in agent shortcuts use kit v2. A v3 workload starts a
-                    v3-only environment. Remote kit sources below come from
-                    discovered descriptors.
+                    Built-in agent shortcuts use kit v2. A v3 workload starts a v3-only environment.
+                    Remote kit sources below come from discovered descriptors.
                   </p>
-                  <label
-                    className="catalog-field catalog-search"
-                    htmlFor={`${id}-agent-search`}
-                  >
+                  <label className="catalog-field catalog-search" htmlFor={`${id}-agent-search`}>
                     Search agents and workloads
                     <input
                       id={`${id}-agent-search`}
@@ -703,18 +635,11 @@ export default function CreateSandbox({
                     />
                   </label>
                   {([2, 3] as const).map((version) => {
-                    const items = agents.filter(
-                      (kit) => kit.schema_version === version,
-                    );
+                    const items = agents.filter((kit) => kit.schema_version === version);
                     return (
                       items.length > 0 && (
-                        <fieldset
-                          className="catalog-unframed catalog-choice-group"
-                          key={version}
-                        >
-                          <legend>
-                            {version === 2 ? "Kit v2 agents" : "Kit v3 workloads"}
-                          </legend>
+                        <fieldset className="catalog-unframed catalog-choice-group" key={version}>
+                          <legend>{version === 2 ? "Kit v2 agents" : "Kit v3 workloads"}</legend>
                           <div className="catalog-kit-grid">
                             {items.map((kit) => (
                               <label
@@ -731,8 +656,7 @@ export default function CreateSandbox({
                                     setMixins((previous) =>
                                       previous.filter(
                                         (mixin) =>
-                                          mixin.name !== kit.name &&
-                                          isCompatibleMixin(mixin, kit),
+                                          mixin.name !== kit.name && isCompatibleMixin(mixin, kit),
                                       ),
                                     );
                                     setError(null);
@@ -761,20 +685,14 @@ export default function CreateSandbox({
                       <button
                         type="button"
                         className="ghost"
-                        onClick={() =>
-                          agentSearch ? setAgentSearch("") : moveTo(0)
-                        }
+                        onClick={() => (agentSearch ? setAgentSearch("") : moveTo(0))}
                       >
                         {agentSearch ? "Clear search" : "Review providers"}
                       </button>
                     </div>
                   )}
                   <div className="catalog-actions">
-                    <button
-                      type="button"
-                      className="ghost"
-                      onClick={() => moveTo(0)}
-                    >
+                    <button type="button" className="ghost" onClick={() => moveTo(0)}>
                       Back
                     </button>
                     <button
@@ -802,19 +720,14 @@ export default function CreateSandbox({
                         Make it your own
                       </h2>
                       <p className="catalog-muted">
-                        Showing only kit v{agent.schema_version} mixins compatible
-                        with {agent.name}, including each mixin’s required agent.
+                        Showing only kit v{agent.schema_version} mixins compatible with {agent.name}
+                        , including each mixin’s required agent.
                       </p>
                     </div>
-                    <span className="catalog-badge">
-                      {mixins.length} selected
-                    </span>
+                    <span className="catalog-badge">{mixins.length} selected</span>
                   </div>
                   <div className="catalog-fields">
-                    <label
-                      className="catalog-field"
-                      htmlFor={`${id}-mixin-search`}
-                    >
+                    <label className="catalog-field" htmlFor={`${id}-mixin-search`}>
                       Search mixins
                       <input
                         id={`${id}-mixin-search`}
@@ -824,10 +737,7 @@ export default function CreateSandbox({
                         onChange={(event) => setMixinSearch(event.target.value)}
                       />
                     </label>
-                    <label
-                      className="catalog-field"
-                      htmlFor={`${id}-provider-filter`}
-                    >
+                    <label className="catalog-field" htmlFor={`${id}-provider-filter`}>
                       Group by provider
                       <select
                         id={`${id}-provider-filter`}
@@ -846,18 +756,13 @@ export default function CreateSandbox({
                     </label>
                   </div>
                   {mixinGroups.map((providerId) => (
-                    <fieldset
-                      className="catalog-unframed catalog-choice-group"
-                      key={providerId}
-                    >
+                    <fieldset className="catalog-unframed catalog-choice-group" key={providerId}>
                       <legend>{providerLabel(providerId)}</legend>
                       <div className="catalog-kit-grid">
                         {matchingMixins
                           .filter((kit) => kit.provider_id === providerId)
                           .map((kit) => {
-                            const selected = mixins.some(
-                              (item) => item.id === kit.id,
-                            );
+                            const selected = mixins.some((item) => item.id === kit.id);
                             const duplicateName =
                               !selected &&
                               (agent.name === kit.name ||
@@ -875,9 +780,7 @@ export default function CreateSandbox({
                                     setMixins((previous) =>
                                       event.target.checked
                                         ? [...previous, kit]
-                                        : previous.filter(
-                                            (item) => item.id !== kit.id,
-                                          ),
+                                        : previous.filter((item) => item.id !== kit.id),
                                     )
                                   }
                                 />
@@ -885,8 +788,7 @@ export default function CreateSandbox({
                                   <KitDetails kit={kit} />
                                   {duplicateName && (
                                     <span className="catalog-help">
-                                      Another kit with this name is already
-                                      selected.
+                                      Another kit with this name is already selected.
                                     </span>
                                   )}
                                 </span>
@@ -953,18 +855,10 @@ export default function CreateSandbox({
                     }
                   />
                   <div className="catalog-actions">
-                    <button
-                      type="button"
-                      className="ghost"
-                      onClick={() => moveTo(1)}
-                    >
+                    <button type="button" className="ghost" onClick={() => moveTo(1)}>
                       Back
                     </button>
-                    <button
-                      type="submit"
-                      className="primary"
-                      disabled={!inputValid}
-                    >
+                    <button type="submit" className="primary" disabled={!inputValid}>
                       Project details <Icon name="arrow" size={16} />
                     </button>
                     {!inputValid && (
@@ -981,14 +875,13 @@ export default function CreateSandbox({
                     Bring your project
                   </h2>
                   <p className="catalog-muted">
-                    Choose the project folder to mount, then review the exact kit
-                    references. Your configuration is saved as a reusable template.
+                    Choose the project folder to mount, then review the exact kit references. Your
+                    configuration is saved as a reusable template.
                   </p>
                   <fieldset className="catalog-unframed" disabled={busy !== null}>
                     <legend className="catalog-sr-only">Project details</legend>
                     <label className="catalog-field" htmlFor={`${id}-name`}>
-                      Sandbox & template name{" "}
-                      <span className="catalog-sr-only">(required)</span>
+                      Sandbox & template name <span className="catalog-sr-only">(required)</span>
                       <input
                         id={`${id}-name`}
                         value={name}
@@ -999,13 +892,12 @@ export default function CreateSandbox({
                         onChange={(event) => setName(event.target.value)}
                       />
                       <span className="catalog-help">
-                        Start with a letter or number; use letters, numbers, dots,
-                        underscores, or hyphens. This is the default launch name.
+                        Start with a letter or number; use letters, numbers, dots, underscores, or
+                        hyphens. This is the default launch name.
                       </span>
                     </label>
                     <label className="catalog-field" htmlFor={`${id}-workspace`}>
-                      Workspace folder{" "}
-                      <span className="catalog-sr-only">(required)</span>
+                      Workspace folder <span className="catalog-sr-only">(required)</span>
                     </label>
                     <div className="catalog-path-row">
                       <input
@@ -1016,17 +908,13 @@ export default function CreateSandbox({
                         aria-describedby={`${id}-workspace-help`}
                         onChange={(event) => setWorkspace(event.target.value)}
                       />
-                      <button
-                        type="button"
-                        className="ghost"
-                        onClick={() => browse("workspace")}
-                      >
+                      <button type="button" className="ghost" onClick={() => browse("workspace")}>
                         Browse…
                       </button>
                     </div>
                     <p className="catalog-help" id={`${id}-workspace-help`}>
-                      Choose an existing folder on this computer. The template
-                      stores this workspace for reuse.
+                      Choose an existing folder on this computer. The template stores this workspace
+                      for reuse.
                     </p>
                     <label className="catalog-field" htmlFor={`${id}-path`}>
                       Save file location (optional)
@@ -1039,24 +927,15 @@ export default function CreateSandbox({
                         aria-describedby={`${id}-path-help`}
                         onChange={(event) => setSavePath(event.target.value)}
                       />
-                      <button
-                        type="button"
-                        className="ghost"
-                        onClick={() => browse("path")}
-                      >
+                      <button type="button" className="ghost" onClick={() => browse("path")}>
                         Choose file…
                       </button>
                     </div>
                     <p className="catalog-help" id={`${id}-path-help`}>
-                      Leave blank to use Sandy’s managed templates outside your
-                      workspace.
+                      Leave blank to use Sandy’s managed templates outside your workspace.
                     </p>
                     {savePath && (
-                      <button
-                        type="button"
-                        className="text-button"
-                        onClick={() => setSavePath("")}
-                      >
+                      <button type="button" className="text-button" onClick={() => setSavePath("")}>
                         Use managed storage
                       </button>
                     )}
@@ -1066,15 +945,12 @@ export default function CreateSandbox({
                         <dt>Agent</dt>
                         <dd>{agent?.name}</dd>
                         <dt>Kit format</dt>
-                        <dd>
-                          v{agent?.schema_version} · environment schema v1
-                        </dd>
+                        <dd>v{agent?.schema_version} · environment schema v1</dd>
                         <dt>Mixins</dt>
                         <dd>{mixins.length} selected</dd>
                         <dt>File location</dt>
                         <dd>
-                          {savePath.trim() ||
-                            "Sandy managed templates (outside the workspace)"}
+                          {savePath.trim() || "Sandy managed templates (outside the workspace)"}
                         </dd>
                       </dl>
                       <ul className="catalog-reference-list">
@@ -1086,23 +962,15 @@ export default function CreateSandbox({
                         ))}
                       </ul>
                       <h3>YAML preview</h3>
-                      <pre
-                        className="catalog-yaml"
-                        aria-label="Environment YAML preview"
-                      >
+                      <pre className="catalog-yaml" aria-label="Environment YAML preview">
                         <code>{previewTemplate(request)}</code>
                       </pre>
                       <p className="catalog-help">
-                        The saved file’s actual YAML and final path will appear
-                        after saving.
+                        The saved file’s actual YAML and final path will appear after saving.
                       </p>
                     </div>
                     <div className="catalog-actions">
-                      <button
-                        type="button"
-                        className="ghost"
-                        onClick={() => moveTo(2)}
-                      >
+                      <button type="button" className="ghost" onClick={() => moveTo(2)}>
                         Back
                       </button>
                       <button

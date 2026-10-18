@@ -78,8 +78,7 @@ export const templateWarnings = () => invoke<string[]>("template_warnings");
 export const launchTemplate = (request: LaunchTemplateRequest) =>
   invoke<string>("launch_template", { ...request });
 export const pickWorkspace = () => invoke<string | null>("pick_workspace");
-export const pickTemplatePath = () =>
-  invoke<string | null>("pick_template_path");
+export const pickTemplatePath = () => invoke<string | null>("pick_template_path");
 
 export function isHubSearchProvider(provider: Provider): boolean {
   const repository = provider.repository.trim().replace(/\/+$/, "");
@@ -162,18 +161,11 @@ export function isCompatibleMixin(mixin: KitOption, agent: KitOption): boolean {
   );
 }
 
-export function argumentValue(
-  values: KitArguments,
-  kit: KitOption,
-  argument: KitArgument,
-): string {
+export function argumentValue(values: KitArguments, kit: KitOption, argument: KitArgument): string {
   return values[kit.id]?.[argument.name] ?? argument.default ?? "";
 }
 
-export function argumentsAreValid(
-  kits: KitOption[],
-  values: KitArguments,
-): boolean {
+export function argumentsAreValid(kits: KitOption[], values: KitArguments): boolean {
   return kits.every((kit) =>
     kit.arguments.every((argument) => {
       const value = argumentValue(values, kit, argument);
@@ -187,10 +179,7 @@ export function argumentsAreValid(
   );
 }
 
-export function resolvedArguments(
-  kits: KitOption[],
-  values: KitArguments,
-): KitArguments {
+export function resolvedArguments(kits: KitOption[], values: KitArguments): KitArguments {
   return Object.fromEntries(
     kits.map((kit) => [
       kit.id,
@@ -202,10 +191,7 @@ export function resolvedArguments(
               argument.default !== null ||
               argument.required,
           )
-          .map((argument) => [
-            argument.name,
-            argumentValue(values, kit, argument),
-          ]),
+          .map((argument) => [argument.name, argumentValue(values, kit, argument)]),
       ),
     ]),
   );
@@ -231,8 +217,8 @@ export function previewTemplate(request: SaveTemplateRequest): string {
   if (kits.length) {
     lines.push("kits:");
     for (const kit of kits) {
-      const args = Object.entries(request.arguments[kit.id] ?? {}).sort(
-        ([left], [right]) => left.localeCompare(right),
+      const args = Object.entries(request.arguments[kit.id] ?? {}).sort(([left], [right]) =>
+        left.localeCompare(right),
       );
       if (!args.length) {
         lines.push(`  - ${quote(kit.source)}`);
