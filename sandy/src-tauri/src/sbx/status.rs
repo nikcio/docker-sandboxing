@@ -70,6 +70,16 @@ fn check_configured(
     if check.status.eq_ignore_ascii_case("pass") && positive.contains(&message.as_str()) {
         return Ok(true);
     }
+    // A passing check is healthy regardless of wording: the CLI versions its
+    // messages (e.g. the SSH check can pass with "legacy inline configuration
+    // detected" instead of "configured"), and Sandy must not report a working
+    // setup as unverified just because the sentence is unrecognized.
+    if check.status.eq_ignore_ascii_case("pass") {
+        return Ok(true);
+    }
+    // Warn/fail with an unrecognized message is ambiguous: it may describe an
+    // unrelated degraded condition rather than "not set up", so report it as
+    // unknown instead of guessing.
     Err(format!(
         "Could not determine {name}: {} ({})",
         check.message, check.status
@@ -169,12 +179,14 @@ pub fn set_clipboard_image_paste() -> Result<(), String> {
 
 /// Ask the CLI instead of matching a comment in ~/.ssh/config: setup may
 /// use an Include, platform-specific paths, or a generated managed block.
+/// A `pass` is healthy whatever the wording (e.g. "configured" or "legacy
+/// inline configuration detected"); "not configured" is the explicit negative.
 pub fn is_ssh_set_up() -> Result<bool, String> {
     ensure_daemon()?;
     check_configured(
         &diagnose_report()?,
         "SSH client config",
-        &["configured"],
+        &["configured", "legacy inline configuration detected"],
         &["not configured"],
     )
 }

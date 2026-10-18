@@ -150,6 +150,7 @@ impl MockCli {
             "SBX_MOCK_AUTH_MESSAGE",
             "SBX_MOCK_AUTH_STATUS",
             "SBX_MOCK_SSH",
+            "SBX_MOCK_SSH_STATUS",
             "SBX_MOCK_STOP_FAIL",
             "SBX_MOCK_RUN_FAIL",
             "SBX_MOCK_START_FAIL",
@@ -222,7 +223,7 @@ invalid) printf '%s\n' 'not a report'; exit 1 ;;
 missing) printf '%s\n' '{"checks":[]}'; exit 0 ;;
 esac
 if [ "$SBX_MOCK_SIGNED_IN" = 1 ]; then auth=authenticated; else auth='not signed in'; fi
-printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"%s"},{"name":"SSH client config","status":"pass","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-pass}" "${SBX_MOCK_AUTH_MESSAGE:-$auth}" "${SBX_MOCK_SSH:-not configured}"
+printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"%s"},{"name":"SSH client config","status":"%s","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-pass}" "${SBX_MOCK_AUTH_MESSAGE:-$auth}" "${SBX_MOCK_SSH_STATUS:-pass}" "${SBX_MOCK_SSH:-not configured}"
 exit "${SBX_MOCK_DIAGNOSE_EXIT:-0}"
 ;;
 settings)
@@ -479,6 +480,13 @@ fn ssh_config_detection_scenarios() {
     crate::sbx::test_env::remove_var("HOME");
     crate::sbx::test_env::remove_var("USERPROFILE");
     assert_eq!(is_ssh_set_up(), Ok(true));
+    // The CLI words a healthy inline managed block differently; a pass is
+    // still set up, whatever the sentence.
+    crate::sbx::test_env::set_var("SBX_MOCK_SSH", "legacy inline configuration detected");
+    assert_eq!(is_ssh_set_up(), Ok(true));
+    // A warn with an unrecognized message is genuinely ambiguous.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
+    crate::sbx::test_env::set_var("SBX_MOCK_SSH_STATUS", "warn");
     crate::sbx::test_env::set_var("SBX_MOCK_SSH", "unavailable");
     assert!(is_ssh_set_up().is_err());
 }
