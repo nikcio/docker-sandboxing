@@ -3,7 +3,6 @@ import { SetupStatus, installSbx, enableImagePaste, setupSsh, login } from "./ap
 
 interface Props {
   status: SetupStatus | null;
-  onFinished: () => void;
   onRefresh: () => void;
 }
 
@@ -14,6 +13,8 @@ interface StepDef {
   kicker: string;
   title: string;
   description: string;
+  /** True when the status check says this step is already configured. */
+  isDone: (status: SetupStatus | null) => boolean;
 }
 
 const STEPS: StepDef[] = [
@@ -23,6 +24,7 @@ const STEPS: StepDef[] = [
     title: "Install the Docker Sandboxes CLI",
     description:
       "Sandy will install the sbx command-line tool, which creates and manages sandboxes. This uses your platform's package manager and may take a few minutes.",
+    isDone: (s) => !!s?.sbx_installed,
   },
   {
     id: "login",
@@ -30,6 +32,7 @@ const STEPS: StepDef[] = [
     title: "Sign in to Docker",
     description:
       "A browser window will open for you to sign in with your Docker account. Sandboxes require sign-in, and Sandy checks the result automatically.",
+    isDone: (s) => !!s?.signed_in,
   },
   {
     id: "imagepaste",
@@ -37,6 +40,7 @@ const STEPS: StepDef[] = [
     title: "Enable image pasting",
     description:
       "Allows you to paste screenshots from your clipboard into agent chats (Ctrl+V). You can withdraw this later from the sandbox settings.",
+    isDone: (s) => !!s?.image_paste_on,
   },
   {
     id: "ssh",
@@ -44,10 +48,11 @@ const STEPS: StepDef[] = [
     title: "Set up SSH access",
     description:
       "Configures your SSH client so every sandbox is reachable as <name>.sbx — handy for editors and terminals.",
+    isDone: (s) => !!s?.ssh_set_up,
   },
 ];
 
-export default function Wizard({ status, onFinished, onRefresh }: Props) {
+export default function Wizard({ status, onRefresh }: Props) {
   const [current, setCurrent] = useState(0);
   const [states, setStates] = useState<Record<string, StepState>>({});
   const [outputs, setOutputs] = useState<Record<string, string>>({});
@@ -68,18 +73,9 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
       const out = await fn();
       setStep(id, "done", typeof out === "string" ? out : undefined);
       onRefresh();
-      return true;
     } catch (e) {
       setStep(id, "error", String(e));
-      return false;
     }
-  };
-
-  const isAutoDone = (id: string): boolean => {
-    if (stateOf(id) === "done") return true;
-    if (id === "install") return !!status?.sbx_installed;
-    if (id === "login") return !!status?.signed_in;
-    return false;
   };
 
   const runners: Record<string, () => Promise<string | void>> = {
@@ -91,8 +87,6 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
 
   const runCurrent = async () => {
     await runStep(step.id, runners[step.id]);
-    // Stay on the step after success so the output is visible; the user
-    // advances with Next (or jumps via the step dots).
   };
 
   const skip = () => {
@@ -103,23 +97,25 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
     if (current > 0) setCurrent(current - 1);
   };
 
-  const allDone = STEPS.every((s) => isAutoDone(s.id) || stateOf(s.id) === "done");
+  const isDone = (s: StepDef) => s.isDone(status) || stateOf(s.id) === "done";
+  const allDone = STEPS.every(isDone);
   const state = stateOf(step.id);
-  const autoDone = isAutoDone(step.id);
+  const autoDone = step.isDone(status);
   const busy = state === "running";
-
-  const doneCount = STEPS.filter((s) => isAutoDone(s.id) || stateOf(s.id) === "done").length;
+  const doneCount = STEPS.filter(isDone).length;
 
   return (
-    <div className="wizard">
+    <div className="page">
       <div className="page-head">
-        <h1>{allDone ? "You're all set" : "Welcome to Sandy"}</h1>
+        <div>
+          <h1>{allDone ? "You're all set 🎉" : "Set up Sandy"}</h1>
+          <p className="page-sub">
+            {allDone
+              ? "Everything is configured. You can re-run any step below if something changed."
+              : "Sandy detected what's already set up on this computer. Only the missing steps need to run."}
+          </p>
+        </div>
       </div>
-      <p className="page-sub">
-        {allDone
-          ? "Sandy is your command center for Docker Sandboxes. You can re-run any setup step later from here."
-          : "Sandy is your command center for Docker Sandboxes — safe, isolated environments where AI coding agents do their work. Let's set everything up."}
-      </p>
 
       <div className="progress-track">
         <div
@@ -143,7 +139,10 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
         )}
         {state === "done" && outputs[step.id] && <pre>{outputs[step.id]}</pre>}
         {autoDone && state !== "done" && (
-          <div className="step-note ok">✓ Already done</div>
+          <div className="step-note ok">✓ Already set up on this computer</div>
+        )}
+        {state === "error" && (
+          <div className="step-note err">The step failed — see the output above.</div>
         )}
 
         <div className="wizard-actions">
@@ -152,8 +151,6 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
               Back
             </button>
           )}
-          {/* Pending or failed: the primary action runs the step. After an
-              error the label becomes Retry so the affordance is obvious. */}
           {!autoDone && state !== "done" && (
             <button className="primary" onClick={runCurrent} disabled={busy}>
               {busy
@@ -165,8 +162,6 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
                     : "Continue"}
             </button>
           )}
-          {/* Exactly one skip: offered for any step that isn't done —
-              pending or failed — except the last step. */}
           {state !== "done" && !autoDone && current < STEPS.length - 1 && (
             <button className="ghost" onClick={skip} disabled={busy}>
               Skip for now
@@ -178,8 +173,8 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
             </button>
           )}
           {(autoDone || state === "done") && current === STEPS.length - 1 && (
-            <button className="primary" onClick={onFinished}>
-              Open command center
+            <button className="primary" onClick={skip}>
+              Done
             </button>
           )}
           {(autoDone || state === "done") && (
@@ -196,7 +191,7 @@ export default function Wizard({ status, onFinished, onRefresh }: Props) {
 
       <div className="step-dots">
         {STEPS.map((s, i) => {
-          const st = isAutoDone(s.id) || stateOf(s.id) === "done" ? "done" : i === current ? "current" : "";
+          const st = isDone(s) ? "done" : i === current ? "current" : "";
           return (
             <span
               key={s.id}

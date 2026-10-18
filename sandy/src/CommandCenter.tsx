@@ -3,31 +3,48 @@ import { SetupStatus, SandboxInfo, listSandboxes } from "./api";
 
 interface Props {
   status: SetupStatus | null;
-  onOpenSetup: () => void;
   onRefreshStatus: () => void;
 }
 
-function Badge({ label, on }: { label: string; on: boolean }) {
+function StatePill({ state }: { state: string }) {
+  const running = state.toLowerCase().includes("running");
+  const stopped = state.toLowerCase().includes("stopped");
+  const label = state.replace(/^[•○]\s*/, "").trim() || "unknown";
   return (
-    <span className={`badge ${on ? "on" : ""}`}>
+    <span className={`state-pill ${running ? "running" : stopped ? "stopped" : ""}`}>
       <span className="dot" />
-      {label}
+      {label.charAt(0).toUpperCase() + label.slice(1)}
     </span>
   );
 }
 
-function StatePill({ state }: { state: string }) {
-  const running = state.toLowerCase() === "running";
-  return <span className={`state-pill ${running ? "running" : ""}`}>{state || "unknown"}</span>;
+function Avatar({ name, agent }: { name: string; agent: string }) {
+  // Deterministic pastel per sandbox name.
+  const palettes = [
+    ["#e3f7ed", "#2fbf71"],
+    ["#e3efff", "#3b82f6"],
+    ["#eeebff", "#6c5ce7"],
+    ["#fff4dd", "#f59e0b"],
+    ["#fdebec", "#e5484d"],
+  ];
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 997;
+  const [bg, fg] = palettes[h % palettes.length];
+  return (
+    <div className="sbx-avatar" style={{ background: bg, color: fg }}>
+      {agent ? agent.charAt(0).toUpperCase() : name.charAt(0).toUpperCase()}
+    </div>
+  );
 }
 
-export default function CommandCenter({ status, onOpenSetup, onRefreshStatus }: Props) {
+export default function CommandCenter({ status, onRefreshStatus }: Props) {
   const [sandboxes, setSandboxes] = useState<SandboxInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"newest" | "name">("newest");
   const inFlight = useRef(false);
-  // Keep the latest callback without re-triggering effects when the parent
-  // re-renders.
   const refreshStatusRef = useRef(onRefreshStatus);
   useEffect(() => {
     refreshStatusRef.current = onRefreshStatus;
@@ -58,78 +75,123 @@ export default function CommandCenter({ status, onOpenSetup, onRefreshStatus }: 
     return () => clearInterval(t);
   }, [autoRefresh, refresh]);
 
-  return (
-    <div>
-      <div className="page-head">
-        <h1>Sandboxes</h1>
-        <div className="badges">
-          <Badge label="CLI installed" on={!!status?.sbx_installed} />
-          <Badge label="Signed in" on={!!status?.signed_in} />
-          <Badge label="Image paste" on={!!status?.image_paste_on} />
-          <Badge label="SSH" on={!!status?.ssh_set_up} />
-        </div>
-      </div>
-      <p className="page-sub">Running local sandboxes, refreshing automatically.</p>
+  const visible = (sandboxes ?? [])
+    .filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) =>
+      sort === "name" ? a.name.localeCompare(b.name) : b.raw.localeCompare(a.raw)
+    );
 
-      <div className="cc-top">
-        <span className="muted" style={{ fontSize: 13 }}>
-          {sandboxes ? `${sandboxes.length} sandbox${sandboxes.length === 1 ? "" : "es"}` : "…"}
-        </span>
+  const running = visible.filter((s) => s.state.toLowerCase().includes("running")).length;
+  const stopped = visible.filter((s) => s.state.toLowerCase().includes("stopped")).length;
+  const sel = visible.find((s) => s.name === selected) ?? null;
+
+  return (
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1>Your Sandboxes</h1>
+          <p className="page-sub">
+            {sandboxes
+              ? `${sandboxes.length} sandbox${sandboxes.length === 1 ? "" : "es"} · ${running} running · ${stopped} stopped`
+              : "Loading…"}
+            {!status?.sbx_installed && " · CLI not installed"}
+            {status?.sbx_installed && !status.signed_in && " · not signed in"}
+          </p>
+        </div>
         <div className="cc-actions">
-          <label>
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-            />
-            Auto-refresh
-          </label>
-          <button className="ghost" onClick={refresh}>
-            Refresh
-          </button>
-          <button className="ghost" onClick={onOpenSetup}>
-            Setup
-          </button>
+          <input
+            className="search"
+            placeholder="Search sandboxes…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            className="select"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as "newest" | "name")}
+          >
+            <option value="newest">Sort: Newest</option>
+            <option value="name">Sort: Name</option>
+          </select>
         </div>
       </div>
 
       {error && <p className="muted">Could not list sandboxes: {error}</p>}
 
-      {sandboxes && sandboxes.length === 0 && (
-        <div className="empty">
-          <div className="big">🏜️</div>
-          No sandboxes right now.
-          <br />
-          Sandboxes appear here when an agent starts one — for example by running{" "}
-          <code>sbx env run</code> or <code>sbx run</code> in a project.
-        </div>
-      )}
+      <div className="card sandbox-card">
+        {visible.length === 0 && (
+          <div className="empty">
+            <div className="big">🏜️</div>
+            {sandboxes && sandboxes.length > 0
+              ? "No sandboxes match your search."
+              : "No sandboxes right now."}
+            <br />
+            Sandboxes appear here when an agent starts one — for example by running{" "}
+            <code>sbx env run</code> or <code>sbx run</code> in a project.
+          </div>
+        )}
 
-      {sandboxes && sandboxes.length > 0 && (
-        <table className="sandboxes">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>State</th>
-              <th>Agent</th>
-              <th>Workspace</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sandboxes.map((sbx) => (
-              <tr key={sbx.name}>
-                <td>
-                  <strong>{sbx.name}</strong>
-                </td>
-                <td>
+        {visible.length > 0 && (
+          <div className="sbx-rows">
+            {visible.map((sbx) => (
+              <div
+                key={sbx.name}
+                className={`sbx-row ${selected === sbx.name ? "selected" : ""}`}
+                onClick={() => setSelected(sbx.name === selected ? null : sbx.name)}
+              >
+                <Avatar name={sbx.name} agent={sbx.agent} />
+                <div className="sbx-info">
+                  <div className="sbx-name">
+                    {sbx.name}
+                    {sbx.agent && <span className="tag">{sbx.agent}</span>}
+                  </div>
+                  {sbx.workspace && <div className="sbx-sub">{sbx.workspace}</div>}
+                </div>
+                <div className="sbx-state">
                   <StatePill state={sbx.state} />
-                </td>
-                <td>{sbx.agent}</td>
-                <td className="muted">{sbx.workspace}</td>
-              </tr>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        )}
+      </div>
+
+      {sel && (
+        <div className="card details-card">
+          <div className="details-head">
+            <Avatar name={sel.name} agent={sel.agent} />
+            <div>
+              <div className="sbx-name" style={{ fontSize: 16 }}>{sel.name}</div>
+              <StatePill state={sel.state} />
+            </div>
+          </div>
+          <div className="details-grid">
+            <div className="details-label">Name</div>
+            <div>{sel.name}</div>
+            <div className="details-label">Agent</div>
+            <div>{sel.agent || "—"}</div>
+            <div className="details-label">Workspace</div>
+            <div>{sel.workspace || "—"}</div>
+            <div className="details-label">Status</div>
+            <div>
+              <StatePill state={sel.state} />
+            </div>
+          </div>
+          <label className="toggle-row">
+            <span className="details-label">Auto-refresh</span>
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+            />
+            On
+          </label>
+          <div className="tip">
+            <div className="tip-title">✦ Tip</div>
+            Connecting, starting, and creating sandboxes from Sandy is coming in a
+            future version — use <code>sbx run</code> or <code>sbx attach {sel.name}</code> for now.
+          </div>
+        </div>
       )}
     </div>
   );
