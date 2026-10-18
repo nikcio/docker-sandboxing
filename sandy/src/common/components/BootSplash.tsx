@@ -1,15 +1,14 @@
 import { useEffect } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import logo from "../../assets/logo.png";
 
 /**
- * Boot screen shown while the first status check runs.
+ * Boot screen: the logo, a spinner, and a label.
  *
- * In the main window it doubles as the pre-reveal screen: the window starts
- * hidden and this reveals it once the splash has painted. In the dedicated
- * splash window (`transparent`) it is the only content — a small, frameless,
- * transparent window with just the logo, a spinner, and a label — and it
- * closes itself once the main window is ready.
+ * In the main window it is the (hidden) pre-reveal content while the first
+ * status check runs. In the dedicated splash window (`transparent`) it is the
+ * only content — a small, frameless, transparent window shown while the main
+ * window loads. Neither variant reveals anything: the main window is revealed
+ * by App once loading settles, and the splash is closed by it afterwards.
  */
 export default function BootSplash({ transparent = false }: { transparent?: boolean }) {
   useEffect(() => {
@@ -18,27 +17,6 @@ export default function BootSplash({ transparent = false }: { transparent?: bool
     // truly transparent, so clear it on both root elements.
     document.documentElement.style.background = "transparent";
     document.body.style.background = "transparent";
-  }, [transparent]);
-
-  useEffect(() => {
-    if (transparent) return;
-
-    let handle = 0;
-    let cancelled = false;
-    // Two painted frames guarantee the logo and spinner are on screen before
-    // the window becomes visible.
-    const reveal = () => {
-      if (cancelled) return;
-      handle = requestAnimationFrame(() => {
-        if (cancelled) return;
-        void getCurrentWindow().show();
-      });
-    };
-    handle = requestAnimationFrame(reveal);
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(handle);
-    };
   }, [transparent]);
 
   return (

@@ -17,23 +17,19 @@ pub fn run() {
             // spinner, and a label, shown while the hidden main window loads.
             // The main window's frontend reveals itself and closes this splash
             // once the first status check settles.
-            WebviewWindowBuilder::new(
-                app,
-                "splash",
-                WebviewUrl::App("index.html?boot=splash".into()),
-            )
-            .title("Sandy")
-            .inner_size(320.0, 200.0)
-            .center()
-            .decorations(false)
-            .transparent(true)
-            .resizable(false)
-            .maximizable(false)
-            .minimizable(false)
-            .always_on_top(true)
-            .skip_taskbar(true)
-            .focused(false)
-            .build()?;
+            WebviewWindowBuilder::new(app, "splash", WebviewUrl::App("index.html".into()))
+                .title("Sandy")
+                .inner_size(320.0, 200.0)
+                .center()
+                .decorations(false)
+                .transparent(true)
+                .resizable(false)
+                .maximizable(false)
+                .minimizable(false)
+                .always_on_top(true)
+                .skip_taskbar(true)
+                .focused(false)
+                .build()?;
             Ok(())
         })
         // `run()` returns () and there is nowhere left to report a fatal
