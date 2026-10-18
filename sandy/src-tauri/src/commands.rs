@@ -130,6 +130,12 @@ async fn template_warnings(app: tauri::AppHandle) -> Result<Vec<String>, String>
 }
 
 #[tauri::command]
+async fn delete_template(app: tauri::AppHandle, id: String) -> Result<(), String> {
+    let root = data_dir(&app)?;
+    blocking(move || environments::delete_template(&root, &id)).await
+}
+
+#[tauri::command]
 async fn launch_template(
     app: tauri::AppHandle,
     id: String,
@@ -177,6 +183,7 @@ pub(crate) fn handlers() -> Box<tauri::ipc::InvokeHandler<tauri::Wry>> {
         save_template,
         list_templates,
         template_warnings,
+        delete_template,
         launch_template,
         allow_source,
         pick_workspace,

@@ -54,6 +54,12 @@ const paths = {
       <circle cx="19" cy="12" r=".8" />
     </>
   ),
+  trash: (
+    <>
+      <path d="M4 7h16M10 4h4M6 7l1 13h10l1-13" />
+      <path d="M10 11v6m4-6v6" />
+    </>
+  ),
   monitor: (
     <>
       <rect x="3" y="3" width="18" height="13" rx="2" />

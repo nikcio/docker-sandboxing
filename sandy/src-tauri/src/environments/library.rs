@@ -183,6 +183,31 @@ pub fn list_templates(root: &Path) -> Result<Vec<SavedTemplate>, String> {
     read_library(root).map(|(templates, _)| templates)
 }
 
+/// Removes a saved template: its file and the library record. Sandboxes
+/// created from the template keep their own copies of the environment.
+pub fn delete_template(root: &Path, id: &str) -> Result<(), String> {
+    let _guard = LIBRARY.lock().map_err(|e| e.to_string())?;
+    let mut library = records(root)?;
+    let index = library
+        .iter()
+        .position(|record| record.id == id)
+        .ok_or("Unknown saved template")?;
+    let record = library.remove(index);
+    // The template file is deleted wherever it lives. A missing file is
+    // already gone: deleting the stale record still helps.
+    match std::fs::remove_file(&record.path) {
+        Ok(()) => {
+            // Library-owned templates live in an empty templates/<id>/ folder;
+            // custom locations never have one, and remove_dir keeps files.
+            let _ = std::fs::remove_dir(root.join("templates").join(&record.id));
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return Err(format!("Cannot delete {}: {e}", record.path)),
+    }
+    write_json(&root.join("templates.json"), &library)
+        .map_err(|error| format!("Template library could not be saved: {error}"))
+}
+
 /// Companion to list_templates: report stale files without hiding readable ones.
 pub fn template_warnings(root: &Path) -> Result<Vec<String>, String> {
     read_library(root).map(|(_, warnings)| warnings)

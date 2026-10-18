@@ -6,7 +6,9 @@ use std::path::PathBuf;
 use super::LIBRARY;
 use super::launch::launch_template;
 use super::launch::{SandboxRuntime, launch_with};
-use super::library::{SaveTemplateRequest, list_templates, save_template, template_warnings};
+use super::library::{
+    SaveTemplateRequest, delete_template, list_templates, save_template, template_warnings,
+};
 use super::schema::Environment;
 use super::source_policy::{allow_source_with, prefix_matches};
 use super::validation::path_string;
@@ -209,6 +211,43 @@ fn stale_template_does_not_hide_readable_library_entries() {
     assert_eq!(warnings.len(), 1);
     assert!(warnings[0].contains(&invalid.path));
     assert!(warnings[0].contains("invalid environment YAML"));
+}
+
+#[test]
+fn delete_template_removes_record_file_and_empty_library_directory() {
+    let fixture = Fixture::new();
+    let library_owned = save_template(&fixture.root, fixture.request()).unwrap();
+    let mut custom = fixture.request();
+    let custom_directory = fixture.base.join("custom");
+    std::fs::create_dir(&custom_directory).unwrap();
+    custom.save_path = Some(path_string(&custom_directory.join("sbxenv.yaml")).unwrap());
+    let custom = save_template(&fixture.root, custom).unwrap();
+
+    delete_template(&fixture.root, &library_owned.id).unwrap();
+    assert!(!std::fs::exists(&library_owned.path).unwrap());
+    assert!(
+        !fixture
+            .root
+            .join("templates")
+            .join(&library_owned.id)
+            .exists()
+    );
+    let remaining = list_templates(&fixture.root).unwrap();
+    assert_eq!(remaining.len(), 1);
+    assert_eq!(remaining[0].id, custom.id);
+    assert!(template_warnings(&fixture.root).unwrap().is_empty());
+
+    // Custom-location files are deleted too, and a missing file is already
+    // gone: the stale record is still removed.
+    delete_template(&fixture.root, &custom.id).unwrap();
+    assert!(!std::fs::exists(&custom.path).unwrap());
+    assert!(list_templates(&fixture.root).unwrap().is_empty());
+    assert!(template_warnings(&fixture.root).unwrap().is_empty());
+
+    assert_eq!(
+        delete_template(&fixture.root, "unknown-id").unwrap_err(),
+        "Unknown saved template"
+    );
 }
 
 #[test]
