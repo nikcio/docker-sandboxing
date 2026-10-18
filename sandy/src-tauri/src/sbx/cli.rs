@@ -6,7 +6,7 @@ use std::process::Command;
 pub const SBX_COMMAND: &str = "sbx";
 pub const SSH_SETUP_COMMAND: &str = "ssh";
 
-pub fn sbx_executable() -> Result<PathBuf, String> {
+pub(crate) fn sbx_executable() -> Result<PathBuf, String> {
     // Prefer the native executable over a PATH shim. Never send CLI arguments
     // through cmd /C: workspace paths and environment values can contain shell
     // metacharacters even when sandbox names have been validated.
@@ -61,6 +61,7 @@ fn standard_sbx_locations() -> Vec<PathBuf> {
     }
 }
 
+/// Construct a direct CLI invocation; callers can also set `current_dir`.
 pub(crate) fn sbx_command(args: &[&str]) -> Result<Command, String> {
     let mut cmd = Command::new(sbx_executable()?);
     cmd.args(args);
