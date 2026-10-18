@@ -14,6 +14,37 @@ A single SemVer version for the whole repo, managed by [release-please](https://
    - the `&ref=vX.Y.Z` git pins in `examples/*.sbxenv.yaml`
 3. Merging the release PR tags `vX.Y.Z` and publishes the GitHub release.
 
+## Preview releases
+
+Pre-release versions (`v3.1.0-beta.1`, GitHub prereleases) cut on demand from
+`main`, for testing the examples and Sandy builds before a stable release:
+
+1. Actions → **Preview Release** → **Run workflow**. This opens a preview
+   release PR (same files as a stable release PR, plus a `-beta.N` version)
+   and queues it for auto-merge (needs the repo setting "Allow auto-merge").
+2. Merging tags the prerelease and publishes the Sandy builds as a GitHub
+   prerelease (not marked latest).
+
+Files (kept apart from the stable flow — own manifest, component, labels, and
+`release-please--branches--main--components--preview` PR branch):
+
+- `.release-please-preview-config.json`, `.release-please-preview-manifest.json`
+- `.github/workflows/preview-release.yml`
+
+Preview releases don't consume conventional commits: the next stable release
+PR releases the same commits again as a full version. A `feat!:` after a
+preview still bumps the stable major from the last stable tag.
+
+Caveats:
+
+- Both release PRs rewrite the same `x-release-please` lines, so don't cut a
+  preview while a stable release PR is open. If one landed anyway, click
+  **Update branch** on the stale PR and resolve the pins to the full version
+  (and keep both CHANGELOG sections).
+- Never hand-edit the preview manifest
+  (`.release-please-preview-manifest.json`); preview release PRs own it, same
+  as the stable one.
+
 No images are published from this repo. The kit runs on Docker's built-in
 `docker/sandbox-templates:opencode-docker` image, and stack toolchains are
 installed by the mixins at sandbox creation.
