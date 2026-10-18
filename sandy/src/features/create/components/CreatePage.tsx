@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import { useId } from "react";
 import Icon from "../../../common/components/Icon";
 import { ErrorBanner } from "../../../common/components/ErrorBanner";
 import Providers from "../../settings/components/Providers";
@@ -21,7 +21,6 @@ const STEPS = ["Providers", "Agent or workload", "Mixins & inputs", "Project & r
 
 export default function CreatePage({ onClose, onCreated, onTemplates, onBusyChange }: CreatePageProps) {
   const id = useId();
-  const heading = useRef<HTMLHeadingElement>(null);
   const flow = useCreateFlow({ onCreated, onBusyChange });
   const {
     step,
@@ -71,16 +70,12 @@ export default function CreatePage({ onClose, onCreated, onTemplates, onBusyChan
     copy,
   } = flow;
 
-  useEffect(() => {
-    heading.current?.focus();
-  }, [step, saved]);
-
   return (
     <section className="standalone-page catalog-page" aria-labelledby={`${id}-title`} aria-busy={busy !== null}>
       <header className="page-head catalog-page-heading">
         <div>
           <span className="eyebrow">YOUR NEXT WORKSPACE</span>
-          <h1 id={`${id}-title`} ref={heading} tabIndex={-1}>
+          <h1 id={`${id}-title`}>
             {saved ? "Your template is ready" : "Create a sandbox"}
           </h1>
           <p className="page-sub">

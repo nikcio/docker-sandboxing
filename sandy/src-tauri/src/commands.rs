@@ -8,7 +8,7 @@ use tauri::Manager;
 
 use crate::{catalog, environments, sbx, setup};
 
-pub(crate) async fn blocking<T: Send + 'static>(
+async fn blocking<T: Send + 'static>(
     work: impl FnOnce() -> Result<T, String> + Send + 'static,
 ) -> Result<T, String> {
     tauri::async_runtime::spawn_blocking(work)

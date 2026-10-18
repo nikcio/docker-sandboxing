@@ -9,7 +9,7 @@ mod setup;
 #[allow(clippy::expect_used, clippy::panic)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(Box::new(commands::handlers()))
+        .invoke_handler(commands::handlers())
         // `run()` returns () and there is nowhere left to report a fatal
         // startup error; exiting with the message is the only option here.
         .run(tauri::generate_context!())
