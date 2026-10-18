@@ -1,7 +1,6 @@
 // Tests may unwrap/expect freely — a panic is exactly the failure mode we want.
 use std::path::PathBuf;
 
-use crate::read_status;
 use crate::sbx::cli::{SSH_SETUP_COMMAND, first_executable, is_sbx_installed, run_capture};
 use crate::sbx::install::ensure_sbx_installed;
 use crate::sbx::lifecycle::{
@@ -13,6 +12,7 @@ use crate::sbx::status::{
 };
 use crate::sbx::terminal::{applescript_quote, open_terminal, powershell_quote, shell_quote};
 use crate::sbx::test_env::CLI_TEST_ENV_LOCK;
+use crate::setup::read_status;
 
 #[test]
 fn parses_typical_ls_table() {
