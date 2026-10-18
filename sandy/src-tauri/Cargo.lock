@@ -2864,6 +2864,7 @@ dependencies = [
 name = "sandy"
 version = "0.1.0"
 dependencies = [
+ "dunce",
  "reqwest",
  "rfd",
  "serde",

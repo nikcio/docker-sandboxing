@@ -27,12 +27,15 @@ export default function Providers({ onChange, onDirtyChange, disabled = false }:
   const lock = useRef(false);
   const id = useId();
   const dirty = providers !== null && JSON.stringify(providers) !== saved;
+  // An empty GitHub reference is valid: discovery resolves it to the latest tag.
   const incomplete =
     providers?.some(
       (provider) =>
         provider.enabled &&
-        ((!isHubSearchProvider(provider) && !provider.reference.trim()) ||
-          !repositoryIsValid(provider.repository, provider.kind)),
+        (isHubSearchProvider(provider)
+          ? !repositoryIsValid(provider.repository, provider.kind)
+          : !repositoryIsValid(provider.repository, provider.kind) ||
+            (provider.kind === "dockerhub" && !provider.reference.trim())),
     ) ?? false;
 
   useEffect(() => {
@@ -74,11 +77,15 @@ export default function Providers({ onChange, onDirtyChange, disabled = false }:
       providers.some(
         (provider) =>
           !provider.label.trim() ||
-          (!isHubSearchProvider(provider) && provider.enabled && !provider.reference.trim()) ||
-          !repositoryIsValid(provider.repository, provider.kind),
+          !repositoryIsValid(provider.repository, provider.kind) ||
+          // An empty GitHub reference is valid: discovery resolves it to the latest tag.
+          (provider.kind === "dockerhub" &&
+            provider.enabled &&
+            !isHubSearchProvider(provider) &&
+            !provider.reference.trim()),
       )
     ) {
-      setError("Give each provider a name, a valid repository, and a reference before saving.");
+      setError("Give each provider a name and a valid repository before saving.");
       return;
     }
     lock.current = true;
@@ -227,7 +234,7 @@ export default function Providers({ onChange, onDirtyChange, disabled = false }:
               <span className="catalog-help" role="status">
                 {notice ||
                   (incomplete
-                    ? "Choose a reference for each enabled repository."
+                    ? "Give each enabled repository a valid repository URL."
                     : dirty
                       ? "Unsaved provider changes"
                       : "Using the saved provider configuration")}

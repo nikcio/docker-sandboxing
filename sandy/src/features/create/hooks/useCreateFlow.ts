@@ -1,6 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Catalog, KitArguments, KitOption, Provider } from "../../../lib/catalog";
-import { discoverKits, pickTemplatePath, pickWorkspace, saveProviders } from "../../../lib/catalog";
+import {
+  discoverKits,
+  getProviders,
+  pickTemplatePath,
+  pickWorkspace,
+  saveProviders,
+} from "../../../lib/catalog";
 import {
   argumentsAreValid,
   BUILTIN_AGENTS,
@@ -27,7 +33,6 @@ export function useCreateFlow({ onCreated, onBusyChange }: CreateFlowOptions) {
   const mounted = useMountedRef();
   const [step, setStep] = useState(0);
   const [providers, setProviders] = useState<Provider[] | null>(null);
-  const [providersDirty, setProvidersDirty] = useState(true);
   const [hubQuery, setHubQuery] = useState("");
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [agent, setAgent] = useState<KitOption | null>(null);
@@ -46,6 +51,23 @@ export function useCreateFlow({ onCreated, onBusyChange }: CreateFlowOptions) {
   const [launchOutput, setLaunchOutput] = useState("");
   const [copyNotice, setCopyNotice] = useState("");
   const lock = useRef(false);
+
+  // Load the saved provider configuration up front. The Providers editor still
+  // reports changes back; this only guarantees step 0 can render (with a
+  // surfaced error) even if that load fails.
+  useEffect(() => {
+    let active = true;
+    getProviders()
+      .then((result) => {
+        if (active) setProviders((previous) => previous ?? result);
+      })
+      .catch((failure) => {
+        if (active) setError(String(failure));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useBusyReporting(busy !== null, onBusyChange);
 
@@ -84,11 +106,19 @@ export function useCreateFlow({ onCreated, onBusyChange }: CreateFlowOptions) {
 
   const moveTo = (next: number) => {
     setError(null);
+    // Later steps render from the discovery snapshot; without one, send the
+    // user back to the provider step instead of showing a blank page.
+    if (next > 0 && !catalog) {
+      setStep(0);
+      return;
+    }
     setStep(next);
   };
 
   const discover = async () => {
-    if (lock.current || !providers || providersDirty) return;
+    // Provider edits are persisted by saveProviders below, so unsaved changes
+    // do not need to block discovery.
+    if (lock.current || !providers) return;
     lock.current = true;
     setBusy("discover");
     setError(null);
@@ -239,8 +269,18 @@ export function useCreateFlow({ onCreated, onBusyChange }: CreateFlowOptions) {
   };
 
   const onProvidersChange = (next: Provider[]) => {
+    // Only invalidate the discovery snapshot when the configuration actually
+    // differs from the discovered one. Remounting the editor re-reports the
+    // unchanged saved configuration; that must not reset the wizard's progress.
+    const changed = providers !== null && JSON.stringify(providers) !== JSON.stringify(next);
     setProviders(next);
-    setCatalog(null);
+    if (changed && catalog) {
+      setCatalog(null);
+      setStep(0);
+      setError(
+        "Provider changes need a new discovery. Review your sources and discover kits again.",
+      );
+    }
   };
 
   const selectAgent = (kit: KitOption) => {
@@ -279,8 +319,6 @@ export function useCreateFlow({ onCreated, onBusyChange }: CreateFlowOptions) {
     values,
     // Step 0: providers and discovery.
     providers,
-    providersDirty,
-    setProvidersDirty,
     hubQuery,
     setHubQuery,
     catalog,

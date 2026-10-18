@@ -33,7 +33,7 @@ pub fn get_providers(root: &Path) -> Result<Vec<Provider>, String> {
                 kind: "dockerhub".into(),
                 repository: "https://hub.docker.com/search?type=sbx_kit".into(),
                 reference: String::new(),
-                enabled: true,
+                enabled: false,
             },
         ]),
         Err(e) => Err(format!("Cannot read {}: {e}", path.display())),

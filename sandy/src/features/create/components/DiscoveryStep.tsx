@@ -5,18 +5,17 @@ import Icon from "../../../common/components/Icon";
 /**
  * The discovery trigger below the provider editor: optional Docker Hub query
  * and the "Discover kits" action. The provider editor itself lives in
- * `features/settings`.
+ * `features/settings`. Unsaved provider changes are persisted by discovery
+ * itself, so they don't block the action.
  */
 export function DiscoveryStep({
   providers,
-  providersDirty,
   hubQuery,
   onHubQuery,
   busy,
   onDiscover,
 }: {
   providers: Provider[];
-  providersDirty: boolean;
   hubQuery: string;
   onHubQuery: (value: string) => void;
   busy: boolean;
@@ -45,7 +44,7 @@ export function DiscoveryStep({
         <button
           type="button"
           className="primary"
-          disabled={busy || providersDirty || !providers.some((provider) => provider.enabled)}
+          disabled={busy || !providers.some((provider) => provider.enabled)}
           onClick={onDiscover}
         >
           {busy ? (
@@ -59,9 +58,8 @@ export function DiscoveryStep({
           )}
         </button>
         <span className="catalog-help">
-          {providersDirty
-            ? "Save provider changes before continuing."
-            : "Only kits with supported metadata will be offered."}
+          Only kits with supported metadata will be offered. Unsaved provider changes are saved
+          when you discover.
         </span>
       </div>
     </>
