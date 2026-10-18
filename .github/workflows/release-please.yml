@@ -101,13 +101,21 @@ jobs:
 
       - name: Build Tauri app
         working-directory: sandy
-        run: pnpm tauri build -- --target ${{ matrix.target }}
+        env:
+          # Signs the updater bundles (.sig files); the key is stored as an
+          # Actions secret. Without it the in-app updater could not verify
+          # downloaded installers.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: pnpm tauri build -- --target ${{ matrix.target }} --config src-tauri/tauri.updater.conf.json
 
       - name: Prepare artifacts (Linux)
         if: runner.os == 'Linux'
         run: |
           mkdir -p artifacts
           find sandy/src-tauri/target -path '*release/bundle*' -name '*.AppImage' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.AppImage.sig' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.AppImage.tar.gz' -exec cp {} artifacts/ \;
           find sandy/src-tauri/target -path '*release/bundle*' -name '*.deb' -exec cp {} artifacts/ \;
 
       - name: Prepare artifacts (macOS)
@@ -115,6 +123,8 @@ jobs:
         run: |
           mkdir -p artifacts
           find sandy/src-tauri/target -path '*release/bundle*' -name '*.dmg' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.app.tar.gz' -exec cp {} artifacts/ \;
+          find sandy/src-tauri/target -path '*release/bundle*' -name '*.app.tar.gz.sig' -exec cp {} artifacts/ \;
           find sandy/src-tauri/target -path '*release/bundle*' -name '*.app' -maxdepth 0 -exec cp -R {} artifacts/ \;
 
       - name: Prepare artifacts (Windows)
@@ -123,7 +133,11 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
           Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/msi/*.msi' | Copy-Item -Destination artifacts
+          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/msi/*.msi.sig' | Copy-Item -Destination artifacts
+          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/msi/*.msi.zip' | Copy-Item -Destination artifacts
           Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/nsis/*-setup.exe' | Copy-Item -Destination artifacts
+          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/nsis/*-setup.exe.sig' | Copy-Item -Destination artifacts
+          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/nsis/*-setup.exe.zip' | Copy-Item -Destination artifacts
 
       - name: Upload artifacts to draft release
         env:
@@ -132,9 +146,64 @@ jobs:
         shell: bash
         run: gh release upload "${TAG_NAME}" --clobber artifacts/*
 
+  latest-manifest:
+    name: Publish updater manifest
+    needs: [release-please, sandy]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Build latest.json from the signed release artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The updater endpoint Sandy ships with: a static manifest on the
+          # latest release. Signatures must match the .sig files uploaded by
+          # the build job — they verify every downloaded installer.
+          version="${TAG_NAME#v}"
+          read_sig() {
+            gh release download "${TAG_NAME}" --pattern "$1" --dir /tmp/sigs --clobber >/dev/null
+            cat "/tmp/sigs/$1"
+          }
+          darwin_sig=$(read_sig 'Sandy_aarch64.app.tar.gz.sig')
+          windows_sig=$(read_sig 'Sandy_x64-setup.exe.zip.sig')
+          linux_sig=$(read_sig 'Sandy_x86_64.AppImage.tar.gz.sig')
+          TAG_NAME="${TAG_NAME}" python3 - "$version" "$darwin_sig" "$windows_sig" "$linux_sig" <<'EOF'
+          import json, os, sys, datetime
+          version, darwin_sig, windows_sig, linux_sig = sys.argv[1:5]
+          tag = os.environ["TAG_NAME"]
+          base = f"https://github.com/nikcio/docker-sandboxing/releases/download/{tag}"
+          now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
+          manifest = {
+              "version": version,
+              "pub_date": now,
+              "platforms": {
+                  "darwin-aarch64": {
+                      "signature": darwin_sig,
+                      "url": f"{base}/Sandy_aarch64.app.tar.gz",
+                  },
+                  "windows-x86_64": {
+                      "signature": windows_sig,
+                      "url": f"{base}/Sandy_x64-setup.exe.zip",
+                  },
+                  "linux-x86_64": {
+                      "signature": linux_sig,
+                      "url": f"{base}/Sandy_x86_64.AppImage.tar.gz",
+                  },
+              },
+          }
+          with open("latest.json", "w") as f:
+              json.dump(manifest, f, indent=2)
+          EOF
+          gh release upload "${TAG_NAME}" --clobber latest.json
+
   publish:
     name: Publish release
-    needs: [release-please, sandy]
+    needs: [release-please, sandy, latest-manifest]
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     permissions:
