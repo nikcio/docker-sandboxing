@@ -22,7 +22,7 @@ Nothing runs automatically: preview release PRs are only opened when you run
 the workflow.
 
 1. Actions → **Preview Release** → **Run workflow**. This opens a preview
-   release PR (same files as a stable release PR, plus a `-betaNNN` version)
+   release PR (same files as a stable release PR, plus a `-beta001` version)
    and queues it for auto-merge (needs the repo setting "Allow auto-merge").
 2. Merging tags the prerelease and publishes the Sandy builds as a GitHub
    prerelease (not marked latest).
