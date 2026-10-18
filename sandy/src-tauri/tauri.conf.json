@@ -10,6 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "Sandy",
@@ -17,7 +18,8 @@
         "height": 820,
         "minWidth": 780,
         "minHeight": 560,
-        "center": true
+        "center": true,
+        "visible": false
       }
     ],
     "security": {
