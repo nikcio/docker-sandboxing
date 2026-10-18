@@ -129,7 +129,7 @@ export function SandboxList({
                   {sandbox.agent && <span className="tag">{sandbox.agent}</span>}
                 </span>
                 <span className="sbx-sub" title={sandbox.workspace}>
-                  {sandbox.workspace || "No workspace reported"}
+                  {sandbox.workspace || "Mountless"}
                 </span>
               </span>
               <StatePill state={sandbox.state} />
