@@ -61,12 +61,15 @@ export function Sidebar({
   checkingSetup,
   count,
   onNavigate,
+  onViewGuide,
 }: {
   view: View;
   busy: boolean;
   checkingSetup: boolean;
   count: number | null;
   onNavigate: (view: Exclude<View, "create">) => void;
+  /** Replaces the guide link while the guide view is not built yet. */
+  onViewGuide: () => void;
 }) {
   return (
     <aside className="sidebar">
@@ -94,9 +97,9 @@ export function Sidebar({
           <Icon name="bulb" size={19} /> Need help?
         </div>
         <p>Check out our guide on how to use sandboxes.</p>
-        <a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noreferrer">
+        <button type="button" className="link-button" onClick={onViewGuide}>
           View guide <Icon name="arrow" size={15} />
-        </a>
+        </button>
       </div>
     </aside>
   );

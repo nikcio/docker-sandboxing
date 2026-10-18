@@ -9,6 +9,7 @@ import type { SandboxAction } from "../sandboxActions";
 import { stateKind } from "../../../common/lib/sandboxState";
 import { summarize, useSandboxDashboard } from "../hooks/useSandboxDashboard";
 import ConnectDialog from "../../connect/components/ConnectDialog";
+import { ComingSoonDialog } from "../../../common/components/ComingSoonDialog";
 
 export interface DashboardPageProps {
   home: boolean;
@@ -40,6 +41,7 @@ export default function DashboardPage({
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [connecting, setConnecting] = useState<SandboxInfo | null>(null);
   const [search, setSearch] = useState("");
+  const [comingSoonOpen, setComingSoonOpen] = useState(false);
   const installed = !!status?.sbx_installed;
   const {
     sandboxes,
@@ -127,7 +129,13 @@ export default function DashboardPage({
             </button>
           )}
         </div>
-        {home && <HomeActions onCreate={onCreate} onGoTemplates={onGoTemplates} />}
+        {home && (
+          <HomeActions
+            onCreate={onCreate}
+            onGoTemplates={onGoTemplates}
+            onLearnMore={() => setComingSoonOpen(true)}
+          />
+        )}
         {needsSetup && (
           <div className="setup-banner">
             <Icon name="shield" size={20} />
@@ -178,6 +186,9 @@ export default function DashboardPage({
           onOpenTerminal={() => runAction(connecting.name, "terminal")}
           onClose={() => setConnecting(null)}
         />
+      )}
+      {comingSoonOpen && (
+        <ComingSoonDialog feature="Learn more" onClose={() => setComingSoonOpen(false)} />
       )}
     </div>
   );

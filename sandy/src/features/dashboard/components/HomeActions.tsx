@@ -3,9 +3,12 @@ import Icon from "../../../common/components/Icon";
 export function HomeActions({
   onCreate,
   onGoTemplates,
+  onLearnMore,
 }: {
   onCreate: () => void;
   onGoTemplates: () => void;
+  /** Replaces the guide link while the learn-more page is not built yet. */
+  onLearnMore: () => void;
 }) {
   return (
     <div className="action-cards">
@@ -29,7 +32,7 @@ export function HomeActions({
           <Icon name="arrow" size={18} />
         </span>
       </button>
-      <a className="action-card" href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noreferrer">
+      <button className="action-card" onClick={onLearnMore}>
         <span className="action-icon purple">
           <Icon name="book" size={27} />
         </span>
@@ -38,7 +41,7 @@ export function HomeActions({
         <span className="action-arrow">
           <Icon name="arrow" size={18} />
         </span>
-      </a>
+      </button>
     </div>
   );
 }
