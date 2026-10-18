@@ -25,6 +25,8 @@ export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: Te
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<SavedTemplate | null>(null);
   const [deleting, setDeleting] = useState<SavedTemplate | null>(null);
+  /** The card's Delete button: focus returns there when the dialog closes. */
+  const returnFocus = useRef<HTMLButtonElement | null>(null);
   const loadingLock = useRef(false);
   const generation = useRef(0);
 
@@ -180,7 +182,10 @@ export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: Te
                         type="button"
                         className="ghost"
                         aria-label={`Delete ${template.name}`}
-                        onClick={() => setDeleting(template)}
+                        onClick={(event) => {
+                          returnFocus.current = event.currentTarget;
+                          setDeleting(template);
+                        }}
                       >
                         <Icon name="trash" size={16} /> Delete
                       </button>
@@ -235,7 +240,10 @@ export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: Te
           key={deleting.id}
           template={deleting}
           onDeleted={() => void refresh()}
-          onClose={() => setDeleting(null)}
+          onClose={() => {
+            setDeleting(null);
+            returnFocus.current?.focus();
+          }}
         />
       )}
     </section>

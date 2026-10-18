@@ -568,8 +568,9 @@ pre.catalog-yaml {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  /* Beats .catalog-section-heading > div { flex: 1; ... }: actions hug the
-     right edge instead of stretching like the heading text block. */
+  /* .catalog-section-heading > div { flex: 1; ... } would stretch this
+     wrapper like the heading text block; pinning the flex basis and pushing
+     with margin-left: auto keeps the buttons hugging the right edge. */
   flex: 0 0 auto;
   margin-left: auto;
   justify-content: flex-end;

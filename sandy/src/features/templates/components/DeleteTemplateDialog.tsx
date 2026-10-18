@@ -12,15 +12,14 @@ export function DeleteTemplateDialog({
   onClose,
 }: {
   template: SavedTemplate;
-  /** Called after a successful delete with a user-facing notice. */
-  onDeleted: (notice: string) => void;
+  /** Called after a successful delete, before the dialog closes. */
+  onDeleted: () => void;
   onClose: () => void;
 }) {
   const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   const mounted = useMountedRef();
   const actionLock = useRef(false);
-  const returnFocus = useRef<HTMLButtonElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -44,7 +43,7 @@ export function DeleteTemplateDialog({
     try {
       await deleteTemplate(template.id);
       if (!mounted.current) return;
-      onDeleted(`Deleted template ${template.name}. The saved file was removed.`);
+      onDeleted();
       dialog.current?.close();
     } catch (failure) {
       if (mounted.current) {
@@ -66,7 +65,6 @@ export function DeleteTemplateDialog({
       }}
       onClose={() => {
         setDeleteError(null);
-        returnFocus.current?.focus();
         onClose();
       }}
     >
