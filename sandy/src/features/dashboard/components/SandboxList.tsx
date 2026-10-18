@@ -14,8 +14,6 @@ export function SandboxList({
   pending,
   search,
   onSearch,
-  sort,
-  onSort,
   onRefresh,
   onSelect,
   onOpen,
@@ -31,8 +29,6 @@ export function SandboxList({
   pending: Map<string, SandboxAction>;
   search: string;
   onSearch: (value: string) => void;
-  sort: string;
-  onSort: (value: string) => void;
   onRefresh: () => void;
   onSelect: (name: string) => void;
   onOpen: (sandbox: SandboxInfo) => void;
@@ -64,10 +60,6 @@ export function SandboxList({
               onChange={(event) => onSearch(event.target.value)}
             />
           </label>
-          <select aria-label="Sort sandboxes" value={sort} onChange={(event) => onSort(event.target.value)}>
-            <option value="default">Sort: CLI order</option>
-            <option value="name">Sort: Name</option>
-          </select>
           <button
             className="icon-button refresh-button"
             title="Refresh sandboxes"

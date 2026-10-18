@@ -39,7 +39,6 @@ export default function DashboardPage({
   const [selected, setSelected] = useState<string | null>(null);
   const [connecting, setConnecting] = useState<SandboxInfo | null>(null);
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("default");
   const installed = !!status?.sbx_installed;
   const {
     sandboxes,
@@ -74,8 +73,6 @@ export default function DashboardPage({
       .toLowerCase()
       .includes(search.trim().toLowerCase()),
   );
-  // The API has no creation timestamp. Preserve CLI order rather than sorting UUIDs as dates.
-  if (sort === "name") visible.sort((a, b) => a.name.localeCompare(b.name));
   const { summary } = summarize(all);
   const detail = all.find((sandbox) => sandbox.name === selected) ?? null;
   const detailPending = detail ? pending.get(detail.name) : undefined;
@@ -135,8 +132,6 @@ export default function DashboardPage({
           pending={pending}
           search={search}
           onSearch={setSearch}
-          sort={sort}
-          onSort={setSort}
           onRefresh={() => void refresh()}
           onSelect={setSelected}
           onOpen={openConnection}
