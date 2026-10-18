@@ -1,6 +1,6 @@
 name: Preview Release
 
-# Preview releases: pre-release versions (v3.1.0-beta.1) cut on demand from
+# Preview releases: pre-release versions (v3.1.0-beta001) cut on demand from
 # current main. Complements the stable release-please flow:
 #
 # 1. Run this workflow (Actions → Preview Release → Run workflow). It opens a

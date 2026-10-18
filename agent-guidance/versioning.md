@@ -16,16 +16,20 @@ A single SemVer version for the whole repo, managed by [release-please](https://
 
 ## Preview releases
 
-Pre-release versions (`v3.1.0-beta.1`, GitHub prereleases) cut on demand from
+Pre-release versions (`v3.1.0-beta001`, GitHub prereleases) cut on demand from
 `main`, for testing the examples and Sandy builds before a stable release.
 Nothing runs automatically: preview release PRs are only opened when you run
 the workflow.
 
 1. Actions → **Preview Release** → **Run workflow**. This opens a preview
-   release PR (same files as a stable release PR, plus a `-beta.N` version)
+   release PR (same files as a stable release PR, plus a `-beta001` version)
    and queues it for auto-merge (needs the repo setting "Allow auto-merge").
 2. Merging tags the prerelease and publishes the Sandy builds as a GitHub
    prerelease (not marked latest).
+
+Previews count up zero-padded: `beta001` → `beta002` → … Repeated dispatches
+before merging just update the same release PR; a merged preview bumps the
+number only on the next dispatch after the previous preview tagged.
 
 Files (kept apart from the stable flow — own manifest, component, labels, and
 `release-please--branches--main--components--preview` PR branch):
