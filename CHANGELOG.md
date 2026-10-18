@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0-beta.1](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0-beta...v3.1.0-beta.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* Sandy release workflow ([#168](https://github.com/nikcio/docker-sandboxing/issues/168)) ([7415c7e](https://github.com/nikcio/docker-sandboxing/commit/7415c7eddb988f08858d60857b9d646691a3372a))
+
 ## [3.1.0-beta](https://github.com/nikcio/docker-sandboxing/compare/v3.0.0...v3.1.0-beta) (2026-10-18)
 
 
