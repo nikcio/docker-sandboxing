@@ -1,0 +1,258 @@
+fn discover_github(api: &Api, provider: &Provider) -> Result<Catalog, String> {
+    let repository = github_repository(&provider.repository)?;
+    let commit = if provider.reference.is_empty() {
+        let tags = api.github_tags(&repository)?;
+        if let Some(sha) = tags.first().and_then(|tag| tag["commit"]["sha"].as_str()) {
+            sha.to_string()
+        } else {
+            let metadata = api.json(&format!("{}/repos/{repository}", api.github))?;
+            let branch = metadata["default_branch"]
+                .as_str()
+                .ok_or("GitHub repository has no default branch")?;
+            github_commit(api, &repository, branch)?
+        }
+    } else {
+        // A manual branch, tag, or commit is independent of tag enumeration.
+        // Resolve it directly even when listing tags is unavailable or rate-limited.
+        github_commit(api, &repository, &provider.reference)?
+    };
+    let tree = api.json(&format!(
+        "{}/repos/{repository}/git/trees/{commit}?recursive=1",
+        api.github
+    ))?;
+    let entries = tree["tree"]
+        .as_array()
+        .ok_or("GitHub tree has no entries")?;
+    let mut candidates: Vec<_> = entries
+        .iter()
+        .filter(|entry| entry["type"] == "blob")
+        .filter_map(|entry| entry["path"].as_str())
+        .filter(|path| {
+            path.ends_with(".yaml")
+                || path.ends_with(".yml")
+                || path.ends_with(".dockerfile")
+                || path.rsplit('/').next() == Some("Dockerfile")
+        })
+        .map(String::from)
+        .collect();
+    let mut catalog = Catalog::default();
+    if tree["truncated"] == true {
+        catalog.warnings.push(format!(
+            "{}: GitHub truncated the repository tree; some kits may be missing",
+            provider.label
+        ));
+    }
+    candidates.sort_by_key(|path| (!path.ends_with("spec.yaml"), path.clone()));
+    if candidates.len() > 512 {
+        catalog.warnings.push(format!("{}: repository contains {} possible descriptors; only the first 512 are read (spec.yaml first). Use a focused kit repository for complete discovery", provider.label, candidates.len()));
+        candidates.truncate(512);
+    }
+    // Fetch raw descriptors in small batches. Ignore ordinary YAML; malformed kit descriptors remain visible.
+    let mut directories = HashSet::new();
+    for chunk in candidates.chunks(METADATA_BATCH) {
+        let repository = &repository;
+        let commit = &commit;
+        let results = std::thread::scope(|scope| {
+            chunk
+                .iter()
+                .map(|path| {
+                    scope.spawn(move || {
+                        let encoded = path
+                            .split('/')
+                            .map(encoded_path)
+                            .collect::<Vec<_>>()
+                            .join("/");
+                        let url = format!("{}/{repository}/{commit}/{encoded}", api.raw);
+                        (path, api.text(&url))
+                    })
+                })
+                .collect::<Vec<_>>()
+                .into_iter()
+                .map(|job| {
+                    job.join()
+                        .map_err(|_| "Descriptor worker failed".to_string())
+                })
+                .collect::<Vec<_>>()
+        });
+        for result in results {
+            let (path, text) = result?;
+            let text = match text {
+                Ok(text) => text,
+                Err(e) => {
+                    catalog
+                        .warnings
+                        .push(format!("{} / {path}: {e}", provider.label));
+                    continue;
+                }
+            };
+            let text = comment_descriptor(&text).unwrap_or(text);
+            let value: Value = match serde_yaml_ng::from_str(&text) {
+                Ok(value) => value,
+                Err(e) => {
+                    if text.contains("schemaVersion:") && text.contains("kind:") {
+                        catalog
+                            .warnings
+                            .push(format!("{} / {path}: {e}", provider.label));
+                    }
+                    continue;
+                }
+            };
+            if !matches!(schema_version(&value), Some(2 | 3)) || value["kind"].as_str().is_none() {
+                continue;
+            }
+            // V2's loader only accepts spec.yaml. Other YAML files may be
+            // documentation examples rather than loadable directory artifacts.
+            if schema_version(&value) == Some(2) && path.rsplit('/').next() != Some("spec.yaml") {
+                continue;
+            }
+            let directory = path.rsplit_once('/').map(|(dir, _)| dir).unwrap_or("");
+            let source = format!(
+                "git+https://github.com/{repository}.git#ref={}&dir={}",
+                encoded(commit),
+                encoded(directory)
+            );
+            let fallback = directory
+                .rsplit('/')
+                .next()
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| repository_name(repository).unwrap_or(repository));
+            match option_from_descriptor(&value, &source, &provider.id, fallback) {
+                Ok(kit) if directories.insert(directory.to_string()) => catalog.kits.push(kit),
+                Ok(kit) => {
+                    catalog
+                        .kits
+                        .retain(|existing| existing.source != kit.source);
+                    catalog.warnings.push(format!("{} / {path}: multiple kit descriptors in one directory; sbx requires an unambiguous directory", provider.label));
+                }
+                Err(e) => catalog
+                    .warnings
+                    .push(format!("{} / {path}: {e}", provider.label)),
+            }
+        }
+    }
+    Ok(catalog)
+}
+
+fn github_commit(api: &Api, repository: &str, reference: &str) -> Result<String, String> {
+    api.json(&format!(
+        "{}/repos/{repository}/commits/{}",
+        api.github,
+        encoded_path(reference)
+    ))?["sha"]
+        .as_str()
+        .map(String::from)
+        .ok_or_else(|| "GitHub could not resolve the selected reference to a commit".into())
+}
+
+fn encoded_path(value: &str) -> String {
+    encoded(value).replace('+', "%20")
+}
+
+fn comment_descriptor(text: &str) -> Option<String> {
+    let mut in_block = false;
+    let mut lines = Vec::new();
+    for line in text.lines() {
+        if line.trim() == "# kit:" {
+            in_block = true;
+            continue;
+        }
+        if in_block {
+            if let Some(line) = line.strip_prefix("#   ") {
+                lines.push(line);
+            } else if line.trim() == "#" {
+                lines.push("");
+            } else {
+                break;
+            }
+        }
+    }
+    in_block.then(|| lines.join("\n"))
+}
+
+fn schema_version(value: &Value) -> Option<u8> {
+    value["schemaVersion"]
+        .as_str()
+        .and_then(|s| s.parse().ok())
+        .or_else(|| {
+            value["schemaVersion"]
+                .as_u64()
+                .and_then(|n| n.try_into().ok())
+        })
+}
+
+fn option_from_descriptor(
+    value: &Value,
+    source: &str,
+    provider_id: &str,
+    fallback: &str,
+) -> Result<KitOption, String> {
+    let schema_version = schema_version(value)
+        .filter(|v| *v == 2 || *v == 3)
+        .ok_or("Only kit schemas 2 and 3 are supported")?;
+    let kind = match (schema_version, value["kind"].as_str()) {
+        (2, Some("sandbox")) => "agent",
+        (3, Some("sandbox" | "workload")) => "workload",
+        (_, Some("mixin")) => "mixin",
+        (_, Some("set")) => return Err("Authored kit sets must be published before selection (their derived workload/mixin kind is not yet known)".into()),
+        _ => return Err("Unsupported kit kind".into()),
+    };
+    let name = if schema_version == 2 {
+        value["name"]
+            .as_str()
+            .ok_or("V2 kit descriptor must declare its name")?
+    } else {
+        value["name"].as_str().unwrap_or(fallback)
+    }
+    .to_string();
+    if name.is_empty() {
+        return Err("Kit has no identity".into());
+    }
+    let args: BTreeMap<String, Value> = value
+        .get("args")
+        .and_then(Value::as_object)
+        .map(|args| {
+            args.iter()
+                .map(|(name, arg)| (name.clone(), arg.clone()))
+                .collect()
+        })
+        .unwrap_or_default();
+    let arguments = args
+        .into_iter()
+        .map(|(name, arg)| KitArgument {
+            name,
+            description: arg["description"].as_str().unwrap_or_default().into(),
+            required: arg["required"].as_bool().unwrap_or(false),
+            default: arg["default"].as_str().map(String::from),
+            choices: arg["enum"]
+                .as_array()
+                .map(|v| {
+                    v.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
+                .unwrap_or_default(),
+        })
+        .collect();
+    Ok(KitOption {
+        id: format!("{provider_id}:{source}"),
+        name,
+        source: source.into(),
+        schema_version,
+        kind: kind.into(),
+        provider_id: provider_id.into(),
+        description: value["description"]
+            .as_str()
+            .or_else(|| value["displayName"].as_str())
+            .unwrap_or_default()
+            .into(),
+        required_agent: value["requires"]["agent"].as_str().map(String::from),
+        arguments,
+    })
+}
+
+fn is_kit_tag(value: &Value) -> bool {
+    value["content_type"] == "sbx_kit"
+        || value["media_type"]
+            .as_str()
+            .is_some_and(|m| m.starts_with("application/vnd.docker.sandbox.kit.v"))
+}
