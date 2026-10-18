@@ -63,6 +63,10 @@ jobs:
         # PR is created by the GitHub App, so the required checks run on it
         # and GitHub merges when they pass. The merge commit then triggers
         # the push run of this workflow, which tags the prerelease.
+        #
+        # -R is required: this job has no checkout, so gh has no git
+        # repository to infer the repo from. --squash because this repo
+        # only allows squash merges.
         if: github.event_name == 'workflow_dispatch' && steps.release.outputs.prs_created == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -70,7 +74,7 @@ jobs:
         run: |
           PR_NUMBER=$(echo "${PR}" | jq -r '.number')
           echo "Queueing auto-merge for preview release PR #${PR_NUMBER}"
-          gh pr merge "${PR_NUMBER}" --auto --merge
+          gh pr merge "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" --auto --squash
 
   sandy:
     needs: release-please
