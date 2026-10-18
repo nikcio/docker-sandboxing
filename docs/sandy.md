@@ -1,6 +1,6 @@
-# Sandy
+# Sandy (experimental)
 
-A desktop app for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) with guided setup, reusable environment templates, and local sandbox management, powered by the `sbx` CLI.
+A desktop app (experimental) for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) with guided setup, reusable environment templates, and local sandbox management, powered by the `sbx` CLI.
 
 ![Sandy](../sandy/src-tauri/icons/icon.png)
 
