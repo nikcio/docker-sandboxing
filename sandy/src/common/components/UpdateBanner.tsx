@@ -1,6 +1,5 @@
 import Icon from "./Icon";
 import type { AppUpdatesState } from "../hooks/useAppUpdates";
-import { snoozeUpdate } from "../hooks/useAppUpdates";
 
 const MB = 1024 * 1024;
 
@@ -32,12 +31,7 @@ export default function UpdateBanner({ updates }: { updates: AppUpdatesState }) 
             <strong>Sandy {info?.version}</strong> is available. Updating keeps your sandboxes
             and settings.
           </span>
-          <button
-            className="text-button"
-            onClick={() => {
-              if (info) snoozeUpdate(info.version);
-            }}
-          >
+          <button className="text-button" onClick={updates.snooze}>
             Later
           </button>
           <button className="primary" onClick={() => void updates.install()}>

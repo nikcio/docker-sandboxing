@@ -19,7 +19,9 @@ export interface AppUpdatesState {
   info: UpdateInfo | null;
   error: string | null;
   progress: UpdateProgress | null;
-  check: () => Promise<void>;
+  /** Checks for an update; `ignoreSnooze` shows a snoozed update anyway. */
+  check: (ignoreSnooze?: boolean) => Promise<void>;
+  snooze: () => void;
   install: () => Promise<void>;
 }
 
@@ -33,11 +35,19 @@ const snoozedVersion = () => {
     if (!raw) return null;
     const snoozed = JSON.parse(raw) as { version: string; until: number };
     if (Date.now() < snoozed.until) return snoozed.version;
-    localStorage.removeItem(SNOOZE_KEY);
+    removeSnooze();
   } catch {
-    localStorage.removeItem(SNOOZE_KEY);
+    removeSnooze();
   }
   return null;
+};
+
+const removeSnooze = () => {
+  try {
+    localStorage.removeItem(SNOOZE_KEY);
+  } catch {
+    // A blocked localStorage only means the banner returns next launch.
+  }
 };
 
 /**
@@ -52,13 +62,18 @@ export function useAppUpdates(): AppUpdatesState {
   const [progress, setProgress] = useState<UpdateProgress | null>(null);
   const installing = useRef(false);
 
-  const check = useCallback(async () => {
+  const check = useCallback(async (ignoreSnooze = false) => {
+    // An installation is in flight; re-checking would flip the state machine
+    // back to "available" while the download runs.
+    if (installing.current) return;
     try {
       const update = await checkForUpdate();
       setError(null);
       if (update) {
         setInfo(update);
-        setStatus(snoozedVersion() === update.version ? "up-to-date" : "available");
+        setStatus(
+          !ignoreSnooze && snoozedVersion() === update.version ? "up-to-date" : "available",
+        );
       } else {
         setInfo(null);
         setStatus("up-to-date");
@@ -86,6 +101,13 @@ export function useAppUpdates(): AppUpdatesState {
     }
   }, [info]);
 
+  const snooze = useCallback(() => {
+    if (!info) return;
+    snoozeUpdate(info.version);
+    // Dismiss now; the snooze also keeps future automatic checks quiet.
+    setStatus("up-to-date");
+  }, [info]);
+
   // One automatic check shortly after boot, so the splash has settled and the
   // dashboard is up before a banner could appear.
   useEffect(() => {
@@ -101,13 +123,17 @@ export function useAppUpdates(): AppUpdatesState {
       let cancelled = false;
       onUpdateProgress((updateProgress) => {
         setProgress(updateProgress);
-      }).then((stop) => {
-        if (cancelled) {
-          void stop();
-        } else {
-          unlisten = stop;
-        }
-      });
+      }).then(
+        (stop) => {
+          if (cancelled) {
+            void stop();
+          } else {
+            unlisten = stop;
+          }
+        },
+        // A failed subscription only means no progress display.
+        () => {},
+      );
       return () => {
         cancelled = true;
         unlisten?.();
@@ -116,11 +142,11 @@ export function useAppUpdates(): AppUpdatesState {
     [],
   );
 
-  return { status, info, error, progress, check, install };
+  return { status, info, error, progress, check, snooze, install };
 }
 
-/** Marks the announced version as dismissed for the current user session day. */
-export function snoozeUpdate(version: string) {
+/** Marks the announced version as dismissed for a day. */
+function snoozeUpdate(version: string) {
   try {
     localStorage.setItem(
       SNOOZE_KEY,

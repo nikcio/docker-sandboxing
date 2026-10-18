@@ -14,8 +14,10 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_updater::UpdaterExt;
 
-/// How long a check/install request may run before giving up.
-const REQUEST_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
+/// How long a check request may run before giving up. The download is left
+/// unbounded: reqwest's timeout covers the whole body read, and a slow
+/// connection must not fail a large installer mid-download.
+const CHECK_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -31,9 +33,17 @@ struct UpdateProgress {
     total: Option<u64>,
 }
 
-fn updater(app: &AppHandle) -> Result<tauri_plugin_updater::Updater, String> {
+fn check_updater(app: &AppHandle) -> Result<tauri_plugin_updater::Updater, String> {
     app.updater_builder()
-        .timeout(REQUEST_TIMEOUT)
+        .timeout(CHECK_TIMEOUT)
+        .build()
+        .map_err(|error| error.to_string())
+}
+
+/// Like [`check_updater`], but for downloading and installing: no timeout, so
+/// a large installer on a slow connection can finish.
+fn install_updater(app: &AppHandle) -> Result<tauri_plugin_updater::Updater, String> {
+    app.updater_builder()
         .build()
         .map_err(|error| error.to_string())
 }
@@ -58,7 +68,7 @@ pub(crate) async fn check_for_update(app: AppHandle) -> Result<Option<UpdateInfo
     if is_dev_build() {
         return Ok(None);
     }
-    let update = updater(&app)?
+    let update = check_updater(&app)?
         .check()
         .await
         .map_err(|error| error.to_string())?;
@@ -75,7 +85,7 @@ pub(crate) async fn check_for_update(app: AppHandle) -> Result<Option<UpdateInfo
 /// and Linux the new version is in place when the relaunch happens.
 #[tauri::command]
 pub(crate) async fn install_update(app: AppHandle) -> Result<(), String> {
-    let update = updater(&app)?
+    let update = install_updater(&app)?
         .check()
         .await
         .map_err(|error| error.to_string())?;

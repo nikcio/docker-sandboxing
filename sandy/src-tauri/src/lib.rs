@@ -13,7 +13,6 @@ use tauri::{WebviewUrl, WebviewWindowBuilder};
 pub fn run() {
     tauri::Builder::default()
         .invoke_handler(commands::handlers())
-        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // Boot splash: a small transparent window with just the logo, a

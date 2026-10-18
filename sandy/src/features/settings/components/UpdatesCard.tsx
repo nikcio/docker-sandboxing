@@ -48,7 +48,7 @@ export default function UpdatesCard({ updates }: { updates: AppUpdatesState }) {
           <Icon name="arrow" size={17} />
         </button>
       ) : (
-        <button className="primary" disabled={busy} onClick={() => void updates.check()}>
+        <button className="primary" disabled={busy} onClick={() => void updates.check(true)}>
           {updates.status === "checking" ? (
             <>
               <span className="spinner" /> Checking…
