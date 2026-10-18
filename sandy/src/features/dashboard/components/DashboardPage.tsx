@@ -151,7 +151,6 @@ export default function DashboardPage({
         installed={installed}
         onAction={(action) => detail && void runAction(detail.name, action).catch(() => {})}
         onOpen={() => detail && openConnection(detail)}
-        onCreate={onCreate}
         actionLabels={actionLabels}
       />
       <div className="dashboard-notifications" aria-live="polite" aria-atomic="true">
