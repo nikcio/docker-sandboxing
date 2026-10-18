@@ -92,7 +92,12 @@ jobs:
 
       - name: Build Tauri app
         working-directory: sandy
-        run: pnpm tauri build -- --target ${{ matrix.target }}
+        # --target must reach the tauri CLI itself (no `--` separator): tauri
+        # needs the triple to locate target/<triple>/release when bundling.
+        # With `pnpm tauri build -- --target X` the flag lands in cargo args
+        # instead — cargo builds into target/<triple>/release, but tauri
+        # bundles from target/release and dies with "can't open main binary".
+        run: pnpm tauri build --target ${{ matrix.target }}
 
       - name: Prepare artifacts (Linux)
         if: runner.os == 'Linux'
