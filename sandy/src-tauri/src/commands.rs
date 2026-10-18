@@ -187,6 +187,9 @@ pub(crate) fn handlers() -> Box<tauri::ipc::InvokeHandler<tauri::Wry>> {
         launch_template,
         allow_source,
         pick_workspace,
-        pick_template_path
+        pick_template_path,
+        crate::updates::app_version,
+        crate::updates::check_for_update,
+        crate::updates::install_update
     ])
 }
