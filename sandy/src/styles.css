@@ -1,7 +1,5 @@
 :root {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   color: #101746;
   background: #f8faff;
   font-synthesis: none;
@@ -52,7 +50,7 @@ button {
 
 button:disabled {
   cursor: default;
-  opacity: .5;
+  opacity: 0.5;
 }
 
 button,
@@ -77,7 +75,10 @@ a:hover {
 
 button,
 a {
-  transition: background .16s, box-shadow .16s, transform .16s;
+  transition:
+    background 0.16s,
+    box-shadow 0.16s,
+    transform 0.16s;
 }
 
 h1,
@@ -128,7 +129,7 @@ h4 {
   gap: 12px;
   font-size: 25px;
   font-weight: 720;
-  letter-spacing: -.6px;
+  letter-spacing: -0.6px;
 }
 
 .brand img {
@@ -290,8 +291,7 @@ h4 {
   flex: 1;
   overflow: auto;
   min-width: 0;
-  background:
-    radial-gradient(ellipse at 35% 0%, #f7faff, transparent 70%), #fafcff;
+  background: radial-gradient(ellipse at 35% 0%, #f7faff, transparent 70%), #fafcff;
 }
 
 .dashboard {
@@ -320,7 +320,7 @@ h4 {
 .wave {
   display: inline-block;
   margin-right: 4px;
-  font-size: .95em;
+  font-size: 0.95em;
 }
 
 .page-sub {
@@ -396,7 +396,7 @@ h4 {
 
 .action-cards {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr .95fr;
+  grid-template-columns: 1.4fr 1fr 1fr 0.95fr;
   gap: 14px;
   margin: 33px 0 24px;
 }
@@ -539,7 +539,7 @@ h4 {
 .list-head h2 {
   font-size: 19px;
   margin: 0 0 7px;
-  letter-spacing: -.4px;
+  letter-spacing: -0.4px;
 }
 
 .list-summary {
@@ -811,7 +811,7 @@ select {
   font-size: 17px;
   margin: 0 0 8px;
   overflow-wrap: anywhere;
-  letter-spacing: -.3px;
+  letter-spacing: -0.3px;
 }
 
 .details-head > .icon-button {
@@ -919,7 +919,7 @@ select {
   border-radius: 20px;
   background: #b6c2d9;
   padding: 3px;
-  transition: background .15s;
+  transition: background 0.15s;
 }
 
 .switch-track::after {
@@ -930,7 +930,7 @@ select {
   border-radius: 50%;
   background: white;
   box-shadow: 0 1px 3px #18224b30;
-  transition: transform .15s;
+  transition: transform 0.15s;
 }
 
 .toggle-control input:checked + .switch-track {
@@ -1041,7 +1041,7 @@ select {
 
 .template-empty h2 {
   font-size: 26px;
-  letter-spacing: -.6px;
+  letter-spacing: -0.6px;
   margin-bottom: 12px;
 }
 
@@ -1115,7 +1115,7 @@ select {
 
 .setup-heading h2 {
   font-size: 25px;
-  letter-spacing: -.6px;
+  letter-spacing: -0.6px;
   margin: 0 0 9px;
 }
 
@@ -1146,7 +1146,7 @@ select {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #8b7fff, #5e4bff);
-  transition: width .25s;
+  transition: width 0.25s;
 }
 
 .setup-steps {
@@ -1205,7 +1205,7 @@ select {
 
 .step-card h3 {
   font-size: 25px;
-  letter-spacing: -.6px;
+  letter-spacing: -0.6px;
   margin-bottom: 13px;
 }
 
@@ -1315,7 +1315,7 @@ pre {
 .setup-finish h3 {
   font-size: 25px;
   margin: 4px 0 12px;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 
 .setup-finish p {
@@ -1362,7 +1362,7 @@ pre {
 
 .feature-dialog h2 {
   font-size: 23px;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
   margin-bottom: 12px;
 }
 
@@ -1401,7 +1401,7 @@ pre {
   border: 2px solid #ded9ff;
   border-top-color: var(--primary);
   border-radius: 50%;
-  animation: spin .8s linear infinite;
+  animation: spin 0.8s linear infinite;
   flex-shrink: 0;
 }
 
@@ -1710,7 +1710,7 @@ pre {
   *,
   *::before,
   *::after {
-    animation-duration: .01ms !important;
-    transition-duration: .01ms !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

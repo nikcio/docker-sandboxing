@@ -32,10 +32,7 @@ export default function App() {
   const [count, setCount] = useState<number | null>(null);
   const openingSetup = useRef(false);
   const completedSteps = useRef(
-    new Map<
-      "sbx_installed" | "signed_in" | "image_paste_on" | "ssh_set_up",
-      number
-    >(),
+    new Map<"sbx_installed" | "signed_in" | "image_paste_on" | "ssh_set_up", number>(),
   );
 
   const refreshStatus = useCallback(async () => {
@@ -72,17 +69,14 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
-    refreshStatus().then((next) => {
+    void refreshStatus().then((next) => {
       if (!active) return;
       if (!next) {
         setView("settings");
       } else if (
-        [
-          next.sbx_installed,
-          next.signed_in,
-          next.image_paste_on,
-          next.ssh_set_up,
-        ].some((value) => value === false)
+        [next.sbx_installed, next.signed_in, next.image_paste_on, next.ssh_set_up].some(
+          (value) => value === false,
+        )
       ) {
         setView("settings");
         setSetupOpen(true);
@@ -124,17 +118,17 @@ export default function App() {
   };
 
   const onStepDone = (step: string) => {
-    const key = ({
-      install: "sbx_installed",
-      login: "signed_in",
-      imagepaste: "image_paste_on",
-      ssh: "ssh_set_up",
-    } as const)[step as "install" | "login" | "imagepaste" | "ssh"];
+    const key = (
+      {
+        install: "sbx_installed",
+        login: "signed_in",
+        imagepaste: "image_paste_on",
+        ssh: "ssh_set_up",
+      } as const
+    )[step as "install" | "login" | "imagepaste" | "ssh"];
     if (key) {
       completedSteps.current.set(key, Date.now() + 30_000);
-      setStatus((previous) =>
-        previous ? { ...previous, [key]: true } : previous,
-      );
+      setStatus((previous) => (previous ? { ...previous, [key]: true } : previous));
     }
   };
 
@@ -187,14 +181,10 @@ export default function App() {
               <button
                 key={item.id}
                 className={`nav-item ${
-                  view === item.id || (view === "create" && item.id === "home")
-                    ? "active"
-                    : ""
+                  view === item.id || (view === "create" && item.id === "home") ? "active" : ""
                 }`}
                 aria-current={
-                  view === item.id || (view === "create" && item.id === "home")
-                    ? "page"
-                    : undefined
+                  view === item.id || (view === "create" && item.id === "home") ? "page" : undefined
                 }
                 disabled={busy || checkingSetup}
                 onClick={() => {
@@ -215,11 +205,7 @@ export default function App() {
               <Icon name="bulb" size={19} /> Need help?
             </div>
             <p>Check out our guide on how to use sandboxes.</p>
-            <a
-              href="https://docs.docker.com/ai/sandboxes/"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noreferrer">
               View guide <Icon name="arrow" size={15} />
             </a>
           </div>
@@ -259,9 +245,7 @@ export default function App() {
             <div className="page standalone-page settings-page">
               <div className="page-head">
                 <h1>Settings</h1>
-                <p className="page-sub">
-                  Make Sandy feel at home on your computer.
-                </p>
+                <p className="page-sub">Make Sandy feel at home on your computer.</p>
               </div>
               {statusError && (
                 <div className="error-banner" role="alert">
@@ -299,21 +283,16 @@ export default function App() {
                   onStepDone={onStepDone}
                 />
               ) : (
-                <section
-                  className="card setup-summary"
-                  aria-busy={checkingSetup}
-                >
+                <section className="card setup-summary" aria-busy={checkingSetup}>
                   <span className="empty-icon green">
                     <Icon name="shield" size={28} />
                   </span>
                   <div>
                     <h2>
                       {status &&
-                      [
-                        status.signed_in,
-                        status.image_paste_on,
-                        status.ssh_set_up,
-                      ].some((value) => value === null)
+                      [status.signed_in, status.image_paste_on, status.ssh_set_up].some(
+                        (value) => value === null,
+                      )
                         ? "Setup status is temporarily unavailable"
                         : isSetupComplete(status)
                           ? "You’re all set"
@@ -325,20 +304,14 @@ export default function App() {
                         : "A few simple steps to get your sandbox tools ready."}
                     </p>
                   </div>
-                  <button
-                    className="primary"
-                    disabled={busy || checkingSetup}
-                    onClick={openSetup}
-                  >
+                  <button className="primary" disabled={busy || checkingSetup} onClick={openSetup}>
                     {checkingSetup ? (
                       <>
                         <span className="spinner" /> Checking setup…
                       </>
                     ) : (
                       <>
-                        {isSetupComplete(status)
-                          ? "Review setup"
-                          : "Continue setup"}
+                        {isSetupComplete(status) ? "Review setup" : "Continue setup"}
                         <Icon name="arrow" size={17} />
                       </>
                     )}
@@ -349,17 +322,11 @@ export default function App() {
                 <section className="card settings-info">
                   <h2>About your workspace</h2>
                   <p>
-                    Sandy connects to Docker Sandboxes on this computer. Your
-                    sandbox data comes directly from the local <code>sbx</code>{" "}
-                    CLI.
+                    Sandy connects to Docker Sandboxes on this computer. Your sandbox data comes
+                    directly from the local <code>sbx</code> CLI.
                   </p>
-                  <a
-                    href="https://docs.docker.com/ai/sandboxes/"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Docker Sandboxes documentation{" "}
-                    <Icon name="arrow" size={15} />
+                  <a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noreferrer">
+                    Docker Sandboxes documentation <Icon name="arrow" size={15} />
                   </a>
                 </section>
               )}

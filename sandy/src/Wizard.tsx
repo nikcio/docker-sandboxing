@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  SetupStatus,
-  installSbx,
-  enableImagePaste,
-  setupSsh,
-  login,
-} from "./api";
+import { SetupStatus, installSbx, enableImagePaste, setupSsh, login } from "./api";
 import Icon, { IconName } from "./Icon";
 
 interface Props {
@@ -83,28 +77,19 @@ export function isSetupComplete(status: SetupStatus | null) {
   return STEPS.every((step) => step.isDone(status));
 }
 
-export default function Wizard({
-  status,
-  onRefresh,
-  onDone,
-  onBusyChange,
-  onStepDone,
-}: Props) {
+export default function Wizard({ status, onRefresh, onDone, onBusyChange, onStepDone }: Props) {
   const [current, setCurrent] = useState(() =>
     Math.max(
       0,
       STEPS.findIndex((step) => !step.isDone(status)),
     ),
   );
-  const [states, setStates] = useState<
-    Record<string, "running" | "done" | "error">
-  >({});
+  const [states, setStates] = useState<Record<string, "running" | "done" | "error">>({});
   const [outputs, setOutputs] = useState<Record<string, string>>({});
   const [finished, setFinished] = useState(false);
   const step = STEPS[current];
   const busy = Object.values(states).includes("running");
-  const isDone = (item: StepDef) =>
-    item.isDone(status) || states[item.id] === "done";
+  const isDone = (item: StepDef) => item.isDone(status) || states[item.id] === "done";
   const completed = STEPS.filter(isDone).length;
   const allDone = completed === STEPS.length;
   const done = isDone(step);
@@ -158,9 +143,7 @@ export default function Wizard({
               : "A few simple steps, and you’ll be right at home. We’ve checked what’s already configured."}
           </p>
         </div>
-        <span className="setup-progress-label">
-          {completed} of 4 ready
-        </span>
+        <span className="setup-progress-label">{completed} of 4 ready</span>
       </div>
       <div
         className="progress-track"
@@ -177,9 +160,7 @@ export default function Wizard({
           <li key={item.id}>
             <button
               className={`setup-step ${current === index && !finished ? "current" : ""} ${isDone(item) ? "complete" : ""}`}
-              aria-current={
-                current === index && !finished ? "step" : undefined
-              }
+              aria-current={current === index && !finished ? "step" : undefined}
               disabled={busy}
               onClick={() => {
                 setCurrent(index);
@@ -258,19 +239,12 @@ export default function Wizard({
                   : "Already set up on this computer. One less thing to do!"}
               </p>
             ) : needsCli ? (
-              <p className="step-note">
-                Install the CLI in step 1 before running this step.
-              </p>
+              <p className="step-note">Install the CLI in step 1 before running this step.</p>
             ) : null}
           </div>
           {outputs[step.id] && (
-            <details
-              className={`step-output ${failed ? "failure" : ""}`}
-              open={failed}
-            >
-              <summary>
-                {failed ? "View error details" : "View command output"}
-              </summary>
+            <details className={`step-output ${failed ? "failure" : ""}`} open={failed}>
+              <summary>{failed ? "View error details" : "View command output"}</summary>
               <pre>{outputs[step.id]}</pre>
             </details>
           )}
@@ -290,29 +264,17 @@ export default function Wizard({
                   {current === STEPS.length - 1 ? "Finish setup" : "Continue"}
                   <Icon name="arrow" size={17} />
                 </button>
-                <button
-                  className="text-button"
-                  disabled={busy || needsCli}
-                  onClick={run}
-                >
+                <button className="text-button" disabled={busy || needsCli} onClick={run}>
                   Run again
                 </button>
               </>
             ) : (
               <>
-                <button
-                  className="primary"
-                  disabled={busy || needsCli}
-                  onClick={run}
-                >
+                <button className="primary" disabled={busy || needsCli} onClick={run}>
                   {busy ? "Working…" : failed ? "Try again" : step.action}
                   {!busy && <Icon name="arrow" size={17} />}
                 </button>
-                <button
-                  className="text-button"
-                  disabled={busy}
-                  onClick={next}
-                >
+                <button className="text-button" disabled={busy} onClick={next}>
                   Skip for now
                 </button>
               </>
@@ -323,8 +285,7 @@ export default function Wizard({
       {!finished && (
         <div className="setup-footer">
           <span>
-            <Icon name="shield" size={16} /> Your tools. Your computer. You’re
-            in control.
+            <Icon name="shield" size={16} /> Your tools. Your computer. You’re in control.
           </span>
           <button className="text-button" disabled={busy} onClick={onDone}>
             Set up later

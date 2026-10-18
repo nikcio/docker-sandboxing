@@ -101,45 +101,46 @@ export default function CommandCenter({
   } | null>(null);
   const generation = useRef(0);
 
-  const refresh = useCallback(async (afterAction = false): Promise<void> => {
-    const requestGeneration = generation.current;
-    const existing = inFlight.current;
-    if (existing?.generation === requestGeneration) {
-      await existing.promise;
-      // A poll started before an action finished can contain stale state.
-      if (!afterAction || requestGeneration !== generation.current) return;
-      // Another completed action may already have queued the fresh request.
-      if (inFlight.current?.generation === requestGeneration) {
-        return inFlight.current.promise;
-      }
-    }
-    if (requestGeneration !== generation.current) return;
-    const request = { generation: requestGeneration, promise: Promise.resolve() };
-    inFlight.current = request;
-    setRefreshing(true);
-    request.promise = (async () => {
-      try {
-        const list = await listSandboxes();
-        if (requestGeneration !== generation.current) return;
-        setSandboxes(list);
-        onCount(list.length);
-        setError(null);
-        setSelected((current) =>
-          list.some((item) => item.name === current)
-            ? current
-            : (list[0]?.name ?? null),
-        );
-      } catch (failure) {
-        if (requestGeneration === generation.current) setError(String(failure));
-      } finally {
-        if (inFlight.current === request) {
-          inFlight.current = null;
-          if (requestGeneration === generation.current) setRefreshing(false);
+  const refresh = useCallback(
+    async (afterAction = false): Promise<void> => {
+      const requestGeneration = generation.current;
+      const existing = inFlight.current;
+      if (existing?.generation === requestGeneration) {
+        await existing.promise;
+        // A poll started before an action finished can contain stale state.
+        if (!afterAction || requestGeneration !== generation.current) return;
+        // Another completed action may already have queued the fresh request.
+        if (inFlight.current?.generation === requestGeneration) {
+          return inFlight.current.promise;
         }
       }
-    })();
-    await request.promise;
-  }, [onCount]);
+      if (requestGeneration !== generation.current) return;
+      const request = { generation: requestGeneration, promise: Promise.resolve() };
+      inFlight.current = request;
+      setRefreshing(true);
+      request.promise = (async () => {
+        try {
+          const list = await listSandboxes();
+          if (requestGeneration !== generation.current) return;
+          setSandboxes(list);
+          onCount(list.length);
+          setError(null);
+          setSelected((current) =>
+            list.some((item) => item.name === current) ? current : (list[0]?.name ?? null),
+          );
+        } catch (failure) {
+          if (requestGeneration === generation.current) setError(String(failure));
+        } finally {
+          if (inFlight.current === request) {
+            inFlight.current = null;
+            if (requestGeneration === generation.current) setRefreshing(false);
+          }
+        }
+      })();
+      await request.promise;
+    },
+    [onCount],
+  );
 
   useEffect(() => {
     // A generation also protects against stale responses during StrictMode remounts.
@@ -209,24 +210,17 @@ export default function CommandCenter({
   );
   // The API has no creation timestamp. Preserve CLI order rather than sorting UUIDs as dates.
   if (sort === "name") visible.sort((a, b) => a.name.localeCompare(b.name));
-  const running = all.filter(
-    (sandbox) => stateKind(sandbox.state) === "running",
-  ).length;
-  const stopped = all.filter(
-    (sandbox) => stateKind(sandbox.state) === "stopped",
-  ).length;
+  const running = all.filter((sandbox) => stateKind(sandbox.state) === "running").length;
+  const stopped = all.filter((sandbox) => stateKind(sandbox.state) === "stopped").length;
   const inactive = all.length - running - stopped;
   const detail = all.find((sandbox) => sandbox.name === selected) ?? null;
   const detailPending = detail ? pending.get(detail.name) : undefined;
   const detailRunning = detail !== null && stateKind(detail.state) === "running";
   const needsSetup =
     status !== null &&
-    [
-      status.sbx_installed,
-      status.signed_in,
-      status.image_paste_on,
-      status.ssh_set_up,
-    ].some((value) => value === false);
+    [status.sbx_installed, status.signed_in, status.image_paste_on, status.ssh_set_up].some(
+      (value) => value === false,
+    );
 
   return (
     <div className="dashboard">
@@ -264,9 +258,7 @@ export default function CommandCenter({
                 <Icon name="create" size={32} />
               </span>
               <span className="action-title">Create sandbox</span>
-              <span className="action-desc">
-                Start with a project and template.
-              </span>
+              <span className="action-desc">Start with a project and template.</span>
               <span className="action-arrow">
                 <Icon name="arrow" size={19} />
               </span>
@@ -276,9 +268,7 @@ export default function CommandCenter({
                 <Icon name="template" size={27} />
               </span>
               <span className="action-title">From template</span>
-              <span className="action-desc">
-                Use a pre-configured environment.
-              </span>
+              <span className="action-desc">Use a pre-configured environment.</span>
               <span className="action-arrow">
                 <Icon name="arrow" size={18} />
               </span>
@@ -293,9 +283,7 @@ export default function CommandCenter({
                 <Icon name="book" size={27} />
               </span>
               <span className="action-title">Learn more</span>
-              <span className="action-desc">
-                View quick start guide and tips.
-              </span>
+              <span className="action-desc">View quick start guide and tips.</span>
               <span className="action-arrow">
                 <Icon name="arrow" size={18} />
               </span>
@@ -311,10 +299,7 @@ export default function CommandCenter({
             </button>
           </div>
         )}
-        <section
-          className="card sandbox-card"
-          aria-labelledby="sandboxes-title"
-        >
+        <section className="card sandbox-card" aria-labelledby="sandboxes-title">
           <div className="list-head">
             <div>
               <h2 id="sandboxes-title">Your Sandboxes</h2>
@@ -361,11 +346,7 @@ export default function CommandCenter({
             <div className="error-banner" role="alert">
               <strong>Couldn’t refresh your sandboxes.</strong>
               <p>{error}</p>
-              <button
-                className="ghost"
-                disabled={refreshing}
-                onClick={() => void refresh()}
-              >
+              <button className="ghost" disabled={refreshing} onClick={() => void refresh()}>
                 Try again
               </button>
             </div>
@@ -375,34 +356,29 @@ export default function CommandCenter({
               <span className="spinner" /> Loading your local sandboxes…
             </div>
           )}
-          {visible.length === 0 &&
-            (sandboxes !== null || !status?.sbx_installed) && (
-              <div className="empty">
-                <span className="empty-icon">
-                  <Icon name="box" size={32} />
-                </span>
-                <h3>
-                  {search
-                    ? "No matching sandboxes"
-                    : "A little room for your next big idea"}
-                </h3>
-                <p>
-                  {search
-                    ? "Try a different name, agent, or workspace."
-                      : "Create a sandbox from a template and a project. Your local environments will appear here."}
-                </p>
-                {search && (
-                  <button className="ghost" onClick={() => setSearch("")}>
-                    Clear search
-                  </button>
-                )}
-                {!search && (
-                  <button className="primary" onClick={onCreate}>
-                    Create sandbox
-                  </button>
-                )}
-              </div>
-            )}
+          {visible.length === 0 && (sandboxes !== null || !status?.sbx_installed) && (
+            <div className="empty">
+              <span className="empty-icon">
+                <Icon name="box" size={32} />
+              </span>
+              <h3>{search ? "No matching sandboxes" : "A little room for your next big idea"}</h3>
+              <p>
+                {search
+                  ? "Try a different name, agent, or workspace."
+                  : "Create a sandbox from a template and a project. Your local environments will appear here."}
+              </p>
+              {search && (
+                <button className="ghost" onClick={() => setSearch("")}>
+                  Clear search
+                </button>
+              )}
+              {!search && (
+                <button className="primary" onClick={onCreate}>
+                  Create sandbox
+                </button>
+              )}
+            </div>
+          )}
           <div className="sbx-rows">
             {visible.map((sandbox) => (
               <div
@@ -420,9 +396,7 @@ export default function CommandCenter({
                   <span className="sbx-info">
                     <span className="sbx-name">
                       {sandbox.name}
-                      {sandbox.agent && (
-                        <span className="tag">{sandbox.agent}</span>
-                      )}
+                      {sandbox.agent && <span className="tag">{sandbox.agent}</span>}
                     </span>
                     <span className="sbx-sub" title={sandbox.workspace}>
                       {sandbox.workspace || "No workspace reported"}
@@ -465,8 +439,7 @@ export default function CommandCenter({
                   </div>
                 </div>
                 <p className="local-label">
-                  Local sandbox <span>·</span>{" "}
-                  {detail.agent || "No agent reported"}
+                  Local sandbox <span>·</span> {detail.agent || "No agent reported"}
                 </p>
                 <div className="sandbox-actions" aria-busy={!!detailPending}>
                   <button
@@ -479,36 +452,24 @@ export default function CommandCenter({
                   </button>
                   <button
                     className="ghost start-action"
-                    disabled={
-                      !!detailPending || detailRunning || !status?.sbx_installed
-                    }
-                    onClick={() =>
-                      void runAction(detail.name, "start").catch(() => {})
-                    }
+                    disabled={!!detailPending || detailRunning || !status?.sbx_installed}
+                    onClick={() => void runAction(detail.name, "start").catch(() => {})}
                   >
                     <Icon name="terminal" size={19} />
                     Start
                   </button>
                   <button
                     className="ghost"
-                    disabled={
-                      !!detailPending || !detailRunning || !status?.sbx_installed
-                    }
-                    onClick={() =>
-                      void runAction(detail.name, "stop").catch(() => {})
-                    }
+                    disabled={!!detailPending || !detailRunning || !status?.sbx_installed}
+                    onClick={() => void runAction(detail.name, "stop").catch(() => {})}
                   >
                     <Icon name="stop" size={19} />
                     Stop
                   </button>
                   <button
                     className="ghost"
-                    disabled={
-                      !!detailPending || !detailRunning || !status?.sbx_installed
-                    }
-                    onClick={() =>
-                      void runAction(detail.name, "restart").catch(() => {})
-                    }
+                    disabled={!!detailPending || !detailRunning || !status?.sbx_installed}
+                    onClick={() => void runAction(detail.name, "restart").catch(() => {})}
                   >
                     <Icon name="refresh" size={19} />
                     Restart
@@ -538,9 +499,7 @@ export default function CommandCenter({
                   <h4>
                     <Icon name="sparkles" size={20} /> Tip
                   </h4>
-                  <p>
-                    Templates give your next project a ready-to-use environment.
-                  </p>
+                  <p>Templates give your next project a ready-to-use environment.</p>
                   <button className="text-button" onClick={onCreate}>
                     Create another sandbox <Icon name="arrow" size={15} />
                   </button>
@@ -558,20 +517,13 @@ export default function CommandCenter({
           )}
         </section>
       </aside>
-      <div
-        className="dashboard-notifications"
-        aria-live="polite"
-        aria-atomic="true"
-      >
+      <div className="dashboard-notifications" aria-live="polite" aria-atomic="true">
         {notice && (
           <div
             className={`dashboard-toast ${notice.kind}`}
             role={notice.kind === "error" ? "alert" : "status"}
           >
-            <Icon
-              name={notice.kind === "success" ? "check" : "help"}
-              size={20}
-            />
+            <Icon name={notice.kind === "success" ? "check" : "help"} size={20} />
             <span>{notice.text}</span>
             <button
               className="icon-button"
@@ -586,9 +538,7 @@ export default function CommandCenter({
       {connecting && (
         <ConnectSandbox
           key={connecting.name}
-          sandbox={
-            all.find((sandbox) => sandbox.name === connecting.name) ?? connecting
-          }
+          sandbox={all.find((sandbox) => sandbox.name === connecting.name) ?? connecting}
           status={status}
           onRefreshStatus={onRefreshStatus}
           onOpenTerminal={() => runAction(connecting.name, "terminal")}
