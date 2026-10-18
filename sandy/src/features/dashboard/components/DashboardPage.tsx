@@ -1,15 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { SandboxInfo, SetupStatus } from "../../../lib/sandbox";
-import { listSandboxes } from "../../../lib/sandbox";
-import { stateKind } from "../../../common/lib/sandboxState";
 import Icon from "../../../common/components/Icon";
 import { Toast } from "../../../common/components/Toast";
-import type { ToastNotice } from "../../../common/components/Toast";
 import { SandboxList } from "./SandboxList";
 import { HomeActions } from "./HomeActions";
 import { SandboxInspector } from "./SandboxInspector";
-import { SandboxActions } from "../sandboxActions";
 import type { SandboxAction } from "../sandboxActions";
+import { stateKind } from "../../../common/lib/sandboxState";
+import { summarize, useSandboxDashboard } from "../hooks/useSandboxDashboard";
 import ConnectDialog from "../../connect/components/ConnectDialog";
 
 export interface DashboardPageProps {
@@ -28,12 +26,6 @@ const actionLabels: Record<SandboxAction, string> = {
   restart: "Restarting…",
   terminal: "Opening terminal…",
 };
-const successLabels: Record<SandboxAction, string> = {
-  start: "Started",
-  stop: "Stopped",
-  restart: "Restarted",
-  terminal: "Opened a terminal for",
-};
 
 export default function DashboardPage({
   home,
@@ -44,119 +36,34 @@ export default function DashboardPage({
   onRefreshStatus,
   onCount,
 }: DashboardPageProps) {
-  const [sandboxes, setSandboxes] = useState<SandboxInfo[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [connecting, setConnecting] = useState<SandboxInfo | null>(null);
-  const [pending, setPending] = useState(() => new Map<string, SandboxAction>());
-  const [notice, setNotice] = useState<ToastNotice | null>(null);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("default");
-  const busySandboxes = useRef(new Set<string>());
-  const inFlight = useRef<{
-    generation: number;
-    promise: Promise<void>;
-  } | null>(null);
-  const generation = useRef(0);
-
-  const refresh = useCallback(
-    async (afterAction = false): Promise<void> => {
-      const requestGeneration = generation.current;
-      const existing = inFlight.current;
-      if (existing?.generation === requestGeneration) {
-        await existing.promise;
-        // A poll started before an action finished can contain stale state.
-        if (!afterAction || requestGeneration !== generation.current) return;
-        // Another completed action may already have queued the fresh request.
-        if (inFlight.current?.generation === requestGeneration) {
-          return inFlight.current.promise;
-        }
-      }
-      if (requestGeneration !== generation.current) return;
-      const request = { generation: requestGeneration, promise: Promise.resolve() };
-      inFlight.current = request;
-      setRefreshing(true);
-      request.promise = (async () => {
-        try {
-          const list = await listSandboxes();
-          if (requestGeneration !== generation.current) return;
-          setSandboxes(list);
-          onCount(list.length);
-          setError(null);
-          setSelected((current) =>
-            list.some((item) => item.name === current) ? current : (list[0]?.name ?? null),
-          );
-        } catch (failure) {
-          if (requestGeneration === generation.current) setError(String(failure));
-        } finally {
-          if (inFlight.current === request) {
-            inFlight.current = null;
-            if (requestGeneration === generation.current) setRefreshing(false);
-          }
-        }
-      })();
-      await request.promise;
-    },
-    [onCount],
-  );
+  const installed = !!status?.sbx_installed;
+  const {
+    sandboxes,
+    error,
+    refreshing,
+    pending,
+    notice,
+    dismissNotice,
+    refresh,
+    runAction,
+    isActionInFlight,
+  } = useSandboxDashboard({ installed, onCount });
 
   useEffect(() => {
-    // A generation also protects against stale responses during StrictMode remounts.
-    generation.current += 1;
-    if (status?.sbx_installed) void refresh();
-    return () => {
-      generation.current += 1;
-    };
-  }, [refresh, status?.sbx_installed]);
-
-  useEffect(() => {
-    if (!status?.sbx_installed) return;
-    const timer = setInterval(() => void refresh(), 5000);
-    const onFocus = () => void refresh(true);
-    window.addEventListener("focus", onFocus);
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [refresh, status?.sbx_installed]);
-
-  const runAction = async (name: string, action: SandboxAction) => {
-    if (busySandboxes.current.has(name)) {
-      throw new Error(`An action is already in progress for ${name}.`);
-    }
-    const actionGeneration = generation.current;
-    busySandboxes.current.add(name);
-    setPending((current) => new Map(current).set(name, action));
-    setNotice(null);
-    try {
-      await SandboxActions[action](name);
-      if (actionGeneration === generation.current) {
-        setNotice({ kind: "success", text: `${successLabels[action]} ${name}.` });
-      }
-    } catch (failure) {
-      if (actionGeneration === generation.current) {
-        setNotice({
-          kind: "error",
-          text: `Couldn’t ${action === "terminal" ? "open a terminal for" : action} ${name}: ${String(failure)}`,
-        });
-      }
-      throw failure;
-    } finally {
-      if (actionGeneration === generation.current) await refresh(true);
-      busySandboxes.current.delete(name);
-      if (actionGeneration === generation.current) {
-        setPending((current) => {
-          const next = new Map(current);
-          next.delete(name);
-          return next;
-        });
-      }
-    }
-  };
+    // Keep the selection on a sandbox that still exists after a refresh.
+    setSelected((current) =>
+      (sandboxes ?? []).some((item) => item.name === current)
+        ? current
+        : (sandboxes?.[0]?.name ?? null),
+    );
+  }, [sandboxes]);
 
   const openConnection = (sandbox: SandboxInfo) => {
-    if (busySandboxes.current.has(sandbox.name)) return;
+    if (isActionInFlight(sandbox.name)) return;
     setSelected(sandbox.name);
     setConnecting(sandbox);
   };
@@ -169,9 +76,7 @@ export default function DashboardPage({
   );
   // The API has no creation timestamp. Preserve CLI order rather than sorting UUIDs as dates.
   if (sort === "name") visible.sort((a, b) => a.name.localeCompare(b.name));
-  const running = all.filter((sandbox) => stateKind(sandbox.state) === "running").length;
-  const stopped = all.filter((sandbox) => stateKind(sandbox.state) === "stopped").length;
-  const inactive = all.length - running - stopped;
+  const { summary } = summarize(all);
   const detail = all.find((sandbox) => sandbox.name === selected) ?? null;
   const detailPending = detail ? pending.get(detail.name) : undefined;
   const detailRunning = detail !== null && stateKind(detail.state) === "running";
@@ -225,7 +130,7 @@ export default function DashboardPage({
           visible={visible}
           error={error}
           refreshing={refreshing}
-          installed={!!status?.sbx_installed}
+          installed={installed}
           selected={selected}
           pending={pending}
           search={search}
@@ -236,21 +141,21 @@ export default function DashboardPage({
           onSelect={setSelected}
           onOpen={openConnection}
           onCreate={onCreate}
-          summary={`${all.length} sandbox${all.length === 1 ? "" : "es"} · ${running} running · ${stopped} stopped${inactive ? ` · ${inactive} inactive` : ""}`}
+          summary={summary}
         />
       </div>
       <SandboxInspector
         detail={detail}
         pending={detailPending}
         running={detailRunning}
-        installed={!!status?.sbx_installed}
+        installed={installed}
         onAction={(action) => detail && void runAction(detail.name, action).catch(() => {})}
         onOpen={() => detail && openConnection(detail)}
         onCreate={onCreate}
         actionLabels={actionLabels}
       />
       <div className="dashboard-notifications" aria-live="polite" aria-atomic="true">
-        {notice && <Toast notice={notice} onDismiss={() => setNotice(null)} />}
+        {notice && <Toast notice={notice} onDismiss={dismissNotice} />}
       </div>
       {connecting && (
         <ConnectDialog
