@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import logo from "./assets/logo.png";
 import { Sidebar, Topbar } from "./common/components/AppShell";
 import type { View } from "./common/components/AppShell";
+import BootSplash from "./common/components/BootSplash";
 import { useSetupStatus } from "./common/hooks/useSetupStatus";
 import DashboardPage from "./features/dashboard/components/DashboardPage";
 import TemplatesPage from "./features/templates/components/TemplatesPage";
@@ -56,12 +56,7 @@ export default function App() {
   };
 
   if (loading) {
-    return (
-      <div className="loading" role="status">
-        <img src={logo} alt="" />
-        <span className="spinner" /> Getting Sandy ready…
-      </div>
-    );
+    return <BootSplash />;
   }
 
   return (
