@@ -26,10 +26,6 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
           token: ${{ steps.app-token.outputs.token }}
-        env:
-          # release-please sets draft releases to published:false; the tag
-          # must still be created so Sandy builds can target it.
-          SET_OUTPUTS: "true"
 
   sandy:
     name: Build Sandy — ${{ matrix.label }}
