@@ -19,6 +19,13 @@ pub(super) struct Api {
     pub(super) hub: String,
     pub(super) registry: String,
     pub(super) auth: String,
+    /// Bearer token for GitHub API calls, resolved from the local `gh` CLI
+    /// login or `GH_TOKEN`. `None` keeps the anonymous public API.
+    pub(super) github_token: Option<String>,
+    /// When false, GitHub endpoints serve from caches only: tag lists and
+    /// discovery snapshots are immutable, so a rate limit never blocks a
+    /// re-discovery unless the user explicitly refreshes.
+    pub(super) refresh: bool,
 }
 
 impl Api {
@@ -35,6 +42,8 @@ impl Api {
             hub: "https://hub.docker.com".into(),
             registry: "https://registry-1.docker.io".into(),
             auth: "https://auth.docker.io/token".into(),
+            github_token: github_token(),
+            refresh: false,
         })
     }
 
@@ -55,7 +64,9 @@ impl Api {
         type HttpCache = Mutex<HashMap<String, (Instant, String, Option<String>)>>;
         static CACHE: OnceLock<HttpCache> = OnceLock::new();
         let cache = CACHE.get_or_init(Default::default);
-        if let Some((at, body, digest)) = cache.lock().map_err(|e| e.to_string())?.get(url)
+        let github_call = url.starts_with(&self.github);
+        if (!self.refresh || !github_call)
+            && let Some((at, body, digest)) = cache.lock().map_err(|e| e.to_string())?.get(url)
             && at.elapsed() < Duration::from_secs(300)
         {
             return Ok((body.clone(), digest.clone()));
@@ -80,22 +91,35 @@ impl Api {
         token: Option<&str>,
     ) -> Result<(String, Option<String>), String> {
         let mut request = self.client.get(url);
+        let github_call = url.starts_with(&self.github);
+        // The registry token comes from the caller; GitHub uses the local
+        // login so discovery does not share the anonymous rate limit.
+        let token = token
+            .or(self.github_token.as_deref())
+            .filter(|_| github_call);
         if let Some(token) = token {
-            request = request.bearer_auth(token).header(
-                "Accept",
-                concat!(
-                    "application/vnd.oci.image.index.v1+json, ",
-                    "application/vnd.oci.image.manifest.v1+json, ",
-                    "application/vnd.docker.distribution.manifest.list.v2+json, ",
-                    "application/vnd.docker.distribution.manifest.v2+json"
-                ),
-            );
+            request = request.bearer_auth(token);
+            if !github_call {
+                request = request.header(
+                    "Accept",
+                    concat!(
+                        "application/vnd.oci.image.index.v1+json, ",
+                        "application/vnd.oci.image.manifest.v1+json, ",
+                        "application/vnd.docker.distribution.manifest.list.v2+json, ",
+                        "application/vnd.docker.distribution.manifest.v2+json"
+                    ),
+                );
+            }
         }
         let response = request.send().map_err(|e| format!("{url}: {e}"))?;
         let status = response.status();
         if !status.is_success() {
             let explanation = if status.as_u16() == 403 || status.as_u16() == 429 {
-                " (public API rate limit or access policy; retry later)"
+                if self.github_token.is_some() {
+                    " (GitHub API rate limit; refresh again later)"
+                } else {
+                    " (public API rate limit or access policy; refresh again later, or sign in with gh to raise the limit)"
+                }
             } else {
                 ""
             };
@@ -152,4 +176,19 @@ impl Api {
         }
         Err("Docker Hub repository has over 10,000 tags; choose a tag directly".into())
     }
+}
+
+/// Bearer token for GitHub API calls: `GH_TOKEN`/`GITHUB_TOKEN` first (they
+/// are what sandbox runs and CI set), then the local `gh` CLI login.
+fn github_token() -> Option<String> {
+    std::env::var("GH_TOKEN")
+        .or_else(|_| std::env::var("GITHUB_TOKEN"))
+        .ok()
+        .filter(|token| !token.trim().is_empty())
+        .or_else(|| {
+            crate::sbx::run_gh_capture(&["auth", "token"])
+                .ok()
+                .map(|token| token.trim().to_string())
+                .filter(|token| !token.is_empty())
+        })
 }

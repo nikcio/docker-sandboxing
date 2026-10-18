@@ -42,11 +42,13 @@ export type KitArguments = Record<string, Record<string, string>>;
 export const getProviders = shareInFlight(() => invoke<Provider[]>("get_providers"));
 export const saveProviders = (providers: Provider[]) =>
   invoke<Provider[]>("save_providers", { providers });
-export const providerVersions = (provider: Provider) =>
-  invoke<string[]>("provider_versions", { provider });
-export const discoverKits = (providers: Provider[], query?: string) =>
+/** Version lists are cached until a refresh is requested. */
+export const providerVersions = (provider: Provider, refresh = false) =>
+  invoke<string[]>("provider_versions", { provider, refresh });
+export const discoverKits = (providers: Provider[], query?: string, refresh = false) =>
   invoke<Catalog>("discover_kits", {
     providers,
+    refresh,
     ...(query?.trim() ? { query: query.trim() } : {}),
   });
 export const pickWorkspace = () => invoke<string | null>("pick_workspace");

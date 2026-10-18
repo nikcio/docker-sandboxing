@@ -10,6 +10,13 @@ use super::{
     BUILTIN_AGENTS, DESCRIPTOR, discover_with, encoded_path, get_providers, save_providers,
     unique_id, versions_with,
 };
+
+fn temp_root() -> std::path::PathBuf {
+    let root = std::env::temp_dir().join(format!("sandy-cache-{}", unique_id()));
+    std::fs::create_dir_all(&root).unwrap();
+    root
+}
+
 fn fixture(routes: Vec<(&str, &str)>) -> (Api, std::thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let base = format!("http://{}", listener.local_addr().unwrap());
@@ -22,7 +29,14 @@ fn fixture(routes: Vec<(&str, &str)>) -> (Api, std::thread::JoinHandle<()>) {
             let (mut stream, _) = listener.accept().unwrap();
             let mut request = [0; 4096];
             let n = stream.read(&mut request).unwrap();
-            assert!(String::from_utf8_lossy(&request[..n]).starts_with(&format!("GET {path} ")));
+            assert!(
+                String::from_utf8_lossy(&request[..n]).starts_with(&format!("GET {path} ")),
+                "unexpected request: {}",
+                String::from_utf8_lossy(&request[..n])
+                    .lines()
+                    .next()
+                    .unwrap_or("")
+            );
             write!(
                 stream,
                 "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
@@ -62,7 +76,7 @@ fn github_api_resolves_selected_tag_and_discovers_descriptor() {
         reference: "v1.0".into(),
         enabled: true,
     };
-    let result = discover_with(&api, &[provider], "").unwrap();
+    let result = discover_with(&api, &[provider], "", &temp_root()).unwrap();
     assert!(result.warnings.is_empty(), "{:?}", result.warnings);
     assert_eq!(result.kits.len(), 1);
     assert_eq!(
@@ -99,7 +113,7 @@ fn manual_github_branch_and_commit_do_not_list_tags() {
             reference: reference.into(),
             enabled: true,
         };
-        let catalog = discover_with(&api, &[provider], "").unwrap();
+        let catalog = discover_with(&api, &[provider], "", &temp_root()).unwrap();
         assert!(catalog.warnings.is_empty(), "{:?}", catalog.warnings);
         assert_eq!(catalog.kits.len(), 1);
         assert!(catalog.kits[0].source.contains("#ref=abc123&dir=tool"));
@@ -165,7 +179,10 @@ fn hub_versions_filter_plain_images_and_keep_tag_selection() {
         reference: String::new(),
         enabled: true,
     };
-    assert_eq!(versions_with(&api, &provider).unwrap(), ["v3", "v2"]);
+    assert_eq!(
+        versions_with(&api, &provider, &temp_root()).unwrap(),
+        ["v3", "v2"]
+    );
     worker.join().unwrap();
 }
 
@@ -280,7 +297,7 @@ fn provider_failure_preserves_other_provider_results() {
         reference: String::new(),
         enabled: true,
     });
-    let catalog = discover_with(&api, &providers, "").unwrap();
+    let catalog = discover_with(&api, &providers, "", &temp_root()).unwrap();
     assert_eq!(catalog.kits.len(), 1);
     assert_eq!(catalog.warnings.len(), 1);
     assert!(catalog.warnings[0].contains("broken/kits"));
@@ -316,4 +333,87 @@ fn builtin_agents_match_the_documented_list() {
             "shell",
         ]
     );
+}
+
+#[test]
+fn github_tags_are_cached_immutably_until_refresh() {
+    let provider = Provider {
+        id: "custom".into(),
+        label: "Test".into(),
+        kind: "github".into(),
+        repository: "team/kits".into(),
+        reference: String::new(),
+        enabled: true,
+    };
+    // Exactly one fixture: a second call must be served from the persistent
+    // cache, not from a new request.
+    let (api, worker) = fixture(vec![(
+        "/repos/team/kits/tags?per_page=100&page=1",
+        r#"[{"name":"v1","commit":{"sha":"abc123"}}]"#,
+    )]);
+    let root = temp_root();
+    assert_eq!(versions_with(&api, &provider, &root).unwrap(), ["v1"]);
+    drop(worker);
+    let mut api = Api::public().unwrap();
+    api.github = "http://127.0.0.1:1".into();
+    // The cache file survives process restarts, so a fresh mirror still hits.
+    assert_eq!(versions_with(&api, &provider, &root).unwrap(), ["v1"]);
+    // A refresh bypasses the cache; the fixture listener is gone, so the
+    // fetch fails instead of silently returning stale data.
+    api.refresh = true;
+    assert!(versions_with(&api, &provider, &root).is_err());
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn discovery_results_are_cached_per_commit_and_refresh_bypasses() {
+    let provider = Provider {
+        id: "custom".into(),
+        label: "Test".into(),
+        kind: "github".into(),
+        repository: "team/kits".into(),
+        reference: "v1.0".into(),
+        enabled: true,
+    };
+    // The tags route warms the immutable tag cache; discovery then resolves
+    // the tag from that cache and continues with the tree and descriptor.
+    let (api, worker) = fixture(vec![
+        (
+            "/repos/team/kits/tags?per_page=100&page=1",
+            r#"[{"name":"v1.0","commit":{"sha":"abc123"}}]"#,
+        ),
+        (
+            "/repos/team/kits/git/trees/abc123?recursive=1",
+            r#"{"tree":[{"type":"blob","path":"tool/spec.yaml"}]}"#,
+        ),
+        (
+            "/team/kits/abc123/tool/spec.yaml",
+            "schemaVersion: '2'\nkind: mixin\nname: tool\n",
+        ),
+    ]);
+    let root = temp_root();
+    let _ = versions_with(&api, &provider, &root);
+    let first = discover_with(&api, std::slice::from_ref(&provider), "", &root).unwrap();
+    worker.join().unwrap();
+    assert_eq!(first.kits.len(), 1);
+    // No listener: a second discovery must be served entirely from the
+    // immutable per-commit cache.
+    let mut offline = Api::public().unwrap();
+    offline.github = "http://127.0.0.1:1".into();
+    offline.raw = "http://127.0.0.1:1".into();
+    let cached = discover_with(&offline, std::slice::from_ref(&provider), "", &root).unwrap();
+    assert_eq!(cached.kits, first.kits);
+    assert!(cached.warnings.is_empty(), "{:?}", cached.warnings);
+    // A refresh re-fetches; the commit resolution fails without a server,
+    // surfacing as a provider warning instead of stale cached kits.
+    offline.refresh = true;
+    let refreshed = discover_with(&offline, &[provider], "", &root).unwrap();
+    assert!(refreshed.kits.is_empty());
+    assert!(
+        refreshed
+            .warnings
+            .iter()
+            .any(|w| w.contains("commits/v1.0"))
+    );
+    std::fs::remove_dir_all(root).unwrap();
 }

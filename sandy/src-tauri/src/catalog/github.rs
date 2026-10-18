@@ -5,16 +5,40 @@ use std::collections::HashSet;
 
 use serde_json::Value;
 
+use super::cache;
 use super::descriptor::{comment_descriptor, option_from_descriptor, schema_version};
 use super::http::Api;
 use super::store::github_repository;
 use super::types::{Catalog, Provider};
 use super::{METADATA_BATCH, encoded, encoded_path, repository_name};
 
-pub(super) fn discover_github(api: &Api, provider: &Provider) -> Result<Catalog, String> {
+pub(super) fn discover_github(
+    api: &Api,
+    provider: &Provider,
+    root: &std::path::Path,
+) -> Result<Catalog, String> {
     let repository = github_repository(&provider.repository)?;
-    let commit = if provider.reference.is_empty() {
-        let tags = api.github_tags(&repository)?;
+    // Reference resolution needs the network only for names the caches have
+    // never seen; tags, the commits they name, and whole discovery results
+    // are immutable once fetched.
+    let reference = provider.reference.as_str();
+    if !api.refresh
+        && reference.is_empty()
+        && let Some(cached) = cache::latest_discovery(root, &repository)?
+    {
+        return Ok(cached);
+    }
+    let commit = if reference.is_empty() {
+        // Tag lists are immutable, so the persistent cache answers without
+        // touching the API; a refresh re-fetches and overwrites the entry.
+        let tags = match cache::tags(root, &repository)? {
+            Some(tags) if !api.refresh => tags,
+            _ => {
+                let tags = api.github_tags(&repository)?;
+                cache::store_tags(root, &repository, &tags);
+                tags
+            }
+        };
         if let Some(sha) = tags.first().and_then(|tag| tag["commit"]["sha"].as_str()) {
             sha.to_string()
         } else {
@@ -24,11 +48,25 @@ pub(super) fn discover_github(api: &Api, provider: &Provider) -> Result<Catalog,
                 .ok_or("GitHub repository has no default branch")?;
             github_commit(api, &repository, branch)?
         }
+    } else if reference.len() == 40 && reference.bytes().all(|b| b.is_ascii_hexdigit()) {
+        // A commit SHA is its own resolution; the tree fetch validates it.
+        reference.to_string()
+    } else if let Some(sha) = cache::tag_commit(root, &repository, reference)?
+        && !api.refresh
+    {
+        sha
     } else {
         // A manual branch, tag, or commit is independent of tag enumeration.
         // Resolve it directly even when listing tags is unavailable or rate-limited.
-        github_commit(api, &repository, &provider.reference)?
+        github_commit(api, &repository, reference)?
     };
+    // A tree is fixed by its commit SHA, so the whole discovery result for a
+    // commit is cacheable without expiry.
+    if !api.refresh
+        && let Some(cached) = cache::discovery(root, &repository, &commit)?
+    {
+        return Ok(cached);
+    }
     let tree = api.json(&format!(
         "{}/repos/{repository}/git/trees/{commit}?recursive=1",
         api.github
@@ -143,6 +181,7 @@ pub(super) fn discover_github(api: &Api, provider: &Provider) -> Result<Catalog,
             }
         }
     }
+    cache::store_discovery(root, &repository, &commit, &catalog);
     Ok(catalog)
 }
 

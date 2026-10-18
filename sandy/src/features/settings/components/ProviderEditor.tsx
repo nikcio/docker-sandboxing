@@ -66,16 +66,19 @@ export function ProviderEditor({
     }
   }, [repositoryKey, provider.id, disabled]);
 
-  const loadVersions = async () => {
+  const loadVersions = async (refresh = false) => {
     if (inFlight.current) return;
     inFlight.current = true;
     const key = repositoryKey;
     setVersions((previous) => ({ ...previous, loading: true, error: null }));
     try {
-      const result = await providerVersions({
-        ...provider,
-        repository: normalizeRepository(provider.repository, provider.kind),
-      });
+      const result = await providerVersions(
+        {
+          ...provider,
+          repository: normalizeRepository(provider.repository, provider.kind),
+        },
+        refresh,
+      );
       const values = [
         ...new Set(result.filter((value) => typeof value === "string" && value.trim())),
       ];
@@ -198,7 +201,7 @@ export function ProviderEditor({
                 type="button"
                 className="ghost"
                 disabled={versions.loading || !repositoryIsValid(provider.repository, provider.kind)}
-                onClick={loadVersions}
+                onClick={() => void loadVersions(true)}
               >
                 {versions.loading ? (
                   <span className="spinner" />
@@ -235,7 +238,7 @@ export function ProviderEditor({
               {provider.reference || (versions.loading ? "Fetching latest…" : "Latest release")}
             </code>
             {versions.fetchedAt
-              ? ` · Version list cached in this view at ${versions.fetchedAt}`
+              ? ` · Version list loaded at ${versions.fetchedAt}; GitHub tags are cached until you refresh.`
               : versions.loading
                 ? " · Loading remote versions…"
                 : " · Remote versions have not been loaded for this repository."}

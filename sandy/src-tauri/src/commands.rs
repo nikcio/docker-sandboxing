@@ -157,20 +157,30 @@ async fn save_providers(
 }
 
 #[tauri::command]
-async fn provider_versions(provider: catalog::Provider) -> Result<Vec<String>, String> {
+async fn provider_versions(
+    app: tauri::AppHandle,
+    provider: catalog::Provider,
+    refresh: Option<bool>,
+) -> Result<Vec<String>, String> {
     logged("provider_versions", async move {
-        blocking(move || catalog::provider_versions(provider)).await
+        let root = data_dir(&app)?;
+        blocking(move || catalog::provider_versions(provider, &root, refresh.unwrap_or(false)))
+            .await
     })
     .await
 }
 
 #[tauri::command]
 async fn discover_kits(
+    app: tauri::AppHandle,
     providers: Vec<catalog::Provider>,
     query: Option<String>,
+    refresh: Option<bool>,
 ) -> Result<catalog::Catalog, String> {
     logged("discover_kits", async move {
-        blocking(move || catalog::discover_kits(providers, query)).await
+        let root = data_dir(&app)?;
+        blocking(move || catalog::discover_kits(providers, query, &root, refresh.unwrap_or(false)))
+            .await
     })
     .await
 }

@@ -102,6 +102,29 @@ pub(crate) fn sbx_command(args: &[&str]) -> Result<Command, String> {
     Ok(cmd)
 }
 
+/// Run `gh` with args and capture stdout. Used for the local GitHub login
+/// (`gh auth token`); failures are reported to the caller.
+pub fn run_gh_capture(args: &[&str]) -> Result<String, String> {
+    let output = Command::new("gh")
+        .args(args)
+        .output()
+        .map_err(|e| format!("failed to run gh: {e}"))?;
+    let text = String::from_utf8_lossy(&output.stdout).to_string();
+    if !output.status.success() {
+        let mut msg = String::from_utf8_lossy(&output.stderr).to_string();
+        if msg.trim().is_empty() {
+            msg = text;
+        }
+        return Err(format!(
+            "gh {} failed (exit {}):\n{}",
+            args.join(" "),
+            output.status.code().unwrap_or(-1),
+            msg.trim()
+        ));
+    }
+    Ok(text.trim().to_string())
+}
+
 pub fn is_sbx_installed() -> bool {
     sbx_executable().is_ok()
 }

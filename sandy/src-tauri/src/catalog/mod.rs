@@ -14,6 +14,7 @@
 //! - sbx kit inspect REFERENCE --json currently normalizes v3 workload to
 //!   kind=sandbox; raw authored v3 descriptors have kind=workload and no name.
 
+mod cache;
 mod descriptor;
 mod github;
 mod http;
@@ -53,14 +54,34 @@ pub(crate) const BUILTIN_AGENTS: &[&str] = &[
     "shell",
 ];
 
-pub fn provider_versions(provider: Provider) -> Result<Vec<String>, String> {
-    versions_with(&Api::public()?, &provider)
+pub fn provider_versions(
+    provider: Provider,
+    root: &std::path::Path,
+    refresh: bool,
+) -> Result<Vec<String>, String> {
+    let mut api = Api::public()?;
+    api.refresh = refresh;
+    versions_with(&api, &provider, root)
 }
 
-fn versions_with(api: &Api, provider: &Provider) -> Result<Vec<String>, String> {
+fn versions_with(
+    api: &Api,
+    provider: &Provider,
+    root: &std::path::Path,
+) -> Result<Vec<String>, String> {
     validate_provider(provider)?;
     let values = if provider.kind == "github" {
-        api.github_tags(&github_repository(&provider.repository)?)?
+        let repository = github_repository(&provider.repository)?;
+        // Tag lists are immutable: serve the persistent cache unless the
+        // caller asked for a refresh.
+        match cache::tags(root, &repository)? {
+            Some(tags) if !api.refresh => tags,
+            _ => {
+                let tags = api.github_tags(&repository)?;
+                cache::store_tags(root, &repository, &tags);
+                tags
+            }
+        }
     } else if let Some(repository) = hub_repository(&provider.repository)? {
         api.hub_tags(&repository)?
     } else {
@@ -74,8 +95,15 @@ fn versions_with(api: &Api, provider: &Provider) -> Result<Vec<String>, String> 
 
 /// `query` narrows Docker Hub's remote search. GitHub repositories and installed
 /// built-ins remain available; the frontend can filter their complete metadata.
-pub fn discover_kits(providers: Vec<Provider>, query: Option<String>) -> Result<Catalog, String> {
-    let mut catalog = discover_with(&Api::public()?, &providers, query.as_deref().unwrap_or(""))?;
+pub fn discover_kits(
+    providers: Vec<Provider>,
+    query: Option<String>,
+    root: &std::path::Path,
+    refresh: bool,
+) -> Result<Catalog, String> {
+    let mut api = Api::public()?;
+    api.refresh = refresh;
+    let mut catalog = discover_with(&api, &providers, query.as_deref().unwrap_or(""), root)?;
     // The built-ins are documented v2 shortcuts, not guessed registry repositories.
     for name in BUILTIN_AGENTS {
         let description = format!("Built-in {name} agent (v2)");
@@ -94,11 +122,16 @@ pub fn discover_kits(providers: Vec<Provider>, query: Option<String>) -> Result<
     Ok(catalog)
 }
 
-fn discover_with(api: &Api, providers: &[Provider], query: &str) -> Result<Catalog, String> {
+fn discover_with(
+    api: &Api,
+    providers: &[Provider],
+    query: &str,
+    root: &std::path::Path,
+) -> Result<Catalog, String> {
     let mut catalog = Catalog::default();
     for provider in providers.iter().filter(|p| p.enabled) {
         let result = validate_provider(provider).and_then(|_| match provider.kind.as_str() {
-            "github" => discover_github(api, provider),
+            "github" => discover_github(api, provider, root),
             "dockerhub" => discover_hub(api, provider, query),
             _ => unreachable!(),
         });

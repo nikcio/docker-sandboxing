@@ -115,7 +115,7 @@ export function useCreateFlow({ onCreated, onBusyChange }: CreateFlowOptions) {
     setStep(next);
   };
 
-  const discover = async () => {
+  const discover = async (refresh = false) => {
     // Provider edits are persisted by saveProviders below, so unsaved changes
     // do not need to block discovery.
     if (lock.current || !providers) return;
@@ -125,7 +125,7 @@ export function useCreateFlow({ onCreated, onBusyChange }: CreateFlowOptions) {
     try {
       // Defaults from get_providers may not have a file yet. Persist before discovery.
       const persistedProviders = await saveProviders(providers);
-      const result = await discoverKits(persistedProviders, hubQuery);
+      const result = await discoverKits(persistedProviders, hubQuery, refresh);
       if (!mounted.current) return;
       const seen = new Set<string>();
       const verified = result.kits.filter((kit) => {

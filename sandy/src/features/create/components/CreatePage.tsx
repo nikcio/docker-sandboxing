@@ -149,6 +149,7 @@ export default function CreatePage({ onClose, onCreated, onTemplates, onBusyChan
                   onHubQuery={setHubQuery}
                   busy={busy !== null}
                   onDiscover={() => void discover()}
+                  onRefresh={() => void discover(true)}
                 />
               )}
             </div>

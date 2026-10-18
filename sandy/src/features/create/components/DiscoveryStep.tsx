@@ -14,12 +14,15 @@ export function DiscoveryStep({
   onHubQuery,
   busy,
   onDiscover,
+  onRefresh,
 }: {
   providers: Provider[];
   hubQuery: string;
   onHubQuery: (value: string) => void;
   busy: boolean;
   onDiscover: () => void;
+  /** Re-discover while bypassing the immutable-source caches. */
+  onRefresh: () => void;
 }) {
   const id = useId();
   return (
@@ -57,9 +60,13 @@ export function DiscoveryStep({
             </>
           )}
         </button>
+        <button type="button" className="ghost" disabled={busy} onClick={onRefresh}>
+          <Icon name="refresh" size={16} /> Refresh sources
+        </button>
         <span className="catalog-help">
           Only kits with supported metadata will be offered. Unsaved provider changes are saved
-          when you discover.
+          when you discover. GitHub tags and commits are immutable, so discovery reuses cached
+          data; Refresh sources fetches everything again.
         </span>
       </div>
     </>
