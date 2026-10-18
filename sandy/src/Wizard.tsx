@@ -1,208 +1,326 @@
 import { useState } from "react";
-import { SetupStatus, installSbx, enableImagePaste, setupSsh, login } from "./api";
+import {
+  SetupStatus,
+  installSbx,
+  enableImagePaste,
+  setupSsh,
+  login,
+} from "./api";
+import Icon, { IconName } from "./Icon";
 
 interface Props {
   status: SetupStatus | null;
-  onRefresh: () => void;
+  onRefresh: () => Promise<SetupStatus | null>;
+  onDone: () => void;
+  onBusyChange: (busy: boolean) => void;
 }
-
-type StepState = "pending" | "running" | "done" | "error";
 
 interface StepDef {
   id: string;
-  kicker: string;
+  label: string;
   title: string;
   description: string;
-  /** True when the status check says this step is already configured. */
+  command: string;
+  action: string;
+  icon: IconName;
   isDone: (status: SetupStatus | null) => boolean;
+  run: () => Promise<string | void>;
 }
 
 const STEPS: StepDef[] = [
   {
     id: "install",
-    kicker: "Step 1 of 4",
-    title: "Install the Docker Sandboxes CLI",
+    label: "Install CLI",
+    title: "A small tool. A world of possibilities.",
     description:
-      "Sandy will install the sbx command-line tool, which creates and manages sandboxes. This uses your platform's package manager and may take a few minutes.",
-    isDone: (s) => !!s?.sbx_installed,
+      "Sandy uses the Docker Sandboxes CLI (sbx) to work with your local sandboxes. We’ll install it with your system’s package manager. You may be asked for administrator permission.",
+    command: "Install sbx using Homebrew, WinGet, or apt for your platform",
+    action: "Install CLI",
+    icon: "terminal",
+    isDone: (status) => !!status?.sbx_installed,
+    run: installSbx,
   },
   {
     id: "login",
-    kicker: "Step 2 of 4",
-    title: "Sign in to Docker",
+    label: "Docker account",
+    title: "Let’s get you signed in",
     description:
-      "A browser window will open for you to sign in with your Docker account. Sandboxes require sign-in, and Sandy checks the result automatically.",
-    isDone: (s) => !!s?.signed_in,
+      "Connect your Docker account to use Sandboxes. We’ll open your browser so you can sign in, then check the result here. Already signed in? Sandy will pick that up automatically.",
+    command: "sbx login",
+    action: "Sign in to Docker",
+    icon: "user",
+    isDone: (status) => !!status?.signed_in,
+    run: login,
   },
   {
     id: "imagepaste",
-    kicker: "Step 3 of 4",
-    title: "Enable image pasting",
+    label: "Image pasting",
+    title: "Give your agent the full picture",
     description:
-      "Allows you to paste screenshots from your clipboard into agent chats (Ctrl+V). You can withdraw this later from the sandbox settings.",
-    isDone: (s) => !!s?.image_paste_on,
+      "Paste screenshots and images from your clipboard directly into agent chats. This enables clipboard image pasting for your local sandboxes.",
+    command: "sbx settings set clipboard.imagePaste true",
+    action: "Enable image pasting",
+    icon: "clipboard",
+    isDone: (status) => !!status?.image_paste_on,
+    run: enableImagePaste,
   },
   {
     id: "ssh",
-    kicker: "Step 4 of 4",
-    title: "Set up SSH access",
+    label: "SSH access",
+    title: "Your favorite tools, connected",
     description:
-      "Configures your SSH client so every sandbox is reachable as <name>.sbx — handy for editors and terminals.",
-    isDone: (s) => !!s?.ssh_set_up,
+      "Configure your SSH client to reach sandboxes at <name>.sbx. This lets you connect from your editor or terminal using the tools you already love.",
+    command: "sbx setup ssh",
+    action: "Set up SSH",
+    icon: "key",
+    isDone: (status) => !!status?.ssh_set_up,
+    run: setupSsh,
   },
 ];
 
-export default function Wizard({ status, onRefresh }: Props) {
-  const [current, setCurrent] = useState(0);
-  const [states, setStates] = useState<Record<string, StepState>>({});
+export function isSetupComplete(status: SetupStatus | null) {
+  return STEPS.every((step) => step.isDone(status));
+}
+
+export default function Wizard({ status, onRefresh, onDone, onBusyChange }: Props) {
+  const [current, setCurrent] = useState(() =>
+    Math.max(
+      0,
+      STEPS.findIndex((step) => !step.isDone(status)),
+    ),
+  );
+  const [states, setStates] = useState<
+    Record<string, "running" | "done" | "error">
+  >({});
   const [outputs, setOutputs] = useState<Record<string, string>>({});
-
+  const [finished, setFinished] = useState(false);
   const step = STEPS[current];
-  const stateOf = (id: string): StepState => states[id] ?? "pending";
+  const busy = Object.values(states).includes("running");
+  const isDone = (item: StepDef) =>
+    item.isDone(status) || states[item.id] === "done";
+  const completed = STEPS.filter(isDone).length;
+  const allDone = completed === STEPS.length;
+  const done = isDone(step);
+  const failed = states[step.id] === "error";
+  const needsCli = current > 0 && !isDone(STEPS[0]);
 
-  const setStep = (id: string, s: StepState, output?: string) => {
-    setStates((prev) => ({ ...prev, [id]: s }));
-    if (output !== undefined) {
-      setOutputs((prev) => ({ ...prev, [id]: output }));
-    }
-  };
-
-  const runStep = async (id: string, fn: () => Promise<string | void>) => {
-    setStep(id, "running");
+  const run = async () => {
+    if (busy) return;
+    setStates((previous) => ({ ...previous, [step.id]: "running" }));
+    setOutputs((previous) => ({ ...previous, [step.id]: "" }));
+    onBusyChange(true);
     try {
-      const out = await fn();
-      setStep(id, "done", typeof out === "string" ? out : undefined);
-      onRefresh();
-    } catch (e) {
-      setStep(id, "error", String(e));
+      const output = await step.run();
+      setOutputs((previous) => ({
+        ...previous,
+        [step.id]: typeof output === "string" ? output : "",
+      }));
+      await onRefresh();
+      setStates((previous) => ({ ...previous, [step.id]: "done" }));
+    } catch (error) {
+      setStates((previous) => ({ ...previous, [step.id]: "error" }));
+      setOutputs((previous) => ({ ...previous, [step.id]: String(error) }));
+    } finally {
+      onBusyChange(false);
     }
   };
 
-  const runners: Record<string, () => Promise<string | void>> = {
-    install: installSbx,
-    login: login,
-    imagepaste: enableImagePaste,
-    ssh: setupSsh,
+  const next = () => {
+    if (current === STEPS.length - 1) setFinished(true);
+    else setCurrent((value) => value + 1);
   };
-
-  const runCurrent = async () => {
-    await runStep(step.id, runners[step.id]);
-  };
-
-  const skip = () => {
-    if (current < STEPS.length - 1) setCurrent(current + 1);
-  };
-
-  const back = () => {
-    if (current > 0) setCurrent(current - 1);
-  };
-
-  const isDone = (s: StepDef) => s.isDone(status) || stateOf(s.id) === "done";
-  const allDone = STEPS.every(isDone);
-  const state = stateOf(step.id);
-  const autoDone = step.isDone(status);
-  const busy = state === "running";
-  const doneCount = STEPS.filter(isDone).length;
 
   return (
-    <div className="page">
-      <div className="page-head">
+    <section className="setup-flow" aria-labelledby="setup-title">
+      <div className="setup-heading">
         <div>
-          <h1>{allDone ? "You're all set 🎉" : "Set up Sandy"}</h1>
-          <p className="page-sub">
-            {allDone
-              ? "Everything is configured. You can re-run any step below if something changed."
-              : "Sandy detected what's already set up on this computer. Only the missing steps need to run."}
+          <span className="eyebrow">YOUR LOCAL WORKSPACE</span>
+          <h2 id="setup-title">
+            {finished
+              ? allDone
+                ? "You’re ready to make something great"
+                : "Pick up where you left off"
+              : "A warm welcome to Sandy"}
+          </h2>
+          <p>
+            {finished
+              ? allDone
+                ? "Your tools are configured. Let’s take a look at your sandboxes."
+                : "You can use Sandy now and finish the remaining steps in Settings."
+              : "A few simple steps, and you’ll be right at home. We’ve checked what’s already configured."}
           </p>
         </div>
+        <span className="setup-progress-label">{completed} of 4 ready</span>
       </div>
-
-      <div className="progress-track">
-        <div
-          className="progress-fill"
-          style={{ width: `${(doneCount / STEPS.length) * 100}%` }}
-        />
+      <div
+        className="progress-track"
+        role="progressbar"
+        aria-label="Setup progress"
+        aria-valuemin={0}
+        aria-valuemax={4}
+        aria-valuenow={completed}
+      >
+        <span style={{ width: `${(completed / 4) * 100}%` }} />
       </div>
-
-      <div className="step-card">
-        <div className="step-kicker">{step.kicker}</div>
-        <h2>{step.title}</h2>
-        <p className="desc">{step.description}</p>
-
-        {busy && (
-          <div className="step-note">
-            <span className="spinner" /> Working… this may take a few minutes.
-          </div>
-        )}
-        {state === "error" && outputs[step.id] && (
-          <pre className="error">{outputs[step.id]}</pre>
-        )}
-        {state === "done" && outputs[step.id] && <pre>{outputs[step.id]}</pre>}
-        {autoDone && state !== "done" && (
-          <div className="step-note ok">✓ Already set up on this computer</div>
-        )}
-        {state === "error" && (
-          <div className="step-note err">The step failed — see the output above.</div>
-        )}
-
-        <div className="wizard-actions">
-          {current > 0 && (
-            <button className="ghost" onClick={back} disabled={busy}>
-              Back
-            </button>
-          )}
-          {!autoDone && state !== "done" && (
-            <button className="primary" onClick={runCurrent} disabled={busy}>
-              {busy
-                ? "Working…"
-                : state === "error"
-                  ? "Retry"
-                  : current === STEPS.length - 1
-                    ? "Finish setup"
-                    : "Continue"}
-            </button>
-          )}
-          {state !== "done" && !autoDone && current < STEPS.length - 1 && (
-            <button className="ghost" onClick={skip} disabled={busy}>
-              Skip for now
-            </button>
-          )}
-          {(autoDone || state === "done") && current < STEPS.length - 1 && (
-            <button className="primary" onClick={() => setCurrent(current + 1)}>
-              Next
-            </button>
-          )}
-          {(autoDone || state === "done") && current === STEPS.length - 1 && (
-            <button className="primary" onClick={skip}>
-              Done
-            </button>
-          )}
-          {(autoDone || state === "done") && (
+      <ol className="setup-steps" aria-label="Setup steps">
+        {STEPS.map((item, index) => (
+          <li key={item.id}>
             <button
-              className="ghost"
-              onClick={() => runStep(step.id, runners[step.id])}
+              className={`setup-step ${current === index && !finished ? "current" : ""} ${isDone(item) ? "complete" : ""}`}
+              aria-current={
+                current === index && !finished ? "step" : undefined
+              }
               disabled={busy}
+              onClick={() => {
+                setCurrent(index);
+                setFinished(false);
+              }}
             >
-              Re-run
+              <span className="step-number">
+                {isDone(item) ? <Icon name="check" size={16} /> : index + 1}
+              </span>
+              <span>{item.label}</span>
             </button>
-          )}
+          </li>
+        ))}
+      </ol>
+      {finished ? (
+        <div className="card setup-finish">
+          <span className={`empty-icon ${allDone ? "green" : ""}`}>
+            <Icon name={allDone ? "check" : "shield"} size={34} />
+          </span>
+          <h3>
+            {allDone
+              ? "All set. All yours."
+              : `${4 - completed} step${4 - completed === 1 ? "" : "s"} left for later`}
+          </h3>
+          <p>
+            {allDone
+              ? "Your sandbox workspace is ready to explore."
+              : "Missing steps will still be here whenever you’re ready."}
+          </p>
+          <div className="wizard-actions">
+            <button className="primary" onClick={onDone}>
+              Go to home <Icon name="arrow" size={18} />
+            </button>
+            {!allDone && (
+              <button
+                className="ghost"
+                onClick={() => {
+                  setCurrent(STEPS.findIndex((item) => !isDone(item)));
+                  setFinished(false);
+                }}
+              >
+                Continue setup
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-
-      <div className="step-dots">
-        {STEPS.map((s, i) => {
-          const st = isDone(s) ? "done" : i === current ? "current" : "";
-          return (
-            <span
-              key={s.id}
-              className={`dot ${st}`}
-              style={{ cursor: "pointer" }}
-              onClick={() => !busy && setCurrent(i)}
-              title={s.title}
-            />
-          );
-        })}
-      </div>
-    </div>
+      ) : (
+        <div className="card step-card" aria-busy={busy}>
+          <span className="empty-icon">
+            <Icon name={step.icon} size={30} />
+          </span>
+          <span className="eyebrow">STEP {current + 1} OF 4</span>
+          <h3>{step.title}</h3>
+          <p className="step-description">{step.description}</p>
+          <div className="command-preview">
+            <Icon name="terminal" size={17} />
+            <code>{step.command}</code>
+          </div>
+          <div className="step-feedback" aria-live="polite">
+            {busy ? (
+              <p className="step-note">
+                <span className="spinner" />
+                {current === 1
+                  ? "Finish signing in in your browser. We’ll wait right here."
+                  : "Working on it… this may take a few minutes."}
+              </p>
+            ) : failed ? (
+              <p className="step-note failure">
+                Something didn’t go through. You can try again below.
+              </p>
+            ) : done ? (
+              <p className="step-note success">
+                <Icon name="check" size={18} />
+                {states[step.id] === "done"
+                  ? "Done — you’re good to go."
+                  : "Already set up on this computer. One less thing to do!"}
+              </p>
+            ) : needsCli ? (
+              <p className="step-note">
+                Install the CLI in step 1 before running this step.
+              </p>
+            ) : null}
+          </div>
+          {outputs[step.id] && (
+            <details
+              className={`step-output ${failed ? "failure" : ""}`}
+              open={failed}
+            >
+              <summary>
+                {failed ? "View error details" : "View command output"}
+              </summary>
+              <pre>{outputs[step.id]}</pre>
+            </details>
+          )}
+          <div className="wizard-actions">
+            {current > 0 && (
+              <button
+                className="ghost"
+                disabled={busy}
+                onClick={() => setCurrent((value) => value - 1)}
+              >
+                Back
+              </button>
+            )}
+            {done && !failed ? (
+              <>
+                <button className="primary" disabled={busy} onClick={next}>
+                  {current === STEPS.length - 1 ? "Finish setup" : "Continue"}
+                  <Icon name="arrow" size={17} />
+                </button>
+                <button
+                  className="text-button"
+                  disabled={busy || needsCli}
+                  onClick={run}
+                >
+                  Run again
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="primary"
+                  disabled={busy || needsCli}
+                  onClick={run}
+                >
+                  {busy ? "Working…" : failed ? "Try again" : step.action}
+                  {!busy && <Icon name="arrow" size={17} />}
+                </button>
+                <button
+                  className="text-button"
+                  disabled={busy}
+                  onClick={next}
+                >
+                  Skip for now
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      {!finished && (
+        <div className="setup-footer">
+          <span>
+            <Icon name="shield" size={16} /> Your tools. Your computer. You’re
+            in control.
+          </span>
+          <button className="text-button" disabled={busy} onClick={onDone}>
+            Set up later
+          </button>
+        </div>
+      )}
+    </section>
   );
 }

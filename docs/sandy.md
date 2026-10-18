@@ -1,12 +1,21 @@
 # Sandy
 
-A friendly desktop app for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/): it installs and configures everything you need, then shows your running sandboxes in one place. Built for people who don't want to touch a terminal.
+A desktop app for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) with guided local setup and a live view of your sandboxes, powered by the `sbx` CLI.
 
 ![Sandy](../sandy/src-tauri/icons/icon.png)
 
 ## What it does
 
-**First-run setup wizard** (one time, re-runnable anytime from the Setup button):
+### Browsing sandboxes
+
+- **Home** combines a live local sandbox list, action cards for creation, templates, images, and help, and an inspector for the selected sandbox.
+- **Sandboxes** shows the local sandboxes returned by `sbx ls`, including their reported state, agent, and workspace. Search by name, agent, or workspace; keep CLI order or sort by name. Auto-refresh polls every 5 seconds and can be toggled in the inspector; manual refresh is also available.
+- **Templates** is a coming-soon page linking to environment examples.
+- Creation (including from an image), open, start, stop, restart, duplicate/create-from-sandbox, more-actions, and account controls are placeholders that show a coming-soon notice. Use the CLI for sandbox management; these controls do not perform those operations.
+
+### Guided setup in Settings
+
+When setup is incomplete, Sandy automatically opens **Settings** at the first missing step, skipping already configured steps on entry. Each step shows what it will run and performs its setup action only when requested:
 
 1. **Installs the `sbx` CLI** — the tool that creates and manages sandboxes — using your platform's package manager:
    - macOS: Homebrew (`brew install docker/tap/sbx`)
@@ -16,7 +25,7 @@ A friendly desktop app for [Docker Sandboxes](https://docs.docker.com/ai/sandbox
 3. **Enables image pasting** — runs `sbx settings set clipboard.imagePaste true` so you can paste screenshots into agent chats with Ctrl+V.
 4. **Sets up SSH** — runs `sbx setup ssh` so every sandbox is reachable as `<name>.sbx` from your terminal or editor.
 
-**Command center** (the main window): lists your running local sandboxes (`sbx ls`) with name, state, agent, and workspace, refreshing automatically every 5 seconds.
+Use **Skip for now** to skip a step or **Set up later** to defer setup and browse Home. Errors show details and a **Try again** action. The finish summary shows what is ready and what remains for later. Return to **Settings** to continue incomplete setup or **Review setup**; completed steps can be selected and explicitly run again.
 
 ## Installing Sandy
 
@@ -57,6 +66,5 @@ The VS Build Tools installer must include the **Desktop development with C++** w
 
 ## Notes
 
-- Sandy is a thin layer on top of the `sbx` CLI: it runs `sbx` commands and shows the output. Nothing is configured behind your back — each wizard step tells you exactly what will run.
-- The wizard can be re-run at any time from the command center (Setup button), for example to re-do SSH setup after changing machines.
-- Creating, connecting to, and recreating sandboxes from inside Sandy is planned for a future version; use [`sbxenv.yaml` examples](../README.md#use-it-in-your-project) with `sbx env run` for now.
+- Sandbox names, states, agents, and workspaces come from the local `sbx` CLI.
+- To create a sandbox, start with the [`sbxenv.yaml` examples](../README.md#use-it-in-your-project) and run `sbx env run` in your project.

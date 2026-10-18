@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Sandy",
-        "width": 960,
-        "height": 680,
+        "width": 1280,
+        "height": 820,
         "minWidth": 780,
         "minHeight": 560,
         "center": true

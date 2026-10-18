@@ -96,8 +96,6 @@ struct DiagnoseCheck {
     name: String,
     status: String,
     message: String,
-    #[serde(default)]
-    detail: String,
 }
 
 /// Whether the user is signed in to Docker, via the `Authentication` check

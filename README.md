@@ -40,14 +40,14 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 
 ## Prefer a GUI?
 
-[Sandy](docs/sandy.md) is a desktop app that does the setup for you — installs `sbx`, signs in, enables image pasting and SSH — and shows your running sandboxes in one window. Grab an installer from the [releases page](https://github.com/nikcio/docker-sandboxing/releases).
+[Sandy](docs/sandy.md) is a desktop app with guided setup — install `sbx`, sign in, enable image pasting and SSH — and a live dashboard of your local sandboxes. Review setup anytime in Settings. Grab an installer from the [releases page](https://github.com/nikcio/docker-sandboxing/releases).
 
 ## Guides
 
 | Guide | Covers |
 | ----- | ------ |
 | [Getting started](docs/getting-started.md) | prerequisites, the steps, first run, daily use |
-| [Sandy (desktop app)](docs/sandy.md) | GUI command center: one-click setup, running sandbox list |
+| [Sandy (desktop app)](docs/sandy.md) | guided setup, local sandbox dashboard, and details inspector |
 | [Set your Zeldoc API key](docs/zeldoc-api-key.md) | get, register, and approve the model provider key |
 | [Use GitHub Copilot](docs/copilot-setup.md) | run the agent on your Copilot subscription (or both providers) |
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
