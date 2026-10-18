@@ -243,10 +243,10 @@ impl Api {
         type HttpCache = Mutex<HashMap<String, (Instant, String, Option<String>)>>;
         static CACHE: OnceLock<HttpCache> = OnceLock::new();
         let cache = CACHE.get_or_init(Default::default);
-        if let Some((at, body, digest)) = cache.lock().map_err(|e| e.to_string())?.get(url) {
-            if at.elapsed() < Duration::from_secs(300) {
-                return Ok((body.clone(), digest.clone()));
-            }
+        if let Some((at, body, digest)) = cache.lock().map_err(|e| e.to_string())?.get(url)
+            && at.elapsed() < Duration::from_secs(300)
+        {
+            return Ok((body.clone(), digest.clone()));
         }
         let mut request = self.client.get(url);
         if let Some(token) = token {
@@ -331,14 +331,25 @@ impl Api {
     }
 }
 
+/// Last `/`-separated segment of a repository path (the whole string when it
+/// contains no `/`). `rsplit` always yields at least one item, so this only
+/// returns `None` for an empty repository string.
+fn repository_name(repository: &str) -> Option<&str> {
+    repository.rsplit('/').next().filter(|s| !s.is_empty())
+}
+
 fn encoded(value: &str) -> String {
     // Form encoding is also the documented encoding of the Git fragment's ref/dir pairs.
+    // The URL is a compile-time constant, so parse/query can't actually fail;
+    // fall back to the raw value (safe, just unencoded) if it somehow did.
     reqwest::Url::parse_with_params("https://sandy.invalid", &[("v", value)])
-        .unwrap()
-        .query()
-        .unwrap()
-        .trim_start_matches("v=")
-        .to_string()
+        .map(|url| {
+            url.query()
+                .unwrap_or_default()
+                .trim_start_matches("v=")
+                .to_string()
+        })
+        .unwrap_or_else(|_| value.to_string())
 }
 
 pub fn provider_versions(provider: Provider) -> Result<Vec<String>, String> {
@@ -544,7 +555,7 @@ fn discover_github(api: &Api, provider: &Provider) -> Result<Catalog, String> {
                 .rsplit('/')
                 .next()
                 .filter(|s| !s.is_empty())
-                .unwrap_or(repository.rsplit('/').next().unwrap());
+                .unwrap_or_else(|| repository_name(repository).unwrap_or(repository));
             match option_from_descriptor(&value, &source, &provider.id, fallback) {
                 Ok(kit) if directories.insert(directory.to_string()) => catalog.kits.push(kit),
                 Ok(kit) => {
@@ -763,7 +774,7 @@ fn selected_hub_kit(api: &Api, provider: &Provider, repository: &str) -> Result<
             &descriptor,
             &source,
             &provider.id,
-            repository.rsplit('/').next().unwrap(),
+            repository_name(repository).unwrap_or(repository),
         );
     }
     let response = if provider.reference.is_empty() {
@@ -791,7 +802,7 @@ fn selected_hub_kit(api: &Api, provider: &Provider, repository: &str) -> Result<
         &descriptor,
         &source,
         &provider.id,
-        repository.rsplit('/').next().unwrap(),
+        repository_name(repository).unwrap_or(repository),
     )
 }
 
@@ -846,21 +857,21 @@ fn hub_descriptor(api: &Api, repository: &str, reference: &str) -> Result<Value,
             return serde_yaml_ng::from_str(&text).map_err(|e| e.to_string());
         }
         // Read only the small spec layer, never filesystem/image layers.
-        if let Some(layers) = manifest["layers"].as_array() {
-            if let Some(layer) = layers.iter().find(|l| {
+        if let Some(layers) = manifest["layers"].as_array()
+            && let Some(layer) = layers.iter().find(|l| {
                 l["mediaType"]
                     .as_str()
                     .is_some_and(|m| m.ends_with(".spec+yaml"))
-            }) {
-                let digest = layer["digest"]
-                    .as_str()
-                    .ok_or("Kit spec layer has no digest")?;
-                let (text, _) = api.request(
-                    &format!("{}/v2/{repository}/blobs/{digest}", api.registry),
-                    Some(&token),
-                )?;
-                return serde_yaml_ng::from_str(&text).map_err(|e| e.to_string());
-            }
+            })
+        {
+            let digest = layer["digest"]
+                .as_str()
+                .ok_or("Kit spec layer has no digest")?;
+            let (text, _) = api.request(
+                &format!("{}/v2/{repository}/blobs/{digest}", api.registry),
+                Some(&token),
+            )?;
+            return serde_yaml_ng::from_str(&text).map_err(|e| e.to_string());
         }
         // Older published formats are understood by the installed CLI. Only bounded selected tags reach this fallback.
         let separator = if reference.starts_with("sha256:") {
@@ -880,7 +891,9 @@ fn hub_descriptor(api: &Api, repository: &str, reference: &str) -> Result<Value,
     Err("OCI image index nesting exceeds four levels".into())
 }
 
+// Tests may unwrap/expect freely — a panic is exactly the failure mode we want.
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 mod tests {
     use super::*;
     use std::net::TcpListener;
@@ -897,7 +910,9 @@ mod tests {
                 let (mut stream, _) = listener.accept().unwrap();
                 let mut request = [0; 4096];
                 let n = stream.read(&mut request).unwrap();
-                assert!(String::from_utf8_lossy(&request[..n]).starts_with(&format!("GET {path} ")));
+                assert!(
+                    String::from_utf8_lossy(&request[..n]).starts_with(&format!("GET {path} "))
+                );
                 write!(
                     stream,
                     "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
@@ -920,8 +935,14 @@ mod tests {
     fn github_api_resolves_selected_tag_and_discovers_descriptor() {
         let (api, worker) = fixture(vec![
             ("/repos/team/kits/commits/v1.0", r#"{"sha":"abc123"}"#),
-            ("/repos/team/kits/git/trees/abc123?recursive=1", r#"{"tree":[{"type":"blob","path":"tool/spec.yaml"}]}"#),
-            ("/team/kits/abc123/tool/spec.yaml", "schemaVersion: '2'\nkind: mixin\nname: tool\nrequires: {agent: claude}\nargs:\n  channel:\n    required: true\n    enum: [stable, beta]\n"),
+            (
+                "/repos/team/kits/git/trees/abc123?recursive=1",
+                r#"{"tree":[{"type":"blob","path":"tool/spec.yaml"}]}"#,
+            ),
+            (
+                "/team/kits/abc123/tool/spec.yaml",
+                "schemaVersion: '2'\nkind: mixin\nname: tool\nrequires: {agent: claude}\nargs:\n  channel:\n    required: true\n    enum: [stable, beta]\n",
+            ),
         ]);
         let provider = Provider {
             id: "custom".into(),
@@ -1010,13 +1031,15 @@ mod tests {
         assert!(is_kit_tag(
             &serde_json::json!({"media_type":"application/vnd.docker.sandbox.kit.v2"})
         ));
-        assert!(option_from_descriptor(
-            &serde_json::json!({"schemaVersion":"1","kind":"mixin"}),
-            "s",
-            "p",
-            "n"
-        )
-        .is_err());
+        assert!(
+            option_from_descriptor(
+                &serde_json::json!({"schemaVersion":"1","kind":"mixin"}),
+                "s",
+                "p",
+                "n"
+            )
+            .is_err()
+        );
     }
 
     #[test]
@@ -1090,9 +1113,11 @@ mod tests {
         assert_eq!(kit.kind, "workload");
         worker.join().unwrap();
         provider.reference = "sha256:invalid".into();
-        assert!(selected_hub_kit(&api, &provider, "team/kit")
-            .unwrap_err()
-            .contains("64 hexadecimal"));
+        assert!(
+            selected_hub_kit(&api, &provider, "team/kit")
+                .unwrap_err()
+                .contains("64 hexadecimal")
+        );
     }
 
     #[test]

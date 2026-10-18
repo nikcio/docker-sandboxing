@@ -196,10 +196,10 @@ fn daemon_running() -> Result<bool, String> {
     let out = sbx_command(&["daemon", "status", "--format", "json"])?
         .output()
         .map_err(|e| format!("could not check sbx daemon: {e}"))?;
-    if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&out.stdout) {
-        if let Some(status) = value.get("status").and_then(|v| v.as_str()) {
-            return Ok(out.status.success() && status.eq_ignore_ascii_case("running"));
-        }
+    if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&out.stdout)
+        && let Some(status) = value.get("status").and_then(|v| v.as_str())
+    {
+        return Ok(out.status.success() && status.eq_ignore_ascii_case("running"));
     }
     // Older CLIs may ignore --format. Match the complete status value, not
     // the substring "running" (which also matches "not running").
@@ -251,12 +251,12 @@ fn normalize_setting(key: &str, out: &str) -> Result<String, String> {
     // record. Normalize both so existing boolean callers can compare "true".
     if let Ok(value) = serde_json::from_str::<serde_json::Value>(text) {
         let value = if value.is_object() {
-            if let Some(actual_key) = value.get("key").and_then(|v| v.as_str()) {
-                if actual_key != key {
-                    return Err(format!(
-                        "sbx returned setting {actual_key} instead of {key}"
-                    ));
-                }
+            if let Some(actual_key) = value.get("key").and_then(|v| v.as_str())
+                && actual_key != key
+            {
+                return Err(format!(
+                    "sbx returned setting {actual_key} instead of {key}"
+                ));
             }
             value
                 .get("value")
@@ -451,7 +451,10 @@ pub fn open_terminal(name: &str) -> Result<(), String> {
                 }
             }
         }
-        Err(format!("Could not open a terminal. Install a supported terminal (x-terminal-emulator, GNOME Terminal, Konsole, XFCE Terminal, or xterm).\n{}", failures.join("\n")))
+        Err(format!(
+            "Could not open a terminal. Install a supported terminal (x-terminal-emulator, GNOME Terminal, Konsole, XFCE Terminal, or xterm).\n{}",
+            failures.join("\n")
+        ))
     }
     #[cfg(target_os = "macos")]
     {
@@ -619,8 +622,10 @@ fn run_via(program: &str, args: &[&str]) -> Result<String, String> {
         .spawn()
         .map_err(|e| format!("failed to run {}: {}", program, e))?;
 
-    let mut stdout = child.stdout.take().unwrap();
-    let mut stderr = child.stderr.take().unwrap();
+    // Pipes were requested above, so these handles are always present.
+    let (Some(mut stdout), Some(mut stderr)) = (child.stdout.take(), child.stderr.take()) else {
+        return Err(format!("{} produced no pipe handles", program));
+    };
     let mut out = String::new();
     let t1 = std::thread::spawn(move || {
         let _ = stdout.read_to_string(&mut out);
@@ -901,7 +906,31 @@ fn split_by_spans(line: &str, spans: &[(usize, usize)]) -> Vec<String> {
 #[cfg(test)]
 pub(crate) static CLI_TEST_ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
+// Edition 2024 marks `std::env::set_var`/`remove_var` unsafe because they are
+// UB when another thread reads the environment concurrently. Every
+// environment-mutating test in the crate holds `CLI_TEST_ENV_LOCK` while it
+// runs, which serializes all of them, so no concurrent access is possible.
+// The wrapper functions below contain that unsafety instead of spreading
+// `unsafe {}` blocks across every call site; keep using only these in tests.
 #[cfg(test)]
+#[allow(unsafe_code)]
+pub(crate) mod test_env {
+    /// Safety contract: caller must hold `crate::sbx::CLI_TEST_ENV_LOCK`.
+    pub(crate) fn set_var(key: &str, value: impl AsRef<std::ffi::OsStr>) {
+        // SAFETY: guaranteed by the caller holding the env lock (see above).
+        unsafe { std::env::set_var(key, value) }
+    }
+
+    /// Safety contract: caller must hold `crate::sbx::CLI_TEST_ENV_LOCK`.
+    pub(crate) fn remove_var(key: &str) {
+        // SAFETY: guaranteed by the caller holding the env lock (see above).
+        unsafe { std::env::remove_var(key) }
+    }
+}
+
+// Tests may unwrap/expect freely — a panic is exactly the failure mode we want.
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 mod tests {
     use super::*;
 
@@ -1049,7 +1078,7 @@ weird  paused  /home/name/state
                 .into_iter()
                 .map(|key| {
                     let original = std::env::var_os(key);
-                    std::env::remove_var(key);
+                    crate::sbx::test_env::remove_var(key);
                     (key, original)
                 })
                 .collect();
@@ -1060,7 +1089,7 @@ weird  paused  /home/name/state
                 "XDG_STATE_HOME",
                 "SBX_TEST_ROOT",
             ] {
-                std::env::set_var(key, &root);
+                crate::sbx::test_env::set_var(key, &root);
             }
             Self { root, environment }
         }
@@ -1079,8 +1108,8 @@ weird  paused  /home/name/state
         fn drop(&mut self) {
             for (key, value) in &self.environment {
                 match value {
-                    Some(value) => std::env::set_var(key, value),
-                    None => std::env::remove_var(key),
+                    Some(value) => crate::sbx::test_env::set_var(key, value),
+                    None => crate::sbx::test_env::remove_var(key),
                 }
             }
             let _ = std::fs::remove_dir_all(&self.root);
@@ -1161,8 +1190,8 @@ esac
     fn cli_mock_success_paths() {
         let _guard = env_lock();
         let _mock = MockCli::new();
-        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
-        std::env::set_var("SBX_MOCK_DAEMON", "running");
+        crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_DAEMON", "running");
 
         // Unknown subcommand exits 1 in the mock -> Err (the real CLI also
         // has no whoami; sign-in detection uses diagnose instead).
@@ -1186,9 +1215,9 @@ esac
         assert_eq!(get_setting("clipboard.imagePaste"), Ok("false".to_string()));
 
         // get_setting with a mock-controlled value.
-        std::env::set_var("SBX_MOCK_PASTE", "true");
+        crate::sbx::test_env::set_var("SBX_MOCK_PASTE", "true");
         assert_eq!(get_setting("clipboard.imagePaste"), Ok("true".to_string()));
-        std::env::remove_var("SBX_MOCK_PASTE");
+        crate::sbx::test_env::remove_var("SBX_MOCK_PASTE");
 
         // settings set: exit 0.
         assert_eq!(set_clipboard_image_paste(), Ok(()));
@@ -1217,24 +1246,24 @@ esac
 
         // list_sandboxes: table fallback (mock returns garbage for --json,
         // so Sandy falls back to the human table and parses it).
-        std::env::set_var("SBX_MOCK_FAIL_JSON", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_FAIL_JSON", "1");
         let rows = list_sandboxes().expect("table fallback should parse");
-        std::env::remove_var("SBX_MOCK_FAIL_JSON");
+        crate::sbx::test_env::remove_var("SBX_MOCK_FAIL_JSON");
         assert_eq!(rows.len(), 2);
         assert_eq!(rows[0].name, "demo");
         assert_eq!(rows[0].state, "running");
         assert_eq!(rows[1].name, "build");
 
         // list_sandboxes: empty output -> empty vec, no error.
-        std::env::set_var("SBX_MOCK_LS_EMPTY", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_LS_EMPTY", "1");
         let rows = list_sandboxes().expect("empty ls should succeed");
-        std::env::remove_var("SBX_MOCK_LS_EMPTY");
+        crate::sbx::test_env::remove_var("SBX_MOCK_LS_EMPTY");
         assert!(rows.is_empty());
 
         // JSON with only "name": optional fields degrade to empty strings.
-        std::env::set_var("SBX_MOCK_JSON", "sparse");
+        crate::sbx::test_env::set_var("SBX_MOCK_JSON", "sparse");
         let rows = list_sandboxes().expect("sparse JSON should parse");
-        std::env::remove_var("SBX_MOCK_JSON");
+        crate::sbx::test_env::remove_var("SBX_MOCK_JSON");
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].name, "bare");
         assert_eq!(rows[0].state, "");
@@ -1243,31 +1272,31 @@ esac
         assert_eq!(rows[0].raw, "");
 
         // Unknown JSON fields are ignored by serde.
-        std::env::set_var("SBX_MOCK_JSON", "extra");
+        crate::sbx::test_env::set_var("SBX_MOCK_JSON", "extra");
         let rows = list_sandboxes().expect("unknown fields should be ignored");
-        std::env::remove_var("SBX_MOCK_JSON");
+        crate::sbx::test_env::remove_var("SBX_MOCK_JSON");
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].name, "with-unknown");
         assert_eq!(rows[0].state, "running");
 
         // Unicode in names/workspaces survives the JSON round-trip.
-        std::env::set_var("SBX_MOCK_JSON", "unicode");
+        crate::sbx::test_env::set_var("SBX_MOCK_JSON", "unicode");
         let rows = list_sandboxes().expect("unicode JSON should parse");
-        std::env::remove_var("SBX_MOCK_JSON");
+        crate::sbx::test_env::remove_var("SBX_MOCK_JSON");
         assert_eq!(rows[0].name, "ünïcødé-サンドボックス");
         assert_eq!(rows[0].workspace, "/home/ünïcødé/プロジェクト");
 
         // Multiple workspaces are joined with ", ".
-        std::env::set_var("SBX_MOCK_JSON", "multi");
+        crate::sbx::test_env::set_var("SBX_MOCK_JSON", "multi");
         let rows = list_sandboxes().expect("multi-workspace JSON should parse");
-        std::env::remove_var("SBX_MOCK_JSON");
+        crate::sbx::test_env::remove_var("SBX_MOCK_JSON");
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].workspace, "/home/me/first, /home/me/second");
 
         // login after explicit sign-out flow: not signed in and login
         // output claims success — still Ok (login itself is authoritative).
-        std::env::remove_var("SBX_MOCK_SIGNED_IN");
-        std::env::remove_var("SBX_MOCK_DAEMON");
+        crate::sbx::test_env::remove_var("SBX_MOCK_SIGNED_IN");
+        crate::sbx::test_env::remove_var("SBX_MOCK_DAEMON");
         assert!(run_login().is_ok());
     }
 
@@ -1282,9 +1311,9 @@ esac
 
         // Per-entry tolerance: the valid entry survives, the invalid one
         // (missing "name") is dropped — no silent fallback to other data.
-        std::env::set_var("SBX_MOCK_JSON", "mixed");
+        crate::sbx::test_env::set_var("SBX_MOCK_JSON", "mixed");
         let rows = list_sandboxes().expect("malformed entry should be tolerated");
-        std::env::remove_var("SBX_MOCK_JSON");
+        crate::sbx::test_env::remove_var("SBX_MOCK_JSON");
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].name, "ok");
         assert_eq!(rows[0].state, "running");
@@ -1298,7 +1327,7 @@ esac
         let _guard = env_lock();
         let _mock = MockCli::new();
 
-        std::env::set_var("SBX_MOCK_FAIL", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_FAIL", "1");
 
         // run_capture: exit 1 -> Err with command, exit code and stderr.
         let err = run_capture(&["ls"]).unwrap_err();
@@ -1328,7 +1357,7 @@ esac
         // An unavailable check is unknown, not an explicit sign-out.
         assert!(is_signed_in().is_err());
 
-        std::env::remove_var("SBX_MOCK_FAIL");
+        crate::sbx::test_env::remove_var("SBX_MOCK_FAIL");
     }
 
     /// Installation checks against the mock on PATH.
@@ -1365,12 +1394,12 @@ esac
             "Include generated/sbx.conf\n",
         )
         .unwrap();
-        std::env::set_var("SBX_MOCK_SSH", "configured");
-        std::env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
-        std::env::remove_var("HOME");
-        std::env::remove_var("USERPROFILE");
+        crate::sbx::test_env::set_var("SBX_MOCK_SSH", "configured");
+        crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
+        crate::sbx::test_env::remove_var("HOME");
+        crate::sbx::test_env::remove_var("USERPROFILE");
         assert_eq!(is_ssh_set_up(), Ok(true));
-        std::env::set_var("SBX_MOCK_SSH", "unavailable");
+        crate::sbx::test_env::set_var("SBX_MOCK_SSH", "unavailable");
         assert!(is_ssh_set_up().is_err());
     }
 
@@ -1379,15 +1408,18 @@ esac
     fn authentication_starts_daemon_before_check_and_parses_failed_report() {
         let _guard = env_lock();
         let mock = MockCli::new();
-        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
-        std::env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
         assert_eq!(is_signed_in(), Ok(true));
-        assert_eq!(mock.commands(), "daemon status --format json\ndaemon start --detach\ndaemon status --format json\ndiagnose --format json\n");
+        assert_eq!(
+            mock.commands(),
+            "daemon status --format json\ndaemon start --detach\ndaemon status --format json\ndiagnose --format json\n"
+        );
         // Neither login nor a previous pass is cached. Logout is visible on
         // the very next refresh, even if diagnose still exits nonzero.
-        std::env::remove_var("SBX_MOCK_SIGNED_IN");
+        crate::sbx::test_env::remove_var("SBX_MOCK_SIGNED_IN");
         assert_eq!(is_signed_in(), Ok(false));
-        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
         assert_eq!(is_signed_in(), Ok(true));
     }
 
@@ -1396,13 +1428,13 @@ esac
     fn whole_status_cold_start_keeps_successful_checks_from_nonzero_diagnose() {
         let _guard = env_lock();
         let mock = MockCli::new();
-        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
-        std::env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
-        std::env::set_var(
+        crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
+        crate::sbx::test_env::set_var(
             "SBX_MOCK_PASTE",
             "{\"key\":\"clipboard.imagePaste\",\"value\":true}",
         );
-        std::env::set_var("SBX_MOCK_SSH", "configured");
+        crate::sbx::test_env::set_var("SBX_MOCK_SSH", "configured");
         let status = crate::read_status().unwrap();
         assert!(status.sbx_installed);
         assert_eq!(status.signed_in, Some(true));
@@ -1420,13 +1452,13 @@ esac
     fn whole_status_refresh_distinguishes_sign_out_from_unknown_checks() {
         let _guard = env_lock();
         let _mock = MockCli::new();
-        std::env::set_var("SBX_MOCK_SIGNED_IN", "1");
-        std::env::set_var("SBX_MOCK_PASTE", "true");
-        std::env::set_var("SBX_MOCK_SSH", "configured");
+        crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_PASTE", "true");
+        crate::sbx::test_env::set_var("SBX_MOCK_SSH", "configured");
         assert_eq!(crate::read_status().unwrap().signed_in, Some(true));
-        std::env::remove_var("SBX_MOCK_SIGNED_IN");
+        crate::sbx::test_env::remove_var("SBX_MOCK_SIGNED_IN");
         assert_eq!(crate::read_status().unwrap().signed_in, Some(false));
-        std::env::set_var("SBX_MOCK_DIAGNOSE", "invalid");
+        crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE", "invalid");
         let status = crate::read_status().unwrap();
         assert_eq!(status.signed_in, None);
         assert_eq!(status.ssh_set_up, None);
@@ -1435,7 +1467,7 @@ esac
         let serialized = serde_json::to_value(&status).unwrap();
         assert!(serialized["signed_in"].is_null());
         assert!(serialized["ssh_set_up"].is_null());
-        std::env::set_var("SBX_MOCK_FAIL", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_FAIL", "1");
         let status = crate::read_status().unwrap();
         assert!(status.sbx_installed);
         assert_eq!(status.signed_in, None);
@@ -1464,16 +1496,16 @@ esac
         let _guard = env_lock();
         let _mock = MockCli::new();
         for mode in ["invalid", "missing"] {
-            std::env::set_var("SBX_MOCK_DIAGNOSE", mode);
+            crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE", mode);
             assert!(is_signed_in().is_err(), "mode: {mode}");
         }
-        std::env::remove_var("SBX_MOCK_DIAGNOSE");
-        std::env::set_var("SBX_MOCK_AUTH_STATUS", "skip");
-        std::env::set_var("SBX_MOCK_AUTH_MESSAGE", "daemon unavailable");
+        crate::sbx::test_env::remove_var("SBX_MOCK_DIAGNOSE");
+        crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "skip");
+        crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "daemon unavailable");
         assert!(is_signed_in().is_err());
-        std::env::set_var("SBX_MOCK_AUTH_MESSAGE", "not signed in");
+        crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "not signed in");
         assert!(is_signed_in().is_err(), "a skipped check is not a sign-out");
-        std::env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
+        crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
         assert_eq!(is_signed_in(), Ok(false));
     }
 
@@ -1482,7 +1514,7 @@ esac
     fn failed_daemon_start_is_unknown_and_does_not_run_authentication() {
         let _guard = env_lock();
         let mock = MockCli::new();
-        std::env::set_var("SBX_MOCK_START_FAIL", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_START_FAIL", "1");
         assert!(is_signed_in().is_err());
         assert!(!mock.commands().contains("diagnose"));
         assert!(mock.commands().contains("daemon start --detach"));
@@ -1500,15 +1532,15 @@ esac
             "{\"value\":\"true\"}",
             "{\"clipboard.imagePaste\":true}",
         ] {
-            std::env::set_var("SBX_MOCK_PASTE", output);
+            crate::sbx::test_env::set_var("SBX_MOCK_PASTE", output);
             assert_eq!(get_setting("clipboard.imagePaste"), Ok("true".to_string()));
         }
-        std::env::set_var(
+        crate::sbx::test_env::set_var(
             "SBX_MOCK_PASTE",
             "{\"key\":\"another.setting\",\"value\":true}",
         );
         assert!(get_setting("clipboard.imagePaste").is_err());
-        std::env::set_var("SBX_MOCK_PASTE", "{\"default\":true}");
+        crate::sbx::test_env::set_var("SBX_MOCK_PASTE", "{\"default\":true}");
         assert!(
             get_setting("clipboard.imagePaste").is_err(),
             "never substitute the default for the evaluated value"
@@ -1529,9 +1561,11 @@ esac
             "stop demo\nls --json\nrun --detach --name demo\n"
         );
         mock.clear_commands();
-        assert!(start_sandbox("missing")
-            .unwrap_err()
-            .contains("does not exist"));
+        assert!(
+            start_sandbox("missing")
+                .unwrap_err()
+                .contains("does not exist")
+        );
         assert_eq!(mock.commands(), "ls --json\n");
         mock.clear_commands();
         assert!(remove_sandbox("demo").is_ok());
@@ -1543,11 +1577,11 @@ esac
     fn restart_does_not_start_after_failed_stop_and_reports_failed_resume() {
         let _guard = env_lock();
         let mock = MockCli::new();
-        std::env::set_var("SBX_MOCK_STOP_FAIL", "1");
+        crate::sbx::test_env::set_var("SBX_MOCK_STOP_FAIL", "1");
         assert!(restart_sandbox("demo").is_err());
         assert_eq!(mock.commands(), "stop demo\n");
-        std::env::remove_var("SBX_MOCK_STOP_FAIL");
-        std::env::set_var("SBX_MOCK_RUN_FAIL", "1");
+        crate::sbx::test_env::remove_var("SBX_MOCK_STOP_FAIL");
+        crate::sbx::test_env::set_var("SBX_MOCK_RUN_FAIL", "1");
         let error = restart_sandbox("demo").unwrap_err();
         assert!(error.contains("was stopped but could not be started"));
     }
@@ -1612,9 +1646,11 @@ esac
             "the fake terminal must not run a real exec"
         );
         std::fs::remove_file(&terminal).unwrap();
-        assert!(open_terminal("demo")
-            .unwrap_err()
-            .contains("Install a supported terminal"));
+        assert!(
+            open_terminal("demo")
+                .unwrap_err()
+                .contains("Install a supported terminal")
+        );
     }
 
     #[test]
