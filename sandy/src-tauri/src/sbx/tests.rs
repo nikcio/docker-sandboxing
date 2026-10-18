@@ -222,7 +222,9 @@ invalid) printf '%s\n' 'not a report'; exit 1 ;;
 missing) printf '%s\n' '{"checks":[]}'; exit 0 ;;
 esac
 if [ "$SBX_MOCK_SIGNED_IN" = 1 ]; then auth=authenticated; else auth='not signed in'; fi
-printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"%s"},{"name":"SSH client config","status":"pass","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-pass}" "${SBX_MOCK_AUTH_MESSAGE:-$auth}" "${SBX_MOCK_SSH:-not configured}"
+# ${VAR-$auth} (not :-$auth): an explicitly empty message must pass
+# through, so tests can exercise unparseable messages.
+printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"%s"},{"name":"SSH client config","status":"pass","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-pass}" "${SBX_MOCK_AUTH_MESSAGE-$auth}" "${SBX_MOCK_SSH:-not configured}"
 exit "${SBX_MOCK_DIAGNOSE_EXIT:-0}"
 ;;
 settings)
@@ -598,6 +600,163 @@ fn failed_daemon_start_is_unknown_and_does_not_run_authentication() {
     assert!(is_signed_in().is_err());
     assert!(!mock.commands().contains("diagnose"));
     assert!(mock.commands().contains("daemon start --detach"));
+}
+
+/// Reworded human messages still resolve: the structured `status` gates
+/// which phrase list decides, and the message is matched tolerantly
+/// (punctuation, decoration and word order of the surrounding sentence),
+/// while a genuinely unknown message stays an error — never a guessed
+/// sign-out or "not set up".
+#[test]
+#[cfg(unix)]
+fn diagnose_reworded_messages_resolve_tolerantly_but_unknown_still_errors() {
+    let _guard = env_lock();
+    let _mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_DAEMON", "running");
+
+    // Reworded positive auth messages with a passing check.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "pass");
+    for message in [
+        "OK — Docker account is authenticated",
+        "Signed in as user@example.com",
+        "authenticated.",
+    ] {
+        crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", message);
+        assert_eq!(is_signed_in(), Ok(true), "message: {message}");
+    }
+
+    // Reworded negative auth messages on failing/warning checks.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "fail");
+    for message in ["Signed out of Docker", "You are not authenticated yet"] {
+        crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", message);
+        assert_eq!(is_signed_in(), Ok(false), "message: {message}");
+    }
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "Docker account not signed in");
+    assert_eq!(is_signed_in(), Ok(false));
+
+    // A message outside both phrase lists is unknown, whatever the status.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "pass");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "quantum entanglement achieved");
+    assert!(is_signed_in().is_err(), "unknown message must not guess");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
+    assert!(is_signed_in().is_err(), "warn + unknown must not guess");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "fail");
+    assert!(is_signed_in().is_err(), "fail + unknown must not guess");
+
+    // An empty or punctuation-only message can never decide a fact.
+    for message in ["", "—", "!"] {
+        crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", message);
+        assert!(is_signed_in().is_err(), "message: {message:?}");
+    }
+
+    // An unrecognized status string is unknown even with a known message.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "pending");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "authenticated");
+    assert!(is_signed_in().is_err(), "unknown status must not guess");
+
+    // Reworded positive SSH messages with a passing check.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "pass");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "authenticated");
+    crate::sbx::test_env::set_var("SBX_MOCK_SSH", "SSH is fully configured.");
+    assert_eq!(is_ssh_set_up(), Ok(true));
+    // The real CLI's shape: pass + "not configured" is a negative fact.
+    crate::sbx::test_env::set_var("SBX_MOCK_SSH", "not configured");
+    assert_eq!(is_ssh_set_up(), Ok(false));
+    // Unknown SSH messages still error instead of claiming "not set up".
+    crate::sbx::test_env::set_var("SBX_MOCK_SSH", "warp drive engaged");
+    assert!(is_ssh_set_up().is_err(), "unknown message must not guess");
+
+    crate::sbx::test_env::remove_var("SBX_MOCK_AUTH_STATUS");
+    crate::sbx::test_env::remove_var("SBX_MOCK_AUTH_MESSAGE");
+    crate::sbx::test_env::remove_var("SBX_MOCK_SSH");
+    crate::sbx::test_env::remove_var("SBX_MOCK_DAEMON");
+}
+
+/// Negation must not flip polarity unsafely: "not configured" must never
+/// satisfy the positive "configured" phrase, and "not signed in" must
+/// never satisfy the positive "signed in" phrase — no matter how far the
+/// negator sits from the phrase ("no longer signed in", "not yet
+/// configured"), whether it hides in a contraction ("isn't signed in",
+/// ASCII or typographic apostrophe), or which status the check carries.
+#[test]
+#[cfg(unix)]
+fn diagnose_negated_messages_never_satisfy_the_opposite_phrase_list() {
+    let _guard = env_lock();
+    let _mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_DAEMON", "running");
+
+    // Real CLI shape: pass + "not configured" is not a positive SSH fact.
+    crate::sbx::test_env::set_var("SBX_MOCK_SSH", "not configured");
+    assert_eq!(is_ssh_set_up(), Ok(false));
+    // Distant negators, contractions and smart apostrophes read as the
+    // negative fact, too.
+    for message in [
+        "not yet configured",
+        "isn't configured yet",
+        "isn’t configured yet",
+    ] {
+        crate::sbx::test_env::set_var("SBX_MOCK_SSH", message);
+        assert_eq!(is_ssh_set_up(), Ok(false), "message: {message}");
+    }
+
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "pass");
+    for message in [
+        "not signed in",
+        "not authenticated",
+        "no longer signed in",
+        "isn't signed in",
+        "wasn't authenticated",
+    ] {
+        crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", message);
+        assert_eq!(
+            is_signed_in(),
+            Ok(false),
+            "negated message on a pass must read as the negative fact: {message}"
+        );
+    }
+
+    // A negated positive phrase on an unknown-status check still errors:
+    // the gate requires a real status before any message decides.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "skip");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "no longer signed in");
+    assert!(is_signed_in().is_err(), "a skipped check is not a sign-out");
+
+    crate::sbx::test_env::remove_var("SBX_MOCK_AUTH_STATUS");
+    crate::sbx::test_env::remove_var("SBX_MOCK_AUTH_MESSAGE");
+    crate::sbx::test_env::remove_var("SBX_MOCK_SSH");
+    crate::sbx::test_env::remove_var("SBX_MOCK_DAEMON");
+}
+
+/// A negated phrase implies the opposite fact even through a negated first
+/// mention and a trailing clause that must not negate backwards.
+#[test]
+#[cfg(unix)]
+fn diagnose_negation_polarity_survives_clause_boundaries() {
+    let _guard = env_lock();
+    let _mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_DAEMON", "running");
+
+    // A negated first mention must not hide a later clean one: "never
+    // signed out, then signed out" resolves via the clean second mention
+    // (a first-occurrence-only scan would block both and error).
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "fail");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "never signed out, then signed out");
+    assert_eq!(is_signed_in(), Ok(false));
+    // A trailing "not ..." clause does not negate the phrase before it.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "pass");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "signed in, not signed out");
+    assert_eq!(is_signed_in(), Ok(true));
+    // A negator in a previous clause must not flip the next one: "no
+    // issues." cannot turn "signed out" into a negated negative (which
+    // would wrongly claim signed in); the clean negative phrase decides.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "no issues. signed out");
+    assert_eq!(is_signed_in(), Ok(false));
+
+    crate::sbx::test_env::remove_var("SBX_MOCK_AUTH_STATUS");
+    crate::sbx::test_env::remove_var("SBX_MOCK_AUTH_MESSAGE");
+    crate::sbx::test_env::remove_var("SBX_MOCK_SSH");
+    crate::sbx::test_env::remove_var("SBX_MOCK_DAEMON");
 }
 
 #[test]
