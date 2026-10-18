@@ -102,23 +102,6 @@ const paths = {
       <path d="m12 12 9 9m-5-5 3-3m-6 0 3-3" />
     </>
   ),
-  wave: (
-    <>
-      <g transform="rotate(-18 12 13)" strokeWidth="1.1">
-        <path
-          d="M7.5 12.5v-6a1.25 1.25 0 0 1 2.5 0v4.3-6.3a1.25 1.25 0 0 1 2.5 0v6.3-5.3a1.25 1.25 0 0 1 2.5 0v6-3.5a1.25 1.25 0 0 1 2.5 0v6.5c0 4-2.5 6.5-6 6.5H11c-2.1 0-3.4-1.1-4.6-2.7l-3.2-4.1a1.45 1.45 0 0 1 2.2-1.8l2.1 2.4Z"
-          fill="#ffc857"
-          stroke="#d8871c"
-        />
-        <path d="M7.6 14.5c.5-1.8 2.2-2.7 4-2.4M13 15.2c.6 1.2.4 2.6-.3 3.5" stroke="#e79b2a" />
-      </g>
-      <path
-        d="M18.5 2.8c1.6.8 2.7 2.1 3.1 3.8M20 10l2 .5M3.4 5.8 2.2 4.5M2.5 8.5.8 8"
-        stroke="#efaa37"
-        strokeWidth="1.4"
-      />
-    </>
-  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof paths;
