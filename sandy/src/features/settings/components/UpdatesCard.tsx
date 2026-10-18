@@ -13,6 +13,10 @@ const headline = (status: AppUpdatesState["status"]) =>
 const detail = (updates: AppUpdatesState) => {
   switch (updates.status) {
     case "available":
+      // A failed install returns to "available"; show why it failed.
+      if (updates.error) {
+        return `The last install attempt failed: ${updates.error} You can retry from the button on the right.`;
+      }
       return `Sandy ${updates.info?.version} is ready to install. Updating keeps your sandboxes, templates, and settings.`;
     case "installing":
       return "The download is verified against Sandy's release signature before anything is installed. Sandy restarts when it's done.";
