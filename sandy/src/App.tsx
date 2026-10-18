@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SetupStatus, getStatus } from "./api";
-import Wizard, { isSetupComplete } from "./Wizard";
-import CommandCenter from "./CommandCenter";
-import Icon, { IconName } from "./Icon";
+import type { SetupStatus } from "./lib/sandbox";
+import { getStatus } from "./lib/sandbox";
+import Icon from "./common/components/Icon";
+import type { IconName } from "./common/components/Icon";
 import logo from "./assets/logo.png";
-import CreateSandbox from "./CreateSandbox";
-import Templates from "./Templates";
-import Providers from "./Providers";
+import DashboardPage from "./features/dashboard/components/DashboardPage";
+import TemplatesPage from "./features/templates/components/TemplatesPage";
+import CreatePage from "./features/create/components/CreatePage";
+import SettingsPage from "./features/settings/components/SettingsPage";
 
 type View = "home" | "sandboxes" | "templates" | "settings" | "create";
 const navigation: {
@@ -212,7 +213,7 @@ export default function App() {
         </aside>
         <main className="content" id="main-content">
           {(view === "home" || view === "sandboxes") && (
-            <CommandCenter
+            <DashboardPage
               home={view === "home"}
               status={status}
               onGoSettings={() => setView("settings")}
@@ -223,7 +224,7 @@ export default function App() {
             />
           )}
           {view === "templates" && (
-            <Templates
+            <TemplatesPage
               onCreate={() => setView("create")}
               onLaunched={() => {
                 void refreshStatus();
@@ -232,7 +233,7 @@ export default function App() {
             />
           )}
           {view === "create" && (
-            <CreateSandbox
+            <CreatePage
               onClose={() => setView("home")}
               onCreated={() => {
                 void refreshStatus();
@@ -242,100 +243,20 @@ export default function App() {
             />
           )}
           <div hidden={view !== "settings"}>
-            <div className="page standalone-page settings-page">
-              <div className="page-head">
-                <h1>Settings</h1>
-                <p className="page-sub">Make Sandy feel at home on your computer.</p>
-              </div>
-              {statusError && (
-                <div className="error-banner" role="alert">
-                  <strong>We couldn’t check your setup.</strong>
-                  <p>{statusError}</p>
-                  <button
-                    className="ghost"
-                    disabled={busy || checkingSetup}
-                    onClick={refreshStatus}
-                  >
-                    Try again
-                  </button>
-                </div>
-              )}
-              {!!status?.issues?.length && (
-                <div className="error-banner" role="status">
-                  <strong>Some setup checks are temporarily unavailable.</strong>
-                  <p>{status.issues.join("\n")}</p>
-                  <button
-                    className="ghost"
-                    disabled={busy || checkingSetup}
-                    onClick={refreshStatus}
-                  >
-                    Check again
-                  </button>
-                </div>
-              )}
-              {setupOpen ? (
-                <Wizard
-                  key={setupSession}
-                  status={status}
-                  onRefresh={refreshStatus}
-                  onDone={finishSetup}
-                  onBusyChange={setBusy}
-                  onStepDone={onStepDone}
-                />
-              ) : (
-                <section className="card setup-summary" aria-busy={checkingSetup}>
-                  <span className="empty-icon green">
-                    <Icon name="shield" size={28} />
-                  </span>
-                  <div>
-                    <h2>
-                      {status &&
-                      [status.signed_in, status.image_paste_on, status.ssh_set_up].some(
-                        (value) => value === null,
-                      )
-                        ? "Setup status is temporarily unavailable"
-                        : isSetupComplete(status)
-                          ? "You’re all set"
-                          : "Let’s get you set up"}
-                    </h2>
-                    <p>
-                      {isSetupComplete(status)
-                        ? "Your local sandbox tools are configured and ready to use."
-                        : "A few simple steps to get your sandbox tools ready."}
-                    </p>
-                  </div>
-                  <button className="primary" disabled={busy || checkingSetup} onClick={openSetup}>
-                    {checkingSetup ? (
-                      <>
-                        <span className="spinner" /> Checking setup…
-                      </>
-                    ) : (
-                      <>
-                        {isSetupComplete(status) ? "Review setup" : "Continue setup"}
-                        <Icon name="arrow" size={17} />
-                      </>
-                    )}
-                  </button>
-                </section>
-              )}
-              {!setupOpen && (
-                <section className="card settings-info">
-                  <h2>About your workspace</h2>
-                  <p>
-                    Sandy connects to Docker Sandboxes on this computer. Your sandbox data comes
-                    directly from the local <code>sbx</code> CLI.
-                  </p>
-                  <a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noreferrer">
-                    Docker Sandboxes documentation <Icon name="arrow" size={15} />
-                  </a>
-                </section>
-              )}
-              {view === "settings" && (
-                <div className="card settings-info">
-                  <Providers disabled={busy || checkingSetup} />
-                </div>
-              )}
-            </div>
+            <SettingsPage
+              status={status}
+              statusError={statusError}
+              busy={busy}
+              checkingSetup={checkingSetup}
+              setupOpen={setupOpen}
+              setupSession={setupSession}
+              active={view === "settings"}
+              onRefreshStatus={refreshStatus}
+              onOpenSetup={openSetup}
+              onFinishSetup={finishSetup}
+              onBusyChange={setBusy}
+              onStepDone={onStepDone}
+            />
           </div>
         </main>
       </div>

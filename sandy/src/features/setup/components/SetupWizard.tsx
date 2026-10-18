@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { SetupStatus, installSbx, enableImagePaste, setupSsh, login } from "./api";
-import Icon, { IconName } from "./Icon";
+import type { SetupStatus } from "../../../lib/sandbox";
+import Icon from "../../../common/components/Icon";
+import { SETUP_STEPS } from "../../setup/setupSteps";
+import type { SetupStep } from "../../setup/setupSteps";
 
 interface Props {
   status: SetupStatus | null;
@@ -10,91 +12,24 @@ interface Props {
   onStepDone?: (step: string) => void;
 }
 
-interface StepDef {
-  id: string;
-  label: string;
-  title: string;
-  description: string;
-  command: string;
-  action: string;
-  icon: IconName;
-  isDone: (status: SetupStatus | null) => boolean;
-  run: () => Promise<string | void>;
-}
-
-const STEPS: StepDef[] = [
-  {
-    id: "install",
-    label: "Install CLI",
-    title: "A small tool. A world of possibilities.",
-    description:
-      "Sandy uses the Docker Sandboxes CLI (sbx) to work with your local sandboxes. We’ll install it with your system’s package manager. You may be asked for administrator permission.",
-    command: "Install sbx using Homebrew, WinGet, or apt for your platform",
-    action: "Install CLI",
-    icon: "terminal",
-    isDone: (status) => !!status?.sbx_installed,
-    run: installSbx,
-  },
-  {
-    id: "login",
-    label: "Docker account",
-    title: "Let’s get you signed in",
-    description:
-      "Connect your Docker account to use Sandboxes. We’ll open your browser so you can sign in, then check the result here. Already signed in? Sandy will pick that up automatically.",
-    command: "sbx login",
-    action: "Sign in to Docker",
-    icon: "user",
-    isDone: (status) => !!status?.signed_in,
-    run: login,
-  },
-  {
-    id: "imagepaste",
-    label: "Image pasting",
-    title: "Give your agent the full picture",
-    description:
-      "Paste screenshots and images from your clipboard directly into agent chats. This enables clipboard image pasting for your local sandboxes.",
-    command: "sbx settings set clipboard.imagePaste true",
-    action: "Enable image pasting",
-    icon: "clipboard",
-    isDone: (status) => !!status?.image_paste_on,
-    run: enableImagePaste,
-  },
-  {
-    id: "ssh",
-    label: "SSH access",
-    title: "Your favorite tools, connected",
-    description:
-      "Configure your SSH client to reach sandboxes at <name>.sbx. This lets you connect from your editor or terminal using the tools you already love.",
-    command: "sbx setup ssh",
-    action: "Set up SSH",
-    icon: "key",
-    isDone: (status) => !!status?.ssh_set_up,
-    run: setupSsh,
-  },
-];
-
-export function isSetupComplete(status: SetupStatus | null) {
-  return STEPS.every((step) => step.isDone(status));
-}
-
-export default function Wizard({ status, onRefresh, onDone, onBusyChange, onStepDone }: Props) {
+export default function SetupWizard({ status, onRefresh, onDone, onBusyChange, onStepDone }: Props) {
   const [current, setCurrent] = useState(() =>
     Math.max(
       0,
-      STEPS.findIndex((step) => !step.isDone(status)),
+      SETUP_STEPS.findIndex((step) => !step.isDone(status)),
     ),
   );
   const [states, setStates] = useState<Record<string, "running" | "done" | "error">>({});
   const [outputs, setOutputs] = useState<Record<string, string>>({});
   const [finished, setFinished] = useState(false);
-  const step = STEPS[current];
+  const step = SETUP_STEPS[current];
   const busy = Object.values(states).includes("running");
-  const isDone = (item: StepDef) => item.isDone(status) || states[item.id] === "done";
-  const completed = STEPS.filter(isDone).length;
-  const allDone = completed === STEPS.length;
+  const isDone = (item: SetupStep) => item.isDone(status) || states[item.id] === "done";
+  const completed = SETUP_STEPS.filter(isDone).length;
+  const allDone = completed === SETUP_STEPS.length;
   const done = isDone(step);
   const failed = states[step.id] === "error";
-  const needsCli = current > 0 && !isDone(STEPS[0]);
+  const needsCli = current > 0 && !isDone(SETUP_STEPS[0]);
 
   const run = async () => {
     if (busy) return;
@@ -119,7 +54,7 @@ export default function Wizard({ status, onRefresh, onDone, onBusyChange, onStep
   };
 
   const next = () => {
-    if (current === STEPS.length - 1) setFinished(true);
+    if (current === SETUP_STEPS.length - 1) setFinished(true);
     else setCurrent((value) => value + 1);
   };
 
@@ -156,7 +91,7 @@ export default function Wizard({ status, onRefresh, onDone, onBusyChange, onStep
         <span style={{ width: `${(completed / 4) * 100}%` }} />
       </div>
       <ol className="setup-steps" aria-label="Setup steps">
-        {STEPS.map((item, index) => (
+        {SETUP_STEPS.map((item, index) => (
           <li key={item.id}>
             <button
               className={`setup-step ${current === index && !finished ? "current" : ""} ${isDone(item) ? "complete" : ""}`}
@@ -198,7 +133,7 @@ export default function Wizard({ status, onRefresh, onDone, onBusyChange, onStep
               <button
                 className="ghost"
                 onClick={() => {
-                  setCurrent(STEPS.findIndex((item) => !isDone(item)));
+                  setCurrent(SETUP_STEPS.findIndex((item) => !isDone(item)));
                   setFinished(false);
                 }}
               >
@@ -261,7 +196,7 @@ export default function Wizard({ status, onRefresh, onDone, onBusyChange, onStep
             {done && !failed ? (
               <>
                 <button className="primary" disabled={busy} onClick={next}>
-                  {current === STEPS.length - 1 ? "Finish setup" : "Continue"}
+                  {current === SETUP_STEPS.length - 1 ? "Finish setup" : "Continue"}
                   <Icon name="arrow" size={17} />
                 </button>
                 <button className="text-button" disabled={busy || needsCli} onClick={run}>
