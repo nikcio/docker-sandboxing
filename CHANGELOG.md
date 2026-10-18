@@ -1,5 +1,37 @@
 # Changelog
 
+## [3.0.0](https://github.com/nikcio/docker-sandboxing/compare/v2.3.0...v3.0.0) (2026-10-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **mixins:** the opencode mixin no longer installs Node/nvm and provider mixins no longer ship mixins.d/ fragments
+* **mixins:** the mixins/opencode-update mixin is removed. Existing sandbox env files that compose it will fail to resolve; drop the line.
+* **mixins:** run built-in agents, install opencode via mixin, move baseline config into owning mixins ([#111](https://github.com/nikcio/docker-sandboxing/issues/111))
+* **mixins:** the mixins/browser mixin is removed. Existing sandbox env files that compose it will fail to resolve; drop the line.
+* remove template images and per-stack kits, compose sandboxes from the built-in image + mixins ([#102](https://github.com/nikcio/docker-sandboxing/issues/102))
+* **mixins:** the agents-md mixin no longer exists; composing mixins/agents-md in sbxenv.yaml fails.
+* **mixins:** the git refs '#dir=mixins/zeldoc' and '#dir=mixins/copilot' no longer exist. Update pinned kit lines to '#dir=mixins/opencode-zeldoc' / '#dir=mixins/opencode-copilot'. The credential service name (zeldoc) and the opencode provider names are unchanged.
+
+### Features
+
+* **mixins:** add herdr mixin ([#100](https://github.com/nikcio/docker-sandboxing/issues/100)) ([3ba8e6d](https://github.com/nikcio/docker-sandboxing/commit/3ba8e6d40aaf3f7d0f5486b1339504a0ce4cf277))
+* **mixins:** add repo-clone mixin ([#105](https://github.com/nikcio/docker-sandboxing/issues/105)) ([83a55da](https://github.com/nikcio/docker-sandboxing/commit/83a55da5d5d0482e9544805865ddd709807b4649))
+* **mixins:** default git editor and merge pull in github-cli mixin ([#112](https://github.com/nikcio/docker-sandboxing/issues/112)) ([43dc1d9](https://github.com/nikcio/docker-sandboxing/commit/43dc1d9de6efc03d1dc0a822ec4977063a3af9be))
+* **mixins:** make every installed version settable via kit args ([#116](https://github.com/nikcio/docker-sandboxing/issues/116)) ([59ddcd0](https://github.com/nikcio/docker-sandboxing/commit/59ddcd0307ebb9531bc21f77691f3b88fbbbdd21))
+* **mixins:** remove agents-md mixin, move baseline to global-opencode-config ([#101](https://github.com/nikcio/docker-sandboxing/issues/101)) ([c30bab7](https://github.com/nikcio/docker-sandboxing/commit/c30bab71acdda7a11e9c5defc2e45722d6f517a3))
+* **mixins:** remove browser mixin ([#108](https://github.com/nikcio/docker-sandboxing/issues/108)) ([38cb6f3](https://github.com/nikcio/docker-sandboxing/commit/38cb6f3a04b82c8f36e3bd2726a5b7c102bc71ba))
+* **mixins:** remove opencode-update mixin ([#117](https://github.com/nikcio/docker-sandboxing/issues/117)) ([3fd9510](https://github.com/nikcio/docker-sandboxing/commit/3fd9510035375d547be70d32680db9c0001c556f))
+* **mixins:** rename zeldoc/copilot mixins to opencode-zeldoc/opencode-copilot ([#99](https://github.com/nikcio/docker-sandboxing/issues/99)) ([d56e153](https://github.com/nikcio/docker-sandboxing/commit/d56e153b3f4392f2909b262042919afc6c1bfb7b))
+* **mixins:** run built-in agents, install opencode via mixin, move baseline config into owning mixins ([#111](https://github.com/nikcio/docker-sandboxing/issues/111)) ([4890d4f](https://github.com/nikcio/docker-sandboxing/commit/4890d4fad42bd9fc8349628e6fb288b70aa873aa))
+* **mixins:** switch opencode mixin to v2 curl install and self-contained provider config ([#118](https://github.com/nikcio/docker-sandboxing/issues/118)) ([947ecdf](https://github.com/nikcio/docker-sandboxing/commit/947ecdfa507fe88430a8beee5111fa23d19c0933))
+* remove template images and per-stack kits, compose sandboxes from the built-in image + mixins ([#102](https://github.com/nikcio/docker-sandboxing/issues/102)) ([96201b0](https://github.com/nikcio/docker-sandboxing/commit/96201b01460babb3aae86ffee9bd8b64026fd392))
+
+
+### Bug Fixes
+
+* **mixins:** drop github-cli credential that conflicts with built-in agent kits ([#113](https://github.com/nikcio/docker-sandboxing/issues/113)) ([2488973](https://github.com/nikcio/docker-sandboxing/commit/248897312e3ff7b9478aa0f0952dfb2456c4e010))
+
 ## [2.3.0](https://github.com/nikcio/docker-sandboxing/compare/v2.2.1...v2.3.0) (2026-10-17)
 
 
