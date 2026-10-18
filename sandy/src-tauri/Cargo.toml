@@ -2,8 +2,10 @@
 name = "sandy"
 version = "0.1.0"
 description = "Sandy — a friendly command center for Docker Sandboxes"
-authors = ["docker-sandboxing contributors"]
-edition = "2021"
+authors = ["nikcio"]
+edition = "2024"
+# Edition 2024 requires Rust 1.85+.
+rust-version = "1.85"
 
 [lib]
 name = "sandy_lib"
@@ -36,3 +38,23 @@ rfd = { version = "=0.17.2", default-features = false, features = ["xdg-portal"]
 codegen-units = 1
 lto = true
 strip = true
+
+# Guardrails: stricter than the compiler defaults, so panicky or
+# error-swallowing patterns fail the build (clippy runs with -D warnings in
+# CI) instead of surfacing at runtime. Test code is exempt below.
+[lints.rust]
+unsafe_code = "deny"
+rust_2018_idioms = { level = "deny", priority = -1 }
+
+[lints.clippy]
+# Error-handling hygiene: no panics hidden behind unwrap()/expect() in
+# production paths.
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+# Silence over things that should stay loud.
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
+print_stdout = "deny"
+print_stderr = "deny"

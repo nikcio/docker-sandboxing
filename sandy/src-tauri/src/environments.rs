@@ -9,7 +9,7 @@
 //! it explicitly directs callers to env run to attach afterward.
 
 use crate::catalog::{
-    get_providers, github_repository, unique_id, write_json, KitOption, Provider,
+    KitOption, Provider, get_providers, github_repository, unique_id, write_json,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
@@ -220,13 +220,13 @@ fn validate_selection(agent: &KitOption, mixins: &[KitOption]) -> Result<(), Str
                 kit.name
             ));
         }
-        if let Some(required) = &kit.required_agent {
-            if required != &agent.name {
-                return Err(format!(
-                    "{} requires agent {required}, but {} was selected",
-                    kit.name, agent.name
-                ));
-            }
+        if let Some(required) = &kit.required_agent
+            && required != &agent.name
+        {
+            return Err(format!(
+                "{} requires agent {required}, but {} was selected",
+                kit.name, agent.name
+            ));
         }
     }
     if let Some(kit) = mixins.iter().find(|k| k.kind != "mixin") {
@@ -432,7 +432,10 @@ fn read_template(record: &TemplateRecord) -> Result<(SavedTemplate, Environment)
         .map(KitEntry::source)
         .ne(expected.iter().map(|k| k.source.as_str()))
     {
-        return Err(format!("{}: kit sources changed on disk; save a new template to validate their metadata and compatibility", record.path));
+        return Err(format!(
+            "{}: kit sources changed on disk; save a new template to validate their metadata and compatibility",
+            record.path
+        ));
     }
     for (entry, kit) in environment.kits.iter().zip(expected) {
         validate_arguments(kit, &entry.arguments())?;
@@ -524,7 +527,10 @@ fn allow_source_with(
         || record["managed"] == true
         || record["read_only"] == true
     {
-        return Err(format!("{prefix} is blocked by kit.allowedSources (source: {}). Ask the administrator or update the controlling environment policy; Sandy will not replace it", record["source"]));
+        return Err(format!(
+            "{prefix} is blocked by kit.allowedSources (source: {}). Ask the administrator or update the controlling environment policy; Sandy will not replace it",
+            record["source"]
+        ));
     }
     for source in &spellings {
         if !prefixes.iter().any(|p| prefix_matches(p, source)) {
@@ -543,7 +549,9 @@ fn allow_source_with(
         .iter()
         .all(|source| evaluated.iter().any(|p| prefix_matches(p, source)))
     {
-        return Err(format!("{prefix} remains blocked by the evaluated kit.allowedSources policy; ask the administrator to authorize this repository"));
+        return Err(format!(
+            "{prefix} remains blocked by the evaluated kit.allowedSources policy; ask the administrator to authorize this repository"
+        ));
     }
     Ok(format!(
         "Authorized {prefix}; existing source prefixes preserved"
@@ -610,7 +618,9 @@ fn launch_with(
         let output = runtime.start(&name).map_err(|error| {
             format!("Existing sandbox {name} could not be started. Retry with sbx run --detach --name {name}:\n{error}")
         })?;
-        return Ok(format!("Started existing sandbox {name} in the background using its existing agent, kits, and workspace.\n{output}"));
+        return Ok(format!(
+            "Started existing sandbox {name} in the background using its existing agent, kits, and workspace.\n{output}"
+        ));
     }
     let workspace = workspace_path(workspace.as_deref().unwrap_or(&saved.workspace))?;
     let original =
@@ -632,12 +642,19 @@ fn launch_with(
                         && p.kind == "github"
                         && github_repository(&p.repository).is_ok_and(|r| r == repository)
                 })
-                .ok_or_else(|| format!("Enable the GitHub provider for {repository} before launching this template"))?;
+                .ok_or_else(|| {
+                    format!(
+                        "Enable the GitHub provider for {repository} before launching this template"
+                    )
+                })?;
             if authorized.insert(repository.to_string()) {
                 allow_source_with(provider, &mut |args| runtime.run(args))?;
             }
         } else if !kit.source.starts_with("docker.io/") {
-            return Err(format!("Unsupported saved source: {}. Select a kit from an enabled GitHub or Docker Hub provider", kit.source));
+            return Err(format!(
+                "Unsupported saved source: {}. Select a kit from an enabled GitHub or Docker Hub provider",
+                kit.source
+            ));
         }
     }
     // Use an immutable per-launch snapshot, preserving the original file and the
@@ -685,10 +702,14 @@ fn launch_with(
     let started = runtime.start(&name).map_err(|error| {
         format!("Environment {name} was created, but it could not be started. Retry with sbx run --detach --name {name}; launching this name again will resume it without recreating it.\nLaunch file: {path}\nCreate output: {created}\n{error}")
     })?;
-    Ok(format!("Created and started sandbox {name} in the background without attaching an interactive session.\nLaunch file: {path}\n{created}\n{started}"))
+    Ok(format!(
+        "Created and started sandbox {name} in the background without attaching an interactive session.\nLaunch file: {path}\n{created}\n{started}"
+    ))
 }
 
+// Tests may unwrap/expect freely — a panic is exactly the failure mode we want.
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 mod tests {
     use super::*;
     use crate::catalog::KitArgument;
@@ -801,18 +822,24 @@ mod tests {
         let fixture = Fixture::new();
         let mut request = fixture.request();
         request.mixins.push(kit("browser", "mixin", 3, "hub"));
-        assert!(save_template(&fixture.root, request.clone())
-            .unwrap_err()
-            .contains("cannot be combined"));
+        assert!(
+            save_template(&fixture.root, request.clone())
+                .unwrap_err()
+                .contains("cannot be combined")
+        );
         request.mixins[0].schema_version = 2;
         request.mixins[0].required_agent = Some("codex".into());
-        assert!(save_template(&fixture.root, request.clone())
-            .unwrap_err()
-            .contains("requires agent codex"));
+        assert!(
+            save_template(&fixture.root, request.clone())
+                .unwrap_err()
+                .contains("requires agent codex")
+        );
         request.mixins[0] = kit("claude", "mixin", 2, "hub");
-        assert!(save_template(&fixture.root, request)
-            .unwrap_err()
-            .contains("unique"));
+        assert!(
+            save_template(&fixture.root, request)
+                .unwrap_err()
+                .contains("unique")
+        );
     }
 
     #[test]
@@ -891,15 +918,19 @@ mod tests {
         let fixture = Fixture::new();
         let mut request = fixture.request();
         request.save_path = Some(path_string(&fixture.workspace.join("sbxenv.yaml")).unwrap());
-        assert!(save_template(&fixture.root, request.clone())
-            .unwrap_err()
-            .contains("outside"));
+        assert!(
+            save_template(&fixture.root, request.clone())
+                .unwrap_err()
+                .contains("outside")
+        );
         let existing = fixture.base.join("important.yaml");
         std::fs::write(&existing, "important").unwrap();
         request.save_path = Some(path_string(&existing).unwrap());
-        assert!(save_template(&fixture.root, request)
-            .unwrap_err()
-            .contains("never overwritten"));
+        assert!(
+            save_template(&fixture.root, request)
+                .unwrap_err()
+                .contains("never overwritten")
+        );
         assert_eq!(std::fs::read_to_string(existing).unwrap(), "important");
     }
 
@@ -989,9 +1020,9 @@ mod tests {
         impl Drop for RestorePath {
             fn drop(&mut self) {
                 if let Some(path) = &self.0 {
-                    std::env::set_var("PATH", path);
+                    crate::sbx::test_env::set_var("PATH", path);
                 } else {
-                    std::env::remove_var("PATH");
+                    crate::sbx::test_env::remove_var("PATH");
                 }
             }
         }
@@ -1032,7 +1063,7 @@ esac
             std::env::split_paths(restore.0.as_deref().unwrap_or_default()),
         ))
         .unwrap();
-        std::env::set_var("PATH", path);
+        crate::sbx::test_env::set_var("PATH", path);
 
         let created = launch_template(&fixture.root, &saved.id, None, None).unwrap();
         assert!(created.contains("Created and started sandbox example"));
@@ -1080,11 +1111,13 @@ esac
                 "github.com/team/kits.git"
             ]
         );
-        assert!(allow_source_with(&provider, &mut |_| Ok(
-            r#"{"source":"envvar","value":["docker.io/"]}"#.into()
-        ))
-        .unwrap_err()
-        .contains("administrator"));
+        assert!(
+            allow_source_with(&provider, &mut |_| Ok(
+                r#"{"source":"envvar","value":["docker.io/"]}"#.into()
+            ))
+            .unwrap_err()
+            .contains("administrator")
+        );
         assert!(!prefix_matches(
             "github.com/team/kits",
             "github.com/team/kits-evil"
