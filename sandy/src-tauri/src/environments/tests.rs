@@ -460,7 +460,6 @@ fn source_authorization_merges_and_rejects_managed_policy() {
     ));
 }
 
-
 #[test]
 fn canonicalized_paths_simplify_windows_verbatim_prefixes() {
     // Windows file pickers and std::fs::canonicalize produce verbatim paths
