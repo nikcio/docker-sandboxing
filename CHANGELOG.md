@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0-beta.2](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0-beta.1...v3.1.0-beta.2) (2026-10-23)
+
+
+### Bug Fixes
+
+* **sandy:** fix Windows artifact collection paths ([#170](https://github.com/nikcio/docker-sandboxing/issues/170)) ([ae768dd](https://github.com/nikcio/docker-sandboxing/commit/ae768ddff41d4f6c9c87a0861da79b67272ab792))
+
 ## [3.1.0-beta.1](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0-beta...v3.1.0-beta.1) (2026-10-18)
 
 
