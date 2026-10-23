@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { shareInFlight } from "./inFlight";
 
 export interface SetupStatus {
   sbx_installed: boolean;
@@ -23,12 +24,15 @@ export interface ConnectionInfo {
   command: string;
 }
 
-export const getStatus = () => invoke<SetupStatus>("status");
+// Concurrent calls share one invoke: StrictMode double effects and
+// overlapping focus handlers must not each spawn the same CLI work.
+export const getStatus = shareInFlight(() => invoke<SetupStatus>("status"));
 export const installSbx = () => invoke<string>("install_sbx");
 export const enableImagePaste = () => invoke<void>("enable_image_paste");
 export const setupSsh = () => invoke<string>("setup_ssh");
 export const login = () => invoke<string>("login");
-export const listSandboxes = () => invoke<SandboxInfo[]>("sandboxes");
+// Same dedupe as getStatus: mount + focus can overlap on one list read.
+export const listSandboxes = shareInFlight(() => invoke<SandboxInfo[]>("sandboxes"));
 export const startSandbox = (name: string) => invoke<string>("start_sandbox", { name });
 export const stopSandbox = (name: string) => invoke<string>("stop_sandbox", { name });
 export const restartSandbox = (name: string) => invoke<string>("restart_sandbox", { name });

@@ -32,24 +32,48 @@ struct DiagnoseCheck {
     message: String,
 }
 
-/// Whether the user is signed in to Docker, via the `Authentication` check
-/// in `sbx diagnose`. The CLI has no `whoami` command; exit-code probing of
-/// `login` would block on the browser flow, so diagnose is the only
-/// non-interactive detector. Unknown status is an error, never an explicit
-/// sign-out. Every call refreshes the report, including after login/logout.
-pub fn is_signed_in() -> Result<bool, String> {
-    ensure_daemon()?;
-    check_configured(
-        &diagnose_report()?,
-        "Authentication",
-        &["authenticated", "signed in"],
-        &[
-            "not signed in",
-            "not authenticated",
-            "unauthenticated",
-            "signed out",
-        ],
-    )
+/// The setup checks Sandy derives from a single `sbx diagnose` report.
+/// Authentication and SSH client config live in the same report, so one run
+/// answers both; when the run itself fails, both checks share that error
+/// (read_status collapses the duplicated issue text).
+#[derive(Debug)]
+pub struct DiagnoseChecks {
+    pub signed_in: Result<bool, String>,
+    pub ssh_set_up: Result<bool, String>,
+}
+
+/// Bring up the daemon and run `sbx diagnose` once, deriving both setup
+/// checks from the one report. Authentication comes from the `Authentication`
+/// check — the CLI has no `whoami` command, and exit-code probing of `login`
+/// would block on the browser flow, so diagnose is the only non-interactive
+/// detector. Unknown status is an error, never an explicit sign-out. Every
+/// call refreshes the report, including after login/logout.
+pub fn diagnose_setup_checks() -> DiagnoseChecks {
+    match ensure_daemon().and_then(|_| diagnose_report()) {
+        Ok(checks) => DiagnoseChecks {
+            signed_in: check_configured(
+                &checks,
+                "Authentication",
+                &["authenticated", "signed in"],
+                &[
+                    "not signed in",
+                    "not authenticated",
+                    "unauthenticated",
+                    "signed out",
+                ],
+            ),
+            ssh_set_up: check_configured(
+                &checks,
+                "SSH client config",
+                &["configured"],
+                &["not configured"],
+            ),
+        },
+        Err(error) => DiagnoseChecks {
+            signed_in: Err(error.clone()),
+            ssh_set_up: Err(error),
+        },
+    }
 }
 
 fn check_configured(
@@ -109,13 +133,18 @@ fn daemon_running() -> Result<bool, String> {
 pub fn ensure_daemon() -> Result<(), String> {
     static START_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
     let _guard = START_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    if daemon_recently_confirmed() {
+        return Ok(());
+    }
     if daemon_running()? {
+        mark_daemon_confirmed();
         return Ok(());
     }
     let start = run_capture(&["daemon", "start", "--detach"]);
     // Another process may have started it while our start command failed.
     for attempt in 0..10 {
         if daemon_running()? {
+            mark_daemon_confirmed();
             return Ok(());
         }
         if start.is_err() {
@@ -128,6 +157,42 @@ pub fn ensure_daemon() -> Result<(), String> {
     Err(start
         .err()
         .unwrap_or_else(|| "sbx daemon did not become ready after starting".to_string()))
+}
+
+/// How long a confirmed-running answer from `sbx daemon status` is reused.
+/// Back-to-back checks (diagnose, settings, login in one status read) share
+/// a single probe instead of each spawning its own; once the window passes,
+/// the next check probes again. A daemon that dies inside the window still
+/// fails loudly — through the very command that needed it.
+const DAEMON_CONFIRMED_TTL: std::time::Duration = std::time::Duration::from_secs(5);
+
+fn daemon_confirmation() -> &'static std::sync::Mutex<Option<std::time::Instant>> {
+    static CONFIRMED_AT: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
+    &CONFIRMED_AT
+}
+
+fn daemon_recently_confirmed() -> bool {
+    let confirmed = daemon_confirmation()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    confirmed.is_some_and(|at| at.elapsed() < DAEMON_CONFIRMED_TTL)
+}
+
+fn mark_daemon_confirmed() {
+    let mut confirmed = daemon_confirmation()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    *confirmed = Some(std::time::Instant::now());
+}
+
+/// Drop the cached daemon confirmation. Test hook: fixtures must not see
+/// another test's confirmed daemon.
+#[cfg(test)]
+pub(crate) fn reset_daemon_cache() {
+    let mut confirmed = daemon_confirmation()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    *confirmed = None;
 }
 
 /// Read a single sbx setting value (empty string if unset).
@@ -173,18 +238,6 @@ pub fn set_clipboard_image_paste() -> Result<(), String> {
         .and_then(|_| run_capture(&["settings", "set", "clipboard.imagePaste", "true"]))
         .map(|_| ())
         .map_err(|e| format!("could not enable image paste:\n{}", e))
-}
-
-/// Ask the CLI instead of matching a comment in ~/.ssh/config: setup may
-/// use an Include, platform-specific paths, or a generated managed block.
-pub fn is_ssh_set_up() -> Result<bool, String> {
-    ensure_daemon()?;
-    check_configured(
-        &diagnose_report()?,
-        "SSH client config",
-        &["configured"],
-        &["not configured"],
-    )
 }
 
 /// Open the browser for Docker OAuth and wait for completion. `sbx login`

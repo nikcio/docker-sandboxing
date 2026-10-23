@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { shareInFlight } from "./inFlight";
 
 export interface Provider {
   id: string;
@@ -36,7 +37,9 @@ export interface Catalog {
 
 export type KitArguments = Record<string, Record<string, string>>;
 
-export const getProviders = () => invoke<Provider[]>("get_providers");
+// Same dedupe as sandbox.ts's getStatus: StrictMode double mounts must not
+// read the provider store twice.
+export const getProviders = shareInFlight(() => invoke<Provider[]>("get_providers"));
 export const saveProviders = (providers: Provider[]) =>
   invoke<Provider[]>("save_providers", { providers });
 export const providerVersions = (provider: Provider) =>

@@ -36,7 +36,29 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
             }
         }
     }
-    let signed_in = checked(sbx::is_signed_in(), &mut issues);
+    // One diagnose run answers both sign-in and SSH; a shared failure is
+    // reported once instead of duplicated per check.
+    let checks = sbx::diagnose_setup_checks();
+    let mut shared_issue: Option<String> = None;
+    let signed_in = match checks.signed_in {
+        Ok(value) => Some(value),
+        Err(error) => {
+            shared_issue = Some(error);
+            None
+        }
+    };
+    let ssh_set_up = match checks.ssh_set_up {
+        Ok(value) => Some(value),
+        Err(error) => {
+            if shared_issue.as_deref() != Some(error.as_str()) {
+                shared_issue = Some(error);
+            }
+            None
+        }
+    };
+    if let Some(error) = shared_issue {
+        issues.push(error);
+    }
     let image_paste_on = checked(
         sbx::get_setting("clipboard.imagePaste").and_then(|value| {
             if value.eq_ignore_ascii_case("true") {
@@ -49,7 +71,6 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
         }),
         &mut issues,
     );
-    let ssh_set_up = checked(sbx::is_ssh_set_up(), &mut issues);
     Ok(SetupStatus {
         sbx_installed,
         signed_in,

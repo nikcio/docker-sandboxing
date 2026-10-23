@@ -8,8 +8,18 @@ use crate::sbx::lifecycle::{
 };
 use crate::sbx::listing::list_sandboxes;
 use crate::sbx::status::{
-    get_setting, is_signed_in, is_ssh_set_up, run_login, set_clipboard_image_paste,
+    diagnose_setup_checks, get_setting, run_login, set_clipboard_image_paste,
 };
+
+/// Sign-in half of a shared diagnose run (the old single-check helper name).
+fn is_signed_in() -> Result<bool, String> {
+    diagnose_setup_checks().signed_in
+}
+
+/// SSH half of a shared diagnose run.
+fn is_ssh_set_up() -> Result<bool, String> {
+    diagnose_setup_checks().ssh_set_up
+}
 use crate::sbx::terminal::{applescript_quote, open_terminal, powershell_quote, shell_quote};
 use crate::sbx::test_env::CLI_TEST_ENV_LOCK;
 use crate::setup::read_status;
@@ -79,6 +89,9 @@ impl MockCli {
         ] {
             crate::sbx::test_env::set_var(key, &root);
         }
+        // The daemon-confirmation cache is process-global; a previous test's
+        // confirmed daemon must not skip this fixture's daemon probe.
+        crate::sbx::status::reset_daemon_cache();
         Self { root, environment }
     }
 
@@ -211,6 +224,11 @@ fn cli_mock_success_paths() {
     // login: already-signed-in reports are success, not failure.
     assert!(run_login().is_ok());
 
+    // Back-to-back checks inside the daemon-confirmation window reuse the
+    // first `daemon status` probe: login and get_setting run no new probe.
+    let commands = mock.commands();
+    assert_eq!(commands.matches("daemon status --format json\n").count(), 1);
+
     // get_setting default: clipboard.imagePaste prints "false".
     assert_eq!(get_setting("clipboard.imagePaste"), Ok("false".to_string()));
 
@@ -255,6 +273,15 @@ fn cli_mock_success_paths() {
     );
     assert!(err.contains("upgrade sbx"), "got: {err}");
     assert_eq!(mock.commands().matches("ls --json\n").count(), 2);
+
+    // get_setting after a daemon start reuses the confirmed daemon: the
+    // only probe in the whole test so far is the one before diagnose.
+    assert_eq!(
+        mock.commands()
+            .matches("daemon status --format json\n")
+            .count(),
+        1
+    );
 
     // list_sandboxes: empty output -> empty vec, no error.
     crate::sbx::test_env::set_var("SBX_MOCK_LS_EMPTY", "1");
@@ -443,12 +470,23 @@ fn authentication_starts_daemon_before_check_and_parses_failed_report() {
         mock.commands(),
         "daemon status --format json\ndaemon start --detach\ndaemon status --format json\ndiagnose --format json\n"
     );
-    // Neither login nor a previous pass is cached. Logout is visible on
-    // the very next refresh, even if diagnose still exits nonzero.
+    // Diagnose is not cached (logout must be visible immediately), but the
+    // daemon confirmation is: the follow-up is_signed_in runs diagnose only,
+    // with no second daemon probe or start.
     crate::sbx::test_env::remove_var("SBX_MOCK_SIGNED_IN");
     assert_eq!(is_signed_in(), Ok(false));
     crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
     assert_eq!(is_signed_in(), Ok(true));
+    assert_eq!(
+        mock.commands()
+            .matches("daemon status --format json\n")
+            .count(),
+        2
+    );
+    assert_eq!(
+        mock.commands().matches("daemon start --detach\n").count(),
+        1
+    );
 }
 
 #[test]
@@ -470,8 +508,12 @@ fn whole_status_cold_start_keeps_successful_checks_from_nonzero_diagnose() {
     assert_eq!(status.ssh_set_up, Some(true));
     assert!(status.issues.is_empty(), "{:?}", status.issues);
     let commands = mock.commands();
+    // One status read: a single cold daemon probe/start pair, one shared
+    // diagnose run, and one settings read afterwards.
     assert!(commands.starts_with("daemon status --format json\ndaemon start --detach\ndaemon status --format json\ndiagnose --format json\n"));
+    assert_eq!(commands.matches("daemon status --format json\n").count(), 2);
     assert_eq!(commands.matches("daemon start --detach\n").count(), 1);
+    assert_eq!(commands.matches("diagnose --format json\n").count(), 1);
     assert!(commands.find("diagnose").unwrap() < commands.find("settings get").unwrap());
 }
 
@@ -491,7 +533,9 @@ fn whole_status_refresh_distinguishes_sign_out_from_unknown_checks() {
     assert_eq!(status.signed_in, None);
     assert_eq!(status.ssh_set_up, None);
     assert_eq!(status.image_paste_on, Some(true));
-    assert_eq!(status.issues.len(), 2);
+    // One diagnose run serves both checks, so its shared failure is one
+    // issue, not two.
+    assert_eq!(status.issues.len(), 1);
     let serialized = serde_json::to_value(&status).unwrap();
     assert!(serialized["signed_in"].is_null());
     assert!(serialized["ssh_set_up"].is_null());
@@ -501,7 +545,9 @@ fn whole_status_refresh_distinguishes_sign_out_from_unknown_checks() {
     assert_eq!(status.signed_in, None);
     assert_eq!(status.image_paste_on, None);
     assert_eq!(status.ssh_set_up, None);
-    assert_eq!(status.issues.len(), 3);
+    // The shared diagnose error and the settings error: two issues, with
+    // the diagnose failure reported once for both checks.
+    assert_eq!(status.issues.len(), 2);
 }
 
 #[test]
