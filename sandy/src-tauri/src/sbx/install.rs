@@ -5,6 +5,8 @@ use std::path::PathBuf;
 
 #[cfg(target_os = "macos")]
 use super::cli::first_executable;
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+use super::cli::HideConsole;
 use super::cli::is_sbx_installed;
 
 #[cfg(target_os = "macos")]
@@ -117,8 +119,8 @@ fn run_via(program: &str, args: &[&str]) -> Result<String, String> {
     let mut child = std::process::Command::new(program)
         .args(args)
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    super::cli::hide_console(&mut child);
+        .stderr(Stdio::piped())
+        .hide_console();
     let mut child = child
         .spawn()
         .map_err(|e| format!("failed to run {}: {}", program, e))?;
