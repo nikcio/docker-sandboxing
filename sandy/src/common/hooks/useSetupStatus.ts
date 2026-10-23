@@ -20,8 +20,12 @@ export interface SetupStatusState {
 type CompletedStep = "sbx_installed" | "signed_in" | "image_paste_on" | "ssh_set_up";
 
 /**
- * The setup-status state machine: refreshes `sbx` diagnostics, trusts recent
- * wizard confirmations for a grace period, and opens setup when incomplete.
+ * The setup-status state machine: one `sbx` diagnostics check at startup,
+ * refreshed only when setup-relevant actions run (wizard steps, explicit
+ * "check again", the SSH check in the connect dialog). Trusts recent wizard
+ * confirmations for a grace period, and opens setup when incomplete. While
+ * the app is otherwise running, nothing polls: the sandbox list has its own
+ * `sbx ls` refresh, and setup state only changes through setup actions.
  */
 export function useSetupStatus(): SetupStatusState {
   const [status, setStatus] = useState<SetupStatus | null>(null);
@@ -74,15 +78,6 @@ export function useSetupStatus(): SetupStatusState {
       active = false;
     };
   }, [refreshStatus]);
-
-  useEffect(() => {
-    if (busy) return;
-    const onFocus = () => {
-      void refreshStatus();
-    };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [busy, refreshStatus]);
 
   const openSetup = async () => {
     if (openingSetup.current || busy) return null;

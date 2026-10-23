@@ -20,8 +20,6 @@ import { useMountedRef } from "../../../common/hooks/useMountedRef";
 import { useBusyReporting } from "../../../common/hooks/useBusyReporting";
 
 export interface CreateFlowOptions {
-  /** Called only after a successful launch; the completed page stays visible. */
-  onCreated: () => void;
   onBusyChange?: (busy: boolean) => void;
 }
 
@@ -29,7 +27,7 @@ export interface CreateFlowOptions {
  * The create-wizard state machine: kit discovery, agent/mixin selection,
  * template saving, and launching. The page component only renders steps.
  */
-export function useCreateFlow({ onCreated, onBusyChange }: CreateFlowOptions) {
+export function useCreateFlow({ onBusyChange }: CreateFlowOptions) {
   const mounted = useMountedRef();
   const [step, setStep] = useState(0);
   const [providers, setProviders] = useState<Provider[] | null>(null);
@@ -202,7 +200,6 @@ export function useCreateFlow({ onCreated, onBusyChange }: CreateFlowOptions) {
     if (!mounted.current) return;
     setLaunchOutput(output);
     setLaunched(true);
-    onCreated();
   };
 
   const submit = async (shouldLaunch: boolean) => {

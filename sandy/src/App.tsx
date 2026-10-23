@@ -65,7 +65,6 @@ export default function App() {
 
   const navigate = (next: Exclude<View, "create">) => {
     setView(next);
-    if (next === "settings") void refreshStatus();
   };
 
   if (loading) {
@@ -99,18 +98,12 @@ export default function App() {
           {view === "templates" && (
             <TemplatesPage
               onCreate={() => setView("create")}
-              onLaunched={() => {
-                void refreshStatus();
-              }}
               onBusyChange={setBusy}
             />
           )}
           {view === "create" && (
             <CreatePage
               onClose={() => setView("home")}
-              onCreated={() => {
-                void refreshStatus();
-              }}
               onTemplates={() => setView("templates")}
               onBusyChange={setBusy}
             />
