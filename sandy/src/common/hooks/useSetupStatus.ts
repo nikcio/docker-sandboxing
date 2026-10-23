@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SetupStatus } from "../../lib/sandbox";
-import { getStatus } from "../../lib/sandbox";
+import { checkSetup } from "../../lib/sandbox";
 
 export interface SetupStatusState {
   status: SetupStatus | null;
   statusError: string | null;
-  /** True until the first status check resolves. */
+  /** True until the first setup check resolves. */
   loading: boolean;
   busy: boolean;
   setBusy: (busy: boolean) => void;
-  refreshStatus: () => Promise<SetupStatus | null>;
+  /**
+   * Run the setup check (a full `sbx` diagnostics batch). Only call this
+   * where the answer can change: after a setup action, or on an explicit
+   * user request. The sandbox list polls `sbx ls` on its own.
+   */
+  checkSetup: () => Promise<SetupStatus | null>;
   /** Whether a setup check is needed before the wizard opens. */
   checkingSetup: boolean;
   openSetup: () => Promise<SetupStatus | null>;
@@ -20,8 +25,12 @@ export interface SetupStatusState {
 type CompletedStep = "sbx_installed" | "signed_in" | "image_paste_on" | "ssh_set_up";
 
 /**
- * The setup-status state machine: refreshes `sbx` diagnostics, trusts recent
- * wizard confirmations for a grace period, and opens setup when incomplete.
+ * The setup-status state machine: one setup check at startup decides the
+ * landing view (setup wizard when incomplete), and later checks run only
+ * when setup-relevant actions run — wizard steps, the connect dialog's SSH
+ * check, the Settings "check again" buttons. Trusts recent wizard
+ * confirmations for a grace period. Nothing polls: setup state only changes
+ * through setup actions, and the sandbox list has its own `sbx ls` refresh.
  */
 export function useSetupStatus(): SetupStatusState {
   const [status, setStatus] = useState<SetupStatus | null>(null);
@@ -32,9 +41,9 @@ export function useSetupStatus(): SetupStatusState {
   const openingSetup = useRef(false);
   const completedSteps = useRef(new Map<CompletedStep, number>());
 
-  const refreshStatus = useCallback(async () => {
+  const checkSetupNow = useCallback(async () => {
     try {
-      const next = await getStatus();
+      const next = await checkSetup();
       // Successful commands are authoritative while the daemon's checks settle.
       // Drop each confirmation once observed, or after a short grace period, so
       // later logout/configuration changes still appear accurately.
@@ -66,30 +75,21 @@ export function useSetupStatus(): SetupStatusState {
 
   useEffect(() => {
     let active = true;
-    void refreshStatus().then(() => {
+    void checkSetupNow().then(() => {
       if (!active) return;
       setLoading(false);
     });
     return () => {
       active = false;
     };
-  }, [refreshStatus]);
-
-  useEffect(() => {
-    if (busy) return;
-    const onFocus = () => {
-      void refreshStatus();
-    };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [busy, refreshStatus]);
+  }, [checkSetupNow]);
 
   const openSetup = async () => {
     if (openingSetup.current || busy) return null;
     openingSetup.current = true;
     setCheckingSetup(true);
     try {
-      return await refreshStatus();
+      return await checkSetupNow();
     } finally {
       openingSetup.current = false;
       setCheckingSetup(false);
@@ -117,7 +117,7 @@ export function useSetupStatus(): SetupStatusState {
     loading,
     busy,
     setBusy,
-    refreshStatus,
+    checkSetup: checkSetupNow,
     checkingSetup,
     openSetup,
     onStepDone,

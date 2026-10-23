@@ -15,7 +15,7 @@ export interface SettingsPageProps {
   setupSession: number;
   /** Whether Settings is the visible page (providers only load when active). */
   active: boolean;
-  onRefreshStatus: () => Promise<SetupStatus | null>;
+  onCheckSetup: () => Promise<SetupStatus | null>;
   onOpenSetup: () => void;
   onFinishSetup: () => void;
   onBusyChange: (busy: boolean) => void;
@@ -35,7 +35,7 @@ export default function SettingsPage({
   setupOpen,
   setupSession,
   active,
-  onRefreshStatus,
+  onCheckSetup,
   onOpenSetup,
   onFinishSetup,
   onBusyChange,
@@ -51,7 +51,7 @@ export default function SettingsPage({
         <div className="error-banner" role="alert">
           <strong>We couldn’t check your setup.</strong>
           <p>{statusError}</p>
-          <button className="ghost" disabled={busy || checkingSetup} onClick={() => void onRefreshStatus()}>
+          <button className="ghost" disabled={busy || checkingSetup} onClick={() => void onCheckSetup()}>
             Try again
           </button>
         </div>
@@ -60,7 +60,7 @@ export default function SettingsPage({
         <div className="error-banner" role="status">
           <strong>Some setup checks are temporarily unavailable.</strong>
           <p>{status.issues.join("\n")}</p>
-          <button className="ghost" disabled={busy || checkingSetup} onClick={() => void onRefreshStatus()}>
+          <button className="ghost" disabled={busy || checkingSetup} onClick={() => void onCheckSetup()}>
             Check again
           </button>
         </div>
@@ -84,7 +84,7 @@ export default function SettingsPage({
         <SetupWizard
           key={setupSession}
           status={status}
-          onRefresh={onRefreshStatus}
+          onCheckSetup={onCheckSetup}
           onDone={onFinishSetup}
           onBusyChange={onBusyChange}
           onStepDone={onStepDone}

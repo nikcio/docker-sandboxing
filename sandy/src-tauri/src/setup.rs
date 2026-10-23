@@ -5,6 +5,12 @@ use serde::Serialize;
 
 use crate::sbx::{self, CheckExplanation};
 
+/// Run the full setup check: whether the `sbx` CLI is installed, and how far
+/// the local configuration (authentication, clipboard setting, SSH) has come.
+/// Every call spawns CLI processes (daemon probe, `sbx diagnose`, a settings
+/// read), so call it only where the answer can change: once at startup, after
+/// a setup action (wizard step, login, SSH setup), or on an explicit user
+/// request ("check again"). Never poll it — sandbox data comes from `sbx ls`.
 #[derive(Serialize)]
 pub struct SetupStatus {
     pub sbx_installed: bool,
@@ -23,7 +29,7 @@ pub struct SetupStatus {
     pub issues: Vec<String>,
 }
 
-pub(crate) fn read_status() -> Result<SetupStatus, String> {
+pub(crate) fn check_setup() -> Result<SetupStatus, String> {
     let sbx_installed = sbx::is_sbx_installed();
     if !sbx_installed {
         return Ok(SetupStatus {

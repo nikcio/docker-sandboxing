@@ -5,16 +5,16 @@ import Icon from "../../../common/components/Icon";
 import { ErrorBanner } from "../../../common/components/ErrorBanner";
 import { useMountedRef } from "../../../common/hooks/useMountedRef";
 import { useBusyReporting } from "../../../common/hooks/useBusyReporting";
+import { Toast, type ToastNotice } from "../../../common/components/Toast";
 import { LaunchDialog } from "./LaunchDialog";
 import { DeleteTemplateDialog } from "./DeleteTemplateDialog";
 
 export interface TemplatesPageProps {
   onCreate: () => void;
-  onLaunched: () => void;
   onBusyChange?: (busy: boolean) => void;
 }
 
-export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: TemplatesPageProps) {
+export default function TemplatesPage({ onCreate, onBusyChange }: TemplatesPageProps) {
   const id = useId();
   const mounted = useMountedRef();
   const [templates, setTemplates] = useState<SavedTemplate[] | null>(null);
@@ -22,6 +22,7 @@ export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: Te
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [warningsError, setWarningsError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<ToastNotice | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<SavedTemplate | null>(null);
   const [deleting, setDeleting] = useState<SavedTemplate | null>(null);
@@ -231,7 +232,7 @@ export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: Te
         <LaunchDialog
           key={selected.id}
           template={selected}
-          onLaunched={onLaunched}
+          onLaunched={(text) => setNotice({ kind: "success", text })}
           onClose={() => setSelected(null)}
         />
       )}
@@ -246,6 +247,9 @@ export default function TemplatesPage({ onCreate, onLaunched, onBusyChange }: Te
           }}
         />
       )}
+      <div className="dashboard-notifications" aria-live="polite" aria-atomic="true">
+        {notice && <Toast notice={notice} onDismiss={() => setNotice(null)} />}
+      </div>
     </section>
   );
 }

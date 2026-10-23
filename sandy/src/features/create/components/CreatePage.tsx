@@ -11,17 +11,15 @@ import { FinishedPanel } from "./FinishedPanel";
 
 export interface CreatePageProps {
   onClose: () => void;
-  /** Called only after a successful launch; the completed page stays visible. */
-  onCreated: () => void;
   onTemplates?: () => void;
   onBusyChange?: (busy: boolean) => void;
 }
 
 const STEPS = ["Providers", "Agent or workload", "Mixins & inputs", "Project & review"];
 
-export default function CreatePage({ onClose, onCreated, onTemplates, onBusyChange }: CreatePageProps) {
+export default function CreatePage({ onClose, onTemplates, onBusyChange }: CreatePageProps) {
   const id = useId();
-  const flow = useCreateFlow({ onCreated, onBusyChange });
+  const flow = useCreateFlow({ onBusyChange });
   const {
     step,
     moveTo,
