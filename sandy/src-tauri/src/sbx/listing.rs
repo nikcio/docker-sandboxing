@@ -15,15 +15,17 @@ pub struct SandboxInfo {
 }
 
 /// List local sandboxes. Prefers `sbx ls --json` (stable, machine-readable)
-/// and falls back to parsing the human table if JSON is unavailable or
-/// entirely unparseable (older CLI versions).
+/// and falls back to parsing the human table if JSON is unavailable,
+/// entirely unparseable, or its entries no longer match the expected
+/// schema (older CLI versions / schema changes).
 pub fn list_sandboxes() -> Result<Vec<SandboxInfo>, String> {
     let json_result = run_capture(&["ls", "--json"]).and_then(|out| {
         // Tolerate individual bad entries instead of discarding the whole
         // payload: parse as raw values, keep the ones that deserialize.
         let values: Vec<serde_json::Value> = serde_json::from_str(&out)
             .map_err(|e| format!("could not parse sbx ls --json output: {}", e))?;
-        Ok(values
+        let total = values.len();
+        let rows: Vec<SandboxInfo> = values
             .into_iter()
             .filter_map(|v| serde_json::from_value::<SandboxJson>(v).ok())
             .map(|s| SandboxInfo {
@@ -33,7 +35,19 @@ pub fn list_sandboxes() -> Result<Vec<SandboxInfo>, String> {
                 workspace: s.workspaces.unwrap_or_default().join(", "),
                 raw: s.id.unwrap_or_default(),
             })
-            .collect())
+            .collect();
+        // A non-empty payload where nothing deserializes means the CLI
+        // renamed its fields, not that there are no sandboxes: reporting an
+        // empty list would silently break existence checks downstream
+        // (start_sandbox would claim existing sandboxes do not exist), so
+        // fail loudly and let the table fallback have a go instead.
+        if total > 0 && rows.is_empty() {
+            return Err(format!(
+                "sbx ls --json returned {} entries but none matched the expected schema — the CLI schema may have changed",
+                total
+            ));
+        }
+        Ok(rows)
     });
     match json_result {
         Ok(rows) => Ok(rows),
