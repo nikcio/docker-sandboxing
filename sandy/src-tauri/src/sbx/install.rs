@@ -116,12 +116,15 @@ fn run_via(program: &str, args: &[&str]) -> Result<String, String> {
     use std::io::Read;
     use std::process::Stdio;
 
+    // `hide_console` returns `&mut Command` (like std's builder methods), so
+    // the chain must end in an owning call: either `.spawn()` below or a
+    // separate statement on a binding. Assigning the chain directly would
+    // borrow a temporary that dies at the end of the statement (E0716).
     let mut child = std::process::Command::new(program)
         .args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .hide_console();
-    let mut child = child
+        .hide_console()
         .spawn()
         .map_err(|e| format!("failed to run {}: {}", program, e))?;
 
