@@ -114,7 +114,8 @@ fn run_via(program: &str, args: &[&str]) -> Result<String, String> {
     use std::io::Read;
     use std::process::Stdio;
 
-    let mut child = std::process::Command::new(program)
+    let mut child = std::process::Command::new(program);
+    let mut child = child
         .args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
