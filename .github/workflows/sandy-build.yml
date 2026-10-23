@@ -118,8 +118,9 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/msi/*.msi' | Copy-Item -Destination artifacts
-          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/nsis/*-setup.exe' | Copy-Item -Destination artifacts
+          $bundle = "sandy/src-tauri/target/${{ matrix.target }}/release/bundle"
+          Copy-Item "$bundle/msi/*.msi" artifacts
+          Copy-Item "$bundle/nsis/*-setup.exe" artifacts
 
       - name: Upload artifacts to draft release
         env:
