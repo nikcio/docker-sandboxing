@@ -37,7 +37,7 @@ export interface Catalog {
 
 export type KitArguments = Record<string, Record<string, string>>;
 
-// Same dedupe as sandbox.ts's getStatus: StrictMode double mounts must not
+// Same dedupe as sandbox.ts's checkSetup: StrictMode double mounts must not
 // read the provider store twice.
 export const getProviders = shareInFlight(() => invoke<Provider[]>("get_providers"));
 export const saveProviders = (providers: Provider[]) =>

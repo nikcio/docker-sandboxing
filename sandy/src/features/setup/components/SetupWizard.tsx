@@ -6,13 +6,13 @@ import type { SetupStep } from "../../setup/setupSteps";
 
 interface Props {
   status: SetupStatus | null;
-  onRefresh: () => Promise<SetupStatus | null>;
+  onCheckSetup: () => Promise<SetupStatus | null>;
   onDone: () => void;
   onBusyChange: (busy: boolean) => void;
   onStepDone?: (step: string) => void;
 }
 
-export default function SetupWizard({ status, onRefresh, onDone, onBusyChange, onStepDone }: Props) {
+export default function SetupWizard({ status, onCheckSetup, onDone, onBusyChange, onStepDone }: Props) {
   const [current, setCurrent] = useState(() =>
     Math.max(
       0,
@@ -42,7 +42,7 @@ export default function SetupWizard({ status, onRefresh, onDone, onBusyChange, o
         ...previous,
         [step.id]: typeof output === "string" ? output : "",
       }));
-      await onRefresh();
+      await onCheckSetup();
       onStepDone?.(step.id);
       setStates((previous) => ({ ...previous, [step.id]: "done" }));
     } catch (error) {

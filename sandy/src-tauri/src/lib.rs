@@ -23,7 +23,7 @@ pub fn run() {
             // Boot splash: a small transparent window with just the logo, a
             // spinner, and a label, shown while the hidden main window loads.
             // The main window's frontend reveals itself and closes this splash
-            // once the first status check settles.
+            // once the first setup check settles.
             WebviewWindowBuilder::new(app, "splash", WebviewUrl::App("index.html".into()))
                 .title("Sandy")
                 .inner_size(320.0, 200.0)

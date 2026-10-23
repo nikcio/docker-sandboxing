@@ -5,7 +5,7 @@ import logo from "../../assets/logo.png";
  * Boot screen: the logo, a spinner, and a label.
  *
  * In the main window it is the (hidden) pre-reveal content while the first
- * status check runs. In the dedicated splash window (`transparent`) it is the
+ * setup check runs. In the dedicated splash window (`transparent`) it is the
  * only content — a small, frameless, transparent window shown while the main
  * window loads. Neither variant reveals anything: the main window is revealed
  * by App once loading settles, and the splash is closed by it afterwards.

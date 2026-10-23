@@ -17,7 +17,7 @@ export interface DashboardPageProps {
   onGoSettings: () => void;
   onGoTemplates: () => void;
   onCreate: () => void;
-  onRefreshStatus: () => Promise<SetupStatus | null>;
+  onCheckSetup: () => Promise<SetupStatus | null>;
   onCount: (count: number) => void;
 }
 
@@ -34,7 +34,7 @@ export default function DashboardPage({
   onGoSettings,
   onGoTemplates,
   onCreate,
-  onRefreshStatus,
+  onCheckSetup,
   onCount,
 }: DashboardPageProps) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -166,7 +166,7 @@ export default function DashboardPage({
           key={connecting.name}
           sandbox={all.find((sandbox) => sandbox.name === connecting.name) ?? connecting}
           status={status}
-          onRefreshStatus={onRefreshStatus}
+          onCheckSetup={onCheckSetup}
           onOpenTerminal={() => runAction(connecting.name, "terminal")}
           onClose={() => setConnecting(null)}
         />

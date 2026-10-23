@@ -18,7 +18,7 @@ fn is_signed_in() -> Result<bool, String> {
     diagnose_setup_checks().signed_in
 }
 use crate::sbx::test_env::CLI_TEST_ENV_LOCK;
-use crate::setup::read_status;
+use crate::setup::check_setup;
 
 // ---- Integration tests against a mock `sbx` executable ----
 //
@@ -484,7 +484,7 @@ fn whole_status_cold_start_keeps_successful_checks_from_nonzero_diagnose() {
         "{\"key\":\"clipboard.imagePaste\",\"value\":true}",
     );
     crate::sbx::status::set_daemon_confirmation_ttl(Some(std::time::Duration::from_secs(3600)));
-    let status = read_status().unwrap();
+    let status = check_setup().unwrap();
     assert!(status.sbx_installed);
     assert_eq!(status.signed_in, Some(true));
     assert_eq!(status.image_paste_on, Some(true));
@@ -508,15 +508,15 @@ fn whole_status_refresh_distinguishes_sign_out_from_unknown_checks() {
     let _mock = MockCli::new();
     crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
     crate::sbx::test_env::set_var("SBX_MOCK_PASTE", "true");
-    assert_eq!(read_status().unwrap().signed_in, Some(true));
+    assert_eq!(check_setup().unwrap().signed_in, Some(true));
     crate::sbx::test_env::remove_var("SBX_MOCK_SIGNED_IN");
-    let status = read_status().unwrap();
+    let status = check_setup().unwrap();
     assert_eq!(status.signed_in, Some(false));
     // The SSH check's fail is downgraded to a warning, not an issue.
     assert_eq!(status.ssh_set_up, Some(true));
     assert_eq!(status.warnings.len(), 1);
     crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE", "invalid");
-    let status = read_status().unwrap();
+    let status = check_setup().unwrap();
     assert_eq!(status.signed_in, None);
     assert_eq!(status.ssh_set_up, None);
     assert_eq!(status.image_paste_on, Some(true));
@@ -528,7 +528,7 @@ fn whole_status_refresh_distinguishes_sign_out_from_unknown_checks() {
     assert!(serialized["signed_in"].is_null());
     assert!(serialized["ssh_set_up"].is_null());
     crate::sbx::test_env::set_var("SBX_MOCK_FAIL", "1");
-    let status = read_status().unwrap();
+    let status = check_setup().unwrap();
     assert!(status.sbx_installed);
     assert_eq!(status.signed_in, None);
     assert_eq!(status.image_paste_on, None);
@@ -550,7 +550,7 @@ fn differing_check_errors_are_both_reported() {
     crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
     crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "daemon unavailable");
     crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE", "missing");
-    let status = read_status().unwrap();
+    let status = check_setup().unwrap();
     assert_eq!(status.signed_in, None);
     assert_eq!(status.ssh_set_up, None);
     // "Could not determine Authentication …" and "did not include the SSH

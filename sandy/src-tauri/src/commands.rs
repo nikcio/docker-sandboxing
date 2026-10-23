@@ -45,8 +45,12 @@ fn data_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 }
 
 #[tauri::command]
-async fn status() -> Result<setup::SetupStatus, String> {
-    logged("status", async move { blocking(setup::read_status).await }).await
+async fn check_setup() -> Result<setup::SetupStatus, String> {
+    logged(
+        "check_setup",
+        async move { blocking(setup::check_setup).await },
+    )
+    .await
 }
 
 #[tauri::command]
@@ -287,7 +291,7 @@ async fn clear_debug_log(app: tauri::AppHandle) -> Result<(), String> {
 
 pub(crate) fn handlers() -> Box<tauri::ipc::InvokeHandler<tauri::Wry>> {
     Box::new(tauri::generate_handler![
-        status,
+        check_setup,
         install_sbx,
         enable_image_paste,
         setup_ssh,

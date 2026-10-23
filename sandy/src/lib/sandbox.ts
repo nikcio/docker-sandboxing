@@ -21,7 +21,6 @@ export interface SetupStatus {
   warnings?: string[];
   issues?: string[];
 }
-
 export interface SandboxInfo {
   name: string;
   state: string;
@@ -37,14 +36,15 @@ export interface ConnectionInfo {
   command: string;
 }
 
-// Concurrent calls share one invoke: StrictMode double effects and
-// overlapping focus handlers must not each spawn the same CLI work.
-export const getStatus = shareInFlight(() => invoke<SetupStatus>("status"));
+// The full setup check (daemon probe, diagnose, settings read) shares one
+// invoke: StrictMode double effects and overlapping callers must not each
+// spawn the same CLI work.
+export const checkSetup = shareInFlight(() => invoke<SetupStatus>("check_setup"));
 export const installSbx = () => invoke<string>("install_sbx");
 export const enableImagePaste = () => invoke<void>("enable_image_paste");
 export const setupSsh = () => invoke<string>("setup_ssh");
 export const login = () => invoke<string>("login");
-// Same dedupe as getStatus: mount + focus can overlap on one list read.
+// Same dedupe as checkSetup: mount + focus can overlap on one list read.
 export const listSandboxes = shareInFlight(() => invoke<SandboxInfo[]>("sandboxes"));
 export const startSandbox = (name: string) => invoke<string>("start_sandbox", { name });
 export const stopSandbox = (name: string) => invoke<string>("stop_sandbox", { name });

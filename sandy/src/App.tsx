@@ -31,13 +31,13 @@ export default function App() {
     loading,
     busy,
     setBusy,
-    refreshStatus,
+    checkSetup,
     checkingSetup,
     openSetup,
     onStepDone,
   } = setup;
 
-  // Route to setup when the first status check finds incomplete configuration.
+  // Route to setup when the first setup check finds incomplete configuration.
   useEffect(() => {
     if (loading) return;
     // The main window is ready: reveal it and drop the boot splash.
@@ -55,7 +55,7 @@ export default function App() {
       setView("settings");
       setSetupOpen(true);
     }
-    // Runs once: the first completed status check decides the landing view.
+    // Runs once: the first completed setup check decides the landing view.
   }, [loading]);
 
   const finishSetup = () => {
@@ -91,7 +91,7 @@ export default function App() {
               onGoSettings={() => setView("settings")}
               onGoTemplates={() => setView("templates")}
               onCreate={() => setView("create")}
-              onRefreshStatus={refreshStatus}
+              onCheckSetup={checkSetup}
               onCount={setCount}
             />
           )}
@@ -117,7 +117,7 @@ export default function App() {
               setupOpen={setupOpen}
               setupSession={setupSession}
               active={view === "settings"}
-              onRefreshStatus={refreshStatus}
+              onCheckSetup={checkSetup}
               onOpenSetup={() => {
                 void openSetup().then((next) => {
                   if (!next) return;

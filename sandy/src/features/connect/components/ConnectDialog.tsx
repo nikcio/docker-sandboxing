@@ -14,7 +14,7 @@ import type { Feedback } from "./ServerInfo";
 export interface ConnectDialogProps {
   sandbox: SandboxInfo;
   status: SetupStatus | null;
-  onRefreshStatus: () => Promise<SetupStatus | null>;
+  onCheckSetup: () => Promise<SetupStatus | null>;
   onOpenTerminal: () => Promise<void>;
   onClose: () => void;
 }
@@ -22,7 +22,7 @@ export interface ConnectDialogProps {
 export default function ConnectDialog({
   sandbox,
   status,
-  onRefreshStatus,
+  onCheckSetup,
   onOpenTerminal,
   onClose,
 }: ConnectDialogProps) {
@@ -102,7 +102,7 @@ export default function ConnectDialog({
     setFeedback(null);
     try {
       if (configure) await setupSsh();
-      const next = await onRefreshStatus();
+      const next = await onCheckSetup();
       const ready = next?.ssh_set_up ?? null;
       setSshReady(ready);
       if (ready === true) {
