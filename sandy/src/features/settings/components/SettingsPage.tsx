@@ -64,6 +64,14 @@ export default function SettingsPage({
           </button>
         </div>
       )}
+      {!!status?.warnings?.length && (
+        <div className="warning-banner" role="status">
+          <strong>One setup check may be a false alarm.</strong>
+          {status.warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      )}
       {setupOpen ? (
         <SetupWizard
           key={setupSession}

@@ -6,6 +6,8 @@ export interface SetupStatus {
   signed_in: boolean | null;
   image_paste_on: boolean | null;
   ssh_set_up: boolean | null;
+  /** Non-blocking notes about checks whose verdicts may be false alarms. */
+  warnings?: string[];
   issues?: string[];
 }
 

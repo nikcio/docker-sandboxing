@@ -1283,6 +1283,16 @@ pre {
   font-size: 13px;
 }
 
+.warning-banner {
+  padding: 17px;
+  margin-bottom: 20px;
+  border-radius: 9px;
+  border: 1px solid #f0dfb2;
+  background: #fffaef;
+  color: #8a6d1f;
+  font-size: 13px;
+}
+
 .error-banner p {
   font-size: 12px;
   overflow-wrap: anywhere;
@@ -1290,6 +1300,12 @@ pre {
   max-height: 140px;
   overflow: auto;
   user-select: text;
+}
+
+.warning-banner p {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  margin: 8px 0 0;
 }
 
 .feature-dialog {
