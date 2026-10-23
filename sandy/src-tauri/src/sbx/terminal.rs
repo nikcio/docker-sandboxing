@@ -127,6 +127,11 @@ pub fn open_terminal(name: &str) -> Result<(), String> {
                 name,
                 "/bin/bash",
             ]);
+            // `wt.exe` is a console-subsystem launcher stub: without this
+            // flag the release build briefly flashes a console for the stub
+            // itself. The real Windows Terminal window is opened by the
+            // stub and stays visible.
+            super::cli::hide_console(&mut command);
             if spawn_terminal(command).is_ok() {
                 return Ok(());
             }

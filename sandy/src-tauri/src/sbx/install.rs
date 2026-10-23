@@ -117,7 +117,9 @@ fn run_via(program: &str, args: &[&str]) -> Result<String, String> {
     let mut child = std::process::Command::new(program)
         .args(args)
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+    super::cli::hide_console(&mut child);
+    let mut child = child
         .spawn()
         .map_err(|e| format!("failed to run {}: {}", program, e))?;
 

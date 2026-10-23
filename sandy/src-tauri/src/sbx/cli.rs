@@ -61,10 +61,28 @@ fn standard_sbx_locations() -> Vec<PathBuf> {
     }
 }
 
+/// Suppress the console window Windows would otherwise allocate for a
+/// console-subsystem child. Release builds run without a console
+/// (`windows_subsystem = "windows"`), so every child — `sbx.exe`,
+/// `powershell.exe` — would briefly flash a new terminal on screen.
+/// Only for background/captured processes; an interactive terminal must
+/// stay visible.
+#[cfg(windows)]
+pub(crate) fn hide_console(command: &mut Command) {
+    use std::os::windows::process::CommandExt;
+
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    command.creation_flags(CREATE_NO_WINDOW);
+}
+
+#[cfg(not(windows))]
+pub(crate) fn hide_console(_command: &mut Command) {}
+
 /// Construct a direct CLI invocation; callers can also set `current_dir`.
 pub(crate) fn sbx_command(args: &[&str]) -> Result<Command, String> {
     let mut cmd = Command::new(sbx_executable()?);
     cmd.args(args);
+    hide_console(&mut cmd);
     Ok(cmd)
 }
 
