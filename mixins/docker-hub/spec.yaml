@@ -10,7 +10,6 @@ version: 0.1.0
 permissions:
   network:
     allow:
-      # Docker Hub
       - docker.io
       - "*.docker.io"
       - "*.docker.com"

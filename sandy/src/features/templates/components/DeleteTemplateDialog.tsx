@@ -12,7 +12,6 @@ export function DeleteTemplateDialog({
   onClose,
 }: {
   template: SavedTemplate;
-  /** Called after a successful delete, before the dialog closes. */
   onDeleted: () => void;
   onClose: () => void;
 }) {

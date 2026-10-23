@@ -7,7 +7,6 @@ export function HomeActions({
 }: {
   onCreate: () => void;
   onGoTemplates: () => void;
-  /** Replaces the guide link while the learn-more page is not built yet. */
   onLearnMore: () => void;
 }) {
   return (

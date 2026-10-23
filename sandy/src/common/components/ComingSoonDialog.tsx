@@ -1,12 +1,10 @@
 import { useEffect, useId, useRef } from "react";
 import Icon from "./Icon";
 
-/** Tells the reader a feature is not built yet. Opens on mount. */
 export function ComingSoonDialog({
   feature,
   onClose,
 }: {
-  /** Name of the feature shown in the dialog. */
   feature: string;
   onClose: () => void;
 }) {

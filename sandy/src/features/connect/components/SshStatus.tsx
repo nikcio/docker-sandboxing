@@ -9,9 +9,7 @@ export function SshStatus({
   onCheck,
 }: {
   sshReady: boolean | null;
-  /** Non-blocking note about a check verdict that may be a false alarm. */
   warning: string | null;
-  /** Which SSH operation is running, if any. */
   busy: "setup" | "check" | null;
   sbxInstalled: boolean;
   onSetup: () => void;

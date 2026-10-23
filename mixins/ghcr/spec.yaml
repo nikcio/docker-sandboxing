@@ -10,6 +10,5 @@ version: 0.1.0
 permissions:
   network:
     allow:
-      # GitHub Container Registry
       - ghcr.io:443
       - "*.ghcr.io:443"

@@ -13,7 +13,6 @@ export function LaunchDialog({
   onClose,
 }: {
   template: SavedTemplate;
-  /** Called after a successful launch with a user-facing notice and CLI output. */
   onLaunched: (notice: string, output: string) => void;
   onClose: () => void;
 }) {

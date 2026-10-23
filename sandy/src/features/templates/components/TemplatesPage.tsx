@@ -26,7 +26,6 @@ export default function TemplatesPage({ onCreate, onBusyChange }: TemplatesPageP
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<SavedTemplate | null>(null);
   const [deleting, setDeleting] = useState<SavedTemplate | null>(null);
-  /** The card's Delete button: focus returns there when the dialog closes. */
   const returnFocus = useRef<HTMLButtonElement | null>(null);
   const loadingLock = useRef(false);
   const generation = useRef(0);
