@@ -1,5 +1,55 @@
 # Changelog
 
+## [3.1.0-beta.3](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0-beta.2...v3.1.0-beta.3) (2026-10-23)
+
+
+### Bug Fixes
+
+* **release:** give publish job repo context for gh release edit ([#173](https://github.com/nikcio/docker-sandboxing/issues/173)) ([b23769d](https://github.com/nikcio/docker-sandboxing/commit/b23769d205da51db970342664e92e2efb0326325))
+* **sandy:** fail loudly when sbx ls --json entries no longer match the schema ([#157](https://github.com/nikcio/docker-sandboxing/issues/157)) ([d0ee1c6](https://github.com/nikcio/docker-sandboxing/commit/d0ee1c67f21a29445c8591e3032955c7400ece49))
+* **sandy:** hard-code the built-in agent list ([#159](https://github.com/nikcio/docker-sandboxing/issues/159)) ([8d3b23c](https://github.com/nikcio/docker-sandboxing/commit/8d3b23c420078b386544ca63001f115730d0f989))
+
+## [3.1.0-beta.2](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0-beta.1...v3.1.0-beta.2) (2026-10-23)
+
+
+### Bug Fixes
+
+* **sandy:** fix Windows artifact collection paths ([#170](https://github.com/nikcio/docker-sandboxing/issues/170)) ([ae768dd](https://github.com/nikcio/docker-sandboxing/commit/ae768ddff41d4f6c9c87a0861da79b67272ab792))
+
+## [3.1.0-beta.1](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0-beta...v3.1.0-beta.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* Sandy release workflow ([#168](https://github.com/nikcio/docker-sandboxing/issues/168)) ([7415c7e](https://github.com/nikcio/docker-sandboxing/commit/7415c7eddb988f08858d60857b9d646691a3372a))
+
+## [3.1.0-beta](https://github.com/nikcio/docker-sandboxing/compare/v3.0.0...v3.1.0-beta) (2026-10-18)
+
+
+### Features
+
+* **sandy:** add close button to the sandbox details pane ([#138](https://github.com/nikcio/docker-sandboxing/issues/138)) ([3fb4698](https://github.com/nikcio/docker-sandboxing/commit/3fb4698791fdb481e412613fafa83f5ba6708a92))
+* **sandy:** add delete with confirmation for saved templates ([#143](https://github.com/nikcio/docker-sandboxing/issues/143)) ([9a2827f](https://github.com/nikcio/docker-sandboxing/commit/9a2827f0184c09b17acbdac2143247d9b2b1649c))
+* **sandy:** add Sandy desktop app for Docker Sandboxes ([#120](https://github.com/nikcio/docker-sandboxing/issues/120)) ([842a4e8](https://github.com/nikcio/docker-sandboxing/commit/842a4e8316513dfaafcdae8077c2b666ecf5fc26))
+* **sandy:** add strict lint guardrails and edition 2024 ([#133](https://github.com/nikcio/docker-sandboxing/issues/133)) ([81d467a](https://github.com/nikcio/docker-sandboxing/commit/81d467a8c5882f730881316185a5491e6c165acb))
+* **sandy:** compact home action cards and trim welcome text ([#152](https://github.com/nikcio/docker-sandboxing/issues/152)) ([d7f4acc](https://github.com/nikcio/docker-sandboxing/commit/d7f4acc906ea380000e0cb44136994885a17a785))
+* **sandy:** migrate frontend tooling to Vite+ ([#125](https://github.com/nikcio/docker-sandboxing/issues/125)) ([b772a07](https://github.com/nikcio/docker-sandboxing/commit/b772a07ed48c8c14c0deec4adbfc98a78b979a7a))
+* **sandy:** remove templates tip from sandbox inspector ([#139](https://github.com/nikcio/docker-sandboxing/issues/139)) ([4d8c731](https://github.com/nikcio/docker-sandboxing/commit/4d8c73126c211f6e5dce064ca6457e15f1d6bd00))
+* **sandy:** show a coming soon dialog for unbuilt guide links ([#148](https://github.com/nikcio/docker-sandboxing/issues/148)) ([c0793d6](https://github.com/nikcio/docker-sandboxing/commit/c0793d683bc36fd488a33d5520c46aeadf66fcd7))
+* **sandy:** show boot splash before revealing the window ([#137](https://github.com/nikcio/docker-sandboxing/issues/137)) ([0baadff](https://github.com/nikcio/docker-sandboxing/commit/0baadffdaf5c6f5e9dc181eff88f9bf87e524df1))
+* **sandy:** use a recognizable circular-arrow refresh icon ([#141](https://github.com/nikcio/docker-sandboxing/issues/141)) ([ee584b5](https://github.com/nikcio/docker-sandboxing/commit/ee584b5776a2ece6e09dec96945b55b09b7c3f66))
+
+
+### Bug Fixes
+
+* **ci:** specify pnpm version directly in pnpm/action-setup ([#131](https://github.com/nikcio/docker-sandboxing/issues/131)) ([fd2353e](https://github.com/nikcio/docker-sandboxing/commit/fd2353e14c13a1708fa343c29e30618ae7af8be1))
+* **sandy:** detect daemon state from JSON output only ([#145](https://github.com/nikcio/docker-sandboxing/issues/145)) ([cf3eeff](https://github.com/nikcio/docker-sandboxing/commit/cf3eeff6c4d54dfe9dedd81fe5f3944aa5eb3408))
+* **sandy:** make Open start a stopped sandbox before connecting ([#140](https://github.com/nikcio/docker-sandboxing/issues/140)) ([6c01a88](https://github.com/nikcio/docker-sandboxing/commit/6c01a88817f03ebe174dd54af123ff140dc6541f))
+* **sandy:** make the create flow usable with the default provider ([#149](https://github.com/nikcio/docker-sandboxing/issues/149)) ([cf5d137](https://github.com/nikcio/docker-sandboxing/commit/cf5d137095e6074c9c584f7be9e4ce9d6cca3b67))
+* **sandy:** remove help and account buttons from the topbar ([#146](https://github.com/nikcio/docker-sandboxing/issues/146)) ([0362356](https://github.com/nikcio/docker-sandboxing/commit/03623569db728322b14328d65d34fb903da4d0b2))
+* **sandy:** remove subtitle from the Sandboxes tab ([#151](https://github.com/nikcio/docker-sandboxing/issues/151)) ([11b35ce](https://github.com/nikcio/docker-sandboxing/commit/11b35cea37bdec0f33c96bef60c788ff00a3c683))
+* **sandy:** show "No workspace" in inspector for mountless sandboxes ([#150](https://github.com/nikcio/docker-sandboxing/issues/150)) ([5c3ffaf](https://github.com/nikcio/docker-sandboxing/commit/5c3ffaf27e1c2f11a346b27f72127fd9d2f865c0))
+
 ## [3.0.0](https://github.com/nikcio/docker-sandboxing/compare/v2.3.0...v3.0.0) (2026-10-17)
 
 

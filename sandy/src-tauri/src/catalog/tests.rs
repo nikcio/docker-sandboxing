@@ -7,8 +7,8 @@ use super::hub::is_kit_repository;
 use super::hub::{hub_descriptor, selected_hub_kit};
 use super::types::Provider;
 use super::{
-    DESCRIPTOR, discover_with, encoded_path, get_providers, save_providers, unique_id,
-    versions_with,
+    BUILTIN_AGENTS, DESCRIPTOR, discover_with, encoded_path, get_providers, save_providers,
+    unique_id, versions_with,
 };
 fn fixture(routes: Vec<(&str, &str)>) -> (Api, std::thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -296,4 +296,24 @@ fn providers_round_trip_and_report_corruption() {
     std::fs::write(root.join("providers.json"), "not json").unwrap();
     assert!(get_providers(&root).unwrap_err().contains("providers.json"));
     std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn builtin_agents_match_the_documented_list() {
+    assert_eq!(
+        BUILTIN_AGENTS,
+        [
+            "claude",
+            "codex",
+            "copilot",
+            "cursor",
+            "devin",
+            "docker-agent",
+            "droid",
+            "gemini",
+            "kiro",
+            "opencode",
+            "shell",
+        ]
+    );
 }

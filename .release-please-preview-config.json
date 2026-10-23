@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "draft": true,
+  "force-tag-creation": true,
+  "bootstrap-sha": "0ed6b4533e82324e92d02c025946b7830eb452e2",
+  "label": "autorelease: preview-pending",
+  "release-label": "autorelease: preview-tagged",
+  "packages": {
+    ".": {
+      "component": "preview",
+      "include-component-in-tag": false,
+      "versioning": "prerelease",
+      "prerelease": true,
+      "prerelease-type": "beta001",
+      "pull-request-title-pattern": "chore(preview): release v${version}",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "examples/opencode-dotnet.sbxenv.yaml"
+        },
+        {
+          "type": "generic",
+          "path": "examples/opencode-node.sbxenv.yaml"
+        },
+        {
+          "type": "generic",
+          "path": "examples/opencode-python.sbxenv.yaml"
+        },
+        {
+          "type": "generic",
+          "path": "examples/opencode-go.sbxenv.yaml"
+        },
+        {
+          "type": "generic",
+          "path": "examples/opencode-rust.sbxenv.yaml"
+        }
+      ]
+    }
+  }
+}
