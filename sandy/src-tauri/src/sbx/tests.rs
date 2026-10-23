@@ -11,16 +11,12 @@ use crate::sbx::status::{
     diagnose_setup_checks, get_setting, run_login, set_clipboard_image_paste,
 };
 
+use crate::sbx::terminal::{applescript_quote, open_terminal, powershell_quote, shell_quote};
+
 /// Sign-in half of a shared diagnose run (the old single-check helper name).
 fn is_signed_in() -> Result<bool, String> {
     diagnose_setup_checks().signed_in
 }
-
-/// SSH half of a shared diagnose run.
-fn is_ssh_set_up() -> Result<bool, String> {
-    diagnose_setup_checks().ssh_set_up
-}
-use crate::sbx::terminal::{applescript_quote, open_terminal, powershell_quote, shell_quote};
 use crate::sbx::test_env::CLI_TEST_ENV_LOCK;
 use crate::setup::read_status;
 
@@ -68,6 +64,7 @@ impl MockCli {
             "SBX_MOCK_AUTH_MESSAGE",
             "SBX_MOCK_AUTH_STATUS",
             "SBX_MOCK_SSH",
+            "SBX_MOCK_SSH_STATUS",
             "SBX_MOCK_STOP_FAIL",
             "SBX_MOCK_RUN_FAIL",
             "SBX_MOCK_START_FAIL",
@@ -150,8 +147,11 @@ case "$SBX_MOCK_DIAGNOSE" in
 invalid) printf '%s\n' 'not a report'; exit 1 ;;
 missing) printf '%s\n' '{"checks":[]}'; exit 0 ;;
 esac
-if [ "$SBX_MOCK_SIGNED_IN" = 1 ]; then auth=authenticated; else auth='not signed in'; fi
-printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"%s"},{"name":"SSH client config","status":"pass","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-pass}" "${SBX_MOCK_AUTH_MESSAGE:-$auth}" "${SBX_MOCK_SSH:-not configured}"
+if [ "$SBX_MOCK_SIGNED_IN" = 1 ]; then
+    printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"%s"},{"name":"SSH client config","status":"%s","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-pass}" "${SBX_MOCK_AUTH_MESSAGE:-authenticated}" "${SBX_MOCK_SSH_STATUS:-pass}" "${SBX_MOCK_SSH:-configured}"
+else
+    printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"not signed in"},{"name":"SSH client config","status":"%s","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-fail}" "${SBX_MOCK_SSH_STATUS:-fail}" "${SBX_MOCK_SSH:-not configured}"
+fi
 exit "${SBX_MOCK_DIAGNOSE_EXIT:-0}"
 ;;
 settings)
@@ -433,29 +433,14 @@ fn sbx_installed_checks_with_mock() {
 fn ssh_config_detection_scenarios() {
     let _guard = env_lock();
     let mock = MockCli::new();
-    assert_eq!(is_ssh_set_up(), Ok(false));
-    std::fs::create_dir(mock.root.join(".ssh")).unwrap();
-    // Merely mentioning Docker Sandboxes in a comment is not setup.
-    std::fs::write(
-        mock.root.join(".ssh/config"),
-        "# Docker Sandboxes setup was removed\n",
-    )
-    .unwrap();
-    assert_eq!(is_ssh_set_up(), Ok(false));
-    // CLI-managed Includes and OS-specific paths are understood by sbx,
-    // without Sandy needing to read HOME or USERPROFILE itself.
-    std::fs::write(
-        mock.root.join(".ssh/config"),
-        "Include generated/sbx.conf\n",
-    )
-    .unwrap();
-    crate::sbx::test_env::set_var("SBX_MOCK_SSH", "configured");
-    crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
-    crate::sbx::test_env::remove_var("HOME");
-    crate::sbx::test_env::remove_var("USERPROFILE");
-    assert_eq!(is_ssh_set_up(), Ok(true));
-    crate::sbx::test_env::set_var("SBX_MOCK_SSH", "unavailable");
-    assert!(is_ssh_set_up().is_err());
+    // A `fail` from the CLI's SSH check counts as set up, with a warning:
+    // the check has a known false alarm (any <name>.sbx host entry trips it
+    // on Windows), so a fail must not gate the setup wizard.
+    let checks = diagnose_setup_checks();
+    assert_eq!(checks.ssh_set_up, Ok(true));
+    assert!(checks.ssh_warning.is_some());
+    assert!(checks.ssh_warning.unwrap().contains("sbx setup ssh"));
+    assert!(!mock.commands().is_empty());
 }
 
 #[test]
@@ -500,12 +485,12 @@ fn whole_status_cold_start_keeps_successful_checks_from_nonzero_diagnose() {
         "SBX_MOCK_PASTE",
         "{\"key\":\"clipboard.imagePaste\",\"value\":true}",
     );
-    crate::sbx::test_env::set_var("SBX_MOCK_SSH", "configured");
     let status = read_status().unwrap();
     assert!(status.sbx_installed);
     assert_eq!(status.signed_in, Some(true));
     assert_eq!(status.image_paste_on, Some(true));
     assert_eq!(status.ssh_set_up, Some(true));
+    assert!(status.warnings.is_empty(), "{:?}", status.warnings);
     assert!(status.issues.is_empty(), "{:?}", status.issues);
     let commands = mock.commands();
     // One status read: a single cold daemon probe/start pair, one shared
@@ -524,15 +509,19 @@ fn whole_status_refresh_distinguishes_sign_out_from_unknown_checks() {
     let _mock = MockCli::new();
     crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
     crate::sbx::test_env::set_var("SBX_MOCK_PASTE", "true");
-    crate::sbx::test_env::set_var("SBX_MOCK_SSH", "configured");
     assert_eq!(read_status().unwrap().signed_in, Some(true));
     crate::sbx::test_env::remove_var("SBX_MOCK_SIGNED_IN");
-    assert_eq!(read_status().unwrap().signed_in, Some(false));
+    let status = read_status().unwrap();
+    assert_eq!(status.signed_in, Some(false));
+    // The SSH check's fail is downgraded to a warning, not an issue.
+    assert_eq!(status.ssh_set_up, Some(true));
+    assert_eq!(status.warnings.len(), 1);
     crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE", "invalid");
     let status = read_status().unwrap();
     assert_eq!(status.signed_in, None);
     assert_eq!(status.ssh_set_up, None);
     assert_eq!(status.image_paste_on, Some(true));
+    assert!(status.warnings.is_empty());
     // One diagnose run serves both checks, so its shared failure is one
     // issue, not two.
     assert_eq!(status.issues.len(), 1);
@@ -548,6 +537,29 @@ fn whole_status_refresh_distinguishes_sign_out_from_unknown_checks() {
     // The shared diagnose error and the settings error: two issues, with
     // the diagnose failure reported once for both checks.
     assert_eq!(status.issues.len(), 2);
+}
+
+/// A `fail` verdict from the SSH check is downgraded to "set up with a
+/// warning" (the check's known false alarm), while an unreadable diagnose
+/// report still leaves the check unknown. Sequential + env-locked.
+#[test]
+#[cfg(unix)]
+fn ssh_fail_is_a_warning_and_unknown_report_is_not() {
+    let _guard = env_lock();
+    let _mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
+    crate::sbx::test_env::set_var("SBX_MOCK_SSH_STATUS", "fail");
+    let checks = diagnose_setup_checks();
+    assert_eq!(checks.ssh_set_up, Ok(true));
+    let warning = checks.ssh_warning.unwrap();
+    assert!(warning.contains("most likely working"), "{warning}");
+
+    // An unknown status (neither pass nor fail) stays an error with no
+    // warning, so the check is reported as temporarily unavailable.
+    crate::sbx::test_env::set_var("SBX_MOCK_SSH_STATUS", "skip");
+    let checks = diagnose_setup_checks();
+    assert!(checks.ssh_set_up.is_err());
+    assert!(checks.ssh_warning.is_none());
 }
 
 #[test]
@@ -579,7 +591,13 @@ fn authentication_unknown_is_never_explicit_sign_out() {
     assert!(is_signed_in().is_err());
     crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "not signed in");
     assert!(is_signed_in().is_err(), "a skipped check is not a sign-out");
+    // Only the `status` field decides: a "warn" is neither pass nor fail, so
+    // it stays unknown (the previous message-matching would have guessed
+    // "signed out" from the text).
     crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
+    assert!(is_signed_in().is_err(), "a warn is not a verdict");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "not signed in");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "fail");
     assert_eq!(is_signed_in(), Ok(false));
 }
 

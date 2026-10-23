@@ -12,6 +12,9 @@ pub struct SetupStatus {
     pub signed_in: Option<bool>,
     pub image_paste_on: Option<bool>,
     pub ssh_set_up: Option<bool>,
+    /// A non-blocking note about a check whose verdict may be a false alarm
+    /// (e.g. the SSH config check's known Windows false alarm).
+    pub warnings: Vec<String>,
     pub issues: Vec<String>,
 }
 
@@ -23,6 +26,7 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
             signed_in: Some(false),
             image_paste_on: Some(false),
             ssh_set_up: Some(false),
+            warnings: Vec::new(),
             issues: Vec::new(),
         });
     }
@@ -59,6 +63,7 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
     if let Some(error) = shared_issue {
         issues.push(error);
     }
+    let warnings: Vec<String> = checks.ssh_warning.into_iter().collect();
     let image_paste_on = checked(
         sbx::get_setting("clipboard.imagePaste").and_then(|value| {
             if value.eq_ignore_ascii_case("true") {
@@ -76,6 +81,7 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
         signed_in,
         image_paste_on,
         ssh_set_up,
+        warnings,
         issues,
     })
 }

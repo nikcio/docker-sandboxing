@@ -40,64 +40,76 @@ struct DiagnoseCheck {
 pub struct DiagnoseChecks {
     pub signed_in: Result<bool, String>,
     pub ssh_set_up: Result<bool, String>,
+    /// Set when the SSH verdict was downgraded from a `fail` to a
+    /// "most likely fine" warning (see `ssh_check`).
+    pub ssh_warning: Option<String>,
 }
 
 /// Bring up the daemon and run `sbx diagnose` once, deriving both setup
 /// checks from the one report. Authentication comes from the `Authentication`
 /// check — the CLI has no `whoami` command, and exit-code probing of `login`
 /// would block on the browser flow, so diagnose is the only non-interactive
-/// detector. Unknown status is an error, never an explicit sign-out. Every
+/// detector. The CLI's own `status` field decides: `pass` is set up, `fail`
+/// is not. Unknown statuses are errors, never an explicit sign-out. Every
 /// call refreshes the report, including after login/logout.
 pub fn diagnose_setup_checks() -> DiagnoseChecks {
     match ensure_daemon().and_then(|_| diagnose_report()) {
-        Ok(checks) => DiagnoseChecks {
-            signed_in: check_configured(
-                &checks,
-                "Authentication",
-                &["authenticated", "signed in"],
-                &[
-                    "not signed in",
-                    "not authenticated",
-                    "unauthenticated",
-                    "signed out",
-                ],
-            ),
-            ssh_set_up: check_configured(
-                &checks,
-                "SSH client config",
-                &["configured"],
-                &["not configured"],
-            ),
-        },
+        Ok(checks) => {
+            let (ssh_set_up, ssh_warning) = ssh_check(&checks);
+            DiagnoseChecks {
+                signed_in: check_status(&checks, "Authentication"),
+                ssh_set_up,
+                ssh_warning,
+            }
+        }
         Err(error) => DiagnoseChecks {
             signed_in: Err(error.clone()),
             ssh_set_up: Err(error),
+            ssh_warning: None,
         },
     }
 }
 
-fn check_configured(
-    checks: &[DiagnoseCheck],
-    name: &str,
-    positive: &[&str],
-    negative: &[&str],
-) -> Result<bool, String> {
+/// The CLI's own verdict: the `status` field decides — `pass` means the check
+/// is satisfied, `fail` means it is not. Message text stays display-only:
+/// matching CLI wording would break whenever the CLI rephrases it.
+fn check_status(checks: &[DiagnoseCheck], name: &str) -> Result<bool, String> {
     let check = checks
         .iter()
         .find(|c| c.name.eq_ignore_ascii_case(name))
         .ok_or_else(|| format!("sbx diagnose did not include the {name} check"))?;
-    let message = check.message.trim().to_ascii_lowercase();
-    let status = check.status.to_ascii_lowercase();
-    if matches!(status.as_str(), "pass" | "warn" | "fail") && negative.contains(&message.as_str()) {
-        return Ok(false);
+    match check.status.trim().to_ascii_lowercase().as_str() {
+        "pass" => Ok(true),
+        "fail" => Ok(false),
+        _ => Err(format!(
+            "Could not determine {name}: {} ({})",
+            check.message.trim(),
+            check.status
+        )),
     }
-    if check.status.eq_ignore_ascii_case("pass") && positive.contains(&message.as_str()) {
-        return Ok(true);
+}
+
+/// The SSH client config check's verdict, downgraded for its known Windows
+/// false alarm: adding any `<name>.sbx` host to ~/.ssh/config makes the
+/// check report `fail` even when `sbx setup ssh` produced a working
+/// configuration. A `fail` therefore counts as set up and is surfaced as a
+/// warning instead of an unfinishable setup step.
+fn ssh_check(checks: &[DiagnoseCheck]) -> (Result<bool, String>, Option<String>) {
+    let check = checks
+        .iter()
+        .find(|c| c.name.eq_ignore_ascii_case("SSH client config"));
+    match check_status(checks, "SSH client config") {
+        Ok(false) => (
+            Ok(true),
+            Some(format!(
+                "The SSH client config check reported a problem ({}). This detection is not always accurate — if you have run the SSH setup command (sbx setup ssh), everything is most likely working as expected.",
+                check
+                    .map(|c| c.message.trim().to_string())
+                    .unwrap_or_default()
+            )),
+        ),
+        other => (other, None),
     }
-    Err(format!(
-        "Could not determine {name}: {} ({})",
-        check.message, check.status
-    ))
 }
 
 /// JSON-only: a human-text fallback would guess at CLI wording that can
