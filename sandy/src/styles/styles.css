@@ -1149,6 +1149,12 @@ select {
   background: #f5f7fc;
 }
 
+.debug-log-older {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
 .setup-flow {
   margin-top: 37px;
 }

@@ -33,6 +33,9 @@ const KIND_LABELS: Record<DebugLogEntry["kind"], string> = {
   info: "Info",
 };
 
+/** How many entries render at once; older entries load on demand. */
+const RENDER_LIMIT = 300;
+
 /**
  * Settings → Advanced: the Sandy diagnostic log. Every CLI invocation,
  * discovery API request, command result, and error is recorded to a
@@ -45,10 +48,12 @@ export default function Advanced() {
   const [notice, setNotice] = useState("");
   const [filter, setFilter] = useState<LevelFilter>("all");
   const [copied, setCopied] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setShowAll(false);
     try {
       setLog(await readDebugLog());
     } catch (failure) {
@@ -70,15 +75,24 @@ export default function Advanced() {
     () => (filter === "errors" ? entries.filter((entry) => entry.outcome === "error" || entry.kind === "error") : entries),
     [entries, filter],
   );
+  // Newest entries first in the DOM; older ones are behind "Show older".
+  const rendered = useMemo(
+    () => (showAll ? visible : visible.slice(Math.max(0, visible.length - RENDER_LIMIT))),
+    [visible, showAll],
+  );
   const errorCount = useMemo(
     () => entries.filter((entry) => entry.outcome === "error" || entry.kind === "error").length,
     [entries],
   );
-  // The backend caps the file at 10 MiB; show how close it is.
-  const sizeBytes = log ? new TextEncoder().encode(log).length : 0;
-  const sizeLabel = sizeBytes > 1024 * 1024
-    ? `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB of 10 MB`
-    : `${Math.round(sizeBytes / 1024)} KB of 10 MB`;
+  // The backend caps the file at 10 MiB; show how close it is. Encoding the
+  // whole (up to 10 MiB) string is expensive, so only redo it when the log
+  // actually changes, not on every render.
+  const sizeLabel = useMemo(() => {
+    const sizeBytes = log ? new TextEncoder().encode(log).length : 0;
+    return sizeBytes > 1024 * 1024
+      ? `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB of 10 MB`
+      : `${Math.round(sizeBytes / 1024)} KB of 10 MB`;
+  }, [log]);
 
   const copyLog = async () => {
     if (!log) return;
@@ -153,7 +167,7 @@ export default function Advanced() {
                 </span>
               </div>
               <div className="debug-log-view" role="log" aria-label="Diagnostic log entries">
-                {visible.map((entry, index) => (
+                {rendered.map((entry, index) => (
                   <details key={`${entry.timestamp}-${index}`} className="debug-log-entry">
                     <summary>
                       <span className={`debug-log-kind debug-log-kind-${entry.kind}`}>
@@ -169,6 +183,17 @@ export default function Advanced() {
                 ))}
                 {visible.length === 0 && (
                   <p className="catalog-empty-note">No matching entries.</p>
+                )}
+                {rendered.length < visible.length && (
+                  <div className="debug-log-older">
+                    <button
+                      type="button"
+                      className="ghost"
+                      onClick={() => setShowAll(true)}
+                    >
+                      Show older entries ({visible.length - rendered.length} hidden)
+                    </button>
+                  </div>
                 )}
               </div>
             </>

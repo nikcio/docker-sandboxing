@@ -151,6 +151,7 @@ const RENAME_RETRY_DELAY_MS: u64 = 10;
 /// destination open without `FILE_SHARE_DELETE`. Such failures are transient,
 /// so retry briefly before giving up.
 fn rename_over(from: &Path, to: &Path) -> std::io::Result<()> {
+    let mut last_error = None;
     for attempt in 0..=RENAME_RETRIES {
         match std::fs::rename(from, to) {
             Ok(()) => return Ok(()),
@@ -158,12 +159,15 @@ fn rename_over(from: &Path, to: &Path) -> std::io::Result<()> {
                 if attempt < RENAME_RETRIES
                     && error.kind() == std::io::ErrorKind::PermissionDenied =>
             {
+                last_error = Some(error);
                 std::thread::sleep(std::time::Duration::from_millis(RENAME_RETRY_DELAY_MS));
             }
             Err(error) => return Err(error),
         }
     }
-    Ok(())
+    Err(last_error.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::PermissionDenied, "rename was denied")
+    }))
 }
 
 /// Drop the oldest half of the file. Reads the whole file, seeks to the first
