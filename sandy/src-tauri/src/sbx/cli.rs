@@ -109,6 +109,12 @@ pub fn is_sbx_installed() -> bool {
 /// Run `sbx` with args, capturing stdout (stderr is merged into the error
 /// path only, so progress noise never pollutes parsed output).
 pub fn run_capture(args: &[&str]) -> Result<String, String> {
+    let result = run_capture_inner(args);
+    crate::diaglog::cli_call(args, &result);
+    result
+}
+
+fn run_capture_inner(args: &[&str]) -> Result<String, String> {
     let output = sbx_command(args)?
         .output()
         .map_err(|e| format!("failed to run {}: {}", SBX_COMMAND, e))?;
