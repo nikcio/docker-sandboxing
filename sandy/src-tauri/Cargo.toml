@@ -4,8 +4,7 @@ version = "0.1.0"
 description = "Sandy — a friendly command center for Docker Sandboxes"
 authors = ["nikcio"]
 edition = "2024"
-# Edition 2024 requires Rust 1.85+.
-rust-version = "1.85"
+rust-version = "1.99"
 
 [lib]
 name = "sandy_lib"
