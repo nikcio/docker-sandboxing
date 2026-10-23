@@ -64,6 +64,8 @@ export interface DebugLogEntry {
 /** The whole diagnostic log file. Empty when nothing has been logged yet. */
 export const readDebugLog = () => invoke<string>("read_debug_log");
 export const clearDebugLog = () => invoke<void>("clear_debug_log");
+/** Open the log file's folder in the platform file manager. */
+export const revealDebugLog = () => invoke<void>("reveal_debug_log");
 
 export function isHubSearchProvider(provider: Provider): boolean {
   const repository = provider.repository.trim().replace(/\/+$/, "");

@@ -7,6 +7,8 @@
 //! even across restarts without a separate rotation job.
 
 // Tests may unwrap/expect freely — a panic is exactly the failure mode we want.
+mod reveal;
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 mod tests;
@@ -80,6 +82,8 @@ fn civil_from_days(days: i64) -> (i64, u32, u32) {
 pub(crate) fn log_path(root: &Path) -> PathBuf {
     root.join(FILE_NAME)
 }
+
+pub(crate) use reveal::reveal_in_folder;
 
 struct LogWriter {
     path: PathBuf,

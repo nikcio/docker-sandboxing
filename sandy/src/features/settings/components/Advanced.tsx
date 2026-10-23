@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { clearDebugLog, readDebugLog, type DebugLogEntry } from "../../../lib/catalog";
+import { clearDebugLog, readDebugLog, revealDebugLog, type DebugLogEntry } from "../../../lib/catalog";
 import { copyText } from "../../../common/lib/clipboard";
 import { ErrorBanner } from "../../../common/components/ErrorBanner";
 import Icon from "../../../common/components/Icon";
@@ -114,6 +114,16 @@ export default function Advanced() {
     }
   };
 
+  const reveal = async () => {
+    setError(null);
+    setNotice("");
+    try {
+      await revealDebugLog();
+    } catch (failure) {
+      setError(String(failure));
+    }
+  };
+
   return (
     <section className="catalog-providers" aria-labelledby="advanced-title" aria-busy={loading}>
       <div className="catalog-section-heading">
@@ -212,6 +222,10 @@ export default function Advanced() {
               disabled={loading || !entries.length}
             >
               {copied ? "Copied" : "Copy log"}
+            </button>
+            <button type="button" className="ghost" onClick={() => void reveal()} disabled={loading}>
+              <Icon name="folder" size={16} />
+              Open folder
             </button>
             <button type="button" className="ghost" onClick={() => void clear()} disabled={loading || !entries.length}>
               <Icon name="trash" size={16} />

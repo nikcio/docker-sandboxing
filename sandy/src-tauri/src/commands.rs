@@ -289,6 +289,19 @@ async fn clear_debug_log(app: tauri::AppHandle) -> Result<(), String> {
     .await
 }
 
+/// Open the diagnostic log's folder in the platform file manager, selecting
+/// the log file where the platform supports it.
+#[tauri::command]
+async fn reveal_debug_log(app: tauri::AppHandle) -> Result<(), String> {
+    let root = data_dir(&app)?;
+    blocking(move || {
+        std::fs::create_dir_all(&root)
+            .map_err(|error| format!("Cannot create {}: {error}", root.display()))?;
+        diaglog::reveal_in_folder(&diaglog::log_path(&root))
+    })
+    .await
+}
+
 pub(crate) fn handlers() -> Box<tauri::ipc::InvokeHandler<tauri::Wry>> {
     Box::new(tauri::generate_handler![
         check_setup,
@@ -316,6 +329,7 @@ pub(crate) fn handlers() -> Box<tauri::ipc::InvokeHandler<tauri::Wry>> {
         pick_workspace,
         pick_template_path,
         read_debug_log,
-        clear_debug_log
+        clear_debug_log,
+        reveal_debug_log
     ])
 }
