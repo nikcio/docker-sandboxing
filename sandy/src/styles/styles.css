@@ -1308,6 +1308,33 @@ pre {
   margin: 8px 0 0;
 }
 
+.explanation-details {
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.explanation-details summary {
+  cursor: pointer;
+  color: var(--primary);
+}
+
+.explanation-details pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+  font-size: 11px;
+  line-height: 1.6;
+  background: #ffffff66;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.explanation-details p {
+  margin: 4px 0 0;
+}
+
 .feature-dialog {
   width: min(430px, calc(100vw - 40px));
   border: 1px solid var(--border);

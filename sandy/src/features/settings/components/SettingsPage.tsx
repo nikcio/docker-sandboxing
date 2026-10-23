@@ -72,6 +72,13 @@ export default function SettingsPage({
           ))}
         </div>
       )}
+      {!!status?.ssh_explanation?.detail && status.ssh_explanation.detail !== status.ssh_explanation.message && (
+        <details className="explanation-details">
+          <summary>SSH check details</summary>
+          <pre>{status.ssh_explanation.detail}</pre>
+          {status.ssh_explanation.hint && <p>{status.ssh_explanation.hint}</p>}
+        </details>
+      )}
       {setupOpen ? (
         <SetupWizard
           key={setupSession}

@@ -8,7 +8,7 @@ use crate::sbx::lifecycle::{
 };
 use crate::sbx::listing::list_sandboxes;
 use crate::sbx::status::{
-    diagnose_setup_checks, get_setting, run_login, set_clipboard_image_paste,
+    CheckExplanation, diagnose_setup_checks, get_setting, run_login, set_clipboard_image_paste,
 };
 
 use crate::sbx::terminal::{applescript_quote, open_terminal, powershell_quote, shell_quote};
@@ -63,6 +63,7 @@ impl MockCli {
             "SBX_MOCK_DIAGNOSE_EXIT",
             "SBX_MOCK_AUTH_MESSAGE",
             "SBX_MOCK_AUTH_STATUS",
+            "SBX_MOCK_AUTH_HINT",
             "SBX_MOCK_SSH",
             "SBX_MOCK_SSH_STATUS",
             "SBX_MOCK_STOP_FAIL",
@@ -148,9 +149,9 @@ invalid) printf '%s\n' 'not a report'; exit 1 ;;
 missing) printf '%s\n' '{"checks":[]}'; exit 0 ;;
 esac
 if [ "$SBX_MOCK_SIGNED_IN" = 1 ]; then
-    printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"%s"},{"name":"SSH client config","status":"%s","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-pass}" "${SBX_MOCK_AUTH_MESSAGE:-authenticated}" "${SBX_MOCK_SSH_STATUS:-pass}" "${SBX_MOCK_SSH:-configured}"
+    printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present","detail":"/dev/kvm does not exist","hint":""},{"name":"Authentication","status":"%s","message":"%s","detail":"","hint":"%s"},{"name":"SSH client config","status":"%s","message":"%s","detail":"","hint":"Run: sbx setup ssh"}]}\n' "${SBX_MOCK_AUTH_STATUS:-pass}" "${SBX_MOCK_AUTH_MESSAGE:-authenticated}" "${SBX_MOCK_AUTH_HINT:-Run: sbx login}" "${SBX_MOCK_SSH_STATUS:-pass}" "${SBX_MOCK_SSH:-configured}"
 else
-    printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present"},{"name":"Authentication","status":"%s","message":"not signed in"},{"name":"SSH client config","status":"%s","message":"%s"}]}\n' "${SBX_MOCK_AUTH_STATUS:-fail}" "${SBX_MOCK_SSH_STATUS:-fail}" "${SBX_MOCK_SSH:-not configured}"
+    printf '{"checks":[{"name":"Virtualization","status":"fail","message":"no hypervisor present","detail":"/dev/kvm does not exist","hint":""},{"name":"Authentication","status":"%s","message":"not signed in","detail":"","hint":"Run: sbx login"},{"name":"SSH client config","status":"%s","message":"%s","detail":"","hint":"Run: sbx setup ssh"}]}\n' "${SBX_MOCK_AUTH_STATUS:-fail}" "${SBX_MOCK_SSH_STATUS:-fail}" "${SBX_MOCK_SSH:-not configured}"
 fi
 exit "${SBX_MOCK_DIAGNOSE_EXIT:-0}"
 ;;
@@ -574,6 +575,63 @@ fn install_location_fallback_checks_executable_files_without_a_shell() {
         first_executable(&[not_executable, mock.root.join("sbx")]),
         Some(mock.root.join("sbx"))
     );
+}
+
+/// The SSH half of a shared diagnose run (the old single-check helper name).
+fn ssh_explanations() -> (Result<bool, String>, Option<CheckExplanation>) {
+    let checks = diagnose_setup_checks();
+    (checks.ssh_set_up, checks.ssh_explanation)
+}
+
+/// A failing check's message, detail, and hint all survive into the
+/// explanations, and blank fields collapse to None. Sequential + env-locked.
+#[test]
+#[cfg(unix)]
+fn failing_checks_expose_message_detail_and_hint() {
+    let _guard = env_lock();
+    let _mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
+    let checks = diagnose_setup_checks();
+
+    // Signed in: pass verdict, but the explanation still carries the CLI's
+    // fields.
+    assert_eq!(checks.signed_in, Ok(true));
+    let auth = checks.auth_explanation.expect("auth explanation present");
+    assert_eq!(auth.message, "authenticated");
+    assert_eq!(auth.detail, None);
+    assert_eq!(auth.hint.as_deref(), Some("Run: sbx login"));
+
+    // A fail with a non-empty detail and hint keeps all three.
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "fail");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "docker not reachable");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_HINT", "Start Docker Desktop");
+    let checks = diagnose_setup_checks();
+    assert_eq!(checks.signed_in, Ok(false));
+    let auth = checks.auth_explanation.expect("auth explanation present");
+    assert_eq!(auth.message, "docker not reachable");
+    assert_eq!(auth.hint.as_deref(), Some("Start Docker Desktop"));
+
+    // The SSH fail keeps its explanation; the message reflects the mock's
+    // signed-in branch default.
+    let (ssh, explanation) = ssh_explanations();
+    assert_eq!(ssh, Ok(true), "the SSH fail is downgraded");
+    let explanation = explanation.expect("ssh explanation present");
+    assert_eq!(explanation.message, "configured");
+    assert_eq!(explanation.hint.as_deref(), Some("Run: sbx setup ssh"));
+}
+
+/// A missing or malformed check keeps the explanation unset instead of
+/// inventing one. Sequential + env-locked.
+#[test]
+#[cfg(unix)]
+fn missing_checks_have_no_explanation() {
+    let _guard = env_lock();
+    let _mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE", "missing");
+    let checks = diagnose_setup_checks();
+    assert!(checks.signed_in.is_err());
+    assert!(checks.auth_explanation.is_none());
+    assert!(checks.ssh_explanation.is_none());
 }
 
 #[test]

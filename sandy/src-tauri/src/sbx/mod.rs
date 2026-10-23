@@ -33,5 +33,7 @@ pub use lifecycle::{
     ConnectionInfo, connection_info, remove_sandbox, restart_sandbox, start_sandbox, stop_sandbox,
 };
 pub use listing::{SandboxInfo, list_sandboxes};
-pub use status::{diagnose_setup_checks, get_setting, run_login, set_clipboard_image_paste};
+pub use status::{
+    CheckExplanation, diagnose_setup_checks, get_setting, run_login, set_clipboard_image_paste,
+};
 pub use terminal::open_terminal;

@@ -25,11 +25,55 @@ struct DiagnoseReport {
     checks: Vec<DiagnoseCheck>,
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 struct DiagnoseCheck {
     name: String,
     status: String,
     message: String,
+    #[serde(default)]
+    detail: Option<String>,
+    #[serde(default)]
+    hint: Option<String>,
+}
+
+/// A diagnose check's human-facing explanation: the one-line message, the
+/// deeper `detail`, and the CLI's suggested fix (`hint`). All three are
+/// optional and blank fields collapse to `None`.
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct CheckExplanation {
+    pub message: String,
+    pub detail: Option<String>,
+    pub hint: Option<String>,
+}
+
+impl CheckExplanation {
+    fn of(check: &DiagnoseCheck) -> Self {
+        let trimmed = |value: &Option<String>| -> Option<String> {
+            value
+                .as_deref()
+                .map(str::trim)
+                .filter(|text| !text.is_empty())
+                .map(str::to_string)
+        };
+        Self {
+            message: check.message.trim().to_string(),
+            detail: trimmed(&check.detail),
+            hint: trimmed(&check.hint),
+        }
+    }
+
+    /// The explanation as a single line for issue/warning lists: the CLI's
+    /// message first, then its detail and suggested fix when present.
+    fn to_line(&self) -> String {
+        let mut line = self.message.clone();
+        if let Some(detail) = &self.detail {
+            line.push_str(&format!(" — {detail}"));
+        }
+        if let Some(hint) = &self.hint {
+            line.push_str(&format!(". {hint}"));
+        }
+        line
+    }
 }
 
 /// The setup checks Sandy derives from a single `sbx diagnose` report.
@@ -40,6 +84,10 @@ struct DiagnoseCheck {
 pub struct DiagnoseChecks {
     pub signed_in: Result<bool, String>,
     pub ssh_set_up: Result<bool, String>,
+    /// The CLI's own explanation of the current Authentication verdict.
+    pub auth_explanation: Option<CheckExplanation>,
+    /// The CLI's own explanation of the current SSH config verdict.
+    pub ssh_explanation: Option<CheckExplanation>,
     /// Set when the SSH verdict was downgraded from a `fail` to a
     /// "most likely fine" warning (see `ssh_check`).
     pub ssh_warning: Option<String>,
@@ -53,25 +101,36 @@ pub struct DiagnoseChecks {
 /// is not. Unknown statuses are errors, never an explicit sign-out. Every
 /// call refreshes the report, including after login/logout.
 pub fn diagnose_setup_checks() -> DiagnoseChecks {
+    let failure = |error: String| DiagnoseChecks {
+        signed_in: Err(error.clone()),
+        ssh_set_up: Err(error),
+        auth_explanation: None,
+        ssh_explanation: None,
+        ssh_warning: None,
+    };
     match ensure_daemon().and_then(|_| diagnose_report()) {
         Ok(checks) => {
             let (ssh_set_up, ssh_warning) = ssh_check(&checks);
+            let named = |name: &str| {
+                checks
+                    .iter()
+                    .find(|c| c.name.eq_ignore_ascii_case(name))
+                    .map(CheckExplanation::of)
+            };
             DiagnoseChecks {
                 signed_in: check_status(&checks, "Authentication"),
                 ssh_set_up,
+                auth_explanation: named("Authentication"),
+                ssh_explanation: named("SSH client config"),
                 ssh_warning,
             }
         }
-        Err(error) => DiagnoseChecks {
-            signed_in: Err(error.clone()),
-            ssh_set_up: Err(error),
-            ssh_warning: None,
-        },
+        Err(error) => failure(error),
     }
 }
 
-/// The CLI's own verdict: the `status` field decides — `pass` means the check
-/// is satisfied, `fail` means it is not. Message text stays display-only:
+/// A check's CLI verdict from the `status` field: `pass` means the check is
+/// satisfied, `fail` means it is not. Message text stays display-only:
 /// matching CLI wording would break whenever the CLI rephrases it.
 fn check_status(checks: &[DiagnoseCheck], name: &str) -> Result<bool, String> {
     let check = checks
@@ -83,7 +142,7 @@ fn check_status(checks: &[DiagnoseCheck], name: &str) -> Result<bool, String> {
         "fail" => Ok(false),
         _ => Err(format!(
             "Could not determine {name}: {} ({})",
-            check.message.trim(),
+            CheckExplanation::of(check).to_line(),
             check.status
         )),
     }
@@ -95,19 +154,23 @@ fn check_status(checks: &[DiagnoseCheck], name: &str) -> Result<bool, String> {
 /// configuration. A `fail` therefore counts as set up and is surfaced as a
 /// warning instead of an unfinishable setup step.
 fn ssh_check(checks: &[DiagnoseCheck]) -> (Result<bool, String>, Option<String>) {
-    let check = checks
-        .iter()
-        .find(|c| c.name.eq_ignore_ascii_case("SSH client config"));
     match check_status(checks, "SSH client config") {
-        Ok(false) => (
-            Ok(true),
-            Some(format!(
-                "The SSH client config check reported a problem ({}). This detection is not always accurate — if you have run the SSH setup command (sbx setup ssh), everything is most likely working as expected.",
-                check
-                    .map(|c| c.message.trim().to_string())
-                    .unwrap_or_default()
-            )),
-        ),
+        Ok(false) => {
+            let explanation = checks
+                .iter()
+                .find(|c| c.name.eq_ignore_ascii_case("SSH client config"))
+                .map(CheckExplanation::of);
+            let problem = explanation
+                .as_ref()
+                .map(CheckExplanation::to_line)
+                .unwrap_or_default();
+            (
+                Ok(true),
+                Some(format!(
+                    "The SSH client config check reported a problem ({problem}). This detection is not always accurate — if you have run the SSH setup command (sbx setup ssh), everything is most likely working as expected."
+                )),
+            )
+        }
         other => (other, None),
     }
 }

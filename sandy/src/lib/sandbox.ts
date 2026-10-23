@@ -1,11 +1,22 @@
 import { invoke } from "@tauri-apps/api/core";
 import { shareInFlight } from "./inFlight";
 
+/** The CLI's own explanation of a diagnose check's verdict. */
+export interface CheckExplanation {
+  message: string;
+  detail?: string | null;
+  hint?: string | null;
+}
+
 export interface SetupStatus {
   sbx_installed: boolean;
   signed_in: boolean | null;
   image_paste_on: boolean | null;
   ssh_set_up: boolean | null;
+  /** The CLI's explanation of the Authentication verdict. */
+  auth_explanation?: CheckExplanation | null;
+  /** The CLI's explanation of the SSH config verdict. */
+  ssh_explanation?: CheckExplanation | null;
   /** Non-blocking notes about checks whose verdicts may be false alarms. */
   warnings?: string[];
   issues?: string[];
