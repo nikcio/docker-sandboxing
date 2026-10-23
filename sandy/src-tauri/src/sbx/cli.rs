@@ -68,8 +68,11 @@ fn standard_sbx_locations() -> Vec<PathBuf> {
 /// Only for background/captured processes; an interactive terminal must
 /// stay visible.
 ///
-/// Implemented as a builder-chain method (like `CommandExt::creation_flags`,
-/// which it wraps) so the `Command` temporary is never dropped mid-statement.
+/// Builder-chain method returning `&mut Command`, mirroring
+/// `CommandExt::creation_flags`, which it wraps on Windows. Because std's
+/// builder methods also return `&mut Command`, a chain using this must end
+/// in an owning call (`.spawn()`, `.output()`, ...) or the chain's value
+/// borrows a temporary that dies at the end of the statement (E0716).
 pub(crate) trait HideConsole {
     fn hide_console(&mut self) -> &mut Self;
 }
