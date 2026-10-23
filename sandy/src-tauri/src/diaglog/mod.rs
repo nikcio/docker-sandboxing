@@ -140,6 +140,32 @@ fn append_line(line: &str) {
     }
 }
 
+/// How many times `rename_over` retries a transiently denied rename, and how
+/// long it waits between attempts.
+const RENAME_RETRIES: u32 = 4;
+const RENAME_RETRY_DELAY_MS: u64 = 10;
+
+/// Replace `to` with `from` by rename. On Windows the final rename can fail
+/// with a sharing violation (surfaced as `PermissionDenied`) while another
+/// process — an editor, a sync client, the Settings log viewer — holds the
+/// destination open without `FILE_SHARE_DELETE`. Such failures are transient,
+/// so retry briefly before giving up.
+fn rename_over(from: &Path, to: &Path) -> std::io::Result<()> {
+    for attempt in 0..=RENAME_RETRIES {
+        match std::fs::rename(from, to) {
+            Ok(()) => return Ok(()),
+            Err(error)
+                if attempt < RENAME_RETRIES
+                    && error.kind() == std::io::ErrorKind::PermissionDenied =>
+            {
+                std::thread::sleep(std::time::Duration::from_millis(RENAME_RETRY_DELAY_MS));
+            }
+            Err(error) => return Err(error),
+        }
+    }
+    Ok(())
+}
+
 /// Drop the oldest half of the file. Reads the whole file, seeks to the first
 /// newline after the midpoint, and rewrites only the newer half. On any
 /// failure the file is left as-is: losing log entries is never worth
@@ -168,7 +194,7 @@ fn truncate_half(path: &Path) {
             file.write_all(&keep)?;
             file.sync_all()
         })
-        .and_then(|_| std::fs::rename(&temporary, path))
+        .and_then(|_| rename_over(&temporary, path))
         .is_err()
     {
         let _ = std::fs::remove_file(&temporary);

@@ -1,6 +1,8 @@
 // Tests may unwrap/expect freely — a panic is exactly the failure mode we want.
 #[allow(unused_imports)]
-use super::{MAX_LOG_BYTES, civil_from_days, log_path, record_with_detail, rfc3339_now};
+use super::{
+    MAX_LOG_BYTES, civil_from_days, log_path, record_with_detail, rename_over, rfc3339_now,
+};
 use std::path::PathBuf;
 
 /// The writer is a process-global; every test that points it at a fixture
@@ -138,4 +140,19 @@ fn oversize_log_is_truncated_but_keeps_newest_entries() {
             panic!("truncated file keeps whole JSON lines: {e} in {line:.100}")
         });
     }
+}
+
+#[test]
+fn rename_over_replaces_the_destination() {
+    // The fixture re-points the process-global writer; serialize against the
+    // other diaglog tests like every other fixture user.
+    let _guard = lock();
+    let fixture = Fixture::new();
+    let from = fixture.root.join("from.tmp");
+    let to = log_path(&fixture.root);
+    std::fs::write(&from, b"replacement").unwrap();
+    std::fs::write(&to, b"original").unwrap();
+    super::rename_over(&from, &to).unwrap();
+    assert_eq!(std::fs::read_to_string(&to).unwrap(), "replacement");
+    assert!(!from.exists(), "the source is gone after the rename");
 }

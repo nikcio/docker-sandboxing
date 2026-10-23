@@ -78,7 +78,7 @@ export default function Advanced() {
   const sizeBytes = log ? new TextEncoder().encode(log).length : 0;
   const sizeLabel = sizeBytes > 1024 * 1024
     ? `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB of 10 MB`
-    : `${Math.max(1, Math.round(sizeBytes / 1024))} KB of 10 MB`;
+    : `${Math.round(sizeBytes / 1024)} KB of 10 MB`;
 
   const copyLog = async () => {
     if (!log) return;
