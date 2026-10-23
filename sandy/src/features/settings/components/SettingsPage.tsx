@@ -66,7 +66,7 @@ export default function SettingsPage({
       )}
       {!!status?.warnings?.length && (
         <div className="warning-banner" role="status">
-          <strong>One setup check may be a false alarm.</strong>
+          <strong>A setup check may be a false alarm.</strong>
           {status.warnings.map((warning) => (
             <p key={warning}>{warning}</p>
           ))}

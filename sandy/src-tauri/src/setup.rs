@@ -13,7 +13,7 @@ pub struct SetupStatus {
     pub image_paste_on: Option<bool>,
     pub ssh_set_up: Option<bool>,
     /// The CLI's own explanation of the Authentication verdict (message,
-    /// detail, hint) — shown even when the check is unavailable.
+    /// detail, hint) — available even when the check is unavailable.
     pub auth_explanation: Option<CheckExplanation>,
     /// The CLI's own explanation of the SSH config verdict.
     pub ssh_explanation: Option<CheckExplanation>,
@@ -48,7 +48,7 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
         }
     }
     // One diagnose run answers both sign-in and SSH; a shared failure is
-    // reported once instead of duplicated per check.
+    // reported once.
     let checks = sbx::diagnose_setup_checks();
     let mut shared_issue: Option<String> = None;
     let signed_in = match checks.signed_in {
@@ -61,7 +61,13 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
     let ssh_set_up = match checks.ssh_set_up {
         Ok(value) => Some(value),
         Err(error) => {
+            // The two checks fail together whenever the diagnose run itself
+            // failed (identical errors). Differing errors mean two distinct
+            // problems, so keep both.
             if shared_issue.as_deref() != Some(error.as_str()) {
+                if let Some(previous) = shared_issue.take() {
+                    issues.push(previous);
+                }
                 shared_issue = Some(error);
             }
             None

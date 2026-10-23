@@ -37,9 +37,9 @@ struct DiagnoseCheck {
 }
 
 /// A diagnose check's human-facing explanation: the one-line message, the
-/// deeper `detail`, and the CLI's suggested fix (`hint`). All three are
-/// optional and blank fields collapse to `None`.
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+/// deeper `detail`, and the CLI's suggested fix (`hint`). `detail` and
+/// `hint` are optional; blank values collapse to `None`.
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct CheckExplanation {
     pub message: String,
     pub detail: Option<String>,
@@ -78,8 +78,7 @@ impl CheckExplanation {
 
 /// The setup checks Sandy derives from a single `sbx diagnose` report.
 /// Authentication and SSH client config live in the same report, so one run
-/// answers both; when the run itself fails, both checks share that error
-/// (read_status collapses the duplicated issue text).
+/// answers both; when the run itself fails, both checks share that error.
 #[derive(Debug)]
 pub struct DiagnoseChecks {
     pub signed_in: Result<bool, String>,
@@ -98,8 +97,9 @@ pub struct DiagnoseChecks {
 /// check — the CLI has no `whoami` command, and exit-code probing of `login`
 /// would block on the browser flow, so diagnose is the only non-interactive
 /// detector. The CLI's own `status` field decides: `pass` is set up, `fail`
-/// is not. Unknown statuses are errors, never an explicit sign-out. Every
-/// call refreshes the report, including after login/logout.
+/// is not — except for the SSH check, whose `fail` is downgraded (see
+/// `ssh_check`). Unknown statuses are errors, never an explicit sign-out.
+/// Every call refreshes the report, including after login/logout.
 pub fn diagnose_setup_checks() -> DiagnoseChecks {
     let failure = |error: String| DiagnoseChecks {
         signed_in: Err(error.clone()),
@@ -148,11 +148,12 @@ fn check_status(checks: &[DiagnoseCheck], name: &str) -> Result<bool, String> {
     }
 }
 
-/// The SSH client config check's verdict, downgraded for its known Windows
-/// false alarm: adding any `<name>.sbx` host to ~/.ssh/config makes the
-/// check report `fail` even when `sbx setup ssh` produced a working
-/// configuration. A `fail` therefore counts as set up and is surfaced as a
-/// warning instead of an unfinishable setup step.
+/// The SSH client config check's verdict and, for a `fail`, the user-facing
+/// warning that downgrades it. The check has a known false alarm: adding any
+/// `<name>.sbx` host to ~/.ssh/config makes it report `fail` even when
+/// `sbx setup ssh` produced a working configuration. A `fail` therefore
+/// counts as set up and is surfaced as a warning instead of an unfinishable
+/// setup step.
 fn ssh_check(checks: &[DiagnoseCheck]) -> (Result<bool, String>, Option<String>) {
     match check_status(checks, "SSH client config") {
         Ok(false) => {
@@ -246,11 +247,33 @@ fn daemon_confirmation() -> &'static std::sync::Mutex<Option<std::time::Instant>
     &CONFIRMED_AT
 }
 
+/// The active TTL. Test hook: command-count assertions must not depend on
+/// the test body finishing inside the real 5-second window, so tests pin an
+/// effectively infinite TTL.
+#[cfg(test)]
+fn confirmation_ttl() -> std::time::Duration {
+    static TEST_TTL: std::sync::Mutex<Option<std::time::Duration>> = std::sync::Mutex::new(None);
+    TEST_TTL
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .unwrap_or(DAEMON_CONFIRMED_TTL)
+}
+
+#[cfg(all(test, unix))]
+pub(crate) fn set_daemon_confirmation_ttl(ttl: Option<std::time::Duration>) {
+    static TEST_TTL: std::sync::Mutex<Option<std::time::Duration>> = std::sync::Mutex::new(None);
+    *TEST_TTL.lock().unwrap_or_else(|e| e.into_inner()) = ttl;
+}
+
 fn daemon_recently_confirmed() -> bool {
     let confirmed = daemon_confirmation()
         .lock()
         .unwrap_or_else(|e| e.into_inner());
-    confirmed.is_some_and(|at| at.elapsed() < DAEMON_CONFIRMED_TTL)
+    #[cfg(test)]
+    let ttl = confirmation_ttl();
+    #[cfg(not(test))]
+    let ttl = DAEMON_CONFIRMED_TTL;
+    confirmed.is_some_and(|at| at.elapsed() < ttl)
 }
 
 fn mark_daemon_confirmed() {

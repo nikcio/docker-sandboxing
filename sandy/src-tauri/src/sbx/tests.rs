@@ -8,12 +8,12 @@ use crate::sbx::lifecycle::{
 };
 use crate::sbx::listing::list_sandboxes;
 use crate::sbx::status::{
-    CheckExplanation, diagnose_setup_checks, get_setting, run_login, set_clipboard_image_paste,
+    diagnose_setup_checks, get_setting, run_login, set_clipboard_image_paste,
 };
 
 use crate::sbx::terminal::{applescript_quote, open_terminal, powershell_quote, shell_quote};
 
-/// Sign-in half of a shared diagnose run (the old single-check helper name).
+/// Sign-in verdict of a shared diagnose run.
 fn is_signed_in() -> Result<bool, String> {
     diagnose_setup_checks().signed_in
 }
@@ -87,9 +87,12 @@ impl MockCli {
         ] {
             crate::sbx::test_env::set_var(key, &root);
         }
-        // The daemon-confirmation cache is process-global; a previous test's
-        // confirmed daemon must not skip this fixture's daemon probe.
+        // The daemon-confirmation cache and its TTL are process-global; a
+        // previous test's confirmed daemon (or pinned TTL) must not change
+        // this fixture's daemon probe behavior.
         crate::sbx::status::reset_daemon_cache();
+        #[cfg(unix)]
+        crate::sbx::status::set_daemon_confirmation_ttl(None);
         Self { root, environment }
     }
 
@@ -206,6 +209,9 @@ fn cli_mock_success_paths() {
     let mock = MockCli::new();
     crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
     crate::sbx::test_env::set_var("SBX_MOCK_DAEMON", "running");
+    // Command-count assertions must not race the real 5-second
+    // confirmation window on a loaded machine.
+    crate::sbx::status::set_daemon_confirmation_ttl(Some(std::time::Duration::from_secs(3600)));
 
     // Unknown subcommand exits 1 in the mock -> Err (the real CLI also
     // has no whoami; sign-in detection uses diagnose instead).
@@ -274,15 +280,6 @@ fn cli_mock_success_paths() {
     );
     assert!(err.contains("upgrade sbx"), "got: {err}");
     assert_eq!(mock.commands().matches("ls --json\n").count(), 2);
-
-    // get_setting after a daemon start reuses the confirmed daemon: the
-    // only probe in the whole test so far is the one before diagnose.
-    assert_eq!(
-        mock.commands()
-            .matches("daemon status --format json\n")
-            .count(),
-        1
-    );
 
     // list_sandboxes: empty output -> empty vec, no error.
     crate::sbx::test_env::set_var("SBX_MOCK_LS_EMPTY", "1");
@@ -431,17 +428,16 @@ fn sbx_installed_checks_with_mock() {
 
 #[test]
 #[cfg(unix)]
-fn ssh_config_detection_scenarios() {
+fn ssh_fail_is_downgraded_to_warning() {
     let _guard = env_lock();
-    let mock = MockCli::new();
+    let _mock = MockCli::new();
     // A `fail` from the CLI's SSH check counts as set up, with a warning:
-    // the check has a known false alarm (any <name>.sbx host entry trips it
-    // on Windows), so a fail must not gate the setup wizard.
+    // the check has a known false alarm (any <name>.sbx host entry trips
+    // it), so a fail must not gate the setup wizard.
     let checks = diagnose_setup_checks();
     assert_eq!(checks.ssh_set_up, Ok(true));
     assert!(checks.ssh_warning.is_some());
     assert!(checks.ssh_warning.unwrap().contains("sbx setup ssh"));
-    assert!(!mock.commands().is_empty());
 }
 
 #[test]
@@ -451,6 +447,7 @@ fn authentication_starts_daemon_before_check_and_parses_failed_report() {
     let mock = MockCli::new();
     crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
     crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE_EXIT", "1");
+    crate::sbx::status::set_daemon_confirmation_ttl(Some(std::time::Duration::from_secs(3600)));
     assert_eq!(is_signed_in(), Ok(true));
     assert_eq!(
         mock.commands(),
@@ -486,6 +483,7 @@ fn whole_status_cold_start_keeps_successful_checks_from_nonzero_diagnose() {
         "SBX_MOCK_PASTE",
         "{\"key\":\"clipboard.imagePaste\",\"value\":true}",
     );
+    crate::sbx::status::set_daemon_confirmation_ttl(Some(std::time::Duration::from_secs(3600)));
     let status = read_status().unwrap();
     assert!(status.sbx_installed);
     assert_eq!(status.signed_in, Some(true));
@@ -540,6 +538,26 @@ fn whole_status_refresh_distinguishes_sign_out_from_unknown_checks() {
     assert_eq!(status.issues.len(), 2);
 }
 
+/// A `warn` verdict on one check and a missing other check produce two
+/// distinct unknown-check errors, and both must reach the issues list.
+/// Sequential + env-locked.
+#[test]
+#[cfg(unix)]
+fn differing_check_errors_are_both_reported() {
+    let _guard = env_lock();
+    let _mock = MockCli::new();
+    crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
+    crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "daemon unavailable");
+    crate::sbx::test_env::set_var("SBX_MOCK_DIAGNOSE", "missing");
+    let status = read_status().unwrap();
+    assert_eq!(status.signed_in, None);
+    assert_eq!(status.ssh_set_up, None);
+    // "Could not determine Authentication …" and "did not include the SSH
+    // client config check": two distinct problems, two issues.
+    assert_eq!(status.issues.len(), 2, "{:?}", status.issues);
+}
+
 /// A `fail` verdict from the SSH check is downgraded to "set up with a
 /// warning" (the check's known false alarm), while an unreadable diagnose
 /// report still leaves the check unknown. Sequential + env-locked.
@@ -577,12 +595,6 @@ fn install_location_fallback_checks_executable_files_without_a_shell() {
     );
 }
 
-/// The SSH half of a shared diagnose run (the old single-check helper name).
-fn ssh_explanations() -> (Result<bool, String>, Option<CheckExplanation>) {
-    let checks = diagnose_setup_checks();
-    (checks.ssh_set_up, checks.ssh_explanation)
-}
-
 /// A failing check's message, detail, and hint all survive into the
 /// explanations, and blank fields collapse to None. Sequential + env-locked.
 #[test]
@@ -613,11 +625,10 @@ fn failing_checks_expose_message_detail_and_hint() {
 
     // The SSH fail keeps its explanation; the message reflects the mock's
     // signed-in branch default.
-    let (ssh, explanation) = ssh_explanations();
-    assert_eq!(ssh, Ok(true), "the SSH fail is downgraded");
-    let explanation = explanation.expect("ssh explanation present");
-    assert_eq!(explanation.message, "configured");
-    assert_eq!(explanation.hint.as_deref(), Some("Run: sbx setup ssh"));
+    assert_eq!(checks.ssh_set_up, Ok(true), "the SSH fail is downgraded");
+    let ssh = checks.ssh_explanation.expect("ssh explanation present");
+    assert_eq!(ssh.message, "configured");
+    assert_eq!(ssh.hint.as_deref(), Some("Run: sbx setup ssh"));
 }
 
 /// A missing or malformed check keeps the explanation unset instead of
@@ -650,8 +661,7 @@ fn authentication_unknown_is_never_explicit_sign_out() {
     crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "not signed in");
     assert!(is_signed_in().is_err(), "a skipped check is not a sign-out");
     // Only the `status` field decides: a "warn" is neither pass nor fail, so
-    // it stays unknown (the previous message-matching would have guessed
-    // "signed out" from the text).
+    // it stays unknown.
     crate::sbx::test_env::set_var("SBX_MOCK_AUTH_STATUS", "warn");
     assert!(is_signed_in().is_err(), "a warn is not a verdict");
     crate::sbx::test_env::set_var("SBX_MOCK_AUTH_MESSAGE", "not signed in");

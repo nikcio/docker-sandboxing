@@ -37,6 +37,7 @@ export default function ConnectDialog({
   const [busy, setBusy] = useState<"terminal" | "setup" | "check" | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [sshReady, setSshReady] = useState<boolean | null>(status?.ssh_set_up ?? null);
+  const sshWarning = status?.warnings?.[0] ?? null;
   const running = stateKind(sandbox.state) === "running";
 
   useEffect(() => {
@@ -226,6 +227,7 @@ export default function ConnectDialog({
             </h3>
             <SshStatus
               sshReady={sshReady}
+              warning={sshWarning}
               busy={busy === "setup" ? "setup" : busy === "check" ? "check" : null}
               sbxInstalled={!!status?.sbx_installed}
               onSetup={() => void checkSsh(true)}
