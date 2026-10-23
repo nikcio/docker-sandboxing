@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.1.0-beta.3](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0-beta.2...v3.1.0-beta.3) (2026-10-23)
+
+
+### Bug Fixes
+
+* **release:** give publish job repo context for gh release edit ([#173](https://github.com/nikcio/docker-sandboxing/issues/173)) ([b23769d](https://github.com/nikcio/docker-sandboxing/commit/b23769d205da51db970342664e92e2efb0326325))
+* **sandy:** fail loudly when sbx ls --json entries no longer match the schema ([#157](https://github.com/nikcio/docker-sandboxing/issues/157)) ([d0ee1c6](https://github.com/nikcio/docker-sandboxing/commit/d0ee1c67f21a29445c8591e3032955c7400ece49))
+* **sandy:** hard-code the built-in agent list ([#159](https://github.com/nikcio/docker-sandboxing/issues/159)) ([8d3b23c](https://github.com/nikcio/docker-sandboxing/commit/8d3b23c420078b386544ca63001f115730d0f989))
+
 ## [3.1.0-beta.2](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0-beta.1...v3.1.0-beta.2) (2026-10-23)
 
 
