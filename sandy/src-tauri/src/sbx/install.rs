@@ -3,10 +3,10 @@
 #[cfg(target_os = "macos")]
 use std::path::PathBuf;
 
-#[cfg(target_os = "macos")]
-use super::cli::first_executable;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 use super::cli::HideConsole;
+#[cfg(target_os = "macos")]
+use super::cli::first_executable;
 use super::cli::is_sbx_installed;
 
 #[cfg(target_os = "macos")]
