@@ -116,10 +116,14 @@ jobs:
       - name: Prepare artifacts (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
+        # -Filter matches the leaf filename while recursing, so it works no
+        # matter where under target/ the bundles land. A wildcarded -Path
+        # only matches the directories it descends into and silently returns
+        # nothing here (the step that broke the v3.1.0-beta.1 upload).
         run: |
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/msi/*.msi' | Copy-Item -Destination artifacts
-          Get-ChildItem -Recurse sandy/src-tauri/target -Path '*release/bundle/nsis/*-setup.exe' | Copy-Item -Destination artifacts
+          Get-ChildItem -Recurse sandy/src-tauri/target -Filter '*.msi' | Copy-Item -Destination artifacts
+          Get-ChildItem -Recurse sandy/src-tauri/target -Filter '*-setup.exe' | Copy-Item -Destination artifacts
 
       - name: Upload artifacts to draft release
         env:
