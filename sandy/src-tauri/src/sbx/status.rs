@@ -125,48 +125,38 @@ pub fn ensure_daemon() -> Result<(), String> {
 /// Read a single sbx setting value (empty string if unset).
 pub fn get_setting(key: &str) -> Result<String, String> {
     ensure_daemon()?;
-    // Request the structured record first: decorated plain-text output
-    // (banners, warnings) must never leak into the parsed value. Older
-    // CLIs may reject or ignore --json, so retry without it — but only
-    // when the --json attempt produced no JSON at all, so record-level
-    // errors (key mismatch, non-scalar values) stay real errors instead
-    // of triggering a second invocation.
-    match run_capture(&["settings", "get", key, "--json"]) {
-        Ok(out) if serde_json::from_str::<serde_json::Value>(&out).is_ok() => {
-            normalize_setting(key, &out)
-        }
-        _ => run_capture(&["settings", "get", key]).and_then(|out| normalize_setting(key, &out)),
-    }
+    // Only the structured record is accepted: decorated plain-text output
+    // (banners, warnings) must never leak into the parsed value, so there
+    // is no plain-text fallback for CLIs that reject or ignore --json.
+    normalize_setting(key, &run_capture(&["settings", "get", key, "--json"])?)
 }
 
 fn normalize_setting(key: &str, out: &str) -> Result<String, String> {
-    let text = out.trim();
-    // Normal output is a scalar; --json/older versions may emit a setting
-    // record. Normalize both so existing boolean callers can compare "true".
-    if let Ok(value) = serde_json::from_str::<serde_json::Value>(text) {
-        let value = if value.is_object() {
-            if let Some(actual_key) = value.get("key").and_then(|v| v.as_str())
-                && actual_key != key
-            {
-                return Err(format!(
-                    "sbx returned setting {actual_key} instead of {key}"
-                ));
-            }
-            value
-                .get("value")
-                .or_else(|| value.get(key))
-                .ok_or_else(|| format!("sbx returned no value for setting {key}"))?
-        } else {
-            &value
-        };
-        return match value {
-            serde_json::Value::String(s) => Ok(s.clone()),
-            serde_json::Value::Bool(_) | serde_json::Value::Number(_) => Ok(value.to_string()),
-            serde_json::Value::Null => Ok(String::new()),
-            _ => Err(format!("sbx returned a non-scalar value for setting {key}")),
-        };
+    // Only JSON is accepted: a scalar, or a setting record. Normalize both
+    // so existing boolean callers can compare "true".
+    let value = serde_json::from_str::<serde_json::Value>(out.trim())
+        .map_err(|e| format!("sbx settings get {key} --json did not return JSON: {e}"))?;
+    let value = if value.is_object() {
+        if let Some(actual_key) = value.get("key").and_then(|v| v.as_str())
+            && actual_key != key
+        {
+            return Err(format!(
+                "sbx returned setting {actual_key} instead of {key}"
+            ));
+        }
+        value
+            .get("value")
+            .or_else(|| value.get(key))
+            .ok_or_else(|| format!("sbx returned no value for setting {key}"))?
+    } else {
+        &value
+    };
+    match value {
+        serde_json::Value::String(s) => Ok(s.clone()),
+        serde_json::Value::Bool(_) | serde_json::Value::Number(_) => Ok(value.to_string()),
+        serde_json::Value::Null => Ok(String::new()),
+        _ => Err(format!("sbx returned a non-scalar value for setting {key}")),
     }
-    Ok(text.to_string())
 }
 
 /// `sbx settings set clipboard.imagePaste true`
