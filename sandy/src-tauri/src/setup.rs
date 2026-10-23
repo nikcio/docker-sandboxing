@@ -3,7 +3,7 @@
 
 use serde::Serialize;
 
-use crate::sbx;
+use crate::sbx::{self, CheckExplanation};
 
 #[derive(Serialize)]
 pub struct SetupStatus {
@@ -12,6 +12,14 @@ pub struct SetupStatus {
     pub signed_in: Option<bool>,
     pub image_paste_on: Option<bool>,
     pub ssh_set_up: Option<bool>,
+    /// The CLI's own explanation of the Authentication verdict (message,
+    /// detail, hint) — available even when the check is unavailable.
+    pub auth_explanation: Option<CheckExplanation>,
+    /// The CLI's own explanation of the SSH config verdict.
+    pub ssh_explanation: Option<CheckExplanation>,
+    /// A non-blocking note about a check whose verdict may be a false alarm
+    /// (e.g. the SSH config check's known Windows false alarm).
+    pub warnings: Vec<String>,
     pub issues: Vec<String>,
 }
 
@@ -23,6 +31,9 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
             signed_in: Some(false),
             image_paste_on: Some(false),
             ssh_set_up: Some(false),
+            auth_explanation: None,
+            ssh_explanation: None,
+            warnings: Vec::new(),
             issues: Vec::new(),
         });
     }
@@ -36,7 +47,38 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
             }
         }
     }
-    let signed_in = checked(sbx::is_signed_in(), &mut issues);
+    // One diagnose run answers both sign-in and SSH; a shared failure is
+    // reported once.
+    let checks = sbx::diagnose_setup_checks();
+    let mut shared_issue: Option<String> = None;
+    let signed_in = match checks.signed_in {
+        Ok(value) => Some(value),
+        Err(error) => {
+            shared_issue = Some(error);
+            None
+        }
+    };
+    let ssh_set_up = match checks.ssh_set_up {
+        Ok(value) => Some(value),
+        Err(error) => {
+            // The two checks fail together whenever the diagnose run itself
+            // failed (identical errors). Differing errors mean two distinct
+            // problems, so keep both.
+            if shared_issue.as_deref() != Some(error.as_str()) {
+                if let Some(previous) = shared_issue.take() {
+                    issues.push(previous);
+                }
+                shared_issue = Some(error);
+            }
+            None
+        }
+    };
+    if let Some(error) = shared_issue {
+        issues.push(error);
+    }
+    let warnings: Vec<String> = checks.ssh_warning.into_iter().collect();
+    let auth_explanation = checks.auth_explanation;
+    let ssh_explanation = checks.ssh_explanation;
     let image_paste_on = checked(
         sbx::get_setting("clipboard.imagePaste").and_then(|value| {
             if value.eq_ignore_ascii_case("true") {
@@ -49,12 +91,14 @@ pub(crate) fn read_status() -> Result<SetupStatus, String> {
         }),
         &mut issues,
     );
-    let ssh_set_up = checked(sbx::is_ssh_set_up(), &mut issues);
     Ok(SetupStatus {
         sbx_installed,
         signed_in,
         image_paste_on,
         ssh_set_up,
+        auth_explanation,
+        ssh_explanation,
+        warnings,
         issues,
     })
 }

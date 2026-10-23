@@ -5,7 +5,8 @@
 //! concern each:
 //!
 //! - [`cli`]: locating the executable and running commands
-//! - [`status`]: daemon, authentication, and settings checks
+//! - [`status`]: daemon, authentication, and settings checks (with short
+//!   reuse of a confirmed daemon probe so one status read spawns one probe)
 //! - [`lifecycle`]: start/stop/restart/remove and connection info
 //! - [`listing`]: parsing `sbx ls` output
 //! - [`terminal`]: opening an interactive terminal into a sandbox
@@ -32,5 +33,7 @@ pub use lifecycle::{
     ConnectionInfo, connection_info, remove_sandbox, restart_sandbox, start_sandbox, stop_sandbox,
 };
 pub use listing::{SandboxInfo, list_sandboxes};
-pub use status::{get_setting, is_signed_in, is_ssh_set_up, run_login, set_clipboard_image_paste};
+pub use status::{
+    CheckExplanation, diagnose_setup_checks, get_setting, run_login, set_clipboard_image_paste,
+};
 pub use terminal::open_terminal;

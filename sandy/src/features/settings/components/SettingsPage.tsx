@@ -65,6 +65,21 @@ export default function SettingsPage({
           </button>
         </div>
       )}
+      {!!status?.warnings?.length && (
+        <div className="warning-banner" role="status">
+          <strong>A setup check may be a false alarm.</strong>
+          {status.warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      )}
+      {!!status?.ssh_explanation?.detail && status.ssh_explanation.detail !== status.ssh_explanation.message && (
+        <details className="explanation-details">
+          <summary>SSH check details</summary>
+          <pre>{status.ssh_explanation.detail}</pre>
+          {status.ssh_explanation.hint && <p>{status.ssh_explanation.hint}</p>}
+        </details>
+      )}
       {setupOpen ? (
         <SetupWizard
           key={setupSession}

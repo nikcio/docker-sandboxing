@@ -29,55 +29,155 @@ struct DiagnoseReport {
     checks: Vec<DiagnoseCheck>,
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 struct DiagnoseCheck {
     name: String,
     status: String,
     message: String,
+    #[serde(default)]
+    detail: Option<String>,
+    #[serde(default)]
+    hint: Option<String>,
 }
 
-/// Whether the user is signed in to Docker, via the `Authentication` check
-/// in `sbx diagnose`. The CLI has no `whoami` command; exit-code probing of
-/// `login` would block on the browser flow, so diagnose is the only
-/// non-interactive detector. Unknown status is an error, never an explicit
-/// sign-out. Every call refreshes the report, including after login/logout.
-pub fn is_signed_in() -> Result<bool, String> {
-    ensure_daemon()?;
-    check_configured(
-        &diagnose_report()?,
-        "Authentication",
-        &["authenticated", "signed in"],
-        &[
-            "not signed in",
-            "not authenticated",
-            "unauthenticated",
-            "signed out",
-        ],
-    )
+/// A diagnose check's human-facing explanation: the one-line message, the
+/// deeper `detail`, and the CLI's suggested fix (`hint`). `detail` and
+/// `hint` are optional; blank values collapse to `None`.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct CheckExplanation {
+    pub message: String,
+    pub detail: Option<String>,
+    pub hint: Option<String>,
 }
 
-fn check_configured(
-    checks: &[DiagnoseCheck],
-    name: &str,
-    positive: &[&str],
-    negative: &[&str],
-) -> Result<bool, String> {
+impl CheckExplanation {
+    fn of(check: &DiagnoseCheck) -> Self {
+        let trimmed = |value: &Option<String>| -> Option<String> {
+            value
+                .as_deref()
+                .map(str::trim)
+                .filter(|text| !text.is_empty())
+                .map(str::to_string)
+        };
+        Self {
+            message: check.message.trim().to_string(),
+            detail: trimmed(&check.detail),
+            hint: trimmed(&check.hint),
+        }
+    }
+
+    /// The explanation as a single line for issue/warning lists: the CLI's
+    /// message first, then its detail and suggested fix when present.
+    fn to_line(&self) -> String {
+        let mut line = self.message.clone();
+        if let Some(detail) = &self.detail {
+            line.push_str(&format!(" — {detail}"));
+        }
+        if let Some(hint) = &self.hint {
+            line.push_str(&format!(". {hint}"));
+        }
+        line
+    }
+}
+
+/// The setup checks Sandy derives from a single `sbx diagnose` report.
+/// Authentication and SSH client config live in the same report, so one run
+/// answers both; when the run itself fails, both checks share that error.
+#[derive(Debug)]
+pub struct DiagnoseChecks {
+    pub signed_in: Result<bool, String>,
+    pub ssh_set_up: Result<bool, String>,
+    /// The CLI's own explanation of the current Authentication verdict.
+    pub auth_explanation: Option<CheckExplanation>,
+    /// The CLI's own explanation of the current SSH config verdict.
+    pub ssh_explanation: Option<CheckExplanation>,
+    /// Set when the SSH verdict was downgraded from a `fail` to a
+    /// "most likely fine" warning (see `ssh_check`).
+    pub ssh_warning: Option<String>,
+}
+
+/// Bring up the daemon and run `sbx diagnose` once, deriving both setup
+/// checks from the one report. Authentication comes from the `Authentication`
+/// check — the CLI has no `whoami` command, and exit-code probing of `login`
+/// would block on the browser flow, so diagnose is the only non-interactive
+/// detector. The CLI's own `status` field decides: `pass` is set up, `fail`
+/// is not — except for the SSH check, whose `fail` is downgraded (see
+/// `ssh_check`). Unknown statuses are errors, never an explicit sign-out.
+/// Every call refreshes the report, including after login/logout.
+pub fn diagnose_setup_checks() -> DiagnoseChecks {
+    let failure = |error: String| DiagnoseChecks {
+        signed_in: Err(error.clone()),
+        ssh_set_up: Err(error),
+        auth_explanation: None,
+        ssh_explanation: None,
+        ssh_warning: None,
+    };
+    match ensure_daemon().and_then(|_| diagnose_report()) {
+        Ok(checks) => {
+            let (ssh_set_up, ssh_warning) = ssh_check(&checks);
+            let named = |name: &str| {
+                checks
+                    .iter()
+                    .find(|c| c.name.eq_ignore_ascii_case(name))
+                    .map(CheckExplanation::of)
+            };
+            DiagnoseChecks {
+                signed_in: check_status(&checks, "Authentication"),
+                ssh_set_up,
+                auth_explanation: named("Authentication"),
+                ssh_explanation: named("SSH client config"),
+                ssh_warning,
+            }
+        }
+        Err(error) => failure(error),
+    }
+}
+
+/// A check's CLI verdict from the `status` field: `pass` means the check is
+/// satisfied, `fail` means it is not. Message text stays display-only:
+/// matching CLI wording would break whenever the CLI rephrases it.
+fn check_status(checks: &[DiagnoseCheck], name: &str) -> Result<bool, String> {
     let check = checks
         .iter()
         .find(|c| c.name.eq_ignore_ascii_case(name))
         .ok_or_else(|| format!("sbx diagnose did not include the {name} check"))?;
-    let message = check.message.trim().to_ascii_lowercase();
-    let status = check.status.to_ascii_lowercase();
-    if matches!(status.as_str(), "pass" | "warn" | "fail") && negative.contains(&message.as_str()) {
-        return Ok(false);
+    match check.status.trim().to_ascii_lowercase().as_str() {
+        "pass" => Ok(true),
+        "fail" => Ok(false),
+        _ => Err(format!(
+            "Could not determine {name}: {} ({})",
+            CheckExplanation::of(check).to_line(),
+            check.status
+        )),
     }
-    if check.status.eq_ignore_ascii_case("pass") && positive.contains(&message.as_str()) {
-        return Ok(true);
+}
+
+/// The SSH client config check's verdict and, for a `fail`, the user-facing
+/// warning that downgrades it. The check has a known false alarm: adding any
+/// `<name>.sbx` host to ~/.ssh/config makes it report `fail` even when
+/// `sbx setup ssh` produced a working configuration. A `fail` therefore
+/// counts as set up and is surfaced as a warning instead of an unfinishable
+/// setup step.
+fn ssh_check(checks: &[DiagnoseCheck]) -> (Result<bool, String>, Option<String>) {
+    match check_status(checks, "SSH client config") {
+        Ok(false) => {
+            let explanation = checks
+                .iter()
+                .find(|c| c.name.eq_ignore_ascii_case("SSH client config"))
+                .map(CheckExplanation::of);
+            let problem = explanation
+                .as_ref()
+                .map(CheckExplanation::to_line)
+                .unwrap_or_default();
+            (
+                Ok(true),
+                Some(format!(
+                    "The SSH client config check reported a problem ({problem}). This detection is not always accurate — if you have run the SSH setup command (sbx setup ssh), everything is most likely working as expected."
+                )),
+            )
+        }
+        other => (other, None),
     }
-    Err(format!(
-        "Could not determine {name}: {} ({})",
-        check.message, check.status
-    ))
 }
 
 /// JSON-only: a human-text fallback would guess at CLI wording that can
@@ -117,13 +217,18 @@ fn daemon_running() -> Result<bool, String> {
 pub fn ensure_daemon() -> Result<(), String> {
     static START_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
     let _guard = START_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    if daemon_recently_confirmed() {
+        return Ok(());
+    }
     if daemon_running()? {
+        mark_daemon_confirmed();
         return Ok(());
     }
     let start = run_capture(&["daemon", "start", "--detach"]);
     // Another process may have started it while our start command failed.
     for attempt in 0..10 {
         if daemon_running()? {
+            mark_daemon_confirmed();
             return Ok(());
         }
         if start.is_err() {
@@ -136,6 +241,64 @@ pub fn ensure_daemon() -> Result<(), String> {
     Err(start
         .err()
         .unwrap_or_else(|| "sbx daemon did not become ready after starting".to_string()))
+}
+
+/// How long a confirmed-running answer from `sbx daemon status` is reused.
+/// Back-to-back checks (diagnose, settings, login in one status read) share
+/// a single probe instead of each spawning its own; once the window passes,
+/// the next check probes again. A daemon that dies inside the window still
+/// fails loudly — through the very command that needed it.
+const DAEMON_CONFIRMED_TTL: std::time::Duration = std::time::Duration::from_secs(5);
+
+fn daemon_confirmation() -> &'static std::sync::Mutex<Option<std::time::Instant>> {
+    static CONFIRMED_AT: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
+    &CONFIRMED_AT
+}
+
+/// The active TTL. Test hook: command-count assertions must not depend on
+/// the test body finishing inside the real 5-second window, so tests pin an
+/// effectively infinite TTL.
+#[cfg(test)]
+fn confirmation_ttl() -> std::time::Duration {
+    static TEST_TTL: std::sync::Mutex<Option<std::time::Duration>> = std::sync::Mutex::new(None);
+    TEST_TTL
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .unwrap_or(DAEMON_CONFIRMED_TTL)
+}
+
+#[cfg(all(test, unix))]
+pub(crate) fn set_daemon_confirmation_ttl(ttl: Option<std::time::Duration>) {
+    static TEST_TTL: std::sync::Mutex<Option<std::time::Duration>> = std::sync::Mutex::new(None);
+    *TEST_TTL.lock().unwrap_or_else(|e| e.into_inner()) = ttl;
+}
+
+fn daemon_recently_confirmed() -> bool {
+    let confirmed = daemon_confirmation()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    #[cfg(test)]
+    let ttl = confirmation_ttl();
+    #[cfg(not(test))]
+    let ttl = DAEMON_CONFIRMED_TTL;
+    confirmed.is_some_and(|at| at.elapsed() < ttl)
+}
+
+fn mark_daemon_confirmed() {
+    let mut confirmed = daemon_confirmation()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    *confirmed = Some(std::time::Instant::now());
+}
+
+/// Drop the cached daemon confirmation. Test hook: fixtures must not see
+/// another test's confirmed daemon.
+#[cfg(test)]
+pub(crate) fn reset_daemon_cache() {
+    let mut confirmed = daemon_confirmation()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    *confirmed = None;
 }
 
 /// Read a single sbx setting value (empty string if unset).
@@ -181,18 +344,6 @@ pub fn set_clipboard_image_paste() -> Result<(), String> {
         .and_then(|_| run_capture(&["settings", "set", "clipboard.imagePaste", "true"]))
         .map(|_| ())
         .map_err(|e| format!("could not enable image paste:\n{}", e))
-}
-
-/// Ask the CLI instead of matching a comment in ~/.ssh/config: setup may
-/// use an Include, platform-specific paths, or a generated managed block.
-pub fn is_ssh_set_up() -> Result<bool, String> {
-    ensure_daemon()?;
-    check_configured(
-        &diagnose_report()?,
-        "SSH client config",
-        &["configured"],
-        &["not configured"],
-    )
 }
 
 /// Open the browser for Docker OAuth and wait for completion. `sbx login`

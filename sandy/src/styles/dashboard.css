@@ -378,6 +378,19 @@
   margin: 6px 0 0;
 }
 
+.connection-ssh-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #8a6d1f;
+  font-size: 12px;
+}
+
+.connection-ssh-warning > .icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 .connection-ssh.ready {
   border-color: #cfeeda;
   background: #f2fbf5;
