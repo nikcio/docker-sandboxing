@@ -4,6 +4,8 @@ use std::process::Command;
 #[cfg(target_os = "linux")]
 use std::process::Stdio;
 
+#[cfg(target_os = "windows")]
+use super::cli::HideConsole;
 use super::cli::sbx_executable;
 use super::lifecycle::validate_sandbox_name;
 
@@ -131,7 +133,7 @@ pub fn open_terminal(name: &str) -> Result<(), String> {
             // flag the release build briefly flashes a console for the stub
             // itself. The real Windows Terminal window is opened by the
             // stub and stays visible.
-            super::cli::hide_console(&mut command);
+            command.hide_console();
             if spawn_terminal(command).is_ok() {
                 return Ok(());
             }

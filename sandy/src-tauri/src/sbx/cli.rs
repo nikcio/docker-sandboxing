@@ -67,22 +67,35 @@ fn standard_sbx_locations() -> Vec<PathBuf> {
 /// `powershell.exe` — would briefly flash a new terminal on screen.
 /// Only for background/captured processes; an interactive terminal must
 /// stay visible.
-#[cfg(windows)]
-pub(crate) fn hide_console(command: &mut Command) {
-    use std::os::windows::process::CommandExt;
+///
+/// Implemented as a builder-chain method (like `CommandExt::creation_flags`,
+/// which it wraps) so the `Command` temporary is never dropped mid-statement.
+pub(crate) trait HideConsole {
+    fn hide_console(&mut self) -> &mut Self;
+}
 
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    command.creation_flags(CREATE_NO_WINDOW);
+#[cfg(windows)]
+impl HideConsole for Command {
+    fn hide_console(&mut self) -> &mut Self {
+        use std::os::windows::process::CommandExt;
+
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        self.creation_flags(CREATE_NO_WINDOW);
+        self
+    }
 }
 
 #[cfg(not(windows))]
-pub(crate) fn hide_console(_command: &mut Command) {}
+impl HideConsole for Command {
+    fn hide_console(&mut self) -> &mut Self {
+        self
+    }
+}
 
 /// Construct a direct CLI invocation; callers can also set `current_dir`.
 pub(crate) fn sbx_command(args: &[&str]) -> Result<Command, String> {
     let mut cmd = Command::new(sbx_executable()?);
-    cmd.args(args);
-    hide_console(&mut cmd);
+    cmd.args(args).hide_console();
     Ok(cmd)
 }
 
