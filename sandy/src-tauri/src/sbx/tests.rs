@@ -6,106 +6,13 @@ use crate::sbx::install::ensure_sbx_installed;
 use crate::sbx::lifecycle::{
     connection_info, remove_sandbox, restart_sandbox, start_sandbox, stop_sandbox,
 };
-use crate::sbx::listing::{list_sandboxes, parse_ls};
+use crate::sbx::listing::list_sandboxes;
 use crate::sbx::status::{
     get_setting, is_signed_in, is_ssh_set_up, run_login, set_clipboard_image_paste,
 };
 use crate::sbx::terminal::{applescript_quote, open_terminal, powershell_quote, shell_quote};
 use crate::sbx::test_env::CLI_TEST_ENV_LOCK;
 use crate::setup::read_status;
-
-#[test]
-fn parses_typical_ls_table() {
-    let sample = "\
-NAME      STATE    AGENT    WORKSPACE
-demo      running  opencode /home/me/project
-build     stopped  claude   /home/me/api
-";
-    let rows = parse_ls(sample);
-    assert_eq!(rows.len(), 2);
-    assert_eq!(rows[0].name, "demo");
-    assert_eq!(rows[0].state, "running");
-    assert_eq!(rows[0].agent, "opencode");
-    assert_eq!(rows[1].name, "build");
-    assert_eq!(rows[1].state, "stopped");
-}
-
-#[test]
-fn parses_real_v048_ls_table() {
-    // Actual `sbx ls` (v0.48) layout: SANDBOX/AGENT/STATUS/PORTS/
-    // WORKSPACE/CREATED, values wider than headers, bullet markers.
-    let sample = "\
-SANDBOX           AGENT            STATUS     PORTS                       WORKSPACE                           CREATED
-my-app            my-agent         • running  127.0.0.1:60000->9418/tcp4  C:\\Dev\\MyProject                   1h
-second            my-agent         • running  -                           -                                   4h
-another-sandbox   my-agent         ○ stopped  -                           C:\\Dev\\OtherProject                1w
-latest            shell            ○ stopped  -                           C:\\Dev\\SandboxTester               43m
-";
-    let rows = parse_ls(sample);
-    assert_eq!(rows.len(), 4);
-    assert_eq!(rows[0].name, "my-app");
-    assert_eq!(rows[0].state, "• running");
-    assert_eq!(rows[0].agent, "my-agent");
-    assert_eq!(rows[0].workspace, "C:\\Dev\\MyProject");
-    assert_eq!(rows[2].name, "another-sandbox");
-    assert_eq!(rows[2].state, "○ stopped");
-    assert_eq!(rows[3].name, "latest");
-    assert_eq!(rows[3].workspace, "C:\\Dev\\SandboxTester");
-}
-
-#[test]
-fn parses_box_drawing_table() {
-    let sample = "\
-┌───────┬──────────┬────────┐
-│ NAME  │ STATE    │ AGENT  │
-├───────┼──────────┼────────┤
-│ alpha │ running  │ claude │
-│ beta  │ creating │ codex  │
-└───────┴──────────┴────────┘
-";
-    let rows = parse_ls(sample);
-    assert_eq!(rows.len(), 2);
-    assert_eq!(rows[0].name, "alpha");
-    assert_eq!(rows[0].state, "running");
-    assert_eq!(rows[1].name, "beta");
-    assert_eq!(rows[1].state, "creating");
-}
-
-#[test]
-fn utf8_values_do_not_panic() {
-    let sample = "\
-NAME     STATE    AGENT  WORKSPACE
-demo     running  claude /home/ünïcødé/プロジェクト
-";
-    let rows = parse_ls(sample);
-    assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0].name, "demo");
-}
-
-#[test]
-fn data_row_with_name_and_state_words_is_not_a_header() {
-    let sample = "\
-NAME   STATE   AGENT
-demo   running claude
-weird  paused  /home/name/state
-";
-    let rows = parse_ls(sample);
-    assert_eq!(rows.len(), 2);
-    assert_eq!(rows[1].name, "weird");
-}
-
-#[test]
-fn single_row_no_header() {
-    let rows = parse_ls("only-one-line");
-    assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0].name, "only-one-line");
-}
-
-#[test]
-fn empty_input() {
-    assert!(parse_ls("").is_empty());
-    assert!(parse_ls("  \n \n").is_empty());
-}
 
 // ---- Integration tests against a mock `sbx` executable ----
 //
@@ -144,7 +51,6 @@ impl MockCli {
             "SBX_MOCK_DAEMON_TEXT",
             "SBX_MOCK_PASTE",
             "SBX_MOCK_FAIL_JSON",
-            "SBX_MOCK_FAIL_TABLE",
             "SBX_MOCK_LS_EMPTY",
             "SBX_MOCK_JSON",
             "SBX_MOCK_DIAGNOSE",
@@ -254,11 +160,8 @@ if [ "$2" = --json ]; then
     *) printf '%s\n' '[{"name":"test","status":"stopped","agent":"shell","workspaces":["C:\\Dev\\MyProject"],"id":"11111111-2222-3333-4444-555555555555"},{"name":"demo","status":"running","agent":"my-agent"}]' ;;
     esac
 else
-    if [ "$SBX_MOCK_FAIL_TABLE" = 1 ]; then
-        printf '%s\n' 'sbx mock: simulated table failure' >&2
-        exit 1
-    fi
-    printf '%s\n' 'NAME      STATE     AGENT     WORKSPACE' 'demo      running   opencode  /workspace/project' 'build     stopped   claude    /workspace/api'
+    printf '%s\n' 'sbx mock: only --json is supported' >&2
+    exit 1
 fi
 ;;
 run)
@@ -286,7 +189,7 @@ fn env_lock() -> std::sync::MutexGuard<'static, ()> {
 #[cfg(unix)]
 fn cli_mock_success_paths() {
     let _guard = env_lock();
-    let _mock = MockCli::new();
+    let mock = MockCli::new();
     crate::sbx::test_env::set_var("SBX_MOCK_SIGNED_IN", "1");
     crate::sbx::test_env::set_var("SBX_MOCK_DAEMON", "running");
 
@@ -341,15 +244,17 @@ fn cli_mock_success_paths() {
     assert_eq!(rows[1].state, "running");
     assert_eq!(rows[1].agent, "my-agent");
 
-    // list_sandboxes: table fallback (mock returns garbage for --json,
-    // so Sandy falls back to the human table and parses it).
+    // list_sandboxes: unreadable JSON (mock returns garbage for --json)
+    // is a hard error, never a fallback to a human table.
     crate::sbx::test_env::set_var("SBX_MOCK_FAIL_JSON", "1");
-    let rows = list_sandboxes().expect("table fallback should parse");
+    let err = list_sandboxes().unwrap_err();
     crate::sbx::test_env::remove_var("SBX_MOCK_FAIL_JSON");
-    assert_eq!(rows.len(), 2);
-    assert_eq!(rows[0].name, "demo");
-    assert_eq!(rows[0].state, "running");
-    assert_eq!(rows[1].name, "build");
+    assert!(
+        err.contains("could not parse sbx ls --json output"),
+        "got: {err}"
+    );
+    assert!(err.contains("upgrade sbx"), "got: {err}");
+    assert_eq!(mock.commands().matches("ls --json\n").count(), 2);
 
     // list_sandboxes: empty output -> empty vec, no error.
     crate::sbx::test_env::set_var("SBX_MOCK_LS_EMPTY", "1");
@@ -398,8 +303,7 @@ fn cli_mock_success_paths() {
 }
 
 /// Per-entry tolerance for `sbx ls --json`: a malformed entry (missing
-/// "name") is dropped while the valid ones survive — no fallback, no error.
-/// Sequential + env-locked.
+/// "name") is dropped while the valid ones survive. Sequential + env-locked.
 #[test]
 #[cfg(unix)]
 fn cli_mock_json_malformed_falls_back_to_table() {
@@ -417,42 +321,31 @@ fn cli_mock_json_malformed_falls_back_to_table() {
 }
 
 /// A future CLI schema change (e.g. renaming "name") must not look like
-/// "no sandboxes": zero-of-N deserialized entries falls back to the human
-/// table instead of returning a silently empty list. Sequential +
-/// env-locked.
+/// "no sandboxes": zero-of-N deserialized entries is a loud error instead
+/// of a silently empty list. Sequential + env-locked.
 #[test]
 #[cfg(unix)]
-fn cli_mock_json_renamed_field_falls_back_to_table() {
+fn cli_mock_json_renamed_field_is_an_error() {
     let _guard = env_lock();
-    let _mock = MockCli::new();
+    let mock = MockCli::new();
 
     // Every entry lacks the required "name" field, so the JSON parse
-    // yields zero rows from a non-empty payload -> table fallback.
+    // yields zero rows from a non-empty payload -> explicit error.
     crate::sbx::test_env::set_var("SBX_MOCK_JSON", "renamed");
-    let rows = list_sandboxes().expect("renamed schema should fall back to the table");
-    crate::sbx::test_env::remove_var("SBX_MOCK_JSON");
-    assert_eq!(rows.len(), 2);
-    assert_eq!(rows[0].name, "demo");
-    assert_eq!(rows[0].state, "running");
-    assert_eq!(rows[0].agent, "opencode");
-    assert_eq!(rows[1].name, "build");
-    assert_eq!(rows[1].state, "stopped");
-
-    // When the table is also unavailable, the JSON error surfaces loudly
-    // instead of an empty list.
-    crate::sbx::test_env::set_var("SBX_MOCK_JSON", "renamed");
-    crate::sbx::test_env::set_var("SBX_MOCK_FAIL_TABLE", "1");
     let err = list_sandboxes().unwrap_err();
     crate::sbx::test_env::remove_var("SBX_MOCK_JSON");
-    crate::sbx::test_env::remove_var("SBX_MOCK_FAIL_TABLE");
     assert!(
         err.contains("returned 1 entries but none matched the expected schema"),
         "got: {err}"
     );
-    assert!(
-        err.contains("the CLI schema may have changed"),
-        "got: {err}"
-    );
+    assert!(err.contains("upgrade sbx"), "got: {err}");
+
+    // The JSON read stays the only invocation: no retry in any other mode.
+    crate::sbx::test_env::set_var("SBX_MOCK_JSON", "renamed");
+    mock.clear_commands();
+    let _ = list_sandboxes();
+    crate::sbx::test_env::remove_var("SBX_MOCK_JSON");
+    assert_eq!(mock.commands(), "ls --json\n");
 }
 
 /// Failure-path CLI scenarios (SBX_MOCK_FAIL=1), sequential and isolated
@@ -473,8 +366,7 @@ fn cli_mock_failure_paths() {
         "stderr body expected, got: {err}"
     );
 
-    // list_sandboxes propagates the error instead of inventing rows:
-    // both the --json attempt and the table fallback fail.
+    // list_sandboxes propagates the error instead of inventing rows.
     let err = list_sandboxes().unwrap_err();
     assert!(err.contains("failed (exit 1)"), "got: {err}");
     assert!(err.contains("simulated failure"), "got: {err}");
