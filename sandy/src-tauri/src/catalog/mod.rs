@@ -37,6 +37,22 @@ use self::http::Api;
 use self::hub::discover_hub;
 use self::store::{hub_repository, validate_provider};
 
+/// The built-in agents as documented on
+/// <https://docs.docker.com/ai/sandboxes/agents/>.
+pub(crate) const BUILTIN_AGENTS: &[&str] = &[
+    "claude",
+    "codex",
+    "copilot",
+    "cursor",
+    "devin",
+    "docker-agent",
+    "droid",
+    "gemini",
+    "kiro",
+    "opencode",
+    "shell",
+];
+
 pub fn provider_versions(provider: Provider) -> Result<Vec<String>, String> {
     versions_with(&Api::public()?, &provider)
 }
@@ -60,40 +76,20 @@ fn versions_with(api: &Api, provider: &Provider) -> Result<Vec<String>, String> 
 /// built-ins remain available; the frontend can filter their complete metadata.
 pub fn discover_kits(providers: Vec<Provider>, query: Option<String>) -> Result<Catalog, String> {
     let mut catalog = discover_with(&Api::public()?, &providers, query.as_deref().unwrap_or(""))?;
-    // The CLI is authoritative about the built-ins available in this installation.
-    // They are documented v2 shortcuts, not guessed registry repositories.
-    match crate::sbx::run_capture(&["run", "--help"]) {
-        Ok(help) => {
-            if let Some(line) = help
-                .lines()
-                .find_map(|line| line.trim().strip_prefix("Available agents: "))
-            {
-                for name in line
-                    .split(',')
-                    .map(str::trim)
-                    .filter(|name| !name.is_empty())
-                {
-                    catalog.kits.push(KitOption {
-                        id: format!("builtin:{name}"),
-                        name: name.into(),
-                        description: format!("Built-in {name} agent (v2)"),
-                        source: name.into(),
-                        schema_version: 2,
-                        kind: "agent".into(),
-                        provider_id: "builtin".into(),
-                        required_agent: None,
-                        arguments: Vec::new(),
-                    });
-                }
-            } else {
-                catalog
-                    .warnings
-                    .push("The installed sbx did not report its available built-in agents".into());
-            }
-        }
-        Err(e) => catalog
-            .warnings
-            .push(format!("Built-in agents unavailable: {e}")),
+    // The built-ins are documented v2 shortcuts, not guessed registry repositories.
+    for name in BUILTIN_AGENTS {
+        let description = format!("Built-in {name} agent (v2)");
+        catalog.kits.push(KitOption {
+            id: format!("builtin:{name}"),
+            name: (*name).into(),
+            description,
+            source: (*name).into(),
+            schema_version: 2,
+            kind: "agent".into(),
+            provider_id: "builtin".into(),
+            required_agent: None,
+            arguments: Vec::new(),
+        });
     }
     Ok(catalog)
 }
