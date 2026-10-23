@@ -1,8 +1,7 @@
 //! Discovery of the `sbx` executable and the shared command runner.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
-use std::sync::Mutex;
 
 pub const SBX_COMMAND: &str = "sbx";
 pub const SSH_SETUP_COMMAND: &str = "ssh";
@@ -94,26 +93,4 @@ pub fn run_capture(args: &[&str]) -> Result<String, String> {
         ));
     }
     Ok(text.trim().to_string())
-}
-
-/// Run `sbx` with args from a specific working directory, capturing stdout.
-///
-/// Setting a child's `current_dir` does not work for every CLI: cobra's hidden
-/// `__complete` command enumerates the *process* working directory, and the
-/// `Command::current_dir` override does not change what it sees on all
-/// platforms. So this temporarily switches the process cwd instead. That is a
-/// process-global change, so callers that care serialize under this lock, and
-/// the original directory is restored even when the command fails.
-pub fn run_capture_in(dir: &Path, args: &[&str]) -> Result<String, String> {
-    static CWD_LOCK: Mutex<()> = Mutex::new(());
-    let _guard = CWD_LOCK.lock();
-    let original = std::env::current_dir().map_err(|e| format!("failed to read cwd: {e}"))?;
-    std::env::set_current_dir(dir)
-        .map_err(|e| format!("failed to enter {}: {e}", dir.display()))?;
-    let result = run_capture(args);
-    // Restore the cwd first, then surface the command's own result.
-    if let Err(e) = std::env::set_current_dir(original) {
-        return Err(format!("failed to restore cwd: {e}"));
-    }
-    result
 }

@@ -26,7 +26,7 @@ pub(crate) mod test_env;
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 mod tests;
 
-pub use cli::{SSH_SETUP_COMMAND, is_sbx_installed, run_capture, run_capture_in};
+pub use cli::{SSH_SETUP_COMMAND, is_sbx_installed, run_capture};
 pub use install::ensure_sbx_installed;
 pub use lifecycle::{
     ConnectionInfo, connection_info, remove_sandbox, restart_sandbox, start_sandbox, stop_sandbox,

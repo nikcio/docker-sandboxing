@@ -7,8 +7,8 @@ use super::hub::is_kit_repository;
 use super::hub::{hub_descriptor, selected_hub_kit};
 use super::types::Provider;
 use super::{
-    BuiltinAgents, DESCRIPTOR, builtin_agents, discover_with, encoded_path, get_providers,
-    parse_available_agents, save_providers, unique_id, versions_with,
+    BUILTIN_AGENTS, DESCRIPTOR, discover_with, encoded_path, get_providers, save_providers,
+    unique_id, versions_with,
 };
 fn fixture(routes: Vec<(&str, &str)>) -> (Api, std::thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -298,105 +298,22 @@ fn providers_round_trip_and_report_corruption() {
     std::fs::remove_dir_all(root).unwrap();
 }
 
-const REAL_V048_HELP_LINE: &str = "  Available agents: claude, codex, copilot, cursor, devin, docker-agent, droid, gemini, kiro, opencode, shell";
-
-const ALL_DOCUMENTED: &[&str] = &[
-    "claude",
-    "codex",
-    "copilot",
-    "cursor",
-    "devin",
-    "docker-agent",
-    "droid",
-    "gemini",
-    "kiro",
-    "opencode",
-    "shell",
-];
-
 #[test]
-fn parse_available_agents_reads_the_real_help_line() {
-    let agents =
-        parse_available_agents(&format!("Description:\n  Run it.\n{REAL_V048_HELP_LINE}\n"));
-    assert_eq!(agents, ALL_DOCUMENTED);
-}
-
-#[test]
-fn parse_available_agents_is_case_and_decoration_tolerant() {
-    // Reworded label casing, ANSI color codes around the values, trailing
-    // backslashes from a Markdown hard-wrap, and heavy indentation.
-    let help = "\x1b[1m  AVAILABLE AGENTS:\x1b[0m \x1b[36mclaude\x1b[0m, opencode, \\\n      shell";
+fn builtin_agents_match_the_documented_list() {
     assert_eq!(
-        parse_available_agents(help),
-        ["claude", "opencode", "shell"]
+        BUILTIN_AGENTS,
+        [
+            "claude",
+            "codex",
+            "copilot",
+            "cursor",
+            "devin",
+            "docker-agent",
+            "droid",
+            "gemini",
+            "kiro",
+            "opencode",
+            "shell",
+        ]
     );
-}
-
-#[test]
-fn parse_available_agents_rejects_garbage_and_missing_lines() {
-    for help in [
-        "",
-        "Usage:\n  sbx run [AGENT]",
-        "Available agents:",
-        "Available agents: , ,, ",
-        "Available agents: ./docs, --name, :4, not/valid",
-    ] {
-        assert!(
-            parse_available_agents(help).is_empty(),
-            "parsed {help:?} into agents"
-        );
-    }
-}
-
-#[test]
-fn completion_output_beats_help_and_filters_protocol_noise() {
-    // Real `sbx __complete run ""` output from an empty directory: the 11
-    // agent names plus the directive trailer. The trailer must be filtered,
-    // not turned into a phantom `builtin:4` kit.
-    let completion = format!("{}\n:4\n", ALL_DOCUMENTED.join("\n"));
-    let agents = builtin_agents(Some(&completion), None);
-    assert_eq!(
-        agents,
-        BuiltinAgents {
-            names: ALL_DOCUMENTED.iter().map(|name| (*name).into()).collect(),
-            from_fallback: false,
-        }
-    );
-    assert_eq!(agents.names, parse_available_agents(REAL_V048_HELP_LINE));
-}
-
-#[test]
-fn empty_completion_falls_back_to_help_then_documented_list() {
-    fn documented(names: &[String]) -> Vec<&str> {
-        names.iter().map(String::as_str).collect()
-    }
-    // Unusable completion output, usable help: the help parse wins.
-    let agents = builtin_agents(Some("./docs\n:4\n"), Some(REAL_V048_HELP_LINE));
-    assert_eq!(
-        agents,
-        BuiltinAgents {
-            names: ALL_DOCUMENTED.iter().map(|name| (*name).into()).collect(),
-            from_fallback: false,
-        }
-    );
-    // Nothing usable from the CLI at all: the documented list, flagged as
-    // fallback so the caller can warn.
-    let agents = builtin_agents(Some(""), Some("no agents here"));
-    assert_eq!(documented(&agents.names), ALL_DOCUMENTED);
-    assert!(agents.from_fallback);
-    let agents = builtin_agents(None, None);
-    assert_eq!(documented(&agents.names), ALL_DOCUMENTED);
-    assert!(agents.from_fallback);
-}
-
-#[test]
-fn documented_fallback_never_shadows_a_real_parse() {
-    // A CLI that reports a subset must not be "corrected" to the full
-    // documented list.
-    let agents = builtin_agents(
-        Some("claude\nshell\n:4\n"),
-        Some("Available agents: claude, shell"),
-    );
-    assert_eq!(agents.names, ["claude", "shell"]);
-    assert!(!agents.from_fallback);
 }
