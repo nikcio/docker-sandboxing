@@ -119,9 +119,6 @@ fn discover_with(api: &Api, providers: &[Provider], query: &str) -> Result<Catal
     Ok(catalog)
 }
 
-/// Last `/`-separated segment of a repository path (the whole string when it
-/// contains no `/`). `rsplit` always yields at least one item, so this only
-/// returns `None` for an empty repository string.
 fn repository_name(repository: &str) -> Option<&str> {
     repository.rsplit('/').next().filter(|s| !s.is_empty())
 }

@@ -6,7 +6,6 @@ import Icon from "../../../common/components/Icon";
 
 type LevelFilter = "all" | "errors";
 
-/** Parse one JSON Lines line, skipping blank or corrupt rows. */
 function parseEntry(line: string): DebugLogEntry | null {
   if (!line.trim()) return null;
   try {
@@ -18,7 +17,6 @@ function parseEntry(line: string): DebugLogEntry | null {
   }
 }
 
-/** Local time rendering of an RFC 3339 UTC timestamp. */
 function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return timestamp;
@@ -33,7 +31,6 @@ const KIND_LABELS: Record<DebugLogEntry["kind"], string> = {
   info: "Info",
 };
 
-/** How many entries render at once; older entries load on demand. */
 const RENDER_LIMIT = 300;
 
 /**

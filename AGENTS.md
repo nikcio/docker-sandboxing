@@ -18,6 +18,11 @@ Use based on your task:
 - [Versioning](agent-guidance/versioning.md) covers the release-please flow, version bumps, and adding a stack mixin. Read when preparing a release or touching pinned versions.
 - [Commit Messages](agent-guidance/commit-messages.md) defines the Conventional Commits style, types, scopes, and examples. Read when writing commit messages.
 
+## Code comments
+
+- Every comment must be relevant to a developer landing on the code 6 months later: it should explain why the code is the way it is (constraints, non-obvious behavior, gotchas) — not narrate what the code obviously does, not reference the current task, ticket, or conversation, and not state something the reader can see or easily infer from the code itself.
+- If a comment fails that test, omit it; when touching code with such comments, remove them. Temporary or conversational comments (e.g. "TODO: revisit after the migration", "this is a workaround for the bug I introduced above") do not belong in the repo.
+
 ## Artifacts
 
 - mixins/* - Premade, reusable config fragments for sandboxes (kind: mixin). Must work in isolation and composition. Each mixin owns its install steps, env vars, and all the network domains its traffic needs (apt mirrors, revocation endpoints, download hosts).

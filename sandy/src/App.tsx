@@ -10,7 +10,6 @@ import TemplatesPage from "./features/templates/components/TemplatesPage";
 import CreatePage from "./features/create/components/CreatePage";
 import SettingsPage from "./features/settings/components/SettingsPage";
 
-/** Reveal the main window and close the boot splash window, if any. */
 const revealMainWindow = async () => {
   const splash = (await Window.getAll()).find((window) => window.label === "splash");
   await getCurrentWindow().show();

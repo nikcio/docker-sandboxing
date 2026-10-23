@@ -10,6 +10,5 @@ version: 0.1.0
 permissions:
   network:
     allow:
-      # Google Container Registry
       - gcr.io:443
       - "*.gcr.io:443"

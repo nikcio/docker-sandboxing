@@ -7,7 +7,6 @@ import { normalizeRepository, repositoryIsValid } from "../providerRepository";
 import { ProviderEditor } from "./ProviderEditor";
 
 export interface ProvidersProps {
-  /** Called with the persisted configuration after loading or saving. */
   onChange?: (providers: Provider[]) => void;
   onDirtyChange?: (dirty: boolean) => void;
   disabled?: boolean;

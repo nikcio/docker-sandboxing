@@ -75,7 +75,6 @@ export default function DashboardPage({
     setConnecting(sandbox);
   };
 
-  /** The row/inspector primary action: start a stopped sandbox, or open a running one. */
   const runPrimaryAction = (sandbox: SandboxInfo) => {
     if (stateKind(sandbox.state) === "running") {
       openConnection(sandbox);

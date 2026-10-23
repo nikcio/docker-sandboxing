@@ -136,7 +136,6 @@ export function useSandboxDashboard({
     dismissNotice: () => setNotice(null),
     refresh,
     runAction,
-    /** True while an action is mid-flight for this sandbox (ref-backed, synchronous). */
     isActionInFlight: (name: string) => busySandboxes.current.has(name),
   };
 }
