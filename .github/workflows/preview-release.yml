@@ -6,8 +6,8 @@ name: Preview Release
 # 1. Run this workflow (Actions → Preview Release → Run workflow). It opens a
 #    preview release PR with a CHANGELOG entry and rewritten `&ref=` pins,
 #    then queues it for auto-merge.
-# 2. The merge triggers this workflow's push job, which tags the prerelease,
-#    builds Sandy, and publishes the GitHub release marked as a prerelease.
+# 2. The merge triggers this workflow's push job, which tags the prerelease
+#    and publishes the GitHub release marked as a prerelease.
 #
 # Preview release PRs are only ever opened by manual dispatch: push runs pass
 # skip-github-pull-request, so landing regular commits on main never opens
@@ -75,12 +75,3 @@ jobs:
           PR_NUMBER=$(echo "${PR}" | jq -r '.number')
           echo "Queueing auto-merge for preview release PR #${PR_NUMBER}"
           gh pr merge "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" --auto --squash
-
-  sandy:
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
-    uses: ./.github/workflows/sandy-build.yml
-    with:
-      tag: ${{ needs.release-please.outputs.tag_name }}
-      sha: ${{ needs.release-please.outputs.sha }}
-      prerelease: true

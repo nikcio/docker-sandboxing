@@ -40,14 +40,14 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 
 ## Prefer a GUI?
 
-[Sandy](docs/sandy.md) **(experimental)** is a desktop app with guided `sbx` setup and an always-refreshing local sandbox dashboard. Create environments from GitHub and Docker Hub providers using compatible v2 agents/mixins or v3 workloads/mixins, and save reusable YAML templates outside your workspace. Launch or resume sandboxes, start/stop/restart them, open a native terminal, or follow the OpenCode Desktop and VS Code SSH connection guides. Review setup anytime in Settings. Grab an installer from the [releases page](https://github.com/nikcio/docker-sandboxing/releases).
+[Sandy](https://github.com/Nikcio-labs/sandy) is a desktop app for Docker Sandboxes with guided `sbx` setup and an always-refreshing local sandbox dashboard. It lives in its own repo now: [github.com/Nikcio-labs/sandy](https://github.com/Nikcio-labs/sandy).
 
 ## Guides
 
 | Guide | Covers |
 | ----- | ------ |
 | [Getting started](docs/getting-started.md) | prerequisites, the steps, first run, daily use |
-| [Sandy (desktop app, experimental)](docs/sandy.md) | guided setup, local sandbox dashboard, and details inspector |
+| [Sandy (desktop app)](https://github.com/Nikcio-labs/sandy) | guided setup, local sandbox dashboard, and details inspector (separate repo) |
 | [Set your Zeldoc API key](docs/zeldoc-api-key.md) | get, register, and approve the model provider key |
 | [Use GitHub Copilot](docs/copilot-setup.md) | run the agent on your Copilot subscription (or both providers) |
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
@@ -110,8 +110,6 @@ Everything below is for developing the mixins in this repo.
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack),
 │                                     #   composing this repo's mixins
 ├── docs/                             # user guides (see above)
-├── sandy/                            # Sandy: Tauri desktop app (setup wizard +
-│                                     #   running-sandbox list), built on release tags
 ├── agent-guidance/                   # worktrees, versioning, commit conventions
 ├── sbxenv.yaml                       # this repo's dev sandbox: local paths into the working copy
 └── opencode.jsonc                    # opencode settings for working in this repo
