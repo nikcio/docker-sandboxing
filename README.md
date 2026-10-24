@@ -40,14 +40,14 @@ Full walkthrough (prerequisites, first run, daily use): [docs/getting-started.md
 
 ## Prefer a GUI?
 
-[Sandy](https://github.com/Nikcio-labs/sandy) is a desktop app for Docker Sandboxes with guided `sbx` setup and an always-refreshing local sandbox dashboard. It lives in its own repo now: [github.com/Nikcio-labs/sandy](https://github.com/Nikcio-labs/sandy).
+[Sandy](https://github.com/Nikcio-labs/sandy) is a desktop app for Docker Sandboxes with guided `sbx` setup and an always-refreshing local sandbox dashboard.
 
 ## Guides
 
 | Guide | Covers |
 | ----- | ------ |
 | [Getting started](docs/getting-started.md) | prerequisites, the steps, first run, daily use |
-| [Sandy (desktop app)](https://github.com/Nikcio-labs/sandy) | guided setup, local sandbox dashboard, and details inspector (separate repo) |
+| [Sandy (desktop app)](https://github.com/Nikcio-labs/sandy) | guided setup, local sandbox dashboard, and details inspector |
 | [Set your Zeldoc API key](docs/zeldoc-api-key.md) | get, register, and approve the model provider key |
 | [Use GitHub Copilot](docs/copilot-setup.md) | run the agent on your Copilot subscription (or both providers) |
 | [Create a GitHub PAT](docs/github-pat.md) | correct permissions and scope, store it per sandbox, rotate it |
