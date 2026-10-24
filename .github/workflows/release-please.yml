@@ -11,10 +11,6 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-      sha: ${{ steps.release.outputs.sha }}
     steps:
       - name: Mint GitHub App token
         id: app-token
@@ -31,11 +27,3 @@ jobs:
           manifest-file: .release-please-manifest.json
           token: ${{ steps.app-token.outputs.token }}
 
-  sandy:
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
-    uses: ./.github/workflows/sandy-build.yml
-    with:
-      tag: ${{ needs.release-please.outputs.tag_name }}
-      sha: ${{ needs.release-please.outputs.sha }}
-      prerelease: false

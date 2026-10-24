@@ -8,7 +8,6 @@ One-time setup that makes this repo's automations work: CI on every PR and relea
 | -------- | ------- | ----- |
 | Validate (`validate.yml`) | every PR, pushes to `main`, manual | nothing, works out of the box |
 | Release Please (`release-please.yml`) | pushes to `main` | a GitHub App (steps 1 and 2) |
-| Preview Release (`preview-release.yml`) | pushes to `main`, manual | the same GitHub App |
 
 Validate runs `sbx kit pack` on every mixin (the offline equivalent of `sbx kit validate`). No secrets involved.
 
@@ -54,16 +53,5 @@ The release PR is an ordinary PR: it runs the same checks and must pass before y
 1. Conventional Commits (`feat`/`fix`/`deps`) land on `main`.
 2. Release Please opens or updates a release PR (CHANGELOG entry and the `&ref=` pins in the examples).
 3. You merge the release PR, which tags `vX.Y.Z` and publishes the GitHub release.
-
-## Preview releases
-
-Run the Preview Release workflow (Actions → Preview Release → Run workflow) to
-cut a prerelease (`v3.1.0-beta001`) from current `main`. It opens and queues its
-own release PR for auto-merge, then tags and publishes the Sandy builds as a
-GitHub prerelease. Previews never run on their own — only manual dispatches
-open preview release PRs. No extra setup beyond the stable flow — same GitHub
-App, plus **Allow auto-merge** enabled in Settings → General → Pull Requests
-(the workflow queues its release PR for auto-merge and waits for the required
-checks). Details: [agent-guidance/versioning.md](../agent-guidance/versioning.md).
 
 Commit and versioning conventions: [agent-guidance/commit-messages.md](../agent-guidance/commit-messages.md), [agent-guidance/versioning.md](../agent-guidance/versioning.md).
