@@ -1,0 +1,48 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: GitHub CLI
+description: >
+  Installs the GitHub CLI (gh) as an image layer, with the egress gh and
+  git-over-HTTPS need.
+
+# No credential entry: the built-in agent kits (opencode, shell,
+# docker-agent) already declare the `github` credential, and composition
+# conflicts when two artifacts define the same (service, phase). The
+# built-in credential is proxy-managed on the same hosts this mixin needs
+# (github.com, api.github.com, raw.githubusercontent.com), so `gh` and
+# git-over-HTTPS get the real token at the proxy with only the sentinel in
+# the VM. Register it host-side with `sbx secret set github`
+# (see ../../docs/github-pat.md).
+
+args:
+  ghVersion:
+    default: ""
+    pattern: '^$|^[0-9]+(\.[0-9]+)*$'
+    description: GitHub CLI version to install (empty = latest apt package)
+    buildArg: GH_VERSION_ARG
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - gh
+
+version: "1.0.0"
+
+dockerfile: github-cli.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # gh CLI (package + keyring are baked at build; kept for
+          # `apt-get upgrade` runs inside the sandbox)
+          - cli.github.com:443
+
+          - github.com
+          - "*.github.com"
+          - "*.githubusercontent.com"

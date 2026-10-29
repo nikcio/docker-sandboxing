@@ -1,0 +1,59 @@
+# syntax=docker/sandbox-kit:3
+# The v2 mixin installs node+nvm and playwright in a create-time hook; the
+# v3 kit bakes both into the image at build time.
+schemaVersion: "3"
+kind: mixin
+displayName: Playwright
+description: >
+  Installs Playwright and the Chromium headless shell for browser
+  automation and testing, as an image layer.
+
+args:
+  playwrightVersion:
+    default: ""
+    pattern: '^$|^[0-9]+(\.[0-9]+)*$'
+    description: Playwright version to install (empty = latest)
+    buildArg: PLAYWRIGHT_VERSION_ARG
+  nodeVersion:
+    default: ""
+    pattern: '^$|^(node/)?v?[0-9]+(\.[0-9]+)*$'
+    description: Node.js version to install when the build needs one (empty = latest)
+    buildArg: NODE_VERSION_ARG
+  nvmVersion:
+    default: ""
+    pattern: '^$|^v[0-9]+\.[0-9]+\.[0-9]+$'
+    description: NVM version to clone (empty = latest release)
+    buildArg: NVM_VERSION_ARG
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - playwright
+
+version: "1.0.0"
+
+dockerfile: playwright.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # npm package installs/updates at runtime
+          - registry.npmjs.org:443
+          - "*.npmjs.org:443"
+
+          # Playwright browser downloads (e.g. `npx playwright install` for
+          # browsers the image did not pre-install). The CDN serves regular
+          # builds, and 302-redirects Chrome-for-Testing builds
+          # (builds/cft/...) to storage.googleapis.com; the redirect target
+          # must be allowed too (the sandbox proxy blocks cross-host
+          # redirects otherwise).
+          - cdn.playwright.dev:443
+          - "*.cdn.playwright.dev:443"
+          - playwright.azureedge.net:443
+          - playwright.download.prss.microsoft.com:443
+          - storage.googleapis.com:443

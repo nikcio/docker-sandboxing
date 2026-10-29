@@ -1,0 +1,58 @@
+# syntax=docker/sandbox-kit:3
+# The v2 mixin installs the interpreter in a create-time hook against the
+# composed sandbox; the v3 kit bakes it into the image at build time.
+schemaVersion: "3"
+kind: mixin
+displayName: Python / uv
+description: >
+  Adds a uv-managed Python interpreter as an image layer, with the uv tool
+  for package and venv management and the PyPI egress installs need.
+
+args:
+  pythonVersion:
+    default: ""
+    pattern: '^$|^[0-9]+(\.[0-9]+){0,2}$'
+    description: CPython version for uv to install (empty = latest stable)
+    buildArg: PYTHON_VERSION_ARG
+  uvVersion:
+    default: ""
+    pattern: '^$|^[0-9]+(\.[0-9]+)*$'
+    description: uv version to install (empty = latest)
+    buildArg: UV_VERSION_ARG
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - uv
+
+version: "1.0.0"
+
+dockerfile: python.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # PyPI (uv/pip installs, index queries)
+          - pypi.org:443
+          - "*.pypi.org:443"
+
+          # Package files served from the PyPI CDN
+          - files.pythonhosted.org:443
+          - "*.pythonhosted.org:443"
+
+          # uv upgrades (`uv self update`); astral.sh 301-redirects to
+          # releases.astral.sh, which is also the installer's primary
+          # artifact host. Also used by the installer on rebuilds.
+          - astral.sh:443
+          - releases.astral.sh:443
+
+          # Python docs and release info for agent lookups (docs.python.org,
+          # www.python.org/ftp, devguide.python.org lifecycles,
+          # peps.python.org)
+          - python.org:443
+          - "*.python.org:443"

@@ -1,0 +1,71 @@
+# syntax=docker/sandbox-kit:3
+# The v2 mixin installs the stack in a create-time hook against the
+# composed sandbox; the v3 kit bakes it into the image at build time, so
+# every sandbox starts with the toolchain present and the create-phase
+# network grant shrinks to nothing.
+schemaVersion: "3"
+kind: mixin
+displayName: Node.js / NVM / PNPM
+description: >
+  Adds Node.js with nvm and PNPM as an image layer, with the egress the
+  npm ecosystem needs at runtime.
+
+args:
+  nodeVersion:
+    default: ""
+    pattern: '^$|^(node/)?v?[0-9]+(\.[0-9]+)*$'
+    description: Node.js version to install (empty = latest)
+    buildArg: NODE_VERSION_ARG
+  pnpmVersion:
+    default: ""
+    pattern: '^$|^[0-9]+(\.[0-9]+)*$'
+    description: PNPM version to install (empty = latest)
+    buildArg: PNPM_VERSION_ARG
+  nvmVersion:
+    default: ""
+    pattern: '^$|^v[0-9]+\.[0-9]+\.[0-9]+$'
+    description: NVM version to clone (empty = latest release)
+    buildArg: NVM_VERSION_ARG
+
+# One provider per managed artifact.
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - node
+
+version: "1.0.0"
+
+dockerfile: node.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Node distribution downloads for nvm installs/switches.
+          - nodejs.org:443
+          - "*.nodejs.org:443"
+
+          # nvm's io.js mirror (fetched by every `nvm ls-remote`; needed for
+          # io.js listings and installs)
+          - iojs.org:443
+
+          # nvm itself (repo clones; raw.githubusercontent covers the
+          # install-script variant)
+          - github.com:443
+          - "*.github.com:443"
+          - raw.githubusercontent.com:443
+
+          # npm registry (pnpm/npm/npx installs and fetches)
+          - registry.npmjs.org:443
+          - "*.npmjs.org:443"
+          - npmjs.com:443
+          - "*.npmjs.com:443"
+
+          # pnpm.io: pnpm docs and settings reference for agent lookups;
+          # pnpm's own errors point here (e.g. the minimumReleaseAge gate
+          # PNPM_CONFIG_MINIMUM_RELEASE_AGE links pnpm.io/settings#minimumreleaseageexclude)
+          - pnpm.io:443

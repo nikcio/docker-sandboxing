@@ -1,0 +1,109 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Zeldoc.ai provider
+description: >
+  Zeldoc.ai model provider for OpenCode: proxy-managed API key, merges the
+  provider + plugin config into the global opencode config
+  (opencode.json(c)) at startup, a default "high" model variant (seeded
+  into the opencode state file), and network rules for the Zeldoc hosts.
+
+capabilities:
+  - type: com.docker.sandbox/credential@1
+    optional: true
+    description: Zeldoc.ai API key for AI model access.
+    config:
+      service: zeldoc
+      phase: runtime
+      apiKey:
+        name: ZELDOC_API_KEY
+        proxyManaged: true
+        inject:
+          - {domain: api.zeldoc.ai, header: Authorization, format: "Basic %s"}
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      startup:
+        - command:
+            - sh
+            - -c
+            - |
+              # Merge this provider's config into the global opencode config
+              # (~/.config/opencode/opencode.json(c)) so the mixin works both
+              # composed with the `opencode` mixin and standalone (opencode
+              # installed by any other means). Idempotent: re-running keeps a
+              # single "zeldoc" entry / plugin.
+              __dir="$HOME/.config/opencode"
+              __file="$__dir/opencode.json"
+              if [ ! -f "$__file" ] && [ -f "$__dir/opencode.jsonc" ]; then
+                __file="$__dir/opencode.jsonc"
+              fi
+              mkdir -p "$__dir"
+              if ! command -v jq > /dev/null 2>&1; then
+                echo "ERROR [zeldoc]: jq is not available: cannot enable the zeldoc provider in the global config (the base image ships jq; install it or report this)" >&2
+                exit 1
+              fi
+              if [ ! -f "$__file" ]; then
+                printf '{\n  "$schema": "https://opencode.ai/config.json"\n}\n' > "$__file"
+              fi
+              __tmp="$(mktemp "$__dir/.zeldoc.XXXXXX")"
+              if jq --arg p zeldoc --arg pl opencode-zeldoc '
+                .enabled_providers = (((.enabled_providers // []) + [$p]) | unique)
+                | .plugin = (((.plugin // []) + [$pl]) | unique)
+              ' "$__file" > "$__tmp" && jq -e 'type == "object"' "$__tmp" > /dev/null; then
+                mv -f "$__tmp" "$__file"
+                echo "[zeldoc] enabled provider zeldoc + plugin opencode-zeldoc in $__file"
+              else
+                rm -f "$__tmp"
+                echo "WARNING [zeldoc]: could not update $__file (invalid JSON?): leaving it untouched" >&2
+              fi
+              unset __dir __file __tmp
+          user: "agent"
+          description: >
+            Enable the zeldoc provider + opencode-zeldoc plugin in the global
+            opencode config (opencode.json(c)), creating the file if needed
+        - command:
+            - sh
+            - -c
+            - |
+              # Seed the opencode model-preference state file so the zdev
+              # variant starts at "high" on first launch. Only writes when
+              # the key is unset: never overrides a variant the user has
+              # already picked (cycling persists to this file).
+              __state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/opencode"
+              __state_file="$__state_dir/model.json"
+              mkdir -p "$__state_dir"
+              if [ ! -f "$__state_file" ]; then
+                printf '{"recent":[],"favorite":[],"variant":{"zeldoc/zdev":"high"}}\n' > "$__state_file"
+                echo "[zeldoc] seeded model state: variant zeldoc/zdev -> high"
+              elif command -v jq > /dev/null 2>&1; then
+                # File exists: fill in the key only if it is missing entirely.
+                __has="$(jq -r --arg k 'zeldoc/zdev' '.variant | has($k)' "$__state_file" 2>/dev/null || echo unknown)"
+                if [ "$__has" = "false" ]; then
+                  __tmp="$(mktemp "$__state_dir/.model.json.XXXXXX")"
+                  if jq --arg k 'zeldoc/zdev' --arg v high '.variant[$k] = $v' "$__state_file" > "$__tmp"; then
+                    mv -f "$__tmp" "$__state_file"
+                    echo "[zeldoc] set model state: variant zeldoc/zdev -> high"
+                  else
+                    rm -f "$__tmp"
+                    echo "WARNING [zeldoc]: could not update $__state_file (invalid JSON?): leaving it untouched" >&2
+                  fi
+                fi
+                unset __has __tmp
+              fi
+              unset __state_dir __state_file
+          user: "agent"
+          description: >
+            Seed the opencode model state file with variant zeldoc/zdev=high
+            (first-run only; never overrides an existing choice)
+
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Model API (auth injected by the proxy) + docs for webfetch.
+          - api.zeldoc.ai:443
+          - zeldoc.ai:443
+          - docs.zeldoc.ai:443
+          # Plugin install: opencode fetches opencode-zeldoc from npm at start.
+          - registry.npmjs.org:443

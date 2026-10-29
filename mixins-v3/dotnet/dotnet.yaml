@@ -1,0 +1,61 @@
+# syntax=docker/sandbox-kit:3
+# The v2 mixin installs the SDK in a create-time hook against the composed
+# sandbox; the v3 kit bakes it into the image at build time.
+schemaVersion: "3"
+kind: mixin
+displayName: .NET / NuGet
+description: >
+  Installs the .NET SDK as an image layer (via the official install script,
+  so the result is independent of the base's distro channel), with the
+  NuGet and Microsoft egress restores need.
+
+args:
+  dotnetVersion:
+    default: ""
+    pattern: '^$|^[0-9]+\.[0-9]+\.[0-9]+$'
+    description: .NET SDK version to install (empty = latest)
+    buildArg: DOTNET_VERSION_ARG
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - dotnet
+
+version: "1.0.0"
+
+dockerfile: dotnet.dockerfile
+
+capabilities:
+  # Telemetry opt-out via image environment; the remaining env the v2 mixin
+  # exports (DOTNET_GENERATE_ASPNET_CERTIFICATE, NUGET_XMLDOC_MODE) is
+  # installer noise, not something the agent needs.
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # NuGet (restore, push, search)
+          - nuget.org:443
+          - "*.nuget.org:443"
+
+          # SDK/workload downloads, MS Build hosts, packages.microsoft.com
+          - "*.microsoft.com:443"
+
+          # SDK download CDN. dot.net's install script redirects SDK/workload
+          # downloads here (builds.dotnet.microsoft.com; the single-label rule
+          # above doesn't match the sub-subdomain)
+          - "*.dotnet.microsoft.com:443"
+
+          # dotnet-install script + feeds
+          - dot.net:443
+          - "*.dot.net:443"
+
+          # Microsoft's short-link redirect service. dotnet-install.sh resolves
+          # its primary SDK/workload download URL by following aka.ms/dotnet/...
+          # short links (it silently falls back to the CDNs above when blocked)
+          - aka.ms:443
+
+          # Legacy download CDNs
+          - "*.azureedge.net:443"

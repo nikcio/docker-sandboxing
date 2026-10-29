@@ -107,6 +107,10 @@ Everything below is for developing the mixins in this repo.
 │   └── <area>/                       # one single-purpose premade mixin per area (kind: mixin):
 │   │                                 #   network rules, env vars, credentials, install steps,
 │   │                                 #   composed explicitly at launch (--kit flags or kits: list)
+├── mixins-v3/                        # every mixin above ported to the v3 kit format
+│   │                                 #   (schemaVersion "3", docker/sandbox-kit:3);
+│   │                                 #   see mixins-v3/README.md. Cannot be combined
+│   │                                 #   with v2 kits in one sandbox.
 ├── examples/*.sbxenv.yaml            # consumer environment examples (one per stack),
 │                                     #   composing this repo's mixins
 ├── docs/                             # user guides (see above)
@@ -121,6 +125,13 @@ image). No images are published from this repo, and there are no kits. Each
 mixin owns its own install steps, locale env, and network rules; stack
 toolchains (Node, .NET, Python, Go, Rust) install at sandbox creation via the
 `mixins/<stack>` mixins.
+
+A v3-format port of every mixin lives in [`mixins-v3/`](mixins-v3/README.md):
+same purpose and behavior, authored as v3 kits (`schemaVersion: "3"`,
+`docker/sandbox-kit:3` frontend), with installs baked into the mixin image
+instead of running as create-time hooks. Build them with
+`docker buildx build -f mixins-v3/<name>/<name>.yaml -t <ref> mixins-v3/<name>/`.
+The v2 and v3 formats cannot be combined in one sandbox.
 
 ### Working on the repo
 

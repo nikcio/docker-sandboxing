@@ -1,0 +1,34 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: sbx CLI (Docker Sandboxes)
+description: >
+  Installs the Docker Sandboxes CLI (docker-sbx) as an image layer.
+
+args:
+  sbxVersion:
+    default: ""
+    pattern: '^$|^[0-9][0-9A-Za-z.+~:-]*$'
+    description: Docker Sandboxes CLI (docker-sbx) apt package version to install (empty = latest apt candidate)
+    buildArg: SBX_VERSION_ARG
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - sbx
+
+version: "1.0.0"
+
+dockerfile: sbx.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Docker apt repo (docker-sbx package + keyring are baked at
+          # build; kept for `apt-get upgrade` runs inside the sandbox)
+          - download.docker.com:443
