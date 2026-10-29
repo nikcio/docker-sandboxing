@@ -1,0 +1,71 @@
+# syntax=docker/sandbox-kit:3
+# The v2 mixin installs zsh + Oh My Zsh into the agent home in a
+# create-time hook; the v3 kit bakes the tree into the image under /opt
+# (a mixin's layers are an overlay on an unknown base, so its content must
+# not claim /home/agent paths the base or the agent user owns) and points
+# the shell and .zshrc at it with a startup hook.
+schemaVersion: "3"
+kind: mixin
+displayName: Zsh + Oh My Zsh
+description: >
+  Installs zsh with Oh My Zsh and makes it the agent's login shell.
+
+args:
+  zshVersion:
+    default: ""
+    pattern: '^$|^[0-9][0-9A-Za-z.+~:-]*$'
+    description: zsh apt package version to install (empty = latest apt candidate)
+    buildArg: ZSH_VERSION_ARG
+  ohMyZshRef:
+    default: ""
+    pattern: '^$|^[A-Za-z0-9._/-]+$'
+    description: Oh My Zsh git ref to clone (empty = master HEAD)
+    buildArg: OH_MY_ZSH_REF_ARG
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - zsh
+
+version: "1.0.0"
+
+dockerfile: zsh.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      startup:
+        # Runs on every boot, so a base whose login shell or .zshrc changed
+        # underneath (or a fresh volume) gets the same setup re-applied.
+        # The zsh package is baked into the image; this only re-points the
+        # login shell and seeds the config, both idempotent.
+        - command:
+            - sh
+            - -c
+            - |
+              set -e
+              if [ "$(getent passwd agent | cut -d: -f7)" != "/usr/bin/zsh" ]; then
+                chsh -s /usr/bin/zsh agent
+              fi
+              if [ ! -f /home/agent/.zshrc ]; then
+                cp /opt/oh-my-zsh/templates/zshrc.zsh-template /home/agent/.zshrc
+                chown agent:agent /home/agent/.zshrc
+              fi
+          user: "root"
+          description: >
+            Make zsh the agent's login shell and seed .zshrc from the baked
+            Oh My Zsh template (idempotent)
+
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Oh My Zsh repo (framework updates)
+          - github.com:443
+          - "*.github.com:443"
+          - raw.githubusercontent.com:443
+          # ohmyz.sh: docs and wiki referenced by the framework itself
+          - ohmyz.sh:443

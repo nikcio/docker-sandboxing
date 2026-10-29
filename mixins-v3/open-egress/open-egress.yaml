@@ -1,0 +1,17 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Open egress (all domains)
+description: >
+  Adds an allow all network policy.
+
+capabilities:
+  # The install list is wide too: with all egress open at runtime, an
+  # install-phase gap would be the only thing that could still fail a
+  # create.
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      install:
+        allow: ["**"]
+      runtime:
+        allow: ["**"]

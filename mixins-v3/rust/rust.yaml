@@ -1,0 +1,64 @@
+# syntax=docker/sandbox-kit:3
+# The v2 mixin installs the toolchain in a create-time hook against the
+# composed sandbox; the v3 kit bakes it into the image at build time.
+schemaVersion: "3"
+kind: mixin
+displayName: Rust / cargo
+description: >
+  Adds a Rust toolchain (rustup-managed, with rust-analyzer) as an image
+  layer, with cargo for building and managing Rust packages and the
+  crates.io egress builds need.
+
+args:
+  rustVersion:
+    default: ""
+    pattern: '^$|^(stable|beta|nightly|[0-9]+\.[0-9]+\.[0-9]+)$'
+    description: Rust toolchain for rustup to install (empty = stable)
+    buildArg: RUST_VERSION_ARG
+  profile:
+    default: "default"
+    description: rustup profile (minimal, default, or complete)
+    enum: [minimal, default, complete]
+    buildArg: RUSTUP_PROFILE
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - rust
+
+version: "1.0.0"
+
+dockerfile: rust.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # crates.io (index/API queries, `cargo search`/`cargo info`); the
+          # wildcard also covers index.crates.io (the sparse index cargo uses)
+          - crates.io:443
+          - "*.crates.io:443"
+
+          # Package files served from the crates.io CDN
+          - static.crates.io:443
+
+          # rustup: toolchain + component downloads, `rustup update` and
+          # `rustup toolchain install`
+          - static.rust-lang.org:443
+
+          # rustup installer (sh.rustup.rs redirects to
+          # raw.githubusercontent.com); rustup-init binaries come from
+          # static.rust-lang.org above
+          - sh.rustup.rs:443
+          - raw.githubusercontent.com:443
+
+          # Rust docs and release info for agent lookups (doc.rust-lang.org,
+          # www.rust-lang.org, editions and release notes) + crate docs
+          # (docs.rs)
+          - rust-lang.org:443
+          - "*.rust-lang.org:443"
+          - docs.rs:443
