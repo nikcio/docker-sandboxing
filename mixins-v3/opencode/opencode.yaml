@@ -4,10 +4,10 @@
 # using fragments (enabled_*/disabled_* lists union) at startup.
 #
 # The v2 mixin installs into the agent home at create; the v3 kit bakes
-# the binary and config into the image under /opt (a mixin's layers are an
-# overlay on an unknown base, so its content must not claim /home/agent
-# paths the base or the agent user owns) and hands them to the agent at
-# startup.
+# the binary into the image under /opt (a mixin's layers are an overlay
+# on an unknown base, so its content must not claim /home/agent paths the
+# base or the agent user owns) and puts it on PATH, while the config is
+# written into the agent home at startup.
 schemaVersion: "3"
 kind: mixin
 displayName: OpenCode

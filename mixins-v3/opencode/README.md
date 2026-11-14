@@ -8,13 +8,15 @@ what the v3 format changes.
 
 ## Differences from the v2 mixin
 
-- The CLI is baked at build; the create-time curl install is gone.
+- The CLI is baked at build under `/opt/opencode-home` (on PATH via a
+  `/usr/local/bin` symlink); the create-time curl install is gone.
 - The permissive config ships as a `lifecycle@1` `files:` entry written
   into the agent home at start (`overwrite: false`, so the agent's own
   config survives a recreate).
-- The data/cache trees live under `/opt/opencode-home` and are pointed at
-  via image environment (`XDG_DATA_HOME`/`XDG_CACHE_HOME`): a mixin layer
-  must not claim `/home/agent` paths.
+- OpenCode's data/cache/state dirs stay at their XDG defaults under the
+  agent home (the v2 behavior): the baked `/opt/opencode-home` tree is
+  root-owned, so pointing the XDG environment at it made opencode fail
+  with `EACCES` on its first write.
 - `OPENCODE_CONFIG` is not exported as image environment (the v2 mixin
   pointed it at the merged config): the workload's entrypoint owns the
   launch, so compose this mixin with a workload that reads the merged
