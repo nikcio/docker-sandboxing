@@ -28,7 +28,7 @@ docker buildx build -f mixins-v3/nikcio-openapi-codegen/nikcio-openapi-codegen.y
 | Arg | Default | Description |
 | --- | ------- | ----------- |
 | `codegenVersion` | *(empty = latest)* | Nikcio.OpenApiCodeGen version |
-| `dotnetVersion` | *(empty = latest)* | .NET SDK version |
+| `dotnetVersion` | *(empty = latest LTS)* | .NET SDK version |
 
 ## How it works
 

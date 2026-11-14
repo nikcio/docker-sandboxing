@@ -16,18 +16,17 @@ ENV DOTNET_ROOT=/opt/dotnet \
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates curl
 
-# The installer's default channel is LTS, but "latest" here means the newest
-# supported channel, so the channel is resolved from the release index and
-# handed to the installer. The script runs fine unpatched on this stage's
-# bash 5.2: the bash-5.3/set -u quoting fixes the dotnet mixin carries are
-# not needed here.
+# Pin LTS explicitly so a future default-channel change upstream cannot
+# silently change what "no version" installs, and so the SDK's runtime
+# matches the bundled tool (targets net10.0). The script runs fine
+# unpatched on this stage's bash 5.2: the bash-5.3/set -u quoting fixes
+# the dotnet mixin carries are not needed here.
 RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \
  && chmod +x /tmp/dotnet-install.sh \
  && if [ -n "${DOTNET_VERSION_ARG}" ]; then \
       /tmp/dotnet-install.sh --version "${DOTNET_VERSION_ARG}" --install-dir "${DOTNET_ROOT}"; \
     else \
-      DOTNET_CHANNEL="$(curl -fsSL 'https://builds.dotnet.microsoft.com/dotnet/release-metadata/releases-index.json' | grep -o '"channel-version": *"[0-9.]*"\|"support-phase": *"[a-z-]*"' | paste - - | grep -v '"go-live"\|"eol"\|"preview"' | head -n 1 | grep -o '[0-9]*\.[0-9]*')"; \
-      /tmp/dotnet-install.sh --channel "${DOTNET_CHANNEL}" --install-dir "${DOTNET_ROOT}"; \
+      /tmp/dotnet-install.sh --channel LTS --install-dir "${DOTNET_ROOT}"; \
     fi \
  && ln -sf "${DOTNET_ROOT}/dotnet" /usr/local/bin/dotnet
 
