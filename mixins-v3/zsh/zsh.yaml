@@ -1,9 +1,10 @@
 # syntax=docker/sandbox-kit:3
 # The v2 mixin installs zsh + Oh My Zsh into the agent home in a
-# create-time hook; the v3 kit bakes the tree into the image under /opt
-# (a mixin's layers are an overlay on an unknown base, so its content must
-# not claim /home/agent paths the base or the agent user owns) and points
-# the shell and .zshrc at it with a startup hook.
+# create-time hook; the v3 kit bakes both into the image (zsh's file tree
+# at its system paths, Oh My Zsh under /opt — a mixin's layers are an
+# overlay on an unknown base, so they must not claim /home/agent paths)
+# and hands the Oh My Zsh tree and .zshrc to the agent with a startup
+# hook.
 schemaVersion: "3"
 kind: mixin
 displayName: Zsh + Oh My Zsh
@@ -40,8 +41,9 @@ capabilities:
       startup:
         # Runs on every boot, so a base whose login shell or .zshrc changed
         # underneath (or a fresh volume) gets the same setup re-applied.
-        # The zsh package is baked into the image; this only re-points the
-        # login shell and seeds the config, both idempotent.
+        # zsh and Oh My Zsh are baked into the image; this re-points the
+        # login shell and copies the Oh My Zsh tree + .zshrc into the agent
+        # home, all idempotent.
         - command:
             - sh
             - -c
@@ -53,6 +55,14 @@ capabilities:
                 # user ("chsh: PAM: Authentication failure"): edit
                 # /etc/passwd directly instead.
                 sed -i 's|^\(agent:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\).*|\1/usr/bin/zsh|' /etc/passwd
+              fi
+              # The Oh My Zsh tree must live in the agent home: the stock
+              # .zshrc template points $ZSH at $HOME/.oh-my-zsh, and a
+              # root-owned /opt tree would also break compinit's cache and
+              # omz updates. Copy it once, then leave it agent-owned.
+              if [ ! -d /home/agent/.oh-my-zsh ]; then
+                cp -a /opt/oh-my-zsh /home/agent/.oh-my-zsh
+                chown -R agent:agent /home/agent/.oh-my-zsh
               fi
               if [ ! -f /home/agent/.zshrc ]; then
                 cp /opt/oh-my-zsh/templates/zshrc.zsh-template /home/agent/.zshrc

@@ -1,8 +1,10 @@
 # zsh (v3)
 
-zsh + Oh My Zsh baked into the mixin layer at image build (tree under
-`/opt/oh-my-zsh`), with a startup hook making zsh the agent's login shell
-and seeding `.zshrc`. v3 port of [`../zsh`](../zsh) — read that for the
+zsh + Oh My Zsh baked into the mixin layer at image build (full zsh file
+tree at its system paths, Oh My Zsh under `/opt/oh-my-zsh`), with a
+startup hook making zsh the agent's login shell and copying the Oh My
+Zsh tree + a seeded `.zshrc` into the agent home. v3 port of
+[`../zsh`](../zsh) — read that for the
 full behavior story; see [`../README.md`](../README.md) for what the v3
 format changes.
 
