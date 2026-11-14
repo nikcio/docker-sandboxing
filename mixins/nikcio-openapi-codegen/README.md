@@ -1,5 +1,7 @@
 # nikcio-openapi-codegen
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/nikcio-openapi-codegen/`](../../mixins-v3/nikcio-openapi-codegen/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Installs the [openapi-code-generator](https://openapi.nikcio.com) .NET global tool (`Nikcio.OpenApiCodeGen`, the `openapi-codegen` CLI) for generating C# models from OpenAPI 3.x documents, plus the docs-site egress.
 
 ## Usage

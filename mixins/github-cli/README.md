@@ -1,5 +1,7 @@
 # github-cli
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/github-cli/`](../../mixins-v3/github-cli/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Installs the **GitHub CLI** (`gh`) and wires proxy-managed GitHub auth so `gh` and git-over-HTTPS work without the token ever being readable inside the sandbox.
 
 ## Usage

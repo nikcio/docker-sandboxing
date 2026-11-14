@@ -1,5 +1,7 @@
 # playwright
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/playwright/`](../../mixins-v3/playwright/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Installs **Playwright** and the Chromium **headless shell** (the smallest browser download) for browser automation and end-to-end testing, plus Node via nvm when the base image lacks one.
 
 ## Usage

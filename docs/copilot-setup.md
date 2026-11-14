@@ -9,7 +9,7 @@ Add the `opencode-copilot` mixin to the `kits:` list in your `sbxenv.yaml` (pin 
 ```yaml
 kits:
   # ...opencode + stack mixins...
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-copilot&ref=<same ref as the other mixins>
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/opencode-copilot&ref=<same ref as the other mixins>
 ```
 
 ## 2. Create the sandbox and sign in

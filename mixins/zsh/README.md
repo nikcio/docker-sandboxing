@@ -1,5 +1,7 @@
 # zsh
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/zsh/`](../../mixins-v3/zsh/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Installs **zsh** with [Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh) for the `agent` user and makes zsh the login shell, so interactive shells start in zsh with the stock Oh My Zsh config.
 
 ## Usage

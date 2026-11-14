@@ -73,7 +73,7 @@ The agent needs a model provider:
 
 Optional: a GitHub personal access token so the agent can push and open PRs, see [github-pat.md](github-pat.md). Cloning public repos (read-only) and git over SSH work without one; pushing over HTTPS always needs it.
 
-The mixins are fetched from `github.com/nikcio/docker-sandboxing` and composed onto Docker's built-in `opencode` agent (the `docker/sandbox-templates:opencode-docker` image), so no builds are needed on your machine. The `opencode` mixin brings the OpenCode config layer and the locale env; stack toolchains install at sandbox creation via the stack mixin in the `kits:` list.
+The mixins are fetched from `github.com/nikcio/docker-sandboxing` and composed onto Docker's built-in `opencode` agent (the `docker/sandbox-templates:opencode-docker` image). The `opencode` mixin brings the OpenCode config layer and the locale env; stack toolchains are baked into the stack mixin's image at build, so the sandbox starts with the toolchain present.
 
 ## Host settings
 

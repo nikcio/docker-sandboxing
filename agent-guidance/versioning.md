@@ -16,7 +16,7 @@ A single SemVer version for the whole repo, managed by [release-please](https://
 
 No images are published from this repo. The kit runs on Docker's built-in
 `docker/sandbox-templates:opencode-docker` image, and stack toolchains are
-installed by the mixins at sandbox creation.
+baked into the mixin images at build.
 
 ## Version bumps
 
@@ -36,6 +36,6 @@ installed by the mixins at sandbox creation.
 
 No kit needed, because stacks are mixins:
 
-1. A mixin directory `mixins/<stack>/` with a `spec.yaml` (copy an
-   existing stack mixin, e.g. `mixins/node/`).
+1. A mixin directory `mixins-v3/<stack>/` with a `<stack>.yaml` descriptor
+   (copy an existing stack mixin, e.g. `mixins-v3/node/`).
 2. An example in `examples/` composing the base kit plus the stack mixin.

@@ -1,5 +1,7 @@
 # omnium
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/omnium/`](../../mixins-v3/omnium/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Omnium OMS/e-commerce API egress for the sandbox: the REST API hosts (production/test/dev, each with a Swagger UI under `/documentation`), tech docs, and proxy-managed `Authorization: Bearer` auth.
 
 ## Usage

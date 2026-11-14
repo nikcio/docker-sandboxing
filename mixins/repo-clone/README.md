@@ -1,5 +1,7 @@
 # repo-clone
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/repo-clone/`](../../mixins-v3/repo-clone/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Clones extra GitHub repositories into the sandbox workspace at sandbox
 creation, authenticated through the same proxy-managed GitHub token the
 [`github-cli`](../github-cli) mixin uses.

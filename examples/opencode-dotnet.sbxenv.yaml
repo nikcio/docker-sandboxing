@@ -15,18 +15,19 @@ agent: opencode
 
 # The built-in opencode agent plus the mixins your project needs. Each
 # mixin brings its own locale env and network rules; the stack mixin
-# installs the toolchain. Refs are pinned to the latest release;
+# brings the toolchain, baked into the mixin image at build. Refs are
+# pinned to the latest release;
 # release-please bumps them (do not edit by hand).
 # x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode&ref=v3.1.2          # OpenCode CLI + config + provider merge
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/env-guard&ref=v3.1.2              # workspace .env guard
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/opencode-zeldoc&ref=v3.1.2                 # Zeldoc.ai provider
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/github-cli&ref=v3.1.2             # git push auth (proxy-managed GitHub token)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/node&ref=v3.1.2                   # node/npm
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/dotnet&ref=v3.1.2                 # .NET/NuGet
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/docker-hub&ref=v3.1.2             # in-sandbox docker (Docker Hub registry egress)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins/playwright&ref=v3.1.2             # Playwright + Chromium headless shell
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/opencode&ref=v3.1.2          # OpenCode CLI + config + provider merge
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/env-guard&ref=v3.1.2              # workspace .env guard
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/opencode-zeldoc&ref=v3.1.2                 # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/github-cli&ref=v3.1.2             # git push auth (proxy-managed GitHub token)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/node&ref=v3.1.2                   # node/npm
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/dotnet&ref=v3.1.2                 # .NET/NuGet
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/docker-hub&ref=v3.1.2             # in-sandbox docker (Docker Hub registry egress)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/playwright&ref=v3.1.2             # Playwright + Chromium headless shell
 # x-release-please-end-version
 
 workspace:

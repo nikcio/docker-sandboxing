@@ -1,5 +1,7 @@
 # gcr
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/gcr/`](../../mixins-v3/gcr/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Network rules so the in-sandbox Docker engine can pull base images and build containers against Google Container Registry.
 
 ## Usage

@@ -1,5 +1,7 @@
 # opencode
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/opencode/`](../../mixins-v3/opencode/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 OpenCode itself: installs OpenCode 2 via the official curl installer when the sandbox lacks it, ships the permissive OpenCode config dropped into the global config layer, and merges `mixins.d/` config fragments (from third-party project kits) into the single `OPENCODE_CONFIG` file. Also carries the locale env the template images ship none of.
 
 ## Usage

@@ -1,5 +1,7 @@
 # opencode-copilot
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/opencode-copilot/`](../../mixins-v3/opencode-copilot/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 GitHub Copilot model provider for OpenCode: the network egress the OAuth device-flow sign-in needs, plus a startup command that enables the `github-copilot` provider in the global opencode config so Copilot models are selectable with `/models`. Runs the agent on your Copilot subscription instead of an API key.
 
 ## Usage

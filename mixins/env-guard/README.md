@@ -1,5 +1,7 @@
 # env-guard
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/env-guard/`](../../mixins-v3/env-guard/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Enforces the no-`.env` policy in the workspace: secrets in `.env` files must never reach the sandbox, where the agent can read them.
 
 ## Usage
