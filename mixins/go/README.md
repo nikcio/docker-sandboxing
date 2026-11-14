@@ -1,5 +1,7 @@
 # go
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/go/`](../../mixins-v3/go/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Go toolchain egress for the sandbox: the toolchain install (when the base image lacks it), module proxy + checksum database for `go get`/`go install`, and docs hosts.
 
 ## Usage

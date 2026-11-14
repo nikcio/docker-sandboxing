@@ -8,7 +8,7 @@ The network policy is deny by default; the host is probably not allowed. Check w
 sbx policy log          # on your host, shows blocked hosts
 ```
 
-Add the host to the mixin's `permissions.network.allow` in `mixins/<area>/spec.yaml`, then recreate the sandbox (kit changes never apply to running sandboxes):
+Add the host to the mixin's `runtime.allow` list (the `network-policy` capability) in `mixins-v3/<area>/<area>.yaml`, then recreate the sandbox (kit changes never apply to running sandboxes):
 
 ```bash
 sbx rm <sandbox-name>

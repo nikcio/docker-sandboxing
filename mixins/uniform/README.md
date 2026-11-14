@@ -1,5 +1,7 @@
 # uniform
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/uniform/`](../../mixins-v3/uniform/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Uniform DXP egress for the sandbox: docs, dashboard + Management API, Edge Delivery API (incl. EU and the image CDN), and proxy-managed `x-api-key` auth.
 
 ## Usage

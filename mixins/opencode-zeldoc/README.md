@@ -1,5 +1,7 @@
 # opencode-zeldoc
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/opencode-zeldoc/`](../../mixins-v3/opencode-zeldoc/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Zeldoc.ai model provider for OpenCode: proxy-managed API key, `opencode-zeldoc` plugin config, a default `high` model variant for `zeldoc/zdev`, and network rules for the Zeldoc hosts.
 
 ## Usage

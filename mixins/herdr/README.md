@@ -1,5 +1,7 @@
 # herdr
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/herdr/`](../../mixins-v3/herdr/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Installs the [Herdr](https://herdr.dev) CLI, the runtime coding agents
 run on. Herdr is a background server that owns your agents' terminals:
 agents keep working when you detach, and you reconnect from any machine

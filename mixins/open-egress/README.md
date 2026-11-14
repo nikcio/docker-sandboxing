@@ -1,5 +1,7 @@
 # open-egress
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/open-egress/`](../../mixins-v3/open-egress/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Allows all outbound domains (the `**` rule) and replaces the deny by default network baseline for the sandbox.
 
 ## Usage

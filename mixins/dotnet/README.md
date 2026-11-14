@@ -1,5 +1,7 @@
 # dotnet
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/dotnet/`](../../mixins-v3/dotnet/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 .NET SDK + NuGet egress for the sandbox: the toolchain install (when the base image lacks it), telemetry opt-out, and every domain NuGet and the SDK need.
 
 ## Usage

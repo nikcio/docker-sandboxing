@@ -1,5 +1,7 @@
 # node
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/node/`](../../mixins-v3/node/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Node.js toolchain egress for the sandbox: nvm-managed Node + pnpm install (when the base image lacks them), the npm registry for package installs, and docs hosts.
 
 ## Usage

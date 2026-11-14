@@ -1,5 +1,7 @@
 # sbx
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/sbx/`](../../mixins-v3/sbx/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Installs the **Docker Sandboxes CLI** (`docker-sbx`, the `sbx` command) inside the sandbox for kit authoring: `sbx validate`, `sbx inspect`, `sbx pack`.
 
 ## Usage

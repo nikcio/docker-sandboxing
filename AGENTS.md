@@ -25,9 +25,10 @@ Use based on your task:
 
 ## Artifacts
 
-- mixins/* - Premade, reusable config fragments for sandboxes (kind: mixin). Must work in isolation and composition. Each mixin owns its install steps, env vars, and all the network domains its traffic needs (apt mirrors, revocation endpoints, download hosts).
-  - Each mixin should have a `spec.yaml` and a `README.md` describing its purpose, usage, and any special instructions. Keep it simple.
-  - Every software version a mixin installs or pins MUST be settable through a declared `args` entry (e.g. `version`) referenced as `${{ kit.args.version }}` in the spec, and MUST default to the latest version when the installer supplies no value — the latest upstream release, or (where the install resolves through a distro channel like apt or rustup's `stable`) the latest the channel offers. Never hardcode a software version in a command, URL, or package name — read it from an arg (or resolve latest dynamically when the arg is unset).
+- mixins-v3/* - Premade, reusable config fragments for sandboxes (kind: mixin, v3 kit format). Must work in isolation and composition. Each mixin owns its install steps, env vars, and all the network domains its traffic needs (apt mirrors, revocation endpoints, download hosts).
+  - Each mixin should have a `<name>.yaml` descriptor (plus an optional `<name>.dockerfile` content recipe) and a `README.md` describing its purpose, usage, and any special instructions. Keep it simple.
+  - Every software version a mixin installs or pins MUST be settable through a declared `args` entry (e.g. `version`) referenced as a build argument in the descriptor/dockerfile, and MUST default to the latest version when the installer supplies no value — the latest upstream release, or (where the install resolves through a distro channel like apt or rustup's `stable`) the latest the channel offers. Never hardcode a software version in a command, URL, or package name — read it from an arg (or resolve latest dynamically when the arg is unset).
+- mixins/* - DEPRECATED v2-format tree, kept only for the migration window. Do not add mixins or features here; new work goes into `mixins-v3/`. See `docs/migrating-from-v2-kits.md` for the format differences and migration steps.
 - examples/*.sbxenv.yaml - Ready-to-copy environment examples per stack, showing how to compose the mixins.
 
 ## Development

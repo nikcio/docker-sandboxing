@@ -1,5 +1,7 @@
 # rust
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/rust/`](../../mixins-v3/rust/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Rust toolchain egress for the sandbox: a rustup-managed toolchain (latest stable by default, settable via the `rustVersion` arg — when the base image lacks one), cargo, crates.io access, and docs hosts.
 
 ## Usage

@@ -1,20 +1,8 @@
 # github-cli (v3)
 
 GitHub CLI (`gh`) baked into the mixin layer at image build, with gh and
-git-over-HTTPS egress. v3 port of [`../github-cli`](../github-cli) — read
-that for the full behavior story (including the git-identity setup and why
-there is no credential entry here); see [`../README.md`](../README.md) for
-what the v3 format changes.
-
-## Differences from the v2 mixin
-
-- `gh` is baked at build; the v2 apt-repo install hook is gone.
-- The v2 startup git-identity hook is **not** carried: identity belongs to
-  the workload's `git-identity@1` capability (or the github credential's
-  own setup) in v3, not to a tool mixin re-deriving it from `GH_TOKEN`.
-  Compose with a v3 workload that declares it.
-- The apt repo definition ships in the layer, so `apt upgrade` inside the
-  sandbox keeps updating gh.
+git-over-HTTPS egress. The sandbox network policy is deny by default, so
+`gh` and git-over-HTTPS fail until these hosts are allowed.
 
 ## Build / use
 
@@ -23,13 +11,52 @@ docker buildx build -f mixins-v3/github-cli/github-cli.yaml -t my/gh-mixin:dev m
 sbx run <agent> . --kit ./mixins-v3/github-cli   # or the published image reference
 ```
 
+In a project's `sbxenv.yaml`, add the mixin to the `kits:` list (pin
+`&ref=<tag>` to a release, as the examples do):
+
+```yaml
+kits:
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/github-cli   # GitHub CLI + auth
+```
+
 ## Build args
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `ghVersion` | *(empty = latest apt package)* | gh version |
+| `ghVersion` | *(empty = latest apt package)* | gh version (`MAJOR[.MINOR[.PATCH]]`) |
+
+Args resolve when the image builds; pass them with an `args:` entry on
+the mixin's `kits:` line.
+
+## How it works
+
+- **Install.** At image build, gh is installed from the official
+  `cli.github.com` apt repository (a no-op on bases that already ship
+  gh). The apt repo definition and keyring ship in the layer, so
+  `apt upgrade` inside the sandbox keeps updating gh.
+- **Credential.** Comes from the built-in agent kit (`opencode`,
+  `shell`, `docker-agent`), which declares the proxy-managed `github`
+  service. The sandbox only sees a sentinel `GH_TOKEN` placeholder; the
+  proxy injects the real `Authorization: Bearer <token>` header on
+  requests to the GitHub domains. Register the token host-side with
+  `sbx secret set github` (see
+  [docs/github-pat.md](../../docs/github-pat.md)) and approve the
+  injection when sbx asks. Use a fine-grained PAT scoped to only the
+  repositories and permissions the agent needs. The mixin deliberately
+  declares no credential of its own: composition rejects two artifacts
+  defining the same service, and the built-in one already covers the
+  hosts below.
+- **Auth domains** (via the built-in credential): `api.github.com`,
+  `github.com`, and `raw.githubusercontent.com`.
+- **Git identity.** Not set up by this mixin: compose with a workload
+  that declares the `git-identity@1` capability.
 
 ## Runtime egress
 
-`cli.github.com`, `github.com` + wildcard, `*.githubusercontent.com`. No
-install-phase grant.
+| Domain | Why |
+| ------ | --- |
+| `cli.github.com` | gh apt repo (package + keyring are baked at build; kept for `apt-get upgrade` runs inside the sandbox) |
+| `github.com`, `*.github.com` | `gh` API calls, git-over-HTTPS, gists |
+| `*.githubusercontent.com` | Raw content, avatars, release assets |
+
+No install-phase grant: the install is baked at build.

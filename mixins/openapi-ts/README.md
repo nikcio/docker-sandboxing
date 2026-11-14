@@ -1,5 +1,7 @@
 # openapi-ts
 
+> **Deprecated.** This kit uses the deprecated v2 kit format. Use the v3 mixin in [`mixins-v3/openapi-ts/`](../../mixins-v3/openapi-ts/) instead — same purpose and behavior. To migrate an existing setup, see the [v2 kit migration guide](../../docs/migrating-from-v2-kits.md).
+
 Docs egress for the [openapi-typescript](https://openapi-ts.dev) and [openapi-fetch](https://openapi-ts.dev) packages, so the agent can look up usage and reference material while generating typed API clients.
 
 ## Usage
