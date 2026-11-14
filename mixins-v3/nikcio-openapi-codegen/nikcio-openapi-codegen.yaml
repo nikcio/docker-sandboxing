@@ -1,0 +1,44 @@
+# syntax=docker/sandbox-kit:3
+# The v2 mixin installs the SDK + tool in create-time hooks against the
+# composed sandbox; the v3 kit bakes both into the image at build time.
+schemaVersion: "3"
+kind: mixin
+displayName: OpenAPI Code Generator (C#)
+description: >
+  Installs the openapi-code-generator .NET global tool Nikcio.OpenApiCodeGen
+  (on the .NET SDK it also carries) as an image layer.
+
+args:
+  codegenVersion:
+    default: ""
+    pattern: '^$|^[0-9]+(\.[0-9]+)*$'
+    description: Nikcio.OpenApiCodeGen version to install (empty = latest)
+    buildArg: CODEGEN_VERSION_ARG
+  dotnetVersion:
+    default: ""
+    pattern: '^$|^[0-9]+\.[0-9]+\.[0-9]+$'
+    description: .NET SDK version to install (empty = latest)
+    buildArg: DOTNET_VERSION_ARG
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - nikcio-openapi-codegen
+
+version: "1.0.0"
+
+dockerfile: nikcio-openapi-codegen.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Docs site (openapi.nikcio.com)
+          - openapi.nikcio.com:443
+          # NuGet (the `dotnet tool install`/`update` upgrades)
+          - nuget.org:443
+          - "*.nuget.org:443"

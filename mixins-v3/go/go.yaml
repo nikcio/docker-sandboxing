@@ -1,0 +1,52 @@
+# syntax=docker/sandbox-kit:3
+# The v2 mixin installs the toolchain in a create-time hook against the
+# composed sandbox; the v3 kit bakes it into the image at build time.
+schemaVersion: "3"
+kind: mixin
+displayName: Go / Go modules
+description: >
+  Adds the Go toolchain as an image layer, with the module-proxy egress Go
+  needs at runtime.
+
+args:
+  goVersion:
+    default: ""
+    pattern: '^$|^go[0-9]+(\.[0-9]+)*$'
+    description: Go version to install (empty = latest)
+    buildArg: GO_VERSION_ARG
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - go
+
+version: "1.0.0"
+
+dockerfile: go.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Module proxy (`go get`, `go mod download`, `go install`), also
+          # serves GOTOOLCHAIN=auto toolchain downloads (golang.org/toolchain
+          # modules)
+          - proxy.golang.org:443
+          # Checksum database (default GOSUMDB), verifies every module and
+          # toolchain download
+          - sum.golang.org:443
+          # go.dev: docs lookups, /dl/ download redirects, release info
+          - go.dev:443
+          - "*.go.dev:443"
+          # golang.org (redirects to go.dev; x/ module paths resolve via the
+          # proxy)
+          - golang.org:443
+          - "*.golang.org:443"
+          # dl.google.com: go.dev/dl download targets (e.g. golang.org/dl
+          # wrapper SDK downloads: `go install golang.org/dl/go1.x@latest`
+          # then `go1.x download`)
+          - dl.google.com:443

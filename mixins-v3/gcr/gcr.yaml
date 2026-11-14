@@ -1,0 +1,15 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: mixin
+displayName: Google Container Registry
+description: >
+  Network rules so the in-sandbox Docker engine can pull base images and
+  build containers.
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          - gcr.io:443
+          - "*.gcr.io:443"

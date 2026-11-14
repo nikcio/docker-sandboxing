@@ -1,0 +1,42 @@
+# syntax=docker/sandbox-kit:3
+# The v2 mixin installs the CLI in a create-time hook against the composed
+# sandbox; the v3 kit bakes it into the image at build time.
+schemaVersion: "3"
+kind: mixin
+displayName: Herdr
+description: >
+  Installs the Herdr CLI (agent runtime, keeps coding agents running and
+  resume them from any machine) as an image layer.
+
+args:
+  herdrVersion:
+    default: ""
+    pattern: '^$|^v?[0-9]+(\.[0-9]+)*$'
+    description: Herdr version to install (empty = latest)
+    buildArg: HERDR_VERSION_ARG
+
+# The installs resolve "latest" at build, so the exact version is not
+# knowable ahead of the build: provides the primary tool unversioned and
+# lets the descriptor's version fallback answer version-constrained
+# requires (SPEC-v3 5.2: an unversioned provide only matches
+# unconstrained requires).
+provides:
+  - herdr
+
+version: "1.0.0"
+
+dockerfile: herdr.dockerfile
+
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      runtime:
+        allow:
+          # Installer + release manifest (herdr.dev/install.sh, latest.json)
+          # — for the rebuild path; the release binaries it downloads for
+          # `herdr update` also come from GitHub releases.
+          - herdr.dev:443
+
+          - github.com:443
+          - "*.github.com:443"
+          - objects.githubusercontent.com:443

@@ -4,3 +4,10 @@
 # Shell scripts must stay LF even when the working tree lives on a Windows
 # mount (CRLF breaks bash parsing, and text=auto hides it from git status).
 *.sh text eol=lf
+
+# Kit sources embed shell too: dockerfile heredocs are copied byte-for-byte
+# (BuildKit strips CRLF from statements but not heredoc content, so `set -e\r`
+# reaches dash), and yaml hooks / file contents ship into the sandbox as-is.
+*.yaml text eol=lf
+*.yml text eol=lf
+*.dockerfile text eol=lf
