@@ -48,7 +48,11 @@ capabilities:
             - |
               set -e
               if [ "$(getent passwd agent | cut -d: -f7)" != "/usr/bin/zsh" ]; then
-                chsh -s /usr/bin/zsh agent
+                # chsh goes through PAM, which fails on bases where the
+                # chsh PAM stack can't authenticate the passwordless agent
+                # user ("chsh: PAM: Authentication failure"): edit
+                # /etc/passwd directly instead.
+                sed -i 's|^\(agent:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\).*|\1/usr/bin/zsh|' /etc/passwd
               fi
               if [ ! -f /home/agent/.zshrc ]; then
                 cp /opt/oh-my-zsh/templates/zshrc.zsh-template /home/agent/.zshrc
