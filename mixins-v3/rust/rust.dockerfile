@@ -16,20 +16,18 @@ RUN set -e; \
     # claim /home/agent paths the base or the agent user owns.
     env RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo bash -c 'curl -fsSL https://sh.rustup.rs | sh -s -- -y --no-modify-path --profile '"${RUSTUP_PROFILE}"' --default-toolchain '"${RUST_TOOLCHAIN}"' --component rust-analyzer'; \
     ls /opt/cargo/bin/cargo >/dev/null; \
-    ln -sf /opt/cargo/bin/* /usr/local/bin/; \
-    env RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo cargo --version
+    # Stage a link to every proxy rustup installed (rustfmt/clippy ships
+    # with the default profile) so the final layer exposes the same set
+    # the v2 mixin did, whatever the profile resolves to.
+    install -m 0755 -d /out/rust-bin; \
+    for f in /opt/cargo/bin/*; do ln -s "$f" "/out/rust-bin/$(basename "$f")"; done; \
+    env RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo PATH="/opt/cargo/bin:$PATH" cargo --version
 
 FROM scratch
 
 COPY --from=build /opt/rustup /opt/rustup
 COPY --from=build /opt/cargo /opt/cargo
-COPY --from=build /usr/local/bin/rustc /usr/local/bin/rustc
-COPY --from=build /usr/local/bin/rustdoc /usr/local/bin/rustdoc
-COPY --from=build /usr/local/bin/cargo /usr/local/bin/cargo
-COPY --from=build /usr/local/bin/rustup /usr/local/bin/rustup
-COPY --from=build /usr/local/bin/rust-analyzer /usr/local/bin/rust-analyzer
-COPY --from=build /usr/local/bin/rust-gdb /usr/local/bin/rust-gdb
-COPY --from=build /usr/local/bin/rust-lldb /usr/local/bin/rust-lldb
+COPY --from=build /out/rust-bin/ /usr/local/bin/
 
 COPY <<'EOF' /etc/profile.d/sbx-v3-rust.sh
 export RUSTUP_HOME=/opt/rustup

@@ -8,7 +8,7 @@ read that for the full behavior story; see [`../README.md`](../README.md)
 for what the v3 format changes.
 
 Declaration-only: no image content, no build args. The credential is
-optional (skip when unbound) and registered host-side with
+required (matches the v2 mixin's `required: true`) and registered host-side with
 `sbx secret set zeldoc` — see [docs/zeldoc-api-key.md](../../docs/zeldoc-api-key.md).
 
 ## Runtime egress

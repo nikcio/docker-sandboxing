@@ -10,7 +10,8 @@ description: >
 
 capabilities:
   - type: com.docker.sandbox/credential@1
-    optional: true
+    # required (v2 carried `required: true`)
+    optional: false
     description: Zeldoc.ai API key for AI model access.
     config:
       service: zeldoc

@@ -58,7 +58,15 @@ export DOTNET_ROOT=/opt/dotnet
 export PATH=$PATH:/opt/dotnet/tools
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 export DOTNET_NOLOGO=1
+# The v2 mixin exported both on every install path; both affect runtime:
+# the first-run ASP.NET developer-certificate generation, and NuGet
+# extracting XML doc files during restore. Matches the
+# nikcio-openapi-codegen v3 port.
+export DOTNET_GENERATE_ASPNET_CERTIFICATE=false
+export NUGET_XMLDOC_MODE=skip
 EOF
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
-    DOTNET_NOLOGO=1
+    DOTNET_NOLOGO=1 \
+    DOTNET_GENERATE_ASPNET_CERTIFICATE=false \
+    NUGET_XMLDOC_MODE=skip

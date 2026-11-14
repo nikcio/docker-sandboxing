@@ -31,7 +31,7 @@ dockerfile: dotnet.dockerfile
 capabilities:
   # Telemetry opt-out via image environment; the remaining env the v2 mixin
   # exports (DOTNET_GENERATE_ASPNET_CERTIFICATE, NUGET_XMLDOC_MODE) is
-  # installer noise, not something the agent needs.
+  # carried in the dockerfile (both affect runtime behavior).
   - type: com.docker.sandbox/network-policy@1
     config:
       runtime:

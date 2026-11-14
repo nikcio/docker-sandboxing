@@ -25,8 +25,9 @@ COPY --from=build /opt/go /opt/go
 COPY --from=build /usr/local/bin/go /usr/local/bin/go
 COPY --from=build /usr/local/bin/gofmt /usr/local/bin/gofmt
 
-# User-level bin dir on PATH for `go install` results. Login shells pick
-# it up; /opt/go/bin comes via the /usr/local/bin symlinks above.
+# `go install` results on PATH. GOBIN is left at Go's default, $HOME/go/bin
+# (the v2 mixin added the same entry); nothing is claimed in the agent home,
+# Go writes there at the user's request.
 COPY <<'EOF' /etc/profile.d/sbx-v3-go.sh
-export PATH=$PATH:/opt/go-user-bin
+export PATH=$PATH:"${HOME}/go/bin"
 EOF
