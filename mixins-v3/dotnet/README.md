@@ -24,15 +24,15 @@ docker buildx build -f mixins-v3/dotnet/dotnet.yaml -t my/dotnet-mixin:dev mixin
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `dotnetVersion` | *(empty = latest)* | .NET SDK version (`MAJOR.MINOR.PATCH`) |
+| `dotnetVersion` | *(empty = latest LTS)* | .NET SDK version (`MAJOR.MINOR.PATCH`) |
 
 ## How it works
 
 - The SDK is installed by the official `dot.net/v1/dotnet-install.sh`
   script into `/opt/dotnet` and symlinked onto `/usr/local/bin`;
   `/opt/dotnet/tools` is added to `PATH` so global tools resolve. With no
-  `dotnetVersion`, the newest SDK on a supported channel is installed. The
-  versions resolve at build, so the image is a snapshot: rebuild to update.
+  `dotnetVersion`, the newest SDK on the LTS channel is installed. The
+  version resolves at build, so the image is a snapshot: rebuild to update.
 - Image environment opts out of telemetry (`DOTNET_CLI_TELEMETRY_OPTOUT`,
   `DOTNET_NOLOGO`), skips the first-run ASP.NET developer-certificate
   generation (`DOTNET_GENERATE_ASPNET_CERTIFICATE=false`), and stops NuGet

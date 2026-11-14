@@ -13,7 +13,7 @@ args:
   dotnetVersion:
     default: ""
     pattern: '^$|^[0-9]+\.[0-9]+\.[0-9]+$'
-    description: .NET SDK version to install (empty = latest)
+    description: .NET SDK version to install (empty = latest LTS)
     buildArg: DOTNET_VERSION_ARG
 
 # The installs resolve "latest" at build, so the exact version is not
