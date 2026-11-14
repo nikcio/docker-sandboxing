@@ -2,15 +2,43 @@ schemaVersion: "1"
 name: docker-sandboxing
 agent: shell
 
+# Dev environment for working on this repo: composes every mixin in
+# mixins-v3/ (the shell agent is a v3 workload, so v2 mixins cannot be
+# mixed in). Grouped by purpose: agent + providers, credentials, gh CLI,
+# toolchains, repo tools, guards, network, shell.
 kits:
-  - ./mixins/opencode
-  - ./mixins/opencode-zeldoc
-  - ./mixins/github-cli
-  - ./mixins/docker-hub
-  - ./mixins/rust
-  - ./mixins/node
-  - ./mixins/sbx
-  - ./mixins/open-egress
+  # OpenCode + model providers
+  - ./mixins-v3/opencode
+  - ./mixins-v3/opencode-copilot
+  - ./mixins-v3/opencode-zeldoc
+  # Container registries + service credentials
+  - ./mixins-v3/docker-hub
+  - ./mixins-v3/gcr
+  - ./mixins-v3/ghcr
+  - ./mixins-v3/mcr
+  - ./mixins-v3/uniform
+  # GitHub CLI
+  - ./mixins-v3/github-cli
+  # Toolchains
+  - ./mixins-v3/rust
+  - ./mixins-v3/node
+  - ./mixins-v3/go
+  - ./mixins-v3/dotnet
+  - ./mixins-v3/python
+  - ./mixins-v3/playwright
+  # Repo tooling
+  - ./mixins-v3/sbx
+  - ./mixins-v3/herdr
+  - ./mixins-v3/omnium
+  - ./mixins-v3/nikcio-openapi-codegen
+  - ./mixins-v3/openapi-ts
+  - ./mixins-v3/repo-clone
+  # Workspace guard
+  - ./mixins-v3/env-guard
+  # Network
+  - ./mixins-v3/open-egress
+  # Shell
+  - ./mixins-v3/zsh
 
 workspace:
   path: .
