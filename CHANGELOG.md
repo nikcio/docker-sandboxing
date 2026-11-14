@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.1](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0...v3.1.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* **mixins:** unbreak v3 opencode and zsh startup ([#187](https://github.com/nikcio/docker-sandboxing/issues/187)) ([1301d9e](https://github.com/nikcio/docker-sandboxing/commit/1301d9e8da66a2ca033ce7796a728ed5f2fdeae7))
+
 ## [3.1.0](https://github.com/nikcio/docker-sandboxing/compare/v3.0.0...v3.1.0) (2026-11-14)
 
 
