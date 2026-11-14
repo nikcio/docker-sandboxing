@@ -31,9 +31,9 @@ the mixin's `kits:` line.
 ## How it works
 
 - **Install.** At image build, gh is installed from the official
-  `cli.github.com` apt repository (a no-op on bases that already ship
-  gh). The apt repo definition and keyring ship in the layer, so
-  `apt upgrade` inside the sandbox keeps updating gh.
+  `cli.github.com` apt repository. The apt repo definition and keyring
+  ship in the layer, so `apt upgrade` inside the sandbox keeps updating
+  gh.
 - **Credential.** Comes from the built-in agent kit (`opencode`,
   `shell`, `docker-agent`), which declares the proxy-managed `github`
   service. The sandbox only sees a sentinel `GH_TOKEN` placeholder; the
