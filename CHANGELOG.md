@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.2](https://github.com/nikcio/docker-sandboxing/compare/v3.1.1...v3.1.2) (2026-11-14)
+
+
+### Bug Fixes
+
+* **mixins:** ship the full zsh tree in the v3 zsh mixin layer ([#189](https://github.com/nikcio/docker-sandboxing/issues/189)) ([a0af423](https://github.com/nikcio/docker-sandboxing/commit/a0af423f46d5ed3271e7aded94acebc747a76ed6))
+
 ## [3.1.1](https://github.com/nikcio/docker-sandboxing/compare/v3.1.0...v3.1.1) (2026-11-14)
 
 
