@@ -3,23 +3,23 @@ FROM debian:bookworm-slim AS build
 
 ARG OPENCODE_VERSION_ARG
 
-RUN set -e; \
-    if command -v opencode >/dev/null 2>&1; then exit 0; fi; \
-    install -m 0755 -d /var/lib/apt/sbx-install-lists; \
-    export DEBIAN_FRONTEND=noninteractive; \
-    { apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists update -qq || true; }; \
-    apt-get -o Dir::State::lists=/var/lib/apt/sbx-install-lists install -y -qq --no-install-recommends ca-certificates curl; \
-    rm -rf /var/lib/apt/sbx-install-lists; \
-    # The OpenCode install tree lives under /opt (not the agent home): a
-    # mixin's layers are an overlay on an unknown base, so its content must
-    # not claim /home/agent paths the base or the agent user owns.
-    install -d -m 0755 /opt/opencode-home/.opencode; \
-    OC_VERSION="${OPENCODE_VERSION_ARG}"; \
-    OC_INSTALL_ARGS=""; \
-    if [ -n "${OC_VERSION}" ]; then OC_INSTALL_ARGS="--version ${OC_VERSION}"; fi; \
-    curl -fsSL https://opencode.ai/v2/install | env HOME=/opt/opencode-home bash -s -- ${OC_INSTALL_ARGS}; \
-    ln -sf /opt/opencode-home/.opencode/bin/opencode /usr/local/bin/opencode; \
-    opencode --version
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl
+
+# The OpenCode install tree lives under /opt (not the agent home): a mixin's
+# layers are an overlay on an unknown base, so its content must not claim
+# /home/agent paths the base or the agent user owns.
+RUN mkdir -p /opt/opencode-home
+
+# Empty arg = latest; set = install that exact version.
+RUN if [ -n "$OPENCODE_VERSION_ARG" ]; then \
+      curl -fsSL https://opencode.ai/v2/install | env HOME=/opt/opencode-home bash -s -- --version "$OPENCODE_VERSION_ARG"; \
+    else \
+      curl -fsSL https://opencode.ai/v2/install | env HOME=/opt/opencode-home bash -s --; \
+    fi
+
+RUN ln -sf /opt/opencode-home/.opencode/bin/opencode /usr/local/bin/opencode \
+ && opencode --version
 
 FROM scratch
 
