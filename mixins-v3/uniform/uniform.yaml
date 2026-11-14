@@ -38,3 +38,10 @@ capabilities:
           # (img.uniform.global / img.eu.uniform.global).
           - uniform.global:443
           - "*.uniform.global:443"
+
+          # The credential's inject domains must appear literally (SPEC-v3:
+          # an inject domain MUST be in the allow list; the wildcards cover
+          # runtime egress but not this check), so the EU hosts are listed
+          # exactly.
+          - eu.uniform.app:443
+          - eu.uniform.global:443
