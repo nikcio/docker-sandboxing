@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.3](https://github.com/nikcio/docker-sandboxing/compare/v3.1.2...v3.1.3) (2026-11-15)
+
+
+### Bug Fixes
+
+* **mixins:** port the git identity lock to the v3 github-cli mixin ([#204](https://github.com/nikcio/docker-sandboxing/issues/204)) ([2939868](https://github.com/nikcio/docker-sandboxing/commit/2939868a67714153aaa5f623140bbe46c6a77050))
+
 ## [3.1.2](https://github.com/nikcio/docker-sandboxing/compare/v3.1.1...v3.1.2) (2026-11-14)
 
 
