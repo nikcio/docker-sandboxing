@@ -1,8 +1,10 @@
 # github-cli (v3)
 
 GitHub CLI (`gh`) baked into the mixin layer at image build, with gh and
-git-over-HTTPS egress. The sandbox network policy is deny by default, so
-`gh` and git-over-HTTPS fail until these hosts are allowed.
+git-over-HTTPS egress plus a startup hook that locks the git committer
+identity to the owner of the github credential. The sandbox network
+policy is deny by default, so `gh` and git-over-HTTPS fail until these
+hosts are allowed.
 
 ## Build / use
 
@@ -48,8 +50,20 @@ the mixin's `kits:` line.
   hosts below.
 - **Auth domains** (via the built-in credential): `api.github.com`,
   `github.com`, and `raw.githubusercontent.com`.
-- **Git identity.** Not set up by this mixin: compose with a workload
-  that declares the `git-identity@1` capability.
+- **Git identity.** A startup hook (runs as root on every boot) resolves
+  the GitHub login name and email through `gh api user` — the request
+  rides the built-in proxy-managed credential, so the hook only sees the
+  sentinel `GH_TOKEN` — and locks the committer identity: both
+  `/etc/gitconfig` and the agent's `~/.gitconfig` are written and made
+  read-only (`chattr +i`), and a `/usr/local/bin/git` wrapper exports the
+  identity from `/etc/git-identity` and refuses `git config` overrides of
+  `user.name`/`user.email`. If the account has no public email, the GitHub
+  noreply address (`<id>+<login>@users.noreply.github.com`) is used. The
+  committer on every commit is therefore always the credential owner; this
+  is not bulletproof, because the agent can still set the *author* on
+  individual commits (`git commit --author=...`) or call a git binary
+  directly. Skipped with a warning when `gh`, `git`, or the credential are
+  unavailable.
 
 ## Runtime egress
 
