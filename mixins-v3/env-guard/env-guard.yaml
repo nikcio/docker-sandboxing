@@ -68,6 +68,10 @@ capabilities:
               fi
               unset __envs __clean __f
           user: "agent"
+          # Hook env is deny-by-default in v3; without the declaration the
+          # hook always takes the WORKSPACE_DIR-unset branch and the
+          # no-.env policy silently stops being enforced.
+          env: [WORKSPACE_DIR]
           description: >
             Enforce the no-.env policy (clone mode removes offenders from
             the sandbox-local copy; direct mode refuses to start)
