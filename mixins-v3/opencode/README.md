@@ -72,9 +72,11 @@ pass them with an `args:` entry on the mixin's `kits:` line.
   agent home: the baked `/opt/opencode-home` tree is root-owned, so
   pointing the XDG environment at it would make opencode fail with
   `EACCES` on its first write.
-- `OPENCODE_CONFIG` is not exported as image environment: the workload's
-  entrypoint owns the launch, so compose this mixin with a workload that
-  reads the merged config, or extend it in your own kit.
+- `OPENCODE_CONFIG` is exported as image environment, pointing at the
+  combined config the startup hook regenerates from `mixins.d/` on every
+  boot (the v2 mixin exported the same variable). A workload entrypoint
+  that sets the variable itself overrides the image default, so the
+  launch stays the workload's to own.
 
 ## Runtime egress
 

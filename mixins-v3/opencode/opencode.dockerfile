@@ -34,5 +34,12 @@ COPY --from=build /usr/local/bin/opencode /usr/local/bin/opencode
 # build stage has no agent user to chown to), so opencode writing its
 # log/state/cache there fails with EACCES — the XDG defaults under the
 # agent home are the v2 behavior.
+#
+# OPENCODE_CONFIG points opencode at the combined config the startup hook
+# rebuilds from ~/.config/opencode/mixins.d/ on every boot. Without it the
+# fragments (the documented contract for third-party kit config) are
+# generated into a file nothing reads. A workload that sets the variable
+# itself overrides this image-level default.
 ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
+    LC_ALL=C.UTF-8 \
+    OPENCODE_CONFIG=/home/agent/.config/opencode/sandbox-mixins.jsonc
