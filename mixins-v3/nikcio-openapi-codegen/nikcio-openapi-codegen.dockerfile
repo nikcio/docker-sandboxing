@@ -52,11 +52,18 @@ RUN set -e; install -m 0755 -d /var/lib/apt/sbx-install-lists; \
     if [ -n "${CG_SPEC}" ]; then CG_SPEC="--version ${CG_SPEC}"; fi; \
     dotnet tool install --global Nikcio.OpenApiCodeGen ${CG_SPEC}
 
+# The muxer link needs the same treatment as the dotnet mixin: it stays a
+# symlink (the dotnet host resolves hostfxr through the realpath of its
+# own executable; a dereferenced copy cannot find /opt/dotnet), staged
+# with cp -P and copied as a directory, which preserves the link.
+RUN install -m 0755 -d /out/dotnet-bin; \
+    cp -P /usr/local/bin/dotnet /out/dotnet-bin/
+
 FROM scratch
 
 COPY --from=build /opt/dotnet /opt/dotnet
 COPY --from=build /root/.dotnet /opt/agent-dotnet-tools
-COPY --from=build /usr/local/bin/dotnet /usr/local/bin/dotnet
+COPY --from=build /out/dotnet-bin/ /usr/local/bin/
 
 COPY <<'EOF' /etc/profile.d/sbx-v3-openapi-codegen.sh
 export DOTNET_ROOT=/opt/dotnet

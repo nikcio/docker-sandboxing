@@ -48,10 +48,19 @@ RUN set -e; install -m 0755 -d /var/lib/apt/sbx-install-lists; \
     # keeps full globalization and only this check runs invariant.
     DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 dotnet --version
 
+# Stage the PATH link as a symlink (cp -P keeps it): the dotnet muxer
+# resolves hostfxr through the realpath of its own executable and ignores
+# DOTNET_ROOT for that lookup, so a dereferenced copy under
+# /usr/local/bin dies with "[/usr/local/bin/host/fxr] does not exist" —
+# it must stay a symlink to /opt/dotnet/dotnet. A plain COPY of the link
+# itself would dereference it, hence the directory COPY.
+RUN install -m 0755 -d /out/dotnet-bin; \
+    cp -P /usr/local/bin/dotnet /out/dotnet-bin/
+
 FROM scratch
 
 COPY --from=build /opt/dotnet /opt/dotnet
-COPY --from=build /usr/local/bin/dotnet /usr/local/bin/dotnet
+COPY --from=build /out/dotnet-bin/ /usr/local/bin/
 
 COPY <<'EOF' /etc/profile.d/sbx-v3-dotnet.sh
 export DOTNET_ROOT=/opt/dotnet
