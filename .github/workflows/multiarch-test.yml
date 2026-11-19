@@ -1,0 +1,125 @@
+name: Multi-arch test
+
+# Runtime smoke tests for the v3 mixins on both sandbox architectures.
+# Kit validation (`validate.yml`) runs on one platform only, and none of
+# it catches what actually broke the mixins: software that works during
+# the amd64 build stage but fails when the layer lands on a base — a
+# dereferenced PATH symlink (go/dotnet/python), a lib left in the
+# throwaway build stage (libatomic for arm64 node), a launcher whose
+# relative paths only resolve in its install tree. This composes every
+# changed mixin onto a plain ubuntu:24.04 base for linux/amd64 and
+# linux/arm64 and runs the tool as the agent user would.
+on:
+  pull_request:
+    paths:
+      - "mixins-v3/**"
+      - ".github/multiarch/**"
+      - ".github/workflows/multiarch-test.yml"
+  push:
+    branches: [ main ]
+    paths:
+      - "mixins-v3/**"
+      - ".github/multiarch/**"
+      - ".github/workflows/multiarch-test.yml"
+  workflow_dispatch:
+    inputs:
+      mixins:
+        description: Mixins to test (space-separated, empty = all)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  list:
+    name: Changed mixins
+    runs-on: ubuntu-latest
+    outputs:
+      mixins: ${{ steps.list.outputs.mixins }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Pick the mixins to test
+        id: list
+        run: |
+          requested="${{ github.event.inputs.mixins }}"
+          if [ -n "$requested" ]; then
+            mixins="$requested"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            mixins="$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- 'mixins-v3/*/*.dockerfile' 'mixins-v3/*/*.yaml' \
+              | cut -d/ -f2 | sort -u | tr '\n' ' ')"
+          fi
+          # Keep only mixins that have a content recipe and smoke checks;
+          # a PR with none of those (or a push to main) tests everything.
+          all=""
+          for d in mixins-v3/*/; do
+            m="$(basename "$d")"
+            [ -f "mixins-v3/$m/$m.dockerfile" ] && [ -f ".github/multiarch/run-checks.sh" ] && all="$all $m"
+          done
+          tested=""
+          for m in ${mixins:-$all}; do
+            case " $all " in
+              *" $m "*) tested="$tested $m" ;;
+            esac
+          done
+          [ -n "$(echo $tested | tr -d ' ')" ] || tested="$all"
+          echo "Testing:$tested"
+          echo "mixins=$(echo $tested | sed 's/^ *//; s/ *$//; s/  */","/g; s/^/"/; s/$/"/')" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: ${{ matrix.mixin }} (${{ matrix.platform }})
+    needs: list
+    if: needs.list.outputs.mixins != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        mixin: ${{ fromJSON(needs.list.outputs.mixins) }}
+        platform: [ linux/amd64, linux/arm64 ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up QEMU (arm64 emulation)
+        if: matrix.platform == 'linux/arm64'
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+        with:
+          platforms: arm64
+
+      - name: Compose the mixin onto an ubuntu base
+        run: |
+          mixin="${{ matrix.mixin }}"
+          platform="${{ matrix.platform }}"
+          tag="${platform#linux/}"
+          ctx="sbx-test/$mixin-$tag"
+          mkdir -p "$ctx"
+          cp "mixins-v3/$mixin/$mixin.dockerfile" "$ctx/Dockerfile"
+          sed -i "s/^FROM scratch\$/FROM ubuntu:24.04/" "$ctx/Dockerfile"
+          # An unknown base is what a mixin must survive: an agent user, the
+          # utils the checks assume, and ICU for the dotnet CLI.
+          cat >> "$ctx/Dockerfile" <<'EOF'
+          RUN useradd -m -d /home/agent -s /bin/bash agent \
+              && apt-get update -qq \
+              && apt-get install -y -qq --no-install-recommends git ca-certificates jq libicu74 gcc libc6-dev >/dev/null \
+              && rm -rf /var/lib/apt/lists/*
+          COPY run-checks.sh /usr/local/bin/run-checks.sh
+          RUN chmod 755 /usr/local/bin/run-checks.sh
+          USER agent
+          ENV HOME=/home/agent
+          CMD ["/bin/bash", "-lc", "run-checks.sh ${{ matrix.mixin }}"]
+          EOF
+          cp .github/multiarch/run-checks.sh "$ctx/run-checks.sh"
+          docker buildx build --platform "$platform" -t "sbx-multiarch/$mixin:$tag" "$ctx"
+
+      - name: Run the smoke checks
+        run: docker run --rm --platform "${{ matrix.platform }}" "sbx-multiarch/${{ matrix.mixin }}:${{ matrix.platform#linux/ }}"
