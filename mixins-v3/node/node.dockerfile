@@ -18,7 +18,12 @@ RUN set -e; install -m 0755 -d /var/lib/apt/sbx-install-lists; \
     unset NPM_CONFIG_PREFIX; \
     . "$NVM_DIR/nvm.sh"; \
     NODE_SPEC="${NODE_VERSION_ARG}"; \
-    if [ -z "${NODE_SPEC}" ]; then NODE_SPEC=node; fi; \
+    if [ -z "${NODE_SPEC}" ]; then \
+      # nvm's `node` alias resolves to the newest nodejs.org index.tab row,
+      # which can be a pre-release (e.g. v27.0.0-alpha.0.1.1): pin the
+      # newest stable version instead.
+      NODE_SPEC="$(nvm ls-remote --no-colors | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+(-[^ ]+)?' | grep -v -- '-' | tail -n1)"; \
+    fi; \
     nvm install "${NODE_SPEC}"; \
     NODE_RESOLVED="$(nvm version "${NODE_SPEC}")"; \
     nvm alias default "${NODE_RESOLVED}"; \

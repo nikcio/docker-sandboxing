@@ -24,14 +24,14 @@ docker buildx build -f mixins-v3/node/node.yaml -t my/node-mixin:dev mixins-v3/n
 
 | Arg | Default | Description |
 | --- | ------- | ----------- |
-| `nodeVersion` | *(empty = latest)* | Node.js version — `MAJOR`, `MAJOR.MINOR`, or full |
+| `nodeVersion` | *(empty = latest stable)* | Node.js version — `MAJOR`, `MAJOR.MINOR`, or full |
 | `pnpmVersion` | *(empty = latest)* | PNPM version |
 | `nvmVersion` | *(empty = latest release)* | NVM ref to clone (`vMAJOR.MINOR.PATCH`) |
 
 ## How it works
 
 - The toolchain is baked into the mixin image: nvm is cloned to
-  `/opt/nvm`, the requested Node (latest by default) is installed and
+  `/opt/nvm`, the requested Node (latest stable by default) is installed and
   aliased as the default, and `node`/`npm`/`npx`/`pnpm`/`pnpx`/`corepack`
   are symlinked onto `/usr/local/bin`. A `/etc/profile.d/` script exports
   `NVM_DIR` and sources `nvm.sh`, so login shells can list, install, or
