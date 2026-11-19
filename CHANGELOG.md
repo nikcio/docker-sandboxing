@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.4](https://github.com/nikcio/docker-sandboxing/compare/v3.1.3...v3.1.4) (2026-11-19)
+
+
+### Bug Fixes
+
+* **mixins:** keep the node mixin default install off pre-release versions ([#208](https://github.com/nikcio/docker-sandboxing/issues/208)) ([d8dda78](https://github.com/nikcio/docker-sandboxing/commit/d8dda7800848b53ffc3e0888eb8ee99d6f06f1e1))
+
 ## [3.1.3](https://github.com/nikcio/docker-sandboxing/compare/v3.1.2...v3.1.3) (2026-11-15)
 
 

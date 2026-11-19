@@ -23,13 +23,13 @@ agent: opencode
 # release-please bumps them (do not edit by hand).
 # x-release-please-start-version
 kits:
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/opencode&ref=v3.1.3          # OpenCode CLI + config + provider merge
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/env-guard&ref=v3.1.3              # workspace .env guard
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/opencode-zeldoc&ref=v3.1.3                 # Zeldoc.ai provider
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/github-cli&ref=v3.1.3             # git push auth (proxy-managed GitHub token)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/rust&ref=v3.1.3                   # Rust toolchain (crates.io egress)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/docker-hub&ref=v3.1.3             # in-sandbox docker (Docker Hub registry egress)
-  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/playwright&ref=v3.1.3             # Playwright + Chromium headless shell
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/opencode&ref=v3.1.4          # OpenCode CLI + config + provider merge
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/env-guard&ref=v3.1.4              # workspace .env guard
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/opencode-zeldoc&ref=v3.1.4                 # Zeldoc.ai provider
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/github-cli&ref=v3.1.4             # git push auth (proxy-managed GitHub token)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/rust&ref=v3.1.4                   # Rust toolchain (crates.io egress)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/docker-hub&ref=v3.1.4             # in-sandbox docker (Docker Hub registry egress)
+  - git+https://github.com/nikcio/docker-sandboxing.git#dir=mixins-v3/playwright&ref=v3.1.4             # Playwright + Chromium headless shell
 # x-release-please-end-version
 
 workspace:
