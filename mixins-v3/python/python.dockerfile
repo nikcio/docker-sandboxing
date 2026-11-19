@@ -26,13 +26,21 @@ RUN set -e; \
     python3 --version; \
     uv --version
 
+# Stage the PATH links as symlinks (cp -P keeps them): the interpreter
+# finds its standard library through its own executable path, so a
+# dereferenced copy under /usr/local/bin starts but dies with
+# "No module named 'encodings'" — the links must stay symlinks into
+# /opt/uv/python. A plain COPY of each link would dereference it, hence
+# the directory COPY.
+RUN install -m 0755 -d /out/python-bin; \
+    cp -P /usr/local/bin/python3 /usr/local/bin/python /out/python-bin/
+
 FROM scratch
 
 COPY --from=build /usr/local/bin/uv /usr/local/bin/uv
 COPY --from=build /usr/local/bin/uvx /usr/local/bin/uvx
 COPY --from=build /opt/uv /opt/uv
-COPY --from=build /usr/local/bin/python3 /usr/local/bin/python3
-COPY --from=build /usr/local/bin/python /usr/local/bin/python
+COPY --from=build /out/python-bin/ /usr/local/bin/
 
 COPY <<'EOF' /etc/profile.d/sbx-v3-python.sh
 export UV_PYTHON_INSTALL_DIR=/opt/uv/python
