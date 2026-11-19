@@ -36,24 +36,56 @@ RUN set -e; install -m 0755 -d /var/lib/apt/sbx-install-lists; \
     PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright npx playwright install --with-deps chromium-headless-shell; \
     npx playwright --version
 
+# The links target the nvm bin-dir entries (see the node mixin): the
+# launchers only work through their relative lib paths in the nvm tree,
+# and libatomic ships because the node linux-arm64 build links against
+# libatomic.so.1 (the sandbox base may not have it).
 RUN NODE_BIN="$(find /opt/nvm/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)"; \
-    mkdir -p /out/bin; \
+    install -m 0755 -d /out/bin; \
     for b in node npm npx corepack; do \
-      if [ -e "$NODE_BIN/$b" ]; then cp -P "$(readlink -f "$NODE_BIN/$b")" "/out/bin/$b"; fi; \
+      if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/out/bin/$b"; fi; \
     done; \
     PW_BIN="$(find /opt/nvm/versions/node -mindepth 3 -maxdepth 3 -path '*bin/playwright' 2>/dev/null | head -n 1)"; \
-    if [ -n "$PW_BIN" ]; then cp -P "$(readlink -f "$PW_BIN")" /out/bin/playwright; fi; \
-    ls /out/bin
+    if [ -n "$PW_BIN" ]; then ln -sf "$PW_BIN" /out/bin/playwright; fi; \
+    install -m 0755 -d /out/libatomic-root; \
+    cp -a --parents /usr/lib/*/libatomic.so.1* /out/libatomic-root; \
+    # The browser's system libraries and fonts were installed by
+    # --with-deps into this throwaway build stage, and the composed base
+    # may not have them (the production sandbox base ships none of the
+    # chromium deps: the browser dies with "libglib-2.0.so.0: cannot
+    # open shared object file" on first launch). Copy the headless
+    # shell's shared-library closure into a private tree the profile
+    # script puts on the loader path — minus the glibc family and
+    # libstdc++/libgcc_s, which the base always has its own (newer) copy
+    # of and a bookworm copy must not shadow — plus the fonts and
+    # fontconfig config the build installed.
+    SHELL_BIN="$(find /opt/ms-playwright -name chrome-headless-shell -type f | head -n 1)"; \
+    install -m 0755 -d /out/pw-libs /out/pw-root; \
+    ldd "$SHELL_BIN" | awk '/=> \//{print $3}' | sort -u | while read -r lib; do \
+      case "$(basename "$lib")" in \
+        ld-linux*|libc.so*|libm.so*|libgcc_s.so*|libstdc++.so*) continue ;; \
+      esac; \
+      cp -L "$lib" "/out/pw-libs/$(basename "$lib")"; \
+    done; \
+    cp -a --parents /usr/share/fonts /etc/fonts /out/pw-root; \
+    ls -l /out/bin
 
 FROM scratch
 
 COPY --from=build /opt/nvm /opt/nvm
 COPY --from=build /opt/ms-playwright /opt/ms-playwright
 COPY --from=build /out/bin/ /usr/local/bin/
+COPY --from=build /out/libatomic-root/ /
+COPY --from=build /out/pw-libs/ /opt/ms-playwright-deps/lib/
+COPY --from=build /out/pw-root/ /
 
 COPY <<'EOF' /etc/profile.d/sbx-v3-playwright.sh
 export NVM_DIR=/opt/nvm
 unset NPM_CONFIG_PREFIX
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 export PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright
+# The browser's system libraries ship with the mixin (the base may not
+# have them; see the dockerfile) — put the private tree on the loader
+# path for everything the agent launches.
+export LD_LIBRARY_PATH="/opt/ms-playwright-deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 EOF

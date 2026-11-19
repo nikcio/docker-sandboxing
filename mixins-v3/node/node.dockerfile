@@ -40,15 +40,20 @@ RUN set -e; install -m 0755 -d /var/lib/apt/sbx-install-lists; \
     pnpm --version
 
 # Stage the bins into a stable path so the scratch stage can copy them
-# whatever the resolved node version is.
+# whatever the resolved node version is. The links target the nvm bin-dir
+# entries (not their readlink -f targets): npm/pnpm are launchers whose
+# relative lib paths only resolve inside the nvm tree, so a dereferenced
+# copy of them under /usr/local/bin would break outside a login shell
+# (where nvm.sh puts the nvm bin dir on PATH first).
 RUN NODE_BIN="$(find /opt/nvm/versions/node -mindepth 2 -maxdepth 2 -name bin -type d | sort -V | tail -n 1)"; \
-    mkdir -p /out/bin; \
+    install -m 0755 -d /out/bin; \
     for b in node npm npx pnpm pnpx corepack; do \
-      if [ -e "$NODE_BIN/$b" ] || [ -e "/usr/local/bin/$b" ]; then \
-        cp -P "$(readlink -f "$NODE_BIN/$b" 2>/dev/null || echo /usr/local/bin/$b)" "/out/bin/$b"; \
-      fi; \
+      if [ -e "$NODE_BIN/$b" ]; then ln -sf "$NODE_BIN/$b" "/out/bin/$b"; \
+      elif [ -e "/usr/local/bin/$b" ]; then ln -sf "/usr/local/bin/$b" "/out/bin/$b"; fi; \
     done; \
-    ls /out/bin
+    install -m 0755 -d /out/libatomic-root; \
+    cp -a --parents /usr/lib/*/libatomic.so.1* /out/libatomic-root; \
+    ls -l /out/bin
 
 FROM scratch
 
@@ -57,6 +62,7 @@ FROM scratch
 # /home/agent paths the base or the agent user owns.
 COPY --from=build /opt/nvm /opt/nvm
 COPY --from=build /out/bin/ /usr/local/bin/
+COPY --from=build /out/libatomic-root/ /
 
 # Login shells (the agent launches through one) pick up NVM_DIR; nvm.sh
 # finds the installed default under it.
